@@ -4,8 +4,10 @@
 -Xss256m
 -XX:+HeapDumpOnOutOfMemoryError
 
-#Proxy options. An internet connection is needed for downloading the free license
+#Network options. An internet connection is needed for downloading the free license
 -Djava.net.useSystemProxies=true
+-Dnetworkaddress.cache.ttl=60
+-Dnetworkaddress.cache.negative.ttl=10
 
 # General options
 -Djava.awt.headless=true

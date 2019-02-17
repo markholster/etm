@@ -1,23 +1,16 @@
 package com.jecstar.etm.launcher.migrations;
 
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.*;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.DocWriteRequest;
-import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
-import org.elasticsearch.action.admin.indices.template.delete.DeleteIndexTemplateAction;
-import org.elasticsearch.action.admin.indices.template.delete.DeleteIndexTemplateRequestBuilder;
-import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesAction;
-import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesRequestBuilder;
-import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesResponse;
-import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateAction;
-import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateRequestBuilder;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.index.IndexAction;
-import org.elasticsearch.action.index.IndexRequestBuilder;
-import org.elasticsearch.action.search.SearchRequestBuilder;
-import org.elasticsearch.client.Client;
+import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -25,6 +18,7 @@ import org.elasticsearch.search.SearchHit;
 
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 /**
@@ -61,19 +55,22 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
         return percentage;
     }
 
-    protected BulkProcessor createBulkProcessor(Client client, BulkProcessor.Listener listener) {
-        return BulkProcessor.builder(client, listener).setBulkActions(20).build();
+    protected BulkProcessor createBulkProcessor(DataRepository dataRepository, BulkProcessor.Listener listener) {
+        BiConsumer<BulkRequest, ActionListener<BulkResponse>> bulkConsumer =
+                (request, bulkListener) ->
+                        dataRepository.getClient().bulkAsync(request, RequestOptions.DEFAULT, bulkListener);
+        return BulkProcessor.builder(bulkConsumer, listener).setBulkActions(20).build();
     }
 
-    protected void deleteIndices(Client client, String description, String... indices) {
+    protected void deleteIndices(DataRepository dataRepository, String description, String... indices) {
         System.out.println("Start removing " + description + ".");
-
-        GetIndexResponse indexResponse = client.admin().indices().prepareGetIndex().addIndices(indices).get();
+        GetIndexRequestBuilder requestBuilder = new GetIndexRequestBuilder().setIndices(indices);
+        GetIndexResponse indexResponse = dataRepository.indicesGet(requestBuilder);
         long lastPrint = 0, current = 0;
         long total = indexResponse.getIndices().length;
-        if (indexResponse != null && indexResponse.getIndices() != null && indexResponse.getIndices().length > 0) {
+        if (indexResponse.getIndices() != null && indexResponse.getIndices().length > 0) {
             for (String index : indexResponse.getIndices()) {
-                client.admin().indices().prepareDelete(index).get();
+                dataRepository.indicesDelete(new DeleteIndexRequestBuilder().setIndices(index));
                 lastPrint = printPercentageWhenChanged(lastPrint, ++current, total);
             }
             printPercentageWhenChanged(lastPrint, ++current, total);
@@ -81,27 +78,27 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
         System.out.println("Done removing " + description + ".");
     }
 
-    protected void reindexTemporaryIndicesToNew(Client client, FailureDetectingBulkProcessorListener listener, String migrationIndexPrefix) {
+    protected void reindexTemporaryIndicesToNew(DataRepository dataRepository, FailureDetectingBulkProcessorListener listener, String migrationIndexPrefix) {
         System.out.println("Start moving temporary indices to permanent indices.");
-        GetIndexResponse indexResponse = client.admin().indices().prepareGetIndex().addIndices(migrationIndexPrefix + "*").get();
+        GetIndexResponse indexResponse = dataRepository.indicesGet(new GetIndexRequestBuilder().setIndices(migrationIndexPrefix + "*"));
         if (indexResponse != null && indexResponse.getIndices() != null && indexResponse.getIndices().length > 0) {
             for (String index : indexResponse.getIndices()) {
                 System.out.println("Migrating index '" + index + "'.");
-                final BulkProcessor bulkProcessor = createBulkProcessor(client, listener);
-                SearchRequestBuilder searchRequestBuilder = client.prepareSearch(index)
+                final BulkProcessor bulkProcessor = createBulkProcessor(dataRepository, listener);
+                SearchRequestBuilder searchRequestBuilder = new SearchRequestBuilder()
+                        .setIndices(index)
                         .setQuery(QueryBuilders.matchAllQuery())
                         .setTimeout(TimeValue.timeValueSeconds(30))
                         .setFetchSource(true);
-                ScrollableSearch searchHits = new ScrollableSearch(client, searchRequestBuilder);
+                ScrollableSearch searchHits = new ScrollableSearch(dataRepository, searchRequestBuilder);
                 long total = searchHits.getNumberOfHits();
                 long current = 0, lastPrint = 0;
                 for (SearchHit searchHit : searchHits) {
-                    bulkProcessor.add(new IndexRequestBuilder(client, IndexAction.INSTANCE)
-                            .setIndex(searchHit.getIndex().substring(migrationIndexPrefix.length()))
-                            .setType(searchHit.getType())
-                            .setId(searchHit.getId())
-                            .setSource(searchHit.getSourceAsMap())
-                            .request());
+                    bulkProcessor.add(new IndexRequest()
+                            .index(searchHit.getIndex().substring(migrationIndexPrefix.length()))
+                            .type(searchHit.getType())
+                            .id(searchHit.getId())
+                            .source(searchHit.getSourceAsMap()));
                     lastPrint = printPercentageWhenChanged(lastPrint, ++current, total);
                 }
                 bulkProcessor.flush();
@@ -110,49 +107,50 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
-                flushIndices(client, index);
+                flushIndices(dataRepository, index);
                 printPercentageWhenChanged(lastPrint, current, total);
             }
         }
         System.out.println("Done moving temporary indices to permanent indices.");
     }
 
-    protected void createTemporaryIndexTemplate(Client client, String indexPrefix, int shardsPerIndex) {
-        deleteTemporaryIndexTemplate(client, indexPrefix);
-        new PutIndexTemplateRequestBuilder(client, PutIndexTemplateAction.INSTANCE, indexPrefix)
+    protected void createTemporaryIndexTemplate(DataRepository dataRepository, String indexPrefix, int shardsPerIndex) {
+        deleteTemporaryIndexTemplate(dataRepository, indexPrefix);
+        PutIndexTemplateRequestBuilder requestBuilder = new PutIndexTemplateRequestBuilder()
+                .setName(indexPrefix)
                 .setCreate(true)
                 .setPatterns(Collections.singletonList(indexPrefix + "*"))
                 .setSettings(Settings.builder()
                         .put("index.number_of_shards", shardsPerIndex)
                         .put("index.number_of_replicas", 0)
-                )
-                .get();
+                );
+        dataRepository.indicesPutTemplate(requestBuilder);
     }
 
-    protected void deleteTemporaryIndexTemplate(Client client, String indexPrefix) {
-        GetIndexTemplatesResponse getResponse = new GetIndexTemplatesRequestBuilder(client, GetIndexTemplatesAction.INSTANCE, indexPrefix).get();
-        if (getResponse.getIndexTemplates().size() > 0) {
-            new DeleteIndexTemplateRequestBuilder(client, DeleteIndexTemplateAction.INSTANCE, indexPrefix).get();
+    protected void deleteTemporaryIndexTemplate(DataRepository dataRepository, String indexPrefix) {
+        boolean templatesExist = dataRepository.indicesTemplatesExist(new IndexTemplatesExistRequestBuilder(indexPrefix));
+        if (templatesExist) {
+            dataRepository.indicesDeleteTemplate(new DeleteIndexTemplateRequestBuilder().setName(indexPrefix));
         }
     }
 
-    protected void checkAndCleanupPreviousRun(Client client, String migrationIndexPrefix) {
-        GetIndexResponse indexResponse = client.admin().indices().prepareGetIndex().addIndices(migrationIndexPrefix + "*").get();
+    protected void checkAndCleanupPreviousRun(DataRepository dataRepository, String migrationIndexPrefix) {
+        GetIndexResponse indexResponse = dataRepository.indicesGet(new GetIndexRequestBuilder().setIndices(migrationIndexPrefix + "*"));
         if (indexResponse != null && indexResponse.getIndices() != null && indexResponse.getIndices().length > 0) {
             System.out.println("Found migration indices from a previous run. Deleting those indices.");
             for (String index : indexResponse.getIndices()) {
-                client.admin().indices().prepareDelete(index).get();
+                dataRepository.indicesDelete(new DeleteIndexRequestBuilder().setIndices(index));
                 System.out.println("Removed migration index '" + index + "'.");
             }
-            deleteTemporaryIndexTemplate(client, migrationIndexPrefix);
+            deleteTemporaryIndexTemplate(dataRepository, migrationIndexPrefix);
         }
-        createTemporaryIndexTemplate(client, migrationIndexPrefix, 1);
+        createTemporaryIndexTemplate(dataRepository, migrationIndexPrefix, 1);
     }
 
-    protected boolean migrateEntity(SearchRequestBuilder searchRequestBuilder, String entityName, Client client, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener, Function<SearchHit, DocWriteRequest> processor) {
+    protected boolean migrateEntity(SearchRequestBuilder searchRequestBuilder, String entityName, DataRepository dataRepository, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener, Function<SearchHit, DocWriteRequest> processor) {
         System.out.println("Start migrating " + entityName + " to temporary index.");
         listener.reset();
-        ScrollableSearch searchHits = new ScrollableSearch(client, searchRequestBuilder);
+        ScrollableSearch searchHits = new ScrollableSearch(dataRepository, searchRequestBuilder);
         long total = searchHits.getNumberOfHits();
         long current = 0, lastPrint = 0;
         for (SearchHit searchHit : searchHits) {
@@ -170,8 +168,8 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
         return !listener.hasFailures();
     }
 
-    protected void flushIndices(Client client, String... indices) {
-        client.admin().indices().prepareFlush(indices).setForce(true).get();
+    protected void flushIndices(DataRepository dataRepository, String... indices) {
+        dataRepository.indicesFlush(new FlushIndexRequestBuilder().setIndices(indices).setForce(true));
     }
 
     public class FailureDetectingBulkProcessorListener implements BulkProcessor.Listener {
@@ -206,11 +204,11 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
         }
     }
 
-    protected void checkAndCreateIndexExistence(Client client, String... indices) {
+    protected void checkAndCreateIndexExistence(DataRepository dataRepository, String... indices) {
         for (String index : indices) {
-            IndicesExistsResponse indicesExistsResponse = client.admin().indices().prepareExists(index).get();
-            if (!indicesExistsResponse.isExists()) {
-                client.admin().indices().prepareCreate(index).get();
+            GetIndexRequestBuilder indexRequestBuilder = new GetIndexRequestBuilder().setIndices(index);
+            if (!dataRepository.indicesExist(indexRequestBuilder)) {
+                dataRepository.indicesCreate(new CreateIndexRequestBuilder().setIndex(index));
             }
         }
     }

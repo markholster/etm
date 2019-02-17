@@ -4,7 +4,7 @@ clusterName: Enterprise Telemetry Monitor
 elasticsearch:
   clusterName: Enterprise Telemetry Monitor
   connectAddresses:
-    - "127.0.0.1:9300"
+    - "127.0.0.1:9200"
   waitForConnectionOnStartup: true
 http:
   guiEnabled: true

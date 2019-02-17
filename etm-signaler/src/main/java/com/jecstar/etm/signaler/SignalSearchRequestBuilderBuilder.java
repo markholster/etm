@@ -7,10 +7,10 @@ import com.jecstar.etm.server.core.domain.aggregator.pipeline.PipelineAggregator
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
 import com.jecstar.etm.signaler.domain.Data;
 import com.jecstar.etm.signaler.domain.Signal;
-import org.elasticsearch.action.search.SearchRequestBuilder;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -27,13 +27,13 @@ public class SignalSearchRequestBuilderBuilder {
 
     public static final String CARDINALITY_AGGREGATION_KEY = "cardinality";
 
-    private final Client client;
+    private final DataRepository dataRepository;
     private final EtmConfiguration etmConfiguration;
 
     private Signal signal;
 
-    public SignalSearchRequestBuilderBuilder(Client client, EtmConfiguration etmConfiguration) {
-        this.client = client;
+    public SignalSearchRequestBuilderBuilder(DataRepository dataRepository, EtmConfiguration etmConfiguration) {
+        this.dataRepository = dataRepository;
         this.etmConfiguration = etmConfiguration;
     }
 
@@ -49,7 +49,8 @@ public class SignalSearchRequestBuilderBuilder {
 
     private SearchRequestBuilder createAggregatedSearchRequest(Function<BoolQueryBuilder, QueryBuilder> enhanceCallback, EtmPrincipal etmPrincipal) {
         final Data data = this.signal.getData();
-        SearchRequestBuilder searchRequest = client.prepareSearch(data.getDataSource())
+        SearchRequestBuilder searchRequestBuilder = new SearchRequestBuilder()
+                .setIndices(data.getDataSource())
                 .setFetchSource(false)
                 .setTimeout(TimeValue.timeValueMillis(this.etmConfiguration.getQueryTimeout()))
                 .setSize(0);
@@ -72,7 +73,7 @@ public class SignalSearchRequestBuilderBuilder {
             boolQueryBuilder.filter(timestampFilter);
         }
         QueryBuilder queryBuilder = enhanceCallback.apply(boolQueryBuilder);
-        searchRequest.setQuery(queryBuilder);
+        searchRequestBuilder.setQuery(queryBuilder);
 
         DateHistogramAggregationBuilder aggregationBuilder = AggregationBuilders.dateHistogram(CARDINALITY_AGGREGATION_KEY).field(data.getTimeFilterField());
         aggregationBuilder.dateHistogramInterval(new DateHistogramInterval(this.signal.getThreshold().getCardinalityUnit().toTimestampExpression(this.signal.getThreshold().getCardinality())));
@@ -80,7 +81,7 @@ public class SignalSearchRequestBuilderBuilder {
         for (Aggregator aggregator : this.signal.getThreshold().getAggregators()) {
             if (aggregator instanceof BucketAggregator) {
                 BucketAggregator bucketAggregator = (BucketAggregator) aggregator;
-                bucketAggregator.prepareForSearch(searchRequest);
+                bucketAggregator.prepareForSearch(this.dataRepository, searchRequestBuilder);
                 aggregationBuilder.subAggregation(bucketAggregator.toAggregationBuilder());
             } else if (aggregator instanceof MetricsAggregator) {
                 aggregationBuilder.subAggregation(((MetricsAggregator) aggregator).toAggregationBuilder());
@@ -88,8 +89,8 @@ public class SignalSearchRequestBuilderBuilder {
                 aggregationBuilder.subAggregation(((PipelineAggregator) aggregator).toAggregationBuilder());
             }
         }
-        searchRequest.addAggregation(aggregationBuilder);
-        return searchRequest;
+        searchRequestBuilder.addAggregation(aggregationBuilder);
+        return searchRequestBuilder;
     }
 
 }

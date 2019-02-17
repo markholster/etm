@@ -1,10 +1,9 @@
 package com.jecstar.etm.server.core.domain.aggregator.metric;
 
 import org.elasticsearch.search.aggregations.Aggregation;
-import org.elasticsearch.search.aggregations.metrics.InternalNumericMetricsAggregation;
 import org.elasticsearch.search.aggregations.metrics.NumericMetricsAggregation;
-import org.elasticsearch.search.aggregations.metrics.percentiles.PercentileRanks;
-import org.elasticsearch.search.aggregations.metrics.percentiles.Percentiles;
+import org.elasticsearch.search.aggregations.metrics.percentiles.ParsedPercentileRanks;
+import org.elasticsearch.search.aggregations.metrics.percentiles.ParsedPercentiles;
 
 public class MetricValue {
 
@@ -13,14 +12,14 @@ public class MetricValue {
     private final double value;
 
     public MetricValue(Aggregation aggregation) {
-        if (aggregation instanceof Percentiles) {
-            Percentiles percentiles = (Percentiles) aggregation;
-            this.value = percentiles.iterator().next().getValue();
-        } else if (aggregation instanceof PercentileRanks) {
-            PercentileRanks percentileRanks = (PercentileRanks) aggregation;
+        if (aggregation instanceof ParsedPercentileRanks) {
+            ParsedPercentileRanks percentileRanks = (ParsedPercentileRanks) aggregation;
             this.value = percentileRanks.iterator().next().getPercent();
-        } else if (aggregation instanceof InternalNumericMetricsAggregation.SingleValue) {
-            NumericMetricsAggregation.SingleValue singleValue = (InternalNumericMetricsAggregation.SingleValue) aggregation;
+        } else if (aggregation instanceof ParsedPercentiles) {
+            ParsedPercentiles percentiles = (ParsedPercentiles) aggregation;
+            this.value = percentiles.iterator().next().getValue();
+        } else if (aggregation instanceof NumericMetricsAggregation.SingleValue) {
+            NumericMetricsAggregation.SingleValue singleValue = (NumericMetricsAggregation.SingleValue) aggregation;
             this.value = singleValue.value();
         } else {
             throw new IllegalArgumentException("'" + aggregation.getClass().getName() + "' is an invalid metric aggregator.");

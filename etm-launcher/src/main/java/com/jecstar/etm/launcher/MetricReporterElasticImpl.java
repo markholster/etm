@@ -4,10 +4,11 @@ import com.codahale.metrics.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jecstar.etm.launcher.MetricConverterTags.RateType;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.IndexRequestBuilder;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import org.elasticsearch.action.support.ActiveShardCount;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentType;
 
 import java.io.IOException;
@@ -33,7 +34,7 @@ class MetricReporterElasticImpl extends ScheduledReporter {
 
     private static final TimeUnit rateUnit = TimeUnit.SECONDS;
     private static final TimeUnit durationUnit = TimeUnit.MILLISECONDS;
-    private final Client elasticClient;
+    private final DataRepository dataRepository;
     private final String nodeName;
 
     private final DateTimeFormatter dateTimeFormatter = new DateTimeFormatterBuilder()
@@ -44,9 +45,9 @@ class MetricReporterElasticImpl extends ScheduledReporter {
             .appendValue(ChronoField.DAY_OF_MONTH, 2).toFormatter().withZone(ZoneId.of("UTC"));
     private final MetricConverterTags tags = new MetricConverterTagsJsonImpl();
 
-    MetricReporterElasticImpl(MetricRegistry registry, String nodeName, Client elasticClient) {
+    MetricReporterElasticImpl(MetricRegistry registry, String nodeName, DataRepository dataRepository) {
         super(registry, nodeName, MetricFilter.ALL, rateUnit, durationUnit);
-        this.elasticClient = elasticClient;
+        this.dataRepository = dataRepository;
         this.nodeName = nodeName;
     }
 
@@ -78,9 +79,9 @@ class MetricReporterElasticImpl extends ScheduledReporter {
 
         try (StringWriter sw = new StringWriter()) {
             objectMapper.writeValue(sw, root);
-            this.elasticClient.prepareIndex(getElasticIndexName(now), ElasticsearchLayout.ETM_DEFAULT_TYPE)
+            this.dataRepository.index(new IndexRequestBuilder(getElasticIndexName(now), ElasticsearchLayout.ETM_DEFAULT_TYPE)
                     .setWaitForActiveShards(ActiveShardCount.ONE)
-                    .setSource(sw.toString(), XContentType.JSON).get();
+                    .setSource(sw.toString(), XContentType.JSON));
         } catch (IOException e) {
             if (log.isDebugLevelEnabled()) {
                 log.logDebugMessage("Failed to generate json metrics", e);

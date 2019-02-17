@@ -366,7 +366,7 @@ function addListeners(readonly) {
                     $.each(dragStatus.row.columns, function (index, column) {
                         if (column.chart) {
                             column.chart.reflow();
-                            if ('number' === column.graph.type) {
+                            if (column.graph && 'number' === column.graph.type) {
                                 column.chart.redraw();
                             }
                         }
@@ -926,7 +926,7 @@ function updateChart(graph, $container, readonly) {
                     },
                     buttons: {
                         contextButton: {
-                            menuItems: ['downloadPNG', 'downloadSVG', 'downloadCSV', 'downloadXLS', 'separator', 'editGraph']
+                            menuItems: ['editGraph', 'separator', 'downloadPNG', 'downloadSVG', 'downloadCSV', 'downloadXLS']
                         }
                     }
                 }

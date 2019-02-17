@@ -6,12 +6,8 @@ import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import com.jecstar.etm.server.core.domain.principal.EtmGroup;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.principal.FilterQuery;
-import org.elasticsearch.action.bulk.BulkRequestBuilder;
-import org.elasticsearch.action.delete.DeleteRequestBuilder;
-import org.elasticsearch.action.index.IndexRequestBuilder;
-import org.elasticsearch.action.search.SearchRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.*;
 import org.elasticsearch.action.support.ActiveShardCount;
-import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -272,7 +268,8 @@ public abstract class AbstractJsonService extends JsonConverter {
      * @return The enhanced <code>EtmConfiguration</code>.
      */
     protected SearchRequestBuilder enhanceRequest(SearchRequestBuilder builder, EtmConfiguration etmConfiguration) {
-        return builder.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+        builder.setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
+        return builder;
     }
 
     /**

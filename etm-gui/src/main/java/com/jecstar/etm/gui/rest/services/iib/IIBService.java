@@ -9,12 +9,15 @@ import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.DeleteRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.GetRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.UpdateRequestBuilder;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.search.SearchRequestBuilder;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
@@ -39,13 +42,13 @@ public class IIBService extends AbstractGuiService {
     private static final String MONITORING_PROFILES = "MonitoringProfiles";
     private static final String PROFILE_PROPERTIES = "profileProperties";
 
-    private static Client client;
+    private static DataRepository dataRepository;
     private static EtmConfiguration etmConfiguration;
 
     private final NodeConverterJsonImpl nodeConverter = new NodeConverterJsonImpl();
 
-    public static void initialize(Client client, EtmConfiguration etmConfiguration) {
-        IIBService.client = client;
+    public static void initialize(DataRepository dataRepository, EtmConfiguration etmConfiguration) {
+        IIBService.dataRepository = dataRepository;
         IIBService.etmConfiguration = etmConfiguration;
     }
 
@@ -54,10 +57,10 @@ public class IIBService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.IIB_NODE_READ, SecurityRoles.IIB_NODE_READ_WRITE})
     public String getNodes() {
-        SearchRequestBuilder searchRequestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
+        SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
                 .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE).setFetchSource(true)
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE));
-        ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
+        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
         if (!scrollableSearch.hasNext()) {
             return null;
         }
@@ -80,10 +83,11 @@ public class IIBService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.IIB_NODE_READ_WRITE)
     public String deleteNode(@PathParam("nodeName") String nodeName) {
-        enhanceRequest(
-                client.prepareDelete(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName),
+        DeleteRequestBuilder builder = enhanceRequest(
+                new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName),
                 etmConfiguration
-        ).get();
+        );
+        dataRepository.delete(builder);
         return "{\"status\":\"success\"}";
     }
 
@@ -96,14 +100,14 @@ public class IIBService extends AbstractGuiService {
         try (IIBNodeConnection nodeConnection = createIIBConnectionInstance(node)) {
             nodeConnection.connect();
         }
-        enhanceRequest(
-                client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName),
+        UpdateRequestBuilder builder = enhanceRequest(
+                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName),
                 etmConfiguration
         )
                 .setDoc(this.nodeConverter.write(node), XContentType.JSON)
                 .setDocAsUpsert(true)
-                .setDetectNoop(true)
-                .get();
+                .setDetectNoop(true);
+        dataRepository.update(builder);
         return "{ \"status\": \"success\" }";
     }
 
@@ -112,9 +116,9 @@ public class IIBService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.IIB_EVENT_READ, SecurityRoles.IIB_EVENT_READ_WRITE})
     public String getServers(@PathParam("nodeName") String nodeName) {
-        GetResponse getResponse = client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
+        GetResponse getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName)
-                .setFetchSource(true).get();
+                .setFetchSource(true));
         if (!getResponse.isExists()) {
             return null;
         }
@@ -143,9 +147,9 @@ public class IIBService extends AbstractGuiService {
     @RolesAllowed(SecurityRoles.IIB_EVENT_READ_WRITE)
     public String updateEventMonitoring(@PathParam("nodeName") String nodeName, @PathParam("serverName") String serverName, @PathParam("objectType") String objectType, String json) {
         Map<String, Object> valueMap = toMap(json);
-        GetResponse getResponse = client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
+        GetResponse getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName)
-                .setFetchSource(true).get();
+                .setFetchSource(true));
         if (!getResponse.isExists()) {
             return null;
         }
@@ -200,9 +204,9 @@ public class IIBService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.IIB_EVENT_READ, SecurityRoles.IIB_EVENT_READ_WRITE})
     public String getServerDeployments(@PathParam("nodeName") String nodeName, @PathParam("serverName") String serverName) {
-        GetResponse getResponse = client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
+        GetResponse getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName)
-                .setFetchSource(true).get();
+                .setFetchSource(true));
         if (!getResponse.isExists()) {
             return null;
         }

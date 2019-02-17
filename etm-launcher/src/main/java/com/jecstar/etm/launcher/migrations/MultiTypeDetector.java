@@ -2,11 +2,10 @@ package com.jecstar.etm.launcher.migrations;
 
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
-import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
-import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsAction;
-import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.GetIndexRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.GetMappingsRequestBuilder;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 
@@ -18,13 +17,13 @@ import org.elasticsearch.common.collect.ImmutableOpenMap;
  */
 public class MultiTypeDetector {
 
-    public void detect(Client client) {
-        IndicesExistsResponse indicesExistsResponse = client.admin().indices().prepareExists(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL).get();
-        if (!indicesExistsResponse.isExists()) {
+    public void detect(DataRepository dataRepository) {
+        boolean indicesExists = dataRepository.indicesExist(new GetIndexRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL));
+        if (!indicesExists) {
             ElasticsearchLayout.OLD_EVENT_TYPES_PRESENT = false;
             return;
         }
-        GetMappingsResponse mappingsResponse = new GetMappingsRequestBuilder(client, GetMappingsAction.INSTANCE, ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL).get();
+        GetMappingsResponse mappingsResponse = dataRepository.indicesGetMappings(new GetMappingsRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL));
         ImmutableOpenMap<String, ImmutableOpenMap<String, MappingMetaData>> mappings = mappingsResponse.getMappings();
         for (ObjectObjectCursor<String, ImmutableOpenMap<String, MappingMetaData>> mappingsCursor : mappings) {
             for (ObjectObjectCursor<String, MappingMetaData> mappingMetadataCursor : mappingsCursor.value) {

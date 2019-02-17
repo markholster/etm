@@ -21,19 +21,19 @@ import com.jecstar.etm.server.core.domain.principal.EtmSecurityEntity;
 import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
 import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalTagsJsonImpl;
-import org.elasticsearch.action.search.SearchRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.HasAggregations;
-import org.elasticsearch.search.aggregations.bucket.InternalSingleBucketAggregation;
+import org.elasticsearch.search.aggregations.ParsedMultiBucketAggregation;
 import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
 import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation.Bucket;
+import org.elasticsearch.search.aggregations.bucket.ParsedSingleBucketAggregation;
 import org.elasticsearch.search.aggregations.bucket.SingleBucketAggregation;
-import org.elasticsearch.search.aggregations.metrics.InternalNumericMetricsAggregation;
 import org.elasticsearch.search.aggregations.metrics.valuecount.InternalValueCount;
 import org.joda.time.DateTimeZone;
 
@@ -50,14 +50,14 @@ import java.util.stream.Collectors;
 @DeclareRoles(SecurityRoles.ALL_ROLES)
 public class DashboardService extends AbstractUserAttributeService {
 
-    private static Client client;
+    private static DataRepository dataRepository;
     private static EtmConfiguration etmConfiguration;
     private final EtmPrincipalTags principalTags = new EtmPrincipalTagsJsonImpl();
     private final GraphContainerConverter graphContainerConverter = new GraphContainerConverter();
     private final DashboardConverter dashboardConverter = new DashboardConverter();
 
-    public static void initialize(Client client, EtmConfiguration etmConfiguration) {
-        DashboardService.client = client;
+    public static void initialize(DataRepository dataRepository, EtmConfiguration etmConfiguration) {
+        DashboardService.dataRepository = dataRepository;
         DashboardService.etmConfiguration = etmConfiguration;
     }
 
@@ -91,13 +91,13 @@ public class DashboardService extends AbstractUserAttributeService {
      * @return The keywords of a user or group.
      */
     private String getKeywords(String groupName) {
-        Map<String, Object> entity = getEntity(client, groupName, this.principalTags.getDashboardDatasourcesTag());
-        List<String> datasources = getArray(this.principalTags.getDashboardDatasourcesTag(), entity);
+        Map<String, Object> entity = getEntity(dataRepository, groupName, this.principalTags.getDashboardDatasourcesTag());
+        List<String> datasources = getArray(this.principalTags.getDashboardDatasourcesTag(), entity, Collections.emptyList());
         StringBuilder result = new StringBuilder();
         result.append("{ \"keywords\":[");
         boolean first = true;
         for (String indexName : datasources) {
-            Map<String, List<Keyword>> names = getIndexFields(client, indexName);
+            Map<String, List<Keyword>> names = getIndexFields(dataRepository, indexName);
             Set<Entry<String, List<Keyword>>> entries = names.entrySet();
             for (Entry<String, List<Keyword>> entry : entries) {
                 if (!first) {
@@ -154,12 +154,12 @@ public class DashboardService extends AbstractUserAttributeService {
      * @return The dashboard datasources of a user or group.
      */
     private String getDashboardDatasources(String groupName) {
-        Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getDashboardDatasourcesTag());
+        Map<String, Object> objectMap = getEntity(dataRepository, groupName, this.principalTags.getDashboardDatasourcesTag());
         if (groupName == null) {
             // We try to get the data for the user but when the user is added to some groups the context of that groups needs to be added to the user context
             Set<EtmGroup> groups = getEtmPrincipal().getGroups();
             for (EtmGroup group : groups) {
-                Map<String, Object> groupObjectMap = getEntity(client, group.getName(), this.principalTags.getDashboardDatasourcesTag());
+                Map<String, Object> groupObjectMap = getEntity(dataRepository, group.getName(), this.principalTags.getDashboardDatasourcesTag());
                 mergeCollectionInValueMap(groupObjectMap, objectMap, this.principalTags.getDashboardDatasourcesTag());
             }
         }
@@ -196,7 +196,7 @@ public class DashboardService extends AbstractUserAttributeService {
      * @return The graphs of a user or group.
      */
     private String getGraphs(String groupName) {
-        Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getGraphsTag());
+        Map<String, Object> objectMap = getEntity(dataRepository, groupName, this.principalTags.getGraphsTag());
         if (objectMap == null || objectMap.isEmpty()) {
             return "{\"max_graphs\": " + etmConfiguration.getMaxGraphCount() + "}";
         }
@@ -237,8 +237,8 @@ public class DashboardService extends AbstractUserAttributeService {
      */
     private String addGraph(String groupName, String graphName, String json) {
         // Execute a dry run on all data.
-        Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getGraphsTag(), this.principalTags.getDashboardDatasourcesTag());
-        EtmSecurityEntity etmSecurityEntity = getEtmSecurityEntity(client, groupName);
+        Map<String, Object> objectMap = getEntity(dataRepository, groupName, this.principalTags.getGraphsTag(), this.principalTags.getDashboardDatasourcesTag());
+        EtmSecurityEntity etmSecurityEntity = getEtmSecurityEntity(dataRepository, groupName);
         GraphContainer graphContainer = this.graphContainerConverter.read(json);
         if (!etmSecurityEntity.isAuthorizedForDashboardDatasource(graphContainer.getData().getDataSource())) {
             throw new EtmException(EtmException.NOT_AUTHORIZED_FOR_DASHBOARD_DATA_SOURCE);
@@ -270,13 +270,13 @@ public class DashboardService extends AbstractUserAttributeService {
         }
         Map<String, Object> source = new HashMap<>();
         source.put(this.principalTags.getGraphsTag(), currentGraphContainers);
-        updateEntity(client, etmConfiguration, groupName, source);
+        updateEntity(dataRepository, etmConfiguration, groupName, source);
         return "{\"status\":\"success\"}";
     }
 
-    private EtmSecurityEntity getEtmSecurityEntity(Client client, String groupName) {
+    private EtmSecurityEntity getEtmSecurityEntity(DataRepository dataRepository, String groupName) {
         if (groupName != null) {
-            return getEtmGroup(client, groupName);
+            return getEtmGroup(dataRepository, groupName);
         }
         return getEtmPrincipal();
     }
@@ -312,7 +312,7 @@ public class DashboardService extends AbstractUserAttributeService {
      * @return The json result of the delete.
      */
     private String deleteGraph(String groupName, String graphName) {
-        Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getDashboardsTag(), this.principalTags.getGraphsTag());
+        Map<String, Object> objectMap = getEntity(dataRepository, groupName, this.principalTags.getDashboardsTag(), this.principalTags.getGraphsTag());
 
         List<Map<String, Object>> currentGraphContainers = new ArrayList<>();
         if (objectMap == null || objectMap.isEmpty()) {
@@ -350,7 +350,7 @@ public class DashboardService extends AbstractUserAttributeService {
                 }
             }
         }
-        updateEntity(client, etmConfiguration, groupName, source);
+        updateEntity(dataRepository, etmConfiguration, groupName, source);
         return "{\"status\":\"success\"}";
     }
 
@@ -384,7 +384,7 @@ public class DashboardService extends AbstractUserAttributeService {
      * @return The dashboards of a user or group.
      */
     private String getDashboards(String groupName) {
-        Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getDashboardsTag());
+        Map<String, Object> objectMap = getEntity(dataRepository, groupName, this.principalTags.getDashboardsTag());
         if (objectMap == null || objectMap.isEmpty()) {
             return null;
         }
@@ -435,7 +435,7 @@ public class DashboardService extends AbstractUserAttributeService {
      * @return The dashboard of a user or group.
      */
     private String getDashboard(String groupName, String dashboardName) {
-        Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getDashboardsTag());
+        Map<String, Object> objectMap = getEntity(dataRepository, groupName, this.principalTags.getDashboardsTag());
         if (objectMap == null || objectMap.isEmpty()) {
             return null;
         }
@@ -489,7 +489,7 @@ public class DashboardService extends AbstractUserAttributeService {
         Dashboard dashboard = this.dashboardConverter.read(json);
         dashboard.setName(dashboardName);
         // Data seems ok, now store the graph.
-        Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getDashboardsTag());
+        Map<String, Object> objectMap = getEntity(dataRepository, groupName, this.principalTags.getDashboardsTag());
 
         List<Map<String, Object>> currentDashboards = new ArrayList<>();
         if (objectMap != null && objectMap.containsKey(this.principalTags.getDashboardsTag())) {
@@ -513,7 +513,7 @@ public class DashboardService extends AbstractUserAttributeService {
         }
         Map<String, Object> source = new HashMap<>();
         source.put(this.principalTags.getDashboardsTag(), currentDashboards);
-        updateEntity(client, etmConfiguration, groupName, source);
+        updateEntity(dataRepository, etmConfiguration, groupName, source);
         return "{\"status\":\"success\"}";
     }
 
@@ -548,7 +548,7 @@ public class DashboardService extends AbstractUserAttributeService {
      * @return The json result of the delete.
      */
     private String deleteDashboard(String groupName, String dashboardName) {
-        Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getDashboardsTag());
+        Map<String, Object> objectMap = getEntity(dataRepository, groupName, this.principalTags.getDashboardsTag());
         List<Map<String, Object>> currentDashboards = new ArrayList<>();
         if (objectMap != null && objectMap.containsKey(this.principalTags.getDashboardsTag())) {
             currentDashboards = getArray(this.principalTags.getDashboardsTag(), objectMap);
@@ -563,7 +563,7 @@ public class DashboardService extends AbstractUserAttributeService {
         }
         Map<String, Object> source = new HashMap<>();
         source.put(this.principalTags.getDashboardsTag(), currentDashboards);
-        updateEntity(client, etmConfiguration, groupName, source);
+        updateEntity(dataRepository, etmConfiguration, groupName, source);
         return "{\"status\":\"success\"}";
     }
 
@@ -603,7 +603,7 @@ public class DashboardService extends AbstractUserAttributeService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.USER_DASHBOARD_READ_WRITE, SecurityRoles.GROUP_DASHBOARD_READ_WRITE})
     public String getGroupPreviewGraphData(@PathParam("groupName") String groupName, String json) {
-        return getGraphData(this.graphContainerConverter.read(json), getEtmGroup(client, groupName));
+        return getGraphData(this.graphContainerConverter.read(json), getEtmGroup(dataRepository, groupName));
     }
 
     /**
@@ -615,8 +615,8 @@ public class DashboardService extends AbstractUserAttributeService {
      * @return The live graph data.
      */
     private String getGraphData(String groupName, String dashboardName, String graphId) {
-        Map<String, Object> objectMap = getEntity(client, groupName, this.principalTags.getDashboardsTag(), this.principalTags.getGraphsTag(), this.principalTags.getDashboardDatasourcesTag());
-        EtmSecurityEntity etmSecurityEntity = getEtmSecurityEntity(client, groupName);
+        Map<String, Object> objectMap = getEntity(dataRepository, groupName, this.principalTags.getDashboardsTag(), this.principalTags.getGraphsTag(), this.principalTags.getDashboardDatasourcesTag());
+        EtmSecurityEntity etmSecurityEntity = getEtmSecurityEntity(dataRepository, groupName);
         if (objectMap == null || !objectMap.containsKey(this.principalTags.getDashboardsTag())) {
             return null;
         }
@@ -679,7 +679,7 @@ public class DashboardService extends AbstractUserAttributeService {
 
     private String getSingleValueData(GraphContainer graphContainer) {
         EtmPrincipal etmPrincipal = getEtmPrincipal();
-        SearchResponse searchResponse = createGraphSearchRequest(etmPrincipal, graphContainer).get();
+        SearchResponse searchResponse = dataRepository.search(createGraphSearchRequest(etmPrincipal, graphContainer));
         Aggregation aggregation = null;
         for (Aggregation aggregationUnderInvestigation : searchResponse.getAggregations().asList()) {
             boolean showOnGraph = (boolean) aggregationUnderInvestigation.getMetaData().get(Aggregator.SHOW_ON_GRAPH);
@@ -707,13 +707,8 @@ public class DashboardService extends AbstractUserAttributeService {
      * @return The <code>MetricValue</code> or <code>null</code> if no or multiple <code>MetricValue</code>s could be extracted.
      */
     private MetricValue extractSingleLeafMetricValue(Aggregation aggregation) {
-        if (!(aggregation instanceof InternalNumericMetricsAggregation.SingleValue
-                || aggregation instanceof InternalNumericMetricsAggregation.MultiValue
-                || aggregation instanceof InternalSingleBucketAggregation)) {
-            throw new IllegalArgumentException("'" + aggregation.getClass().getName() + "' is not a single value aggregation.");
-        }
-        if (aggregation instanceof InternalSingleBucketAggregation) {
-            List<Aggregation> aggregations = ((InternalSingleBucketAggregation) aggregation).getAggregations().asList();
+        if (aggregation instanceof SingleBucketAggregation) {
+            List<Aggregation> aggregations = ((SingleBucketAggregation) aggregation).getAggregations().asList();
             if (aggregations.size() == 1) {
                 return extractSingleLeafMetricValue(aggregations.get(0));
             }
@@ -724,7 +719,7 @@ public class DashboardService extends AbstractUserAttributeService {
 
     private String getMultiBucketData(GraphContainer graphContainer) {
         EtmPrincipal etmPrincipal = getEtmPrincipal();
-        SearchResponse searchResponse = createGraphSearchRequest(etmPrincipal, graphContainer).get();
+        SearchResponse searchResponse = dataRepository.search(createGraphSearchRequest(etmPrincipal, graphContainer));
         Aggregation aggregation = searchResponse.getAggregations().asList().get(0);
 
         // Start building the response
@@ -795,8 +790,8 @@ public class DashboardService extends AbstractUserAttributeService {
             if (!showOnGraph) {
                 continue;
             }
-            if (aggregation instanceof MultiBucketsAggregation) {
-                MultiBucketsAggregation multiBucketsAggregation = (MultiBucketsAggregation) aggregation;
+            if (aggregation instanceof ParsedMultiBucketAggregation) {
+                ParsedMultiBucketAggregation multiBucketsAggregation = (ParsedMultiBucketAggregation) aggregation;
                 String bucketName = (String) multiBucketsAggregation.getMetaData().get(Aggregator.NAME);
                 name = createHierarchicalBucketName(name, bucketName);
                 for (Bucket subBucket : multiBucketsAggregation.getBuckets()) {
@@ -810,12 +805,12 @@ public class DashboardService extends AbstractUserAttributeService {
                         processAggregations(root, subBucket, seriesData, subBucketName);
                     }
                 }
-            } else if (aggregation instanceof SingleBucketAggregation) {
-                SingleBucketAggregation singleBucketAggregation = (SingleBucketAggregation) aggregation;
+            } else if (aggregation instanceof ParsedSingleBucketAggregation) {
+                ParsedSingleBucketAggregation singleBucketAggregation = (ParsedSingleBucketAggregation) aggregation;
                 String bucketName = (String) singleBucketAggregation.getMetaData().get(Aggregator.NAME);
                 name = createHierarchicalBucketName(name, bucketName);
                 processAggregations(root, singleBucketAggregation, seriesData, name);
-            } else if (aggregation instanceof InternalNumericMetricsAggregation.SingleValue || aggregation instanceof InternalNumericMetricsAggregation.MultiValue) {
+            } else {
                 final MetricValue metricValue = new MetricValue(aggregation);
                 if (name.length() == 0) {
                     name = metricValue.getName();
@@ -850,7 +845,7 @@ public class DashboardService extends AbstractUserAttributeService {
 
     private SearchRequestBuilder createGraphSearchRequest(EtmPrincipal etmPrincipal, GraphContainer graphContainer) {
         Data data = graphContainer.getData();
-        SearchRequestBuilder searchRequest = enhanceRequest(client.prepareSearch(data.getDataSource()), etmConfiguration)
+        SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(data.getDataSource()), etmConfiguration)
                 .setFetchSource(false)
                 .setSize(0);
         QueryStringQueryBuilder queryStringBuilder = new QueryStringQueryBuilder(data.getQuery())
@@ -873,12 +868,12 @@ public class DashboardService extends AbstractUserAttributeService {
         }
 
         if (ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL.equals(data.getDataSource())) {
-            searchRequest.setQuery(addFilterQuery(getEtmPrincipal(), boolQueryBuilder));
+            searchRequestBuilder.setQuery(addFilterQuery(getEtmPrincipal(), boolQueryBuilder));
         } else {
-            searchRequest.setQuery(boolQueryBuilder);
+            searchRequestBuilder.setQuery(boolQueryBuilder);
         }
-        graphContainer.getGraph().prepareForSearch(searchRequest);
-        graphContainer.getGraph().addAggregators(searchRequest);
-        return searchRequest;
+        graphContainer.getGraph().prepareForSearch(dataRepository, searchRequestBuilder);
+        graphContainer.getGraph().addAggregators(searchRequestBuilder);
+        return searchRequestBuilder;
     }
 }

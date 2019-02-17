@@ -29,7 +29,7 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 
     private final MessagingTelemetryEventConverterJsonImpl messagingEventConverter = new MessagingTelemetryEventConverterJsonImpl();
 
-    protected BulkProcessor.Listener createBuilkListener() {
+    protected BulkProcessor.Listener createBulkListener() {
         return new BulkProcessor.Listener() {
 
             @Override

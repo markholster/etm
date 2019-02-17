@@ -1,11 +1,11 @@
 package com.jecstar.etm.server.core.persisting;
 
-import org.elasticsearch.action.search.ClearScrollRequestBuilder;
-import org.elasticsearch.action.search.SearchRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.ClearScrollRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.SearchScrollRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.SearchHit;
 
 import java.util.HashSet;
@@ -15,9 +15,8 @@ import java.util.Set;
 
 public class ScrollableSearch implements Iterable<SearchHit>, Iterator<SearchHit> {
 
-    private final Client client;
+    private final DataRepository dataRepository;
     private final SearchRequestBuilder searchRequestBuilder;
-    private final long requestTimeout;
     private final int startIx;
     private final int scrollSize;
 
@@ -27,18 +26,17 @@ public class ScrollableSearch implements Iterable<SearchHit>, Iterator<SearchHit
     private boolean nextBatchRequired = false;
     private int currentIndexInResponse = 0;
 
-    public ScrollableSearch(Client client, SearchRequestBuilder searchRequestBuilder) {
-        this(client, searchRequestBuilder, 0);
+    public ScrollableSearch(DataRepository dataRepository, SearchRequestBuilder builder) {
+        this(dataRepository, builder, 0);
     }
 
-    public ScrollableSearch(Client client, SearchRequestBuilder searchRequestBuilder, int startIx) {
-        this(client, searchRequestBuilder, startIx, 25);
+    public ScrollableSearch(DataRepository dataRepository, SearchRequestBuilder builder, int startIx) {
+        this(dataRepository, builder, startIx, 25);
     }
 
-    private ScrollableSearch(Client client, SearchRequestBuilder searchRequestBuilder, int startIx, int scrollSize) {
-        this.client = client;
-        this.searchRequestBuilder = searchRequestBuilder;
-        this.requestTimeout = searchRequestBuilder.request().source().timeout().getMillis();
+    private ScrollableSearch(DataRepository dataRepository, SearchRequestBuilder builder, int startIx, int scrollSize) {
+        this.dataRepository = dataRepository;
+        this.searchRequestBuilder = builder;
         this.startIx = startIx;
         this.scrollSize = scrollSize;
     }
@@ -72,11 +70,11 @@ public class ScrollableSearch implements Iterable<SearchHit>, Iterator<SearchHit
     }
 
     public void clearScrollIds() {
-        ClearScrollRequestBuilder clearScrollRequestBuilder = this.client.prepareClearScroll();
+        ClearScrollRequestBuilder builder = new ClearScrollRequestBuilder();
         for (String scrollId : this.scrollIds) {
-            clearScrollRequestBuilder.addScrollId(scrollId);
+            builder.addScrollId(scrollId);
         }
-        clearScrollRequestBuilder.execute();
+        this.dataRepository.clearScroll(builder);
     }
 
     public long getNumberOfHits() {
@@ -87,11 +85,12 @@ public class ScrollableSearch implements Iterable<SearchHit>, Iterator<SearchHit
     }
 
     private void executeSearch() {
-        this.response = this.searchRequestBuilder
+        this.searchRequestBuilder
+                .setScroll(TimeValue.timeValueSeconds(30))
                 .setSize(this.scrollSize)
-                .setFrom(this.startIx)
-                .setScroll(new Scroll(TimeValue.timeValueSeconds(30)))
-                .get();
+                .setFrom(this.startIx);
+        this.response = this.dataRepository.search(this.searchRequestBuilder);
+
         this.currentIndexInResponse = 0;
         this.currentScrollId = this.response.getScrollId();
         this.scrollIds.add(this.currentScrollId);
@@ -99,13 +98,13 @@ public class ScrollableSearch implements Iterable<SearchHit>, Iterator<SearchHit
     }
 
     private void scrollToNext() {
-        this.response = client.prepareSearchScroll(this.currentScrollId)
-                .setScroll(TimeValue.timeValueSeconds(30))
-                .get(TimeValue.timeValueMillis(this.requestTimeout));
+        SearchScrollRequestBuilder builder = new SearchScrollRequestBuilder(this.currentScrollId).setScroll(TimeValue.timeValueSeconds(30));
+        this.response = this.dataRepository.scroll(builder);
+
         this.currentIndexInResponse = 0;
         this.currentScrollId = this.response.getScrollId();
         this.scrollIds.add(this.currentScrollId);
         this.nextBatchRequired = this.scrollSize == this.response.getHits().getHits().length;
-
+//
     }
 }

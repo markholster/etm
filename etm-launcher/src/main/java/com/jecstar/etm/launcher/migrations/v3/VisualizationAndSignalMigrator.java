@@ -10,6 +10,10 @@ import com.jecstar.etm.server.core.domain.aggregator.bucket.*;
 import com.jecstar.etm.server.core.domain.aggregator.metric.*;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.GetIndexRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.IndexRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
 import com.jecstar.etm.signaler.domain.Notifications;
 import com.jecstar.etm.signaler.domain.Signal;
 import com.jecstar.etm.signaler.domain.Threshold;
@@ -17,10 +21,6 @@ import com.jecstar.etm.signaler.domain.TimeUnit;
 import com.jecstar.etm.signaler.domain.converter.SignalConverter;
 import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.bulk.BulkProcessor;
-import org.elasticsearch.action.index.IndexAction;
-import org.elasticsearch.action.index.IndexRequestBuilder;
-import org.elasticsearch.action.search.SearchRequestBuilder;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
@@ -37,28 +37,31 @@ import java.util.function.Function;
 public class VisualizationAndSignalMigrator extends AbstractEtmMigrator {
 
     private final String migrationIndexPrefix = "migetm_";
-    private final Client client;
+    private final DataRepository dataRepository;
     private final JsonConverter jsonConverter = new JsonConverter();
     private final GraphContainerConverter graphContainerConverter = new GraphContainerConverter();
     private final DashboardConverter dashboardConverter = new DashboardConverter();
     private final SignalConverter signalConverter = new SignalConverter();
 
-    public VisualizationAndSignalMigrator(Client client) {
-        this.client = client;
+    public VisualizationAndSignalMigrator(DataRepository dataRepository) {
+        this.dataRepository = dataRepository;
     }
 
     @Override
     public boolean shouldBeExecuted() {
-        SearchHits searchHits = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+        boolean indexExist = this.dataRepository.indicesExist(new GetIndexRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME));
+        if (!indexExist) {
+            return false;
+        }
+        SearchRequestBuilder builder = new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
                 .setQuery(QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery())
                         .should(QueryBuilders.existsQuery("user.graphs.query"))
                         .should(QueryBuilders.existsQuery("user.signals.query"))
                         .should(QueryBuilders.existsQuery("group.graphs.query"))
                         .should(QueryBuilders.existsQuery("group.signals.query"))
                         .minimumShouldMatch(1)
-                )
-                .get().getHits();
-
+                );
+        SearchHits searchHits = dataRepository.search(builder).getHits();
         return searchHits.totalHits != 0;
     }
 
@@ -67,71 +70,73 @@ public class VisualizationAndSignalMigrator extends AbstractEtmMigrator {
         if (!shouldBeExecuted()) {
             return;
         }
-        checkAndCleanupPreviousRun(this.client, this.migrationIndexPrefix);
+        checkAndCleanupPreviousRun(this.dataRepository, this.migrationIndexPrefix);
 
         Function<SearchHit, DocWriteRequest> processor = searchHit -> {
-            IndexRequestBuilder builder = new IndexRequestBuilder(this.client, IndexAction.INSTANCE)
-                    .setIndex(VisualizationAndSignalMigrator.this.migrationIndexPrefix + searchHit.getIndex())
-                    .setType(searchHit.getType())
-                    .setId(searchHit.getId())
+            IndexRequestBuilder builder = new IndexRequestBuilder(
+                    VisualizationAndSignalMigrator.this.migrationIndexPrefix + searchHit.getIndex(),
+                    searchHit.getType(),
+                    searchHit.getId()
+            )
                     .setSource(mapToNewLayout(searchHit.getSourceAsMap()));
-            return builder.request();
+            return builder.build();
         };
 
         FailureDetectingBulkProcessorListener listener = new FailureDetectingBulkProcessorListener();
-        boolean succeeded = migrateUsers(this.client, createBulkProcessor(client, listener), listener, processor);
+        boolean succeeded = migrateUsers(this.dataRepository, createBulkProcessor(this.dataRepository, listener), listener, processor);
         if (succeeded) {
-            succeeded = migrateGroups(this.client, createBulkProcessor(client, listener), listener, processor);
+            succeeded = migrateGroups(this.dataRepository, createBulkProcessor(dataRepository, listener), listener, processor);
         }
         if (succeeded) {
-            succeeded = moveAllOtherConfigurationItems(this.client, createBulkProcessor(client, listener), listener);
+            succeeded = moveAllOtherConfigurationItems(this.dataRepository, createBulkProcessor(dataRepository, listener), listener);
         }
         if (!succeeded) {
             System.out.println("Errors detected. Quitting migration. Migrated indices are prefixed with '" + this.migrationIndexPrefix + "' and are still existent in your Elasticsearch cluster!");
             return;
         }
-        deleteIndices(this.client, "old indices", ElasticsearchLayout.CONFIGURATION_INDEX_NAME);
-        flushIndices(this.client, this.migrationIndexPrefix + ElasticsearchLayout.CONFIGURATION_INDEX_NAME);
-        reindexTemporaryIndicesToNew(this.client, listener, this.migrationIndexPrefix);
-        deleteIndices(this.client, "temporary indices", this.migrationIndexPrefix + "*");
-        deleteTemporaryIndexTemplate(this.client, this.migrationIndexPrefix);
-        checkAndCreateIndexExistence(client, ElasticsearchLayout.CONFIGURATION_INDEX_NAME);
+        deleteIndices(this.dataRepository, "old indices", ElasticsearchLayout.CONFIGURATION_INDEX_NAME);
+        flushIndices(this.dataRepository, this.migrationIndexPrefix + ElasticsearchLayout.CONFIGURATION_INDEX_NAME);
+        reindexTemporaryIndicesToNew(this.dataRepository, listener, this.migrationIndexPrefix);
+        deleteIndices(this.dataRepository, "temporary indices", this.migrationIndexPrefix + "*");
+        deleteTemporaryIndexTemplate(this.dataRepository, this.migrationIndexPrefix);
+        checkAndCreateIndexExistence(dataRepository, ElasticsearchLayout.CONFIGURATION_INDEX_NAME);
     }
 
-    private boolean migrateUsers(Client client, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener, Function<SearchHit, DocWriteRequest> processor) {
-        SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+    private boolean migrateUsers(DataRepository dataRepository, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener, Function<SearchHit, DocWriteRequest> processor) {
+        SearchRequestBuilder searchRequestBuilder = new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
                 .setQuery(QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery())
                         .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER)))
                 .setTimeout(TimeValue.timeValueSeconds(30))
                 .setFetchSource(true);
-        return migrateEntity(searchRequestBuilder, "users", client, bulkProcessor, listener, processor);
+        return migrateEntity(searchRequestBuilder, "users", dataRepository, bulkProcessor, listener, processor);
     }
 
-    private boolean migrateGroups(Client client, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener, Function<SearchHit, DocWriteRequest> processor) {
-        SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+    private boolean migrateGroups(DataRepository dataRepository, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener, Function<SearchHit, DocWriteRequest> processor) {
+        SearchRequestBuilder searchRequestBuilder = new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
                 .setQuery(QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery())
                         .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP)))
                 .setTimeout(TimeValue.timeValueSeconds(30))
                 .setFetchSource(true);
-        return migrateEntity(searchRequestBuilder, "groups", client, bulkProcessor, listener, processor);
+        return migrateEntity(searchRequestBuilder, "groups", dataRepository, bulkProcessor, listener, processor);
     }
 
-    private boolean moveAllOtherConfigurationItems(Client client, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener) {
+    private boolean moveAllOtherConfigurationItems(DataRepository dataRepository, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener) {
         Function<SearchHit, DocWriteRequest> processor = searchHit -> {
-            IndexRequestBuilder builder = new IndexRequestBuilder(this.client, IndexAction.INSTANCE)
-                    .setIndex(VisualizationAndSignalMigrator.this.migrationIndexPrefix + searchHit.getIndex())
-                    .setType(searchHit.getType())
-                    .setId(searchHit.getId())
+            IndexRequestBuilder builder = new IndexRequestBuilder(
+                    VisualizationAndSignalMigrator.this.migrationIndexPrefix + searchHit.getIndex(),
+                    searchHit.getType(),
+                    searchHit.getId()
+            )
                     .setSource(searchHit.getSourceAsMap());
-            return builder.request();
+            return builder.build();
         };
-        SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+        SearchRequestBuilder searchRequestBuilder = new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
                 .setQuery(QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery())
                         .mustNot(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER))
                         .mustNot(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP)))
                 .setTimeout(TimeValue.timeValueSeconds(30))
                 .setFetchSource(true);
-        return migrateEntity(searchRequestBuilder, "everything else", client, bulkProcessor, listener, processor);
+        return migrateEntity(searchRequestBuilder, "everything else", dataRepository, bulkProcessor, listener, processor);
     }
 
     private Map<String, Object> mapToNewLayout(Map<String, Object> sourceAsMap) {
@@ -199,13 +204,13 @@ public class VisualizationAndSignalMigrator extends AbstractEtmMigrator {
                 yAxis.setFormat(this.jsonConverter.getString("format", yAxisMap, "d"));
 
                 Map<String, Object> aggregatorMap = this.jsonConverter.getObject("aggregator", xAxisMap);
-                xAxis.setBucketAggregator(createBucketAggregator(aggregatorMap));
+                xAxis.setBucketAggregator(createBucketAggregator(aggregatorMap, 0));
 
                 List<Aggregator> aggregators = createMetricAggregators(this.jsonConverter.getArray("aggregators", yAxisMap));
 
                 Map<String, Object> subAggregatorMap = this.jsonConverter.getObject("sub_aggregator", xAxisMap);
                 if (subAggregatorMap != null) {
-                    BucketAggregator subAggregator = createBucketAggregator(subAggregatorMap);
+                    BucketAggregator subAggregator = createBucketAggregator(subAggregatorMap, 1);
                     subAggregator.setAggregators(aggregators);
                     yAxis.setAggregators(Arrays.asList(subAggregator));
                 } else {
@@ -371,8 +376,10 @@ public class VisualizationAndSignalMigrator extends AbstractEtmMigrator {
                         .setField(this.jsonConverter.getString("field", aggregatorMap));
             }
             if (metricsAggregator != null) {
+                String id = this.jsonConverter.getString("id", aggregatorMap);
+                id = "0-" + id.substring(id.indexOf("_") + 1);
                 metricsAggregator
-                        .setId(this.jsonConverter.getString("id", aggregatorMap))
+                        .setId(id)
                         .setName(this.jsonConverter.getString("label", aggregatorMap))
                         .setShowOnGraph(true);
                 result.add(metricsAggregator);
@@ -381,7 +388,7 @@ public class VisualizationAndSignalMigrator extends AbstractEtmMigrator {
         return result;
     }
 
-    private BucketAggregator createBucketAggregator(Map<String, Object> aggregatorMap) {
+    private BucketAggregator createBucketAggregator(Map<String, Object> aggregatorMap, int level) {
         BucketAggregator bucketAggregator = null;
         String aggregatorType = this.jsonConverter.getString("aggregator", aggregatorMap);
         if ("date_histogram".equalsIgnoreCase(aggregatorType)) {
@@ -412,7 +419,7 @@ public class VisualizationAndSignalMigrator extends AbstractEtmMigrator {
             bucketAggregator
                     .setField(this.jsonConverter.getString("field", aggregatorMap))
                     .setFieldType(this.jsonConverter.getString("field_type", aggregatorMap))
-                    .setId(UUID.randomUUID().toString())
+                    .setId(level + "-0")
                     .setShowOnGraph(true);
 
         }

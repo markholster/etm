@@ -4,7 +4,8 @@ import com.jecstar.etm.gui.rest.services.dashboard.domain.converter.YAxisConvert
 import com.jecstar.etm.server.core.converter.JsonField;
 import com.jecstar.etm.server.core.domain.aggregator.Aggregator;
 import com.jecstar.etm.server.core.domain.aggregator.bucket.BucketAggregator;
-import org.elasticsearch.action.search.SearchRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.BaseAggregationBuilder;
 import org.elasticsearch.search.aggregations.PipelineAggregationBuilder;
@@ -58,7 +59,8 @@ public class NumberGraph extends Graph<NumberGraph> {
     public void mergeFromColumn(NumberGraph graph) {
     }
 
-    public void prepareForSearch(SearchRequestBuilder searchRequest) {
-        getYAxis().getAggregators().stream().filter(p -> p instanceof BucketAggregator).forEach(c -> ((BucketAggregator) c).prepareForSearch(searchRequest));
+    @Override
+    public void prepareForSearch(DataRepository dataRepository, SearchRequestBuilder searchRequest) {
+        getYAxis().getAggregators().stream().filter(p -> p instanceof BucketAggregator).forEach(c -> ((BucketAggregator) c).prepareForSearch(dataRepository, searchRequest));
     }
 }

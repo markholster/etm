@@ -9,8 +9,10 @@ import com.consol.citrus.selenium.endpoint.SeleniumBrowser;
 import com.jecstar.etm.gui.AbstractCitrusSeleniumTest;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmSnmpConstants;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -23,6 +25,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(CitrusExtension.class)
 public class NotifiersIntegrationTest extends AbstractCitrusSeleniumTest {
 
@@ -42,6 +45,12 @@ public class NotifiersIntegrationTest extends AbstractCitrusSeleniumTest {
             this.snmpReceiver.stopServer();
             this.snmpReceiver = null;
         }
+    }
+
+    @AfterAll
+    private void afterAll() {
+        this.firefox.stop();
+        this.chrome.stop();
     }
 
     @Test

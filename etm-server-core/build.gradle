@@ -16,6 +16,7 @@ sourceSets {
 dependencies {
     compile project(":etm-public:etm-domain")
     compile dep_elasticsearchClient,
+            dep_elasticsearchClientSniffer,
             dep_jacksonDatabind,
             dep_ldaptive,
             dep_saxonHE,
@@ -28,8 +29,7 @@ dependencies {
     integrationTestCompile project(":etm-server-core"),
             dep_metricsCore,
             dep_disruptor,
-            dep_elasticsearchClient,
-            dep_elasticsearchXpackTransportClient
+            dep_elasticsearchClient
     integrationTestRuntime dep_log4jToSlf4j
 }
 

@@ -4,12 +4,13 @@ import com.jecstar.etm.launcher.migrations.AbstractEtmMigrator;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import com.jecstar.etm.server.core.domain.parser.ExpressionParserField;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.GetIndexRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.GetStoredScriptRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.UpdateRequestBuilder;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
-import org.elasticsearch.action.admin.cluster.storedscripts.GetStoredScriptRequest;
 import org.elasticsearch.action.admin.cluster.storedscripts.GetStoredScriptResponse;
-import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
-import org.elasticsearch.action.search.SearchRequestBuilder;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
@@ -25,32 +26,32 @@ import java.util.Map;
 public class EndpointHandlerToSingleListMigrator extends AbstractEtmMigrator {
 
     private final JsonConverter jsonConverter = new JsonConverter();
-    private final Client client;
+    private final DataRepository dataRepository;
 
-    public EndpointHandlerToSingleListMigrator(Client client) {
-        this.client = client;
+    public EndpointHandlerToSingleListMigrator(DataRepository dataRepository) {
+        this.dataRepository = dataRepository;
     }
 
     @Override
     public boolean shouldBeExecuted() {
-        GetStoredScriptResponse response = client.admin().cluster().getStoredScript(new GetStoredScriptRequest("etm_update-event")).actionGet();
-        if (response.getSource() != null && (response.getSource().getSource().contains("\"reading_endpoint_handlers\"") || response.getSource().getSource().contains("\"writing_endpoint_handler\""))) {
+        GetStoredScriptResponse response = this.dataRepository.getStoredScript(new GetStoredScriptRequestBuilder("etm_update-event"));
+        if (response != null && response.getSource() != null && (response.getSource().getSource().contains("\"reading_endpoint_handlers\"") || response.getSource().getSource().contains("\"writing_endpoint_handler\""))) {
             return true;
         }
-        response = client.admin().cluster().getStoredScript(new GetStoredScriptRequest("etm_update-request-with-response")).actionGet();
-        if (response.getSource() != null && (response.getSource().getSource().contains("\"reading_endpoint_handlers\"") || response.getSource().getSource().contains("\"writing_endpoint_handler\""))) {
+        response = this.dataRepository.getStoredScript(new GetStoredScriptRequestBuilder("etm_update-request-with-response"));
+        if (response != null && response.getSource() != null && (response.getSource().getSource().contains("\"reading_endpoint_handlers\"") || response.getSource().getSource().contains("\"writing_endpoint_handler\""))) {
             return true;
         }
-        IndicesExistsResponse indicesExistsResponse = client.admin().indices().prepareExists(ElasticsearchLayout.CONFIGURATION_INDEX_NAME).get();
-        if (!indicesExistsResponse.isExists()) {
+        boolean indicesExists = this.dataRepository.indicesExist(new GetIndexRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME));
+        if (!indicesExists) {
             return false;
         }
-        SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+        SearchRequestBuilder searchRequestBuilder = new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
                 .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT))
                 .setTimeout(TimeValue.timeValueMillis(30000));
-        ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
+        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
         for (SearchHit searchHit : scrollableSearch) {
             Map<String, Object> endpointMap = this.jsonConverter.getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT, searchHit.getSourceAsMap());
             if (endpointMap == null) {
@@ -86,12 +87,12 @@ public class EndpointHandlerToSingleListMigrator extends AbstractEtmMigrator {
             return;
         }
         System.out.println("Migrating reading_endpoint_handlers and writing_endpoint_handler to endpoint_handlers.");
-        SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+        SearchRequestBuilder searchRequestBuilder = new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
                 .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                 .setFetchSource(true)
                 .setTimeout(TimeValue.timeValueMillis(30000))
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT));
-        ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
+        ScrollableSearch scrollableSearch = new ScrollableSearch(this.dataRepository, searchRequestBuilder);
         for (SearchHit searchHit : scrollableSearch) {
             boolean changed = false;
             Map<String, Object> sourceAsMap = searchHit.getSourceAsMap();
@@ -132,9 +133,8 @@ public class EndpointHandlerToSingleListMigrator extends AbstractEtmMigrator {
                 }
             }
             if (changed) {
-                client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, searchHit.getId())
-                        .setDoc(sourceAsMap)
-                        .get();
+                this.dataRepository.update(new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, searchHit.getId())
+                        .setDoc(sourceAsMap));
             }
         }
         System.out.println("Done migrating to endpoint_handlers.");

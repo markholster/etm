@@ -9,7 +9,9 @@ import com.consol.citrus.selenium.endpoint.SeleniumBrowser;
 import com.jecstar.etm.gui.AbstractCitrusSeleniumTest;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -20,6 +22,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(CitrusExtension.class)
 public class UsersIntegrationTest extends AbstractCitrusSeleniumTest {
 
@@ -31,21 +34,27 @@ public class UsersIntegrationTest extends AbstractCitrusSeleniumTest {
     @CitrusEndpoint(name = "chrome")
     private SeleniumBrowser chrome;
 
+    @AfterAll
+    private void afterAll() {
+        this.firefox.stop();
+        this.chrome.stop();
+    }
+
     @Test
     @CitrusTest
     public void testRemoveLatestAdminAccounInFirefox(@CitrusResource TestRunner runner) {
         setTestMetadata(runner, "Mark Holster", "Test if removing the latest admin account fails in Firefox", 2018, Month.OCTOBER, 20);
-        testRemoveLatestAdminAccoun(runner, this.firefox);
+        testRemoveLatestAdminAccount(runner, this.firefox);
     }
 
     @Test
     @CitrusTest
     public void testRemoveLatestAdminAccounInChrome(@CitrusResource TestRunner runner) {
         setTestMetadata(runner, "Mark Holster", "Test if removing the latest admin account fails in Chrome", 2018, Month.OCTOBER, 20);
-        testRemoveLatestAdminAccoun(runner, this.chrome);
+        testRemoveLatestAdminAccount(runner, this.chrome);
     }
 
-    private void testRemoveLatestAdminAccoun(TestRunner runner, SeleniumBrowser browser) {
+    private void testRemoveLatestAdminAccount(TestRunner runner, SeleniumBrowser browser) {
         login(runner, browser);
         runner.selenium(action -> action.navigate(getEtmUrl() + usersPath));
         runner.selenium(action -> action.waitUntil().visible().element(By.id("users_box")));

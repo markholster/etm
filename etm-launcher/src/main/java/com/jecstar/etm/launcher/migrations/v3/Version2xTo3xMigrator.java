@@ -10,18 +10,12 @@ import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
 import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalTagsJsonImpl;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.*;
 import com.jecstar.etm.server.core.util.DateUtils;
 import org.elasticsearch.action.DocWriteRequest;
-import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
-import org.elasticsearch.action.admin.indices.mapping.put.PutMappingRequestBuilder;
 import org.elasticsearch.action.bulk.BulkProcessor;
-import org.elasticsearch.action.index.IndexAction;
 import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.index.IndexRequestBuilder;
-import org.elasticsearch.action.search.SearchRequestBuilder;
-import org.elasticsearch.action.update.UpdateAction;
-import org.elasticsearch.action.update.UpdateRequestBuilder;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -46,29 +40,32 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
 
     private final ElasticsearchSessionTags sessionTags = new ElasticsearchSessionTagsJsonImpl();
     private final EtmPrincipalTags principalTags = new EtmPrincipalTagsJsonImpl();
-    private final Client client;
+    private final DataRepository dataRepository;
     private final String migrationIndexPrefix = "migetm_";
 
-    public Version2xTo3xMigrator(Client client) {
-        this.client = client;
+    public Version2xTo3xMigrator(DataRepository dataRepository) {
+        this.dataRepository = dataRepository;
     }
 
     @Override
     public boolean shouldBeExecuted() {
-        IndicesExistsResponse indicesExistsResponse = client.admin().indices().prepareExists(ElasticsearchLayout.STATE_INDEX_NAME,
+        GetIndexRequestBuilder getIndexRequestBuilder = new GetIndexRequestBuilder().setIndices(ElasticsearchLayout.STATE_INDEX_NAME,
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 ElasticsearchLayout.METRICS_INDEX_ALIAS_ALL,
-                ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL).get();
-        if (!indicesExistsResponse.isExists()) {
+                ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL);
+
+        boolean exists = this.dataRepository.indicesExist(getIndexRequestBuilder);
+        if (!exists) {
             return false;
         }
-        SearchHits searchHits = client.prepareSearch(ElasticsearchLayout.STATE_INDEX_NAME,
-                ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
-                ElasticsearchLayout.METRICS_INDEX_ALIAS_ALL,
-                ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL)
+        SearchRequestBuilder searchRequestBuilder = new SearchRequestBuilder()
+                .setIndices((ElasticsearchLayout.STATE_INDEX_NAME),
+                        ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
+                        ElasticsearchLayout.METRICS_INDEX_ALIAS_ALL,
+                        ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL)
                 .setQuery(QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery())
-                        .mustNot(QueryBuilders.termQuery("_type", ElasticsearchLayout.ETM_DEFAULT_TYPE)))
-                .get().getHits();
+                        .mustNot(QueryBuilders.termQuery("_type", ElasticsearchLayout.ETM_DEFAULT_TYPE)));
+        SearchHits searchHits = dataRepository.search(searchRequestBuilder).getHits();
         return searchHits.totalHits != 0;
     }
 
@@ -77,64 +74,64 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
         if (!shouldBeExecuted()) {
             return;
         }
-        checkAndCleanupPreviousRun(this.client, this.migrationIndexPrefix);
+        checkAndCleanupPreviousRun(this.dataRepository, this.migrationIndexPrefix);
 
         FailureDetectingBulkProcessorListener listener = new FailureDetectingBulkProcessorListener();
-        boolean succeeded = migrateMetrics(this.client, listener);
+        boolean succeeded = migrateMetrics(this.dataRepository, listener);
         if (succeeded) {
-            succeeded = migrateHttpSessions(this.client, listener);
+            succeeded = migrateHttpSessions(this.dataRepository, listener);
         }
         if (succeeded) {
-            succeeded = migrateAudits(this.client, listener);
+            succeeded = migrateAudits(this.dataRepository, listener);
         }
         if (succeeded) {
-            succeeded = migrateLicense(this.client, listener);
+            succeeded = migrateLicense(this.dataRepository, listener);
         }
         if (succeeded) {
-            succeeded = migrateUsers(this.client, listener);
+            succeeded = migrateUsers(this.dataRepository, listener);
         }
         if (succeeded) {
-            succeeded = migrateGroups(this.client, listener);
+            succeeded = migrateGroups(this.dataRepository, listener);
         }
         if (succeeded) {
-            succeeded = migrateParsers(this.client, listener);
+            succeeded = migrateParsers(this.dataRepository, listener);
         }
         if (succeeded) {
-            succeeded = migrateEndpoints(this.client, listener);
+            succeeded = migrateEndpoints(this.dataRepository, listener);
         }
         if (succeeded) {
-            succeeded = migrateLdap(this.client, listener);
+            succeeded = migrateLdap(this.dataRepository, listener);
         }
         if (succeeded) {
-            succeeded = migrateNodes(this.client, listener);
+            succeeded = migrateNodes(this.dataRepository, listener);
         }
         if (succeeded) {
-            succeeded = migrateIIBNodes(this.client, listener);
+            succeeded = migrateIIBNodes(this.dataRepository, listener);
         }
         if (succeeded) {
-            succeeded = migrateGraphs(this.client, listener);
+            succeeded = migrateGraphs(this.dataRepository, listener);
         }
         if (succeeded) {
-            succeeded = migrateDashboards(this.client, listener);
+            succeeded = migrateDashboards(this.dataRepository, listener);
         }
         if (!succeeded) {
             System.out.println("Errors detected. Quitting migration. Migrated indices are prefixed with '" + this.migrationIndexPrefix + "' and are still existent in your Elasticsearch cluster!");
             return;
         }
         // Reinitialize template
-        ElasticsearchIndexTemplateCreator indexTemplateCreator = new ElasticsearchIndexTemplateCreator(client);
-        indexTemplateCreator.addConfigurationChangeNotificationListener(new ElasticBackedEtmConfiguration(null, client, this.migrationIndexPrefix + ElasticsearchLayout.CONFIGURATION_INDEX_NAME));
+        ElasticsearchIndexTemplateCreator indexTemplateCreator = new ElasticsearchIndexTemplateCreator(dataRepository);
+        indexTemplateCreator.addConfigurationChangeNotificationListener(new ElasticBackedEtmConfiguration(null, dataRepository, this.migrationIndexPrefix + ElasticsearchLayout.CONFIGURATION_INDEX_NAME));
         indexTemplateCreator.reinitialize();
 
-        deleteIndices(this.client, "old indices", ElasticsearchLayout.METRICS_INDEX_ALIAS_ALL,
+        deleteIndices(this.dataRepository, "old indices", ElasticsearchLayout.METRICS_INDEX_ALIAS_ALL,
                 ElasticsearchLayout.STATE_INDEX_NAME,
                 ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL,
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME);
-        reindexTemporaryIndicesToNew(this.client, listener, this.migrationIndexPrefix);
-        deleteIndices(this.client, "temporary indices", this.migrationIndexPrefix + "*");
-        deleteTemporaryIndexTemplate(this.client, this.migrationIndexPrefix);
-        updateDocMappingForCurrentEventIndex(this.client);
-        checkAndCreateIndexExistence(client,
+        reindexTemporaryIndicesToNew(this.dataRepository, listener, this.migrationIndexPrefix);
+        deleteIndices(this.dataRepository, "temporary indices", this.migrationIndexPrefix + "*");
+        deleteTemporaryIndexTemplate(this.dataRepository, this.migrationIndexPrefix);
+        updateDocMappingForCurrentEventIndex(this.dataRepository);
+        checkAndCreateIndexExistence(dataRepository,
                 ElasticsearchLayout.STATE_INDEX_NAME,
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 ElasticsearchLayout.METRICS_INDEX_ALIAS_ALL,
@@ -142,23 +139,23 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
         );
     }
 
-    private boolean migrateMetrics(Client client, FailureDetectingBulkProcessorListener listener) {
+    private boolean migrateMetrics(DataRepository dataRepository, FailureDetectingBulkProcessorListener listener) {
         Function<SearchHit, DocWriteRequest> requestBuilder = searchHit -> {
             Map<String, Object> sourceMap = new HashMap<>(searchHit.getSourceAsMap());
             sourceMap.put(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.METRICS_OBJECT_TYPE_ETM_NODE);
             removeNanValues(sourceMap);
-            IndexRequestBuilder builder = new IndexRequestBuilder(this.client, IndexAction.INSTANCE)
-                    .setIndex(Version2xTo3xMigrator.this.migrationIndexPrefix + searchHit.getIndex())
+            IndexRequestBuilder builder = new IndexRequestBuilder().
+                    setIndex(Version2xTo3xMigrator.this.migrationIndexPrefix + searchHit.getIndex())
                     .setType(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                     .setSource(sourceMap);
-            return builder.request();
+            return builder.build();
         };
 
         return migrateEntity("metrics",
                 ElasticsearchLayout.METRICS_INDEX_ALIAS_ALL,
                 null,
-                client,
-                createBulkProcessor(client, listener),
+                dataRepository,
+                createBulkProcessor(dataRepository, listener),
                 listener,
                 requestBuilder
         );
@@ -181,7 +178,7 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
         }
     }
 
-    private boolean migrateHttpSessions(Client client, FailureDetectingBulkProcessorListener listener) {
+    private boolean migrateHttpSessions(DataRepository dataRepository, FailureDetectingBulkProcessorListener listener) {
         Function<SearchHit, DocWriteRequest> requestBuilder = searchHit -> {
             Map<String, Object> valueMap = new HashMap<>();
             valueMap.put(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION);
@@ -189,55 +186,54 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
             // Add the id attribute, because the original id is replaced with an prefix.
             sourceMap.put(sessionTags.getIdTag(), searchHit.getId());
             valueMap.put(ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION, sourceMap);
-            return new IndexRequestBuilder(this.client, IndexAction.INSTANCE)
+            return new IndexRequestBuilder()
                     .setIndex(this.migrationIndexPrefix + searchHit.getIndex())
                     .setType(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                     .setId(ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION_ID_PREFIX + searchHit.getId())
                     .setSource(valueMap)
-                    .request();
+                    .build();
         };
 
         return migrateEntity("http sessions",
                 ElasticsearchLayout.STATE_INDEX_NAME,
                 null,
-                client,
-                createBulkProcessor(client, listener),
+                dataRepository,
+                createBulkProcessor(dataRepository, listener),
                 listener,
                 requestBuilder
         );
     }
 
-    private boolean migrateAudits(Client client, FailureDetectingBulkProcessorListener listener) {
+    private boolean migrateAudits(DataRepository dataRepository, FailureDetectingBulkProcessorListener listener) {
         Function<SearchHit, DocWriteRequest> requestBuilder = searchHit -> {
             Map<String, Object> sourceMap = searchHit.getSourceAsMap();
             sourceMap.put(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, searchHit.getType());
-            return new IndexRequestBuilder(this.client, IndexAction.INSTANCE)
+            return new IndexRequestBuilder()
                     .setIndex(this.migrationIndexPrefix + searchHit.getIndex())
                     .setType(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                     .setId(searchHit.getId())
                     .setSource(sourceMap)
-                    .request();
+                    .build();
         };
 
         return migrateEntity("audit logs",
                 ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL,
                 null,
-                client,
-                createBulkProcessor(client, listener),
+                dataRepository,
+                createBulkProcessor(dataRepository, listener),
                 listener,
                 requestBuilder
         );
     }
 
-    private boolean migrateLicense(Client client, FailureDetectingBulkProcessorListener listener) {
+    private boolean migrateLicense(DataRepository dataRepository, FailureDetectingBulkProcessorListener listener) {
         return migrateEntity("license",
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "license",
-                client,
-                createBulkProcessor(client, listener),
+                dataRepository,
+                createBulkProcessor(dataRepository, listener),
                 listener,
                 new DefaultIndexRequestCreator(
-                        client,
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LICENSE,
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LICENSE + "_",
                         true
@@ -246,7 +242,7 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
     }
 
     @SuppressWarnings("unchecked")
-    private boolean migrateUsers(Client client, FailureDetectingBulkProcessorListener listener) {
+    private boolean migrateUsers(DataRepository dataRepository, FailureDetectingBulkProcessorListener listener) {
         Function<SearchHit, DocWriteRequest> requestBuilder = searchHit -> {
             Map<String, Object> valueMap = new HashMap<>();
             valueMap.put(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER);
@@ -275,26 +271,26 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
                 }
             }
             valueMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, sourceMap);
-            IndexRequestBuilder builder = new IndexRequestBuilder(this.client, IndexAction.INSTANCE)
+            IndexRequestBuilder builder = new IndexRequestBuilder()
                     .setIndex(this.migrationIndexPrefix + searchHit.getIndex())
                     .setType(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                     .setSource(valueMap);
             builder.setId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + searchHit.getId());
-            return builder.request();
+            return builder.build();
         };
 
         return migrateEntity("users",
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "user",
-                client,
-                createBulkProcessor(client, listener),
+                dataRepository,
+                createBulkProcessor(dataRepository, listener),
                 listener,
                 requestBuilder
         );
     }
 
     @SuppressWarnings("unchecked")
-    private boolean migrateGroups(Client client, FailureDetectingBulkProcessorListener listener) {
+    private boolean migrateGroups(DataRepository dataRepository, FailureDetectingBulkProcessorListener listener) {
         Function<SearchHit, DocWriteRequest> requestBuilder = searchHit -> {
             Map<String, Object> valueMap = new HashMap<>();
             Map<String, Object> sourceMap = searchHit.getSourceAsMap();
@@ -304,32 +300,31 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
                 sourceMap.put(this.principalTags.getRolesTag(), mapOldRoles(roles));
             }
             valueMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP, sourceMap);
-            IndexRequestBuilder builder = new IndexRequestBuilder(this.client, IndexAction.INSTANCE)
+            IndexRequestBuilder builder = new IndexRequestBuilder()
                     .setIndex(this.migrationIndexPrefix + searchHit.getIndex())
                     .setType(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                     .setSource(valueMap);
             builder.setId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + searchHit.getId());
-            return builder.request();
+            return builder.build();
         };
         return migrateEntity("groups",
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "group",
-                client,
-                createBulkProcessor(client, listener),
+                dataRepository,
+                createBulkProcessor(dataRepository, listener),
                 listener,
                 requestBuilder
         );
     }
 
-    private boolean migrateParsers(Client client, FailureDetectingBulkProcessorListener listener) {
+    private boolean migrateParsers(DataRepository dataRepository, FailureDetectingBulkProcessorListener listener) {
         return migrateEntity("parsers",
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "parser",
-                client,
-                createBulkProcessor(client, listener),
+                dataRepository,
+                createBulkProcessor(dataRepository, listener),
                 listener,
                 new DefaultIndexRequestCreator(
-                        client,
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER,
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER_ID_PREFIX,
                         true
@@ -337,15 +332,14 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
         );
     }
 
-    private boolean migrateEndpoints(Client client, FailureDetectingBulkProcessorListener listener) {
+    private boolean migrateEndpoints(DataRepository dataRepository, FailureDetectingBulkProcessorListener listener) {
         return migrateEntity("endpoints",
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "endpoint",
-                client,
-                createBulkProcessor(client, listener),
+                dataRepository,
+                createBulkProcessor(dataRepository, listener),
                 listener,
                 new DefaultIndexRequestCreator(
-                        client,
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT,
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT_ID_PREFIX,
                         true
@@ -353,15 +347,14 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
         );
     }
 
-    private boolean migrateLdap(Client client, FailureDetectingBulkProcessorListener listener) {
+    private boolean migrateLdap(DataRepository dataRepository, FailureDetectingBulkProcessorListener listener) {
         return migrateEntity("ldap",
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "ldap",
-                client,
-                createBulkProcessor(client, listener),
+                dataRepository,
+                createBulkProcessor(dataRepository, listener),
                 listener,
                 new DefaultIndexRequestCreator(
-                        client,
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LDAP,
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LDAP_ID_PREFIX
                         , true
@@ -369,15 +362,14 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
         );
     }
 
-    private boolean migrateNodes(Client client, FailureDetectingBulkProcessorListener listener) {
+    private boolean migrateNodes(DataRepository dataRepository, FailureDetectingBulkProcessorListener listener) {
         return migrateEntity("nodes",
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "node",
-                client,
-                createBulkProcessor(client, listener),
+                dataRepository,
+                createBulkProcessor(dataRepository, listener),
                 listener,
                 new DefaultIndexRequestCreator(
-                        client,
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE,
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE_ID_PREFIX,
                         true
@@ -385,15 +377,14 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
         );
     }
 
-    private boolean migrateIIBNodes(Client client, FailureDetectingBulkProcessorListener listener) {
+    private boolean migrateIIBNodes(DataRepository dataRepository, FailureDetectingBulkProcessorListener listener) {
         return migrateEntity("IIB nodes",
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "iib-node",
-                client,
-                createBulkProcessor(client, listener),
+                dataRepository,
+                createBulkProcessor(dataRepository, listener),
                 listener,
                 new DefaultIndexRequestCreator(
-                        client,
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE,
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX,
                         true
@@ -401,11 +392,11 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
         );
     }
 
-    private boolean migrateGraphs(Client client, FailureDetectingBulkProcessorListener listener) {
+    private boolean migrateGraphs(DataRepository dataRepository, FailureDetectingBulkProcessorListener listener) {
         Function<SearchHit, DocWriteRequest> requestBuilder = searchHit -> {
             Map<String, Object> params = new HashMap<>();
             params.put("graphs", searchHit.getSourceAsMap().get("graphs"));
-            return new UpdateRequestBuilder(client, UpdateAction.INSTANCE)
+            return new UpdateRequestBuilder()
                     .setIndex(this.migrationIndexPrefix + searchHit.getIndex())
                     .setType(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                     .setId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + searchHit.getId())
@@ -418,24 +409,24 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
                                     "        ctx._source.user.graphs.add(graph);\n" +
                                     "    }\n" +
                                     "}", params))
-                    .request();
+                    .build();
         };
 
         return migrateEntity("graphs",
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "graph",
-                client,
-                createBulkProcessor(client, listener),
+                dataRepository,
+                createBulkProcessor(dataRepository, listener),
                 listener,
                 requestBuilder
         );
     }
 
-    private boolean migrateDashboards(Client client, FailureDetectingBulkProcessorListener listener) {
+    private boolean migrateDashboards(DataRepository dataRepository, FailureDetectingBulkProcessorListener listener) {
         Function<SearchHit, DocWriteRequest> requestBuilder = searchHit -> {
             Map<String, Object> params = new HashMap<>();
             params.put("dashboards", searchHit.getSourceAsMap().get("dashboards"));
-            return new UpdateRequestBuilder(client, UpdateAction.INSTANCE)
+            return new UpdateRequestBuilder()
                     .setIndex(this.migrationIndexPrefix + searchHit.getIndex())
                     .setType(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                     .setId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + searchHit.getId())
@@ -457,14 +448,14 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
                                     "    }\n" +
                                     "}", params))
                     .setScriptedUpsert(true)
-                    .request();
+                    .build();
         };
 
         return migrateEntity("dashboards",
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 "dashboard",
-                client,
-                createBulkProcessor(client, listener),
+                dataRepository,
+                createBulkProcessor(dataRepository, listener),
                 listener,
                 requestBuilder
         );
@@ -473,17 +464,17 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
     /**
      * The event index will not work with the new index template so we need to make it compatible over here.
      *
-     * @param client The elasticsearch client.
+     * @param dataRepository The <code>DataRepository</code>.
      */
-    private void updateDocMappingForCurrentEventIndex(Client client) {
+    private void updateDocMappingForCurrentEventIndex(DataRepository dataRepository) {
         final String currentIndex = ElasticsearchLayout.EVENT_INDEX_PREFIX + DateUtils.getIndexPerDayFormatter().format(ZonedDateTime.now());
-        IndicesExistsResponse indicesExistsResponse = client.admin().indices().prepareExists(currentIndex).get();
-        if (!indicesExistsResponse.isExists()) {
+        boolean indexExists = dataRepository.indicesExist(new GetIndexRequestBuilder().setIndices(currentIndex));
+        if (!indexExists) {
             // Index of today does not exists.
             return;
         }
-        PutMappingRequestBuilder builder = client.admin().indices().preparePutMapping(currentIndex);
-        builder.setType("doc").setSource(
+        PutMappingRequestBuilder builder = new PutMappingRequestBuilder().setIndices(currentIndex)
+                .setType("doc").setSource(
                 "{\n" +
                         "  \"dynamic_templates\": [\n" +
                         "    {\n" +
@@ -546,12 +537,13 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
                         "  ]\n" +
                         "}",
                 XContentType.JSON
-        ).get();
+                );
+        dataRepository.indicesPutMapping(builder);
     }
 
 
-    private boolean migrateEntity(String entityName, String index, String type, Client client, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener, Function<SearchHit, DocWriteRequest> processor) {
-        SearchRequestBuilder searchRequestBuilder = client.prepareSearch(index)
+    private boolean migrateEntity(String entityName, String index, String type, DataRepository dataRepository, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener, Function<SearchHit, DocWriteRequest> processor) {
+        SearchRequestBuilder searchRequestBuilder = new SearchRequestBuilder().setIndices(index)
                 .setQuery(QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery())
                         .mustNot(QueryBuilders.termQuery("_type", ElasticsearchLayout.ETM_DEFAULT_TYPE)))
                 .setTimeout(TimeValue.timeValueSeconds(30))
@@ -559,7 +551,7 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
         if (type != null) {
             searchRequestBuilder.setTypes(type);
         }
-        return migrateEntity(searchRequestBuilder, entityName, client, bulkProcessor, listener, processor);
+        return migrateEntity(searchRequestBuilder, entityName, dataRepository, bulkProcessor, listener, processor);
     }
 
     /**
@@ -599,13 +591,11 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
 
     private class DefaultIndexRequestCreator implements Function<SearchHit, DocWriteRequest> {
 
-        private final Client client;
         private final String etmTypeAttributeName;
         private final String idPrefix;
         private final boolean ownNamespace;
 
-        private DefaultIndexRequestCreator(Client client, String etmTypeAttributeName, String idPrefix, boolean ownNamespace) {
-            this.client = client;
+        private DefaultIndexRequestCreator(String etmTypeAttributeName, String idPrefix, boolean ownNamespace) {
             this.etmTypeAttributeName = etmTypeAttributeName;
             this.idPrefix = idPrefix;
             this.ownNamespace = ownNamespace;
@@ -622,7 +612,7 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
             if (this.etmTypeAttributeName != null) {
                 sourceMap.put(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, this.etmTypeAttributeName);
             }
-            IndexRequestBuilder builder = new IndexRequestBuilder(this.client, IndexAction.INSTANCE)
+            IndexRequestBuilder builder = new IndexRequestBuilder()
                     .setIndex(Version2xTo3xMigrator.this.migrationIndexPrefix + searchHit.getIndex())
                     .setType(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                     .setSource(sourceMap);
@@ -631,7 +621,7 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
             } else {
                 builder.setId(searchHit.getId());
             }
-            return builder.request();
+            return builder.build();
         }
     }
 }

@@ -1,6 +1,6 @@
 apply plugin: "java"
 
 dependencies {
-    compile project(":etm-server-core"), dep_elasticsearchClient, dep_mailApi, dep_snmp4j
+    compile project(":etm-server-core"), dep_elasticsearchClient, dep_mailApi, dep_snmp4j, dep_log4jToLog4j2
     testCompile dep_citrus, dep_citrusMail, dep_slf4jSimple
 }

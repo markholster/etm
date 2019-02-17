@@ -5,7 +5,8 @@ import com.jecstar.etm.gui.rest.services.dashboard.domain.converter.YAxisConvert
 import com.jecstar.etm.server.core.converter.JsonField;
 import com.jecstar.etm.server.core.domain.aggregator.Aggregator;
 import com.jecstar.etm.server.core.domain.aggregator.bucket.BucketAggregator;
-import org.elasticsearch.action.search.SearchRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
 
 import java.util.stream.Collectors;
 
@@ -94,8 +95,9 @@ public class PieGraph extends Graph<PieGraph> {
         this.showDataLabels = graph.isShowDataLabels();
     }
 
-    public void prepareForSearch(SearchRequestBuilder searchRequest) {
-        getXAxis().getBucketAggregator().prepareForSearch(searchRequest);
-        getYAxis().getAggregators().stream().filter(p -> p instanceof BucketAggregator).forEach(c -> ((BucketAggregator) c).prepareForSearch(searchRequest));
+    @Override
+    public void prepareForSearch(DataRepository dataRepository, SearchRequestBuilder searchRequestBuilder) {
+        getXAxis().getBucketAggregator().prepareForSearch(dataRepository, searchRequestBuilder);
+        getYAxis().getAggregators().stream().filter(p -> p instanceof BucketAggregator).forEach(c -> ((BucketAggregator) c).prepareForSearch(dataRepository, searchRequestBuilder));
     }
 }

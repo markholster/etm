@@ -3,10 +3,10 @@ package com.jecstar.etm.gui.rest.services;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
-import org.elasticsearch.action.get.GetRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.GetRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.UpdateRequestBuilder;
 import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.update.UpdateRequestBuilder;
-import org.elasticsearch.client.Client;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -21,20 +21,19 @@ public class AbstractUserAttributeService extends AbstractIndexMetadataService {
     /**
      * Loads the given attributes from an entity.
      *
-     * @param client     The elasticsearch client.
-     * @param groupName  The name of the group to load the attributes from. If <code>null</code> the attributes of the current user will be loaded.
-     * @param attributes The attributes to return.
+     * @param dataRepository    The <code>DataRepository</code>.
+     * @param groupName         The name of the group to load the attributes from. If <code>null</code> the attributes of the current user will be loaded.
+     * @param attributes        The attributes to return.
      * @return A <code>Map</code> with attributes from the given entity.
      */
-    @SuppressWarnings("unchecked")
-    protected Map<String, Object> getEntity(Client client, String groupName, String... attributes) {
+    protected Map<String, Object> getEntity(DataRepository dataRepository, String groupName, String... attributes) {
         String[] prefixedAttributes = new String[attributes.length];
         GetRequestBuilder builder;
         if (groupName != null) {
             if (!getEtmPrincipal().isInGroup(groupName)) {
                 throw new EtmException(EtmException.UNAUTHORIZED);
             }
-            builder = client.prepareGet(
+            builder = new GetRequestBuilder(
                     ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                     ElasticsearchLayout.ETM_DEFAULT_TYPE,
                     ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName
@@ -43,7 +42,7 @@ public class AbstractUserAttributeService extends AbstractIndexMetadataService {
                 prefixedAttributes[i] = ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP + "." + attributes[i];
             }
         } else {
-            builder = client.prepareGet(
+            builder = new GetRequestBuilder(
                     ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                     ElasticsearchLayout.ETM_DEFAULT_TYPE,
                     ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId()
@@ -52,7 +51,7 @@ public class AbstractUserAttributeService extends AbstractIndexMetadataService {
                 prefixedAttributes[i] = ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + attributes[i];
             }
         }
-        GetResponse getResponse = builder.setFetchSource(prefixedAttributes, null).get();
+        GetResponse getResponse = dataRepository.get(builder.setFetchSource(prefixedAttributes, null));
         if (getResponse.isSourceEmpty() || getResponse.getSourceAsMap().isEmpty()) {
             return new HashMap<>();
         }
@@ -65,26 +64,26 @@ public class AbstractUserAttributeService extends AbstractIndexMetadataService {
     /**
      * Updates an entity.
      *
-     * @param client           The elasticsearch client.
+     * @param dataRepository   The <code>DataRepository</code>.
      * @param etmConfiguration The <code>EtmConfiguration</code> instance for this node.
      * @param groupName        The name of the group to update. If <code>null</code> the graphs of the current user will be loaded.
      * @param source           The contents of the user or group.
      */
-    protected void updateEntity(Client client, EtmConfiguration etmConfiguration, String groupName, Map<String, Object> source) {
+    protected void updateEntity(DataRepository dataRepository, EtmConfiguration etmConfiguration, String groupName, Map<String, Object> source) {
         Map<String, Object> objectMap = new HashMap<>();
         UpdateRequestBuilder builder;
         if (groupName != null) {
             if (!getEtmPrincipal().isInGroup(groupName)) {
                 throw new EtmException(EtmException.UNAUTHORIZED);
             }
-            builder = client.prepareUpdate(
+            builder = new UpdateRequestBuilder(
                     ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                     ElasticsearchLayout.ETM_DEFAULT_TYPE,
                     ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName
             );
             objectMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP, source);
         } else {
-            builder = client.prepareUpdate(
+            builder = new UpdateRequestBuilder(
                     ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                     ElasticsearchLayout.ETM_DEFAULT_TYPE,
                     ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId()
@@ -93,8 +92,8 @@ public class AbstractUserAttributeService extends AbstractIndexMetadataService {
         }
         enhanceRequest(builder, etmConfiguration)
                 .setDoc(objectMap)
-                .setDocAsUpsert(true)
-                .get();
+                .setDocAsUpsert(true);
+        dataRepository.update(builder);
     }
 
     /**
@@ -112,10 +111,11 @@ public class AbstractUserAttributeService extends AbstractIndexMetadataService {
         Collection<Object> destinationArray = getArray(attribute, destinationMap, null);
         if (destinationArray == null) {
             destinationMap.put(attribute, array);
-        }
-        for (Object item : array) {
-            if (item != null && !destinationArray.contains(item)) {
-                destinationArray.add(item);
+        } else {
+            for (Object item : array) {
+                if (item != null && !destinationArray.contains(item)) {
+                    destinationArray.add(item);
+                }
             }
         }
     }

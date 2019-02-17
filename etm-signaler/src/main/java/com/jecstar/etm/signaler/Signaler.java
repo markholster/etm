@@ -12,6 +12,10 @@ import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.principal.EtmSecurityEntity;
 import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalConverterJsonImpl;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.GetRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.UpdateRequestBuilder;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
@@ -21,22 +25,18 @@ import com.jecstar.etm.signaler.backoff.BackoffPolicy;
 import com.jecstar.etm.signaler.domain.Signal;
 import com.jecstar.etm.signaler.domain.Threshold;
 import com.jecstar.etm.signaler.domain.converter.SignalConverter;
+import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.index.engine.VersionConflictEngineException;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.ExistsQueryBuilder;
+import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.HasAggregations;
+import org.elasticsearch.search.aggregations.ParsedMultiBucketAggregation;
 import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
-import org.elasticsearch.search.aggregations.bucket.SingleBucketAggregation;
-import org.elasticsearch.search.aggregations.metrics.InternalNumericMetricsAggregation;
-import org.elasticsearch.search.aggregations.metrics.NumericMetricsAggregation;
-import org.elasticsearch.search.aggregations.metrics.percentiles.PercentileRanks;
-import org.elasticsearch.search.aggregations.metrics.percentiles.Percentiles;
+import org.elasticsearch.search.aggregations.bucket.ParsedSingleBucketAggregation;
 import org.joda.time.DateTime;
 import org.snmp4j.smi.OctetString;
 
@@ -58,7 +58,7 @@ public class Signaler extends AbstractJsonService implements Runnable {
     private static final int MAX_RETRIES = 5;
 
     private final String clusterName;
-    private final Client client;
+    private final DataRepository dataRepository;
     private final EtmConfiguration etmConfiguration;
     private final EtmPrincipalConverterJsonImpl etmPrincipalConverter = new EtmPrincipalConverterJsonImpl();
     private final EtmPrincipalTags etmPrincipalTags = etmPrincipalConverter.getTags();
@@ -66,10 +66,10 @@ public class Signaler extends AbstractJsonService implements Runnable {
     private final NotifierConverter notifierConverter = new NotifierConverter();
     private final byte[] snmpEngineId;
 
-    public Signaler(String clusterName, EtmConfiguration etmConfiguration, Client client) {
+    public Signaler(String clusterName, EtmConfiguration etmConfiguration, DataRepository dataRepository) {
         this.clusterName = clusterName;
         this.etmConfiguration = etmConfiguration;
-        this.client = client;
+        this.dataRepository = dataRepository;
         OctetString engineId = createSnmpEngineId();
         this.snmpEngineId = engineId.getValue();
         BusinessEventLogger.logSnmpEngineIdAssignment(engineId.toHexString());
@@ -117,11 +117,13 @@ public class Signaler extends AbstractJsonService implements Runnable {
             boolQueryBuilder.minimumShouldMatch(1);
 
             ScrollableSearch scrollableSearch = new ScrollableSearch(
-                    client,
+                    dataRepository,
                     enhanceRequest(
-                            this.client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME),
+                            new SearchRequestBuilder(),
                             this.etmConfiguration
-                    ).setFetchSource(false).setQuery(boolQueryBuilder)
+                    ).setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+                            .setFetchSource(false)
+                            .setQuery(boolQueryBuilder)
             );
             for (SearchHit searchHit : scrollableSearch)
                 for (int i = 0; i < MAX_RETRIES; i++) {
@@ -150,7 +152,7 @@ public class Signaler extends AbstractJsonService implements Runnable {
      * @return <code>true</code> when the entity is handled, otherwise <code>false</code> will be returned.
      */
     private boolean handleEntity(Instant batchStart, NotificationExecutor notificationExecutor, String index, String type, String id) {
-        GetResponse getResponse = this.client.prepareGet(index, type, id)
+        GetResponse getResponse = this.dataRepository.get(new GetRequestBuilder(index, type, id)
                 .setFetchSource(
                         new String[]{
                                 ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP + "." + this.etmPrincipalTags.getSignalsTag(),
@@ -158,8 +160,7 @@ public class Signaler extends AbstractJsonService implements Runnable {
                                 ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getSignalsTag(),
                                 ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getIdTag()
                         }
-                        , null)
-                .get();
+                        , null));
         Map<String, Object> sourceMap = getResponse.getSourceAsMap();
         Map<String, Object> entityObjectMap;
         EtmSecurityEntity etmSecurityEntity;
@@ -222,21 +223,25 @@ public class Signaler extends AbstractJsonService implements Runnable {
             return true;
         }
         try {
-            enhanceRequest(
-                    this.client.prepareUpdate(index, type, id),
+            UpdateRequestBuilder updateRequestBuilder = enhanceRequest(
+                    new UpdateRequestBuilder(index, type, id),
                     this.etmConfiguration
-            ).setVersion(getResponse.getVersion())
+            )
+                    .setVersion(getResponse.getVersion())
                     .setDoc(sourceMap)
                     .setDocAsUpsert(true)
                     // No retry because we specify the version
-                    .setRetryOnConflict(0)
-                    .get();
-        } catch (VersionConflictEngineException e) {
-            // Another process has updated the entity. This could be another ETM instance that was running this signal
-            // at exactly the same time. The only way to detect this is to retry this entire method. If another ETM instance
-            // has fully executed this method the LAST_EXECUTED time is updated on all signals in this entity so it won't
-            // be executed again.
-            return false;
+                    .setRetryOnConflict(0);
+            this.dataRepository.update(updateRequestBuilder);
+        } catch (ElasticsearchStatusException e) {
+            if (RestStatus.CONFLICT.equals(e.status())) {
+                // Another process has updated the entity. This could be another ETM instance that was running this signal
+                // at exactly the same time. The only way to detect this is to retry this entire method. If another ETM instance
+                // has fully executed this method the LAST_EXECUTED time is updated on all signals in this entity so it won't
+                // be executed again.
+                return false;
+            }
+            return true;
         }
         // Current version updated, so no other node in the cluster has came this far. We have to send the notifications now.
         for (Map.Entry<Signal, SignalTestResult> entry : notificationMap.entrySet()) {
@@ -260,7 +265,7 @@ public class Signaler extends AbstractJsonService implements Runnable {
     private SignalTestResult testThresholds(Signal signal, EtmSecurityEntity etmSecurityEntity) {
         SignalTestResult result = new SignalTestResult();
         result.setTestInterval(signal.getNotifications().getIntervalUnit().toDuration(signal.getNotifications().getInterval()));
-        SignalSearchRequestBuilderBuilder builderBuilder = new SignalSearchRequestBuilderBuilder(this.client, this.etmConfiguration)
+        SignalSearchRequestBuilderBuilder builderBuilder = new SignalSearchRequestBuilderBuilder(this.dataRepository, this.etmConfiguration)
                 .setSignal(signal);
         SearchRequestBuilder builder;
 
@@ -278,7 +283,7 @@ public class Signaler extends AbstractJsonService implements Runnable {
             builder = builderBuilder.build(q -> addFilterQuery(etmGroup, q, null), null);
         }
 
-        SearchResponse searchResponse = builder.get();
+        SearchResponse searchResponse = this.dataRepository.search(builder);
         result.setExectued(true);
         MultiBucketsAggregation multiBucketsAggregation = searchResponse.getAggregations().get(SignalSearchRequestBuilderBuilder.CARDINALITY_AGGREGATION_KEY);
         for (MultiBucketsAggregation.Bucket bucket : multiBucketsAggregation.getBuckets()) {
@@ -288,22 +293,20 @@ public class Signaler extends AbstractJsonService implements Runnable {
     }
 
     private void processAggregations(MultiBucketsAggregation.Bucket root, HasAggregations aggregationHolder, Threshold threshold, SignalTestResult signalTestResult) {
-        Iterator<Aggregation> iterator = aggregationHolder.getAggregations().iterator();
-        while (iterator.hasNext()) {
-            Aggregation aggregation = iterator.next();
+        for (Aggregation aggregation : aggregationHolder.getAggregations()) {
             boolean showOnGraph = (boolean) aggregation.getMetaData().get(Aggregator.SHOW_ON_GRAPH);
             if (!showOnGraph) {
                 continue;
             }
-            if (aggregation instanceof MultiBucketsAggregation) {
-                MultiBucketsAggregation multiBucketsAggregation = (MultiBucketsAggregation) aggregation;
+            if (aggregation instanceof ParsedMultiBucketAggregation) {
+                ParsedMultiBucketAggregation multiBucketsAggregation = (ParsedMultiBucketAggregation) aggregation;
                 for (MultiBucketsAggregation.Bucket subBucket : multiBucketsAggregation.getBuckets()) {
                     processAggregations(root, subBucket, threshold, signalTestResult);
                 }
-            } else if (aggregation instanceof SingleBucketAggregation) {
-                SingleBucketAggregation singleBucketAggregation = (SingleBucketAggregation) aggregation;
+            } else if (aggregation instanceof ParsedSingleBucketAggregation) {
+                ParsedSingleBucketAggregation singleBucketAggregation = (ParsedSingleBucketAggregation) aggregation;
                 processAggregations(root, singleBucketAggregation, threshold, signalTestResult);
-            } else if (aggregation instanceof InternalNumericMetricsAggregation.SingleValue || aggregation instanceof InternalNumericMetricsAggregation.MultiValue) {
+            } else {
                 final MetricValue metricValue = new MetricValue(aggregation);
                 if (metricValue.hasValidValue() && threshold.getComparison().isExceeded(threshold.getValue(), metricValue.getValue())) {
                     signalTestResult.addThresholdExceedance((DateTime) root.getKey(), metricValue.getValue());
@@ -348,7 +351,7 @@ public class Signaler extends AbstractJsonService implements Runnable {
             }
             BackoffPolicy backoffPolicy = signalTestResult.getNotificationBackoffPolicy(notifier);
             if (backoffPolicy.shouldBeNotified()) {
-                notificationExecutor.notifyExceedance(this.client, this.etmConfiguration, this.clusterName, signal, notifier, signalTestResult.getThresholdExceedances(), etmSecurityEntity, SYSTEM_START_TIME);
+                notificationExecutor.notifyExceedance(this.dataRepository, this.etmConfiguration, this.clusterName, signal, notifier, signalTestResult.getThresholdExceedances(), etmSecurityEntity, SYSTEM_START_TIME);
             }
         }
     }
@@ -386,7 +389,7 @@ public class Signaler extends AbstractJsonService implements Runnable {
                 }
                 continue;
             }
-            notificationExecutor.notifyNoLongerExceeded(this.client, this.etmConfiguration, this.clusterName, signal, notifier, etmSecurityEntity);
+            notificationExecutor.notifyNoLongerExceeded(this.dataRepository, this.etmConfiguration, this.clusterName, signal, notifier, etmSecurityEntity);
         }
     }
 
@@ -400,11 +403,11 @@ public class Signaler extends AbstractJsonService implements Runnable {
         if (username == null) {
             return null;
         }
-        GetResponse getResponse = this.client.prepareGet(
+        GetRequestBuilder requestBuilder = new GetRequestBuilder(
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 ElasticsearchLayout.ETM_DEFAULT_TYPE,
-                ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + username)
-                .get();
+                ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + username);
+        GetResponse getResponse = this.dataRepository.get(requestBuilder);
         if (!getResponse.isExists()) {
             return null;
         }
@@ -421,11 +424,12 @@ public class Signaler extends AbstractJsonService implements Runnable {
         if (groupName == null) {
             return null;
         }
-        GetResponse getResponse = this.client.prepareGet(
+        GetRequestBuilder requestBuilder = new GetRequestBuilder(
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 ElasticsearchLayout.ETM_DEFAULT_TYPE,
-                ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName)
-                .get();
+                ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName
+        );
+        GetResponse getResponse = this.dataRepository.get(requestBuilder);
         if (!getResponse.isExists()) {
             return null;
         }
@@ -439,35 +443,15 @@ public class Signaler extends AbstractJsonService implements Runnable {
      * @return The <code>Notifier</code> with the given notifierName, or <code>null</code> when no such notifier exists.
      */
     private Notifier getNotifier(String notifierName) {
-        GetResponse getResponse = this.client.prepareGet(
+        GetRequestBuilder requestBuilder = new GetRequestBuilder(
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 ElasticsearchLayout.ETM_DEFAULT_TYPE,
-                ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER_ID_PREFIX + notifierName)
-                .get();
+                ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER_ID_PREFIX + notifierName
+        );
+        GetResponse getResponse = this.dataRepository.get(requestBuilder);
         if (!getResponse.isExists()) {
             return null;
         }
         return this.notifierConverter.read(getResponse.getSourceAsMap());
-    }
-
-    /**
-     * Extracts the value of a metric <code>Aggregator</code>.
-     *
-     * @param aggregation The <code>Aggregator</code> to extract the value from.
-     * @return The value stored in the <code>Aggregator</code>.
-     * @throws IllegalArgumentException when the give <code>Aggregator</code> is't a metric <code>Aggregator</code>.
-     */
-    private Double getMetricAggregationValueFromAggregator(Aggregation aggregation) {
-        if (aggregation instanceof Percentiles) {
-            Percentiles percentiles = (Percentiles) aggregation;
-            return percentiles.iterator().next().getValue();
-        } else if (aggregation instanceof PercentileRanks) {
-            PercentileRanks percentileRanks = (PercentileRanks) aggregation;
-            return percentileRanks.iterator().next().getPercent();
-        } else if (aggregation instanceof NumericMetricsAggregation.SingleValue) {
-            NumericMetricsAggregation.SingleValue singleValue = (NumericMetricsAggregation.SingleValue) aggregation;
-            return singleValue.value();
-        }
-        throw new IllegalArgumentException("'" + aggregation.getClass().getName() + "' is an invalid metric aggregator.");
     }
 }

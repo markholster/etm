@@ -15,13 +15,11 @@ public class Elasticsearch {
     public String username;
     public String password;
 
-    public boolean sslEnabled = false;
-    public File sslKeyLocation;
-    public File sslCertificateLocation;
-    public File sslCertificateAuthoritiesLocation;
+    public File sslTrustStoreLocation;
+    public String sslTrustStorePassword;
 
     public Elasticsearch() {
-        this.connectAddresses.add("127.0.0.1:9300");
+        this.connectAddresses.add("127.0.0.1:9200");
     }
 
 }

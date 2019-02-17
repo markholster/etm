@@ -8,6 +8,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
+import java.util.stream.Collectors;
 
 @Path("/event")
 public class RestTelemetryEventProcessor extends AbstractJsonHandler {
@@ -31,7 +32,9 @@ public class RestTelemetryEventProcessor extends AbstractJsonHandler {
     public Response addEvent(InputStream data) {
         HandlerResults results = handleSingleEvent(data);
         if (results.hasFailures()) {
-            // TODO uitlezen failure en loggen.
+            if (log.isErrorLevelEnabled()) {
+                log.logErrorMessage("Failed to add event: " + results.getFailures().stream().map(f -> f.toString()).collect(Collectors.joining(", ")));
+            }
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
         return Response.accepted("{ \"status\": \"acknowledged\" }").build();
@@ -45,7 +48,9 @@ public class RestTelemetryEventProcessor extends AbstractJsonHandler {
     public Response addEvents(InputStream data) {
         HandlerResults results = handleBulkEvents(data);
         if (results.hasFailures()) {
-            // TODO uitlezen failures en loggen.
+            if (log.isErrorLevelEnabled()) {
+                log.logErrorMessage("Failed to add event: " + results.getFailures().stream().map(f -> f.toString()).collect(Collectors.joining(", ")));
+            }
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }
         return Response.accepted("{ \"status\": \"acknowledged\" }").build();

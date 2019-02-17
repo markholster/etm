@@ -20,16 +20,20 @@ import com.jecstar.etm.server.core.domain.configuration.converter.json.EtmConfig
 import com.jecstar.etm.server.core.domain.principal.EtmGroup;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.SyncActionListener;
+import com.jecstar.etm.server.core.elasticsearch.builder.GetRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.IndexRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.UpdateRequestBuilder;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import com.jecstar.etm.server.core.util.DateUtils;
 import com.jecstar.etm.server.core.util.LegacyEndpointHandler;
-import org.elasticsearch.action.ActionFuture;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -69,7 +73,7 @@ public class SearchService extends AbstractIndexMetadataService {
     private static final LogWrapper log = LogFactory.getLogger(SearchService.class);
 
     private static final DateTimeFormatter dateTimeFormatterIndexPerDay = DateUtils.getIndexPerDayFormatter();
-    private static Client client;
+    private static DataRepository dataRepository;
     private static EtmConfiguration etmConfiguration;
 
     private final TelemetryEventTags eventTags = new TelemetryEventTagsJsonImpl();
@@ -77,8 +81,8 @@ public class SearchService extends AbstractIndexMetadataService {
     private final QueryAuditLogConverter queryAuditLogConverter = new QueryAuditLogConverter();
     private final GetEventAuditLogConverter getEventAuditLogConverter = new GetEventAuditLogConverter();
 
-    public static void initialize(Client client, EtmConfiguration etmConfiguration) {
-        SearchService.client = client;
+    public static void initialize(DataRepository dataRepository, EtmConfiguration etmConfiguration) {
+        SearchService.dataRepository = dataRepository;
         SearchService.etmConfiguration = etmConfiguration;
     }
 
@@ -88,9 +92,8 @@ public class SearchService extends AbstractIndexMetadataService {
     @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
     public String getSearchTemplates() {
         EtmPrincipal etmPrincipal = getEtmPrincipal();
-        GetResponse getResponse = client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + etmPrincipal.getId())
-                .setFetchSource(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + ".search_templates", null)
-                .get();
+        GetResponse getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + etmPrincipal.getId())
+                .setFetchSource(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + ".search_templates", null));
         if (getResponse.isSourceEmpty() || getResponse.getSourceAsMap().isEmpty() || !getResponse.getSourceAsMap().containsKey(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER)) {
             return "{\"max_search_templates\": " + etmConfiguration.getMaxSearchTemplateCount() + ", \"default_search_range\": " + etmPrincipal.getDefaultSearchRange() + "}";
         }
@@ -106,9 +109,8 @@ public class SearchService extends AbstractIndexMetadataService {
     @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
     public String getRecentQueries() {
         EtmPrincipal etmPrincipal = getEtmPrincipal();
-        GetResponse getResponse = client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + etmPrincipal.getId())
-                .setFetchSource(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.configurationTags.getSearchHistoryTag(), null)
-                .get();
+        GetResponse getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + etmPrincipal.getId())
+                .setFetchSource(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.configurationTags.getSearchHistoryTag(), null));
         if (getResponse.isSourceEmpty() || !getResponse.getSourceAsMap().containsKey(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER)) {
             return "{}";
         }
@@ -138,12 +140,12 @@ public class SearchService extends AbstractIndexMetadataService {
 
         scriptParams.put("template", template);
         scriptParams.put("max_templates", etmConfiguration.getMaxSearchTemplateCount());
-        enhanceRequest(
-                client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId()),
+        UpdateRequestBuilder builder = enhanceRequest(
+                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId()),
                 etmConfiguration
         )
-                .setScript(new Script(ScriptType.STORED, null, "etm_update-search-template", scriptParams))
-                .get();
+                .setScript(new Script(ScriptType.STORED, null, "etm_update-search-template", scriptParams));
+        dataRepository.update(builder);
         return "{ \"status\": \"success\" }";
     }
 
@@ -154,12 +156,12 @@ public class SearchService extends AbstractIndexMetadataService {
     public String removeSearchTemplate(@PathParam("templateName") String templateName) {
         Map<String, Object> scriptParams = new HashMap<>();
         scriptParams.put("name", templateName);
-        enhanceRequest(
-                client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId()),
+        UpdateRequestBuilder builder = enhanceRequest(
+                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId()),
                 etmConfiguration
         )
-                .setScript(new Script(ScriptType.STORED, null, "etm_remove-search-template", scriptParams))
-                .get();
+                .setScript(new Script(ScriptType.STORED, null, "etm_remove-search-template", scriptParams));
+        dataRepository.update(builder);
         return "{ \"status\": \"success\" }";
     }
 
@@ -169,7 +171,7 @@ public class SearchService extends AbstractIndexMetadataService {
     @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
     public String getKeywords(@PathParam("indexName") String indexName) {
         StringBuilder result = new StringBuilder();
-        Map<String, List<Keyword>> names = getIndexFields(SearchService.client, indexName);
+        Map<String, List<Keyword>> names = getIndexFields(SearchService.dataRepository, indexName);
         result.append("{ \"keywords\":[");
         Set<Entry<String, List<Keyword>>> entries = names.entrySet();
         boolean first = true;
@@ -213,7 +215,7 @@ public class SearchService extends AbstractIndexMetadataService {
         SearchRequestParameters parameters = new SearchRequestParameters(toMap(json), etmPrincipal);
         SearchRequestBuilder requestBuilder = createRequestFromInput(parameters, etmPrincipal);
         NumberFormat numberFormat = NumberFormat.getInstance(etmPrincipal.getLocale());
-        SearchResponse response = requestBuilder.get();
+        SearchResponse response = dataRepository.search(requestBuilder);
         StringBuilder result = new StringBuilder();
         result.append("{");
         result.append("\"status\": \"success\"");
@@ -244,7 +246,7 @@ public class SearchService extends AbstractIndexMetadataService {
             String executedQuery = null;
             try {
                 XContentBuilder contentBuilder = XContentFactory.jsonBuilder();
-                requestBuilder.request().source().query().toXContent(contentBuilder, ToXContent.EMPTY_PARAMS);
+                requestBuilder.build().source().query().toXContent(contentBuilder, ToXContent.EMPTY_PARAMS);
                 executedQuery = Strings.toString(contentBuilder);
             } catch (IOException e) {
                 if (log.isErrorLevelEnabled()) {
@@ -256,12 +258,12 @@ public class SearchService extends AbstractIndexMetadataService {
                     .setExectuedQuery(executedQuery)
                     .setNumberOfResults(response.getHits().getTotalHits())
                     .setQueryTime(queryTime);
-            enhanceRequest(
-                    client.prepareIndex(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now), ElasticsearchLayout.ETM_DEFAULT_TYPE),
+            IndexRequestBuilder builder = enhanceRequest(
+                    new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now), ElasticsearchLayout.ETM_DEFAULT_TYPE),
                     etmConfiguration
             )
-                    .setSource(this.queryAuditLogConverter.write(auditLogBuilder.build()), XContentType.JSON)
-                    .execute();
+                    .setSource(this.queryAuditLogConverter.write(auditLogBuilder.build()), XContentType.JSON);
+            dataRepository.indexAsync(builder, DataRepository.noopActionListener());
         }
         return result.toString();
     }
@@ -329,15 +331,15 @@ public class SearchService extends AbstractIndexMetadataService {
                 boolQueryBuilder.filter(QueryBuilders.termsQuery(this.eventTags.getObjectTypeTag(), parameters.getTypes().toArray()));
             }
         }
-        SearchRequestBuilder requestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL), etmConfiguration)
+        SearchRequestBuilder requestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL), etmConfiguration)
                 .setQuery(addFilterQuery(getEtmPrincipal(), boolQueryBuilder))
                 .setFetchSource(parameters.getFields().toArray(new String[parameters.getFields().size()]), null)
                 .setFrom(parameters.getStartIndex())
                 .setSize(parameters.getMaxResults() > 500 ? 500 : parameters.getMaxResults());
         if (parameters.getSortField() != null && parameters.getSortField().trim().length() > 0) {
-            String sortProperty = getSortProperty(client, ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL, parameters.getSortField());
+            String sortProperty = getSortProperty(this.dataRepository, ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL, parameters.getSortField());
             if (sortProperty != null) {
-                requestBuilder.addSort(sortProperty, "desc".equals(parameters.getSortOrder()) ? SortOrder.DESC : SortOrder.ASC);
+                requestBuilder.setSort(sortProperty, "desc".equals(parameters.getSortOrder()) ? SortOrder.DESC : SortOrder.ASC);
             }
         }
         return requestBuilder;
@@ -360,12 +362,12 @@ public class SearchService extends AbstractIndexMetadataService {
 
         scriptParams.put("query", query);
         scriptParams.put("history_size", history_size);
-        enhanceRequest(
-                client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + etmPrincipal.getId()),
+        UpdateRequestBuilder builder = enhanceRequest(
+                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + etmPrincipal.getId()),
                 etmConfiguration
         )
-                .setScript(new Script(ScriptType.STORED, null, "etm_update-search-history", scriptParams))
-                .execute();
+                .setScript(new Script(ScriptType.STORED, null, "etm_update-search-history", scriptParams));
+        dataRepository.updateAsync(builder, DataRepository.noopActionListener());
     }
 
 
@@ -390,7 +392,7 @@ public class SearchService extends AbstractIndexMetadataService {
         }
         SearchRequestBuilder requestBuilder = createRequestFromInput(parameters, etmPrincipal);
 
-        ScrollableSearch scrollableSearch = new ScrollableSearch(client, requestBuilder, parameters.getStartIndex());
+        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, requestBuilder, parameters.getStartIndex());
         FileType fileType = FileType.valueOf(getString("fileType", valueMap).toUpperCase());
         File result = new QueryExporter().exportToFile(
                 scrollableSearch,
@@ -399,12 +401,14 @@ public class SearchService extends AbstractIndexMetadataService {
                         etmConfiguration.getMaxSearchResultDownloadRows()),
                 etmPrincipal,
                 parameters.toFieldLayouts(),
-                c -> enhanceRequest(
-                        client.prepareIndex(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(c.getTimestamp()), ElasticsearchLayout.ETM_DEFAULT_TYPE),
-                        etmConfiguration
+                c -> dataRepository.indexAsync(
+                        enhanceRequest(
+                                new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(c.getTimestamp()), ElasticsearchLayout.ETM_DEFAULT_TYPE),
+                                etmConfiguration
+                        )
+                                .setSource(this.getEventAuditLogConverter.write(c.build()), XContentType.JSON),
+                        DataRepository.noopActionListener()
                 )
-                        .setSource(this.getEventAuditLogConverter.write(c.build()), XContentType.JSON)
-                        .execute()
         );
         ResponseBuilder response = Response.ok(result);
         response.header("Content-Disposition", "attachment; filename=etm-results." + fileType.name().toLowerCase());
@@ -429,10 +433,11 @@ public class SearchService extends AbstractIndexMetadataService {
                 .setPayloadVisible(payloadVisible)
                 .setDownloaded(false)
                 .setFound(false);
-        ActionFuture<SearchResponse> auditLogsForEvent = null;
+        SyncActionListener<SearchResponse> auditLogListener = null;
         if (getEtmPrincipal().isInRole(SecurityRoles.AUDIT_LOG_READ)) {
+            auditLogListener = DataRepository.syncActionListener(etmConfiguration.getQueryTimeout());
             // We've got an principal with audit logs roles requesting the event. Also add the audit logs of this event to the response.
-            auditLogsForEvent = findAuditLogsForEvent(eventType, eventId);
+            findAuditLogsForEvent(eventType, eventId, auditLogListener);
         }
         StringBuilder result = new StringBuilder();
         result.append("{");
@@ -508,10 +513,10 @@ public class SearchService extends AbstractIndexMetadataService {
             if (correlationAdded) {
                 result.append("]");
             }
-            if (auditLogsForEvent != null) {
+            if (auditLogListener != null) {
                 // Audit logs received async. Wait here to add the to the result.
-                SearchResponse auditLogResponse = auditLogsForEvent.actionGet();
-                if (auditLogResponse.getHits().getHits().length != 0) {
+                SearchResponse auditLogResponse = auditLogListener.get();
+                if (auditLogResponse != null && auditLogResponse.getHits().getHits().length != 0) {
                     boolean auditLogAdded = false;
                     result.append(", \"audit_logs\": [");
                     for (SearchHit hit : auditLogResponse.getHits().getHits()) {
@@ -536,12 +541,12 @@ public class SearchService extends AbstractIndexMetadataService {
         }
         result.append("}");
         // Log the retrieval request to the audit logs.
-        enhanceRequest(
-                client.prepareIndex(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now), ElasticsearchLayout.ETM_DEFAULT_TYPE),
+        IndexRequestBuilder builder = enhanceRequest(
+                new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now), ElasticsearchLayout.ETM_DEFAULT_TYPE),
                 etmConfiguration
         )
-                .setSource(this.getEventAuditLogConverter.write(auditLogBuilder.build()), XContentType.JSON)
-                .execute();
+                .setSource(this.getEventAuditLogConverter.write(auditLogBuilder.build()), XContentType.JSON);
+        dataRepository.indexAsync(builder, DataRepository.noopActionListener());
         return result.toString();
     }
 
@@ -573,20 +578,20 @@ public class SearchService extends AbstractIndexMetadataService {
         }
     }
 
-    private ActionFuture<SearchResponse> findAuditLogsForEvent(String eventType, String eventId) {
+    private void findAuditLogsForEvent(String eventType, String eventId, ActionListener<SearchResponse> actionListener) {
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
         boolQueryBuilder.must(new TermQueryBuilder(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.AUDIT_LOG_OBJECT_TYPE_GET_EVENT));
         boolQueryBuilder.must(new TermQueryBuilder(GetEventAuditLog.EVENT_TYPE + KEYWORD_SUFFIX, eventType));
         boolQueryBuilder.should(new TermQueryBuilder(GetEventAuditLog.EVENT_ID + KEYWORD_SUFFIX, eventId));
         boolQueryBuilder.should(new TermQueryBuilder(GetEventAuditLog.CORRELATED_EVENTS + "." + GetEventAuditLog.EVENT_ID + KEYWORD_SUFFIX, eventId));
         boolQueryBuilder.minimumShouldMatch(1);
-        SearchRequestBuilder requestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL), etmConfiguration)
+        SearchRequestBuilder requestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL), etmConfiguration)
                 .setQuery(boolQueryBuilder)
-                .addSort(AuditLog.HANDLING_TIME, SortOrder.DESC)
+                .setSort(AuditLog.HANDLING_TIME, SortOrder.DESC)
                 .setFetchSource(new String[]{AuditLog.HANDLING_TIME, AuditLog.PRINCIPAL_ID, GetEventAuditLog.EVENT_ID, GetEventAuditLog.PAYLOAD_VISIBLE, GetEventAuditLog.DOWNLOADED}, null)
                 .setFrom(0)
                 .setSize(500);
-        return requestBuilder.execute();
+        dataRepository.searchAsync(requestBuilder, actionListener);
     }
 
     @GET
@@ -618,12 +623,12 @@ public class SearchService extends AbstractIndexMetadataService {
         }
         BoolQueryBuilder query = new BoolQueryBuilder();
         query.must(idsQueryBuilder);
-        SearchRequestBuilder builder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL), etmConfiguration)
+        SearchRequestBuilder builder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL), etmConfiguration)
                 .setQuery(addFilterQuery(getEtmPrincipal(), query))
                 .setFrom(0)
                 .setSize(1);
         builder.setFetchSource(includes, excludes);
-        SearchResponse response = builder.get();
+        SearchResponse response = dataRepository.search(builder);
         if (response.getHits().getHits().length == 0) {
             return null;
         }
@@ -635,12 +640,12 @@ public class SearchService extends AbstractIndexMetadataService {
                 .types(eventType)
                 .addIds(eventId);
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder().must(idsQueryBuilder);
-        SearchRequestBuilder builder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL), etmConfiguration)
+        SearchRequestBuilder builder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL), etmConfiguration)
                 .setQuery(alwaysShowCorrelatedEvents(getEtmPrincipal()) ? idsQueryBuilder : addFilterQuery(getEtmPrincipal(), boolQueryBuilder))
                 .setFrom(0)
                 .setSize(1)
                 .setFetchSource(new String[]{"*"}, !payloadVisible ? new String[]{this.eventTags.getPayloadTag()} : null);
-        SearchResponse response = builder.get();
+        SearchResponse response = dataRepository.search(builder);
         if (response.getHits().getHits().length == 0) {
             return null;
         }
@@ -711,9 +716,9 @@ public class SearchService extends AbstractIndexMetadataService {
                         ".writing_endpoint_handler" +
                         "." + this.eventTags.getEndpointHandlerTransactionIdTag() + KEYWORD_SUFFIX, transactionId)
                 );
-        SearchRequestBuilder searchRequest = enhanceRequest(client.prepareSearch(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL), etmConfiguration)
+        SearchRequestBuilder searchRequest = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL), etmConfiguration)
                 .setQuery(addFilterQuery(getEtmPrincipal(), findEventsQuery))
-                .addSort(SortBuilders.fieldSort("_doc"))
+                .setSort(SortBuilders.fieldSort("_doc"))
                 .setFetchSource(new String[]{
                         this.eventTags.getObjectTypeTag(),
                         this.eventTags.getEndpointsTag() + ".*",
@@ -723,7 +728,7 @@ public class SearchService extends AbstractIndexMetadataService {
                         this.eventTags.getHttpEventTypeTag(),
                         this.eventTags.getSqlEventTypeTag()}, null
                 );
-        ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequest);
+        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequest);
         if (!scrollableSearch.hasNext()) {
             scrollableSearch.clearScrollIds();
             return null;
@@ -818,12 +823,12 @@ public class SearchService extends AbstractIndexMetadataService {
                 events,
                 fileType,
                 etmPrincipal,
-                c -> enhanceRequest(
-                        client.prepareIndex(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(c.getTimestamp()), ElasticsearchLayout.ETM_DEFAULT_TYPE),
+                c -> dataRepository.indexAsync(enhanceRequest(
+                        new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(c.getTimestamp()), ElasticsearchLayout.ETM_DEFAULT_TYPE),
                         etmConfiguration
                 )
-                        .setSource(this.getEventAuditLogConverter.write(c.build()), XContentType.JSON)
-                        .execute()
+                        .setSource(this.getEventAuditLogConverter.write(c.build()), XContentType.JSON), DataRepository.noopActionListener())
+
         );
         ResponseBuilder response = Response.ok(result);
         response.header("Content-Disposition", "attachment; filename=etm-" + transactionId + "." + fileType.name().toLowerCase());
@@ -843,12 +848,12 @@ public class SearchService extends AbstractIndexMetadataService {
                 .types(eventType)
                 .addIds(eventId);
         // No principal filtered query. We would like to show the entire event chain, but the user should not be able to retrieve all information.
-        SearchResponse response = enhanceRequest(client.prepareSearch(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL), etmConfiguration)
+        SearchRequestBuilder builder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL), etmConfiguration)
                 .setQuery(idsQueryBuilder)
                 .setFetchSource(null, this.eventTags.getPayloadTag())
                 .setFrom(0)
-                .setSize(1)
-                .get();
+                .setSize(1);
+        SearchResponse response = dataRepository.search(builder);
         if (response.getHits().getHits().length == 0) {
             return null;
         }
@@ -922,11 +927,11 @@ public class SearchService extends AbstractIndexMetadataService {
             findEventsQuery.filter(QueryBuilders.termsQuery(this.eventTags.getObjectTypeTag(), "http", "messaging"));
         }
         // No principal filtered query. We would like to show the entire event chain, but the user should not be able to retrieve all information.
-        SearchRequestBuilder searchRequest = enhanceRequest(client.prepareSearch(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL), etmConfiguration)
+        SearchRequestBuilder searchRequest = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL), etmConfiguration)
                 .setQuery(findEventsQuery)
-                .addSort(SortBuilders.fieldSort("_doc"))
+                .setSort(SortBuilders.fieldSort("_doc"))
                 .setFetchSource(null, this.eventTags.getPayloadTag());
-        ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequest);
+        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequest);
         if (!scrollableSearch.hasNext()) {
             return;
         }

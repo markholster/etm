@@ -33,6 +33,9 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
                 case EtmException.UNAUTHORIZED:
                     errorMessage.setMessage("You are not authorized for this action");
                     break;
+                case EtmException.DATA_COMMUNICATION_EXCEPTION:
+                    errorMessage.setMessage("Error communication with Elasticsearch");
+                    break;
                 case EtmException.INVALID_LICENSE_KEY:
                     errorMessage.setMessage("Invalid license key");
                     break;

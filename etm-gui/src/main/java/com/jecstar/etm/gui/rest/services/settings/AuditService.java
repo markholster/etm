@@ -6,10 +6,11 @@ import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.GetRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
 import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
@@ -35,11 +36,11 @@ import java.util.stream.Collectors;
 public class AuditService extends AbstractIndexMetadataService {
 
 
-    private static Client client;
+    private static DataRepository dataRepository;
     private static EtmConfiguration etmConfiguration;
 
-    public static void initialize(Client client, EtmConfiguration etmConfiguration) {
-        AuditService.client = client;
+    public static void initialize(DataRepository dataRepository, EtmConfiguration etmConfiguration) {
+        AuditService.dataRepository = dataRepository;
         AuditService.etmConfiguration = etmConfiguration;
     }
 
@@ -49,7 +50,7 @@ public class AuditService extends AbstractIndexMetadataService {
     @RolesAllowed(SecurityRoles.AUDIT_LOG_READ)
     public String getKeywords(@PathParam("indexName") String indexName) {
         StringBuilder result = new StringBuilder();
-        Map<String, List<Keyword>> names = getIndexFields(AuditService.client, indexName);
+        Map<String, List<Keyword>> names = getIndexFields(AuditService.dataRepository, indexName);
         result.append("{ \"keywords\":[");
         Set<Entry<String, List<Keyword>>> entries = names.entrySet();
         boolean first = true;
@@ -85,9 +86,8 @@ public class AuditService extends AbstractIndexMetadataService {
         if (!index.startsWith(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX)) {
             return null;
         }
-        GetResponse getResponse = client.prepareGet(index, ElasticsearchLayout.ETM_DEFAULT_TYPE, id)
-                .setFetchSource(true)
-                .get();
+        GetResponse getResponse = dataRepository.get(new GetRequestBuilder(index, ElasticsearchLayout.ETM_DEFAULT_TYPE, id)
+                .setFetchSource(true));
         return getResponse.getSourceAsString();
     }
 
@@ -104,7 +104,7 @@ public class AuditService extends AbstractIndexMetadataService {
         AuditSearchRequestParameters parameters = new AuditSearchRequestParameters(toMap(json));
         SearchRequestBuilder requestBuilder = createRequestFromInput(parameters, etmPrincipal);
         NumberFormat numberFormat = NumberFormat.getInstance(etmPrincipal.getLocale());
-        SearchResponse response = requestBuilder.get();
+        SearchResponse response = dataRepository.search(requestBuilder);
         StringBuilder result = new StringBuilder();
         result.append("{");
         result.append("\"status\": \"success\"");
@@ -133,16 +133,16 @@ public class AuditService extends AbstractIndexMetadataService {
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
         boolQueryBuilder.must(queryStringBuilder);
         boolQueryBuilder.filter(new RangeQueryBuilder("timestamp").lte(parameters.getNotAfterTimestamp()));
-        SearchRequestBuilder requestBuilder = client.prepareSearch(ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL).setQuery(boolQueryBuilder)
+        SearchRequestBuilder requestBuilder = new SearchRequestBuilder().setIndices(ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL).setQuery(boolQueryBuilder)
                 .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                 .setFetchSource(true)
                 .setFrom(parameters.getStartIndex())
                 .setSize(parameters.getMaxResults() > 500 ? 500 : parameters.getMaxResults())
                 .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
         if (parameters.getSortField() != null && parameters.getSortField().trim().length() > 0) {
-            String sortProperty = getSortProperty(client, ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL, parameters.getSortField());
+            String sortProperty = getSortProperty(dataRepository, ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL, parameters.getSortField());
             if (sortProperty != null) {
-                requestBuilder.addSort(sortProperty, "desc".equals(parameters.getSortOrder()) ? SortOrder.DESC : SortOrder.ASC);
+                requestBuilder.setSort(sortProperty, "desc".equals(parameters.getSortOrder()) ? SortOrder.DESC : SortOrder.ASC);
             }
         }
         return requestBuilder;

@@ -5,7 +5,8 @@ import com.jecstar.etm.server.core.domain.aggregator.Aggregator;
 import com.jecstar.etm.server.core.domain.aggregator.converter.AggregatorListConverter;
 import com.jecstar.etm.server.core.domain.aggregator.metric.MetricsAggregator;
 import com.jecstar.etm.server.core.domain.aggregator.pipeline.PipelineAggregator;
-import org.elasticsearch.action.search.SearchRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 
 import java.util.ArrayList;
@@ -116,8 +117,10 @@ public abstract class BucketAggregator extends Aggregator {
 
     protected abstract AggregationBuilder createAggregationBuilder();
 
-    public void prepareForSearch(SearchRequestBuilder searchRequest) {
-        getAggregators().stream().filter(p -> p instanceof BucketAggregator).forEach(c -> ((BucketAggregator) c).prepareForSearch(searchRequest));
+    public void prepareForSearch(DataRepository dataRepository, SearchRequestBuilder searchRequestBuilder) {
+        if (getAggregators() != null) {
+            getAggregators().stream().filter(p -> p instanceof BucketAggregator).forEach(c -> ((BucketAggregator) c).prepareForSearch(dataRepository, searchRequestBuilder));
+        }
     }
 
 }

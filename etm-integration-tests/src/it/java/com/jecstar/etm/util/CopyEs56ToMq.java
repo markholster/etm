@@ -4,19 +4,19 @@ import com.ibm.mq.*;
 import com.ibm.mq.constants.CMQC;
 import com.ibm.mq.constants.MQConstants;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
-import org.elasticsearch.action.search.SearchRequestBuilder;
-import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.TransportAddress;
+import org.apache.http.HttpHost;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestClientBuilder;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.SortBuilders;
-import org.elasticsearch.transport.client.PreBuiltTransportClient;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.util.Hashtable;
 import java.util.Map;
 
@@ -24,8 +24,6 @@ import java.util.Map;
  * Utility class that loads the contents of an Elasticsearch database to MQ messages.
  */
 public class CopyEs56ToMq {
-
-    private static final String ES_CLUSTER_NAME = "etm2-acceptatie";
 
     public static void main(String[] args) throws IOException, MQException {
         Hashtable<String, Object> connectionProperties = new Hashtable<>();
@@ -39,20 +37,18 @@ public class CopyEs56ToMq {
         MQPutMessageOptions putMessageOptions = new MQPutMessageOptions();
         putMessageOptions.options = MQConstants.MQPMO_LOGICAL_ORDER + MQConstants.MQPMO_VERSION_2;
 
-        Settings.Builder settingsBuilder = Settings.builder()
-                .put("cluster.name", ES_CLUSTER_NAME)
-                .put("client.transport.sniff", true);
-        TransportClient client = new PreBuiltTransportClient(settingsBuilder.build())
-                .addTransportAddress(new TransportAddress(InetAddress.getByName("127.0.0.1"), 9300));
+        RestClientBuilder restClientBuilder = RestClient.builder(HttpHost.create("http://127.0.0.1:9200"));
+        RestHighLevelClient client = new RestHighLevelClient(restClientBuilder);
+        DataRepository dataRepository = new DataRepository(client);
 
-        SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL)
+        SearchRequestBuilder searchRequestBuilder = new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL)
                 .setQuery(QueryBuilders.matchAllQuery())
                 .setTimeout(TimeValue.timeValueSeconds(30))
-                .addSort(SortBuilders.fieldSort("_doc"))
+                .setSort(SortBuilders.fieldSort("_doc"))
                 .setFetchSource(true);
 
 
-        ScrollableSearch searchHits = new ScrollableSearch(client, searchRequestBuilder);
+        ScrollableSearch searchHits = new ScrollableSearch(dataRepository, searchRequestBuilder);
         int i = 0;
         while (searchHits.hasNext()) {
             SearchHit searchHit = searchHits.next();

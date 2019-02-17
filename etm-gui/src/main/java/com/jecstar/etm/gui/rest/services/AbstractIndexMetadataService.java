@@ -3,8 +3,11 @@ package com.jecstar.etm.gui.rest.services;
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 import com.jecstar.etm.gui.rest.AbstractGuiService;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
-import org.elasticsearch.action.admin.indices.mapping.get.*;
-import org.elasticsearch.client.Client;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.GetFieldMappingsRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.GetMappingsRequestBuilder;
+import org.elasticsearch.action.admin.indices.mapping.get.GetFieldMappingsResponse;
+import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 
@@ -24,13 +27,13 @@ public abstract class AbstractIndexMetadataService extends AbstractGuiService {
     /**
      * Gives a list of fields of an index per index type.
      *
-     * @param client    The elasticsearch client.
-     * @param indexName The name of the index to find the keywords for.
+     * @param dataRepository    The <code>DataRepository</code>.
+     * @param indexName         The name of the index to find the keywords for.
      * @return
      */
-    protected Map<String, List<Keyword>> getIndexFields(Client client, String indexName) {
+    protected Map<String, List<Keyword>> getIndexFields(DataRepository dataRepository, String indexName) {
         Map<String, List<Keyword>> names = new HashMap<>();
-        GetMappingsResponse mappingsResponse = new GetMappingsRequestBuilder(client, GetMappingsAction.INSTANCE, indexName).get();
+        GetMappingsResponse mappingsResponse = dataRepository.indicesGetMappings(new GetMappingsRequestBuilder().setIndices(indexName));
         ImmutableOpenMap<String, ImmutableOpenMap<String, MappingMetaData>> mappings = mappingsResponse.getMappings();
         for (ObjectObjectCursor<String, ImmutableOpenMap<String, MappingMetaData>> mappingsCursor : mappings) {
             for (ObjectObjectCursor<String, MappingMetaData> mappingMetadataCursor : mappingsCursor.value) {
@@ -59,10 +62,9 @@ public abstract class AbstractIndexMetadataService extends AbstractGuiService {
         return names;
     }
 
-    protected String getSortProperty(Client client, String indexName, String propertyName) {
-        GetFieldMappingsRequestBuilder fieldRequest = client.admin().indices().prepareGetFieldMappings(indexName)
-                .setFields(propertyName);
-        GetFieldMappingsResponse response = fieldRequest.get();
+    protected String getSortProperty(DataRepository dataRepository, String indexName, String propertyName) {
+        GetFieldMappingsResponse response = dataRepository.indicesGetFieldMappings(new GetFieldMappingsRequestBuilder().setIndices(indexName).setFields(propertyName));
+
         if (response.mappings().isEmpty()) {
             return null;
         }

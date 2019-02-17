@@ -7,7 +7,9 @@ import com.consol.citrus.dsl.junit.jupiter.CitrusExtension;
 import com.consol.citrus.dsl.runner.TestRunner;
 import com.consol.citrus.selenium.endpoint.SeleniumBrowser;
 import com.jecstar.etm.gui.AbstractCitrusSeleniumTest;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
 
@@ -15,6 +17,7 @@ import java.time.Month;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(CitrusExtension.class)
 public class LoginIntegrationTest extends AbstractCitrusSeleniumTest {
 
@@ -24,6 +27,12 @@ public class LoginIntegrationTest extends AbstractCitrusSeleniumTest {
 
     @CitrusEndpoint(name = "chrome")
     private SeleniumBrowser chrome;
+
+    @AfterAll
+    private void afterAll() {
+        this.firefox.stop();
+        this.chrome.stop();
+    }
 
     @Test
     @CitrusTest
@@ -43,7 +52,7 @@ public class LoginIntegrationTest extends AbstractCitrusSeleniumTest {
         login(runner, browser);
         waitForAjaxToComplete(runner);
         String value = browser.getWebDriver().findElement(By.id("event-count")).getText();
-        value = value.replaceAll("[,\\.]", "");
+        value = value.replaceAll("[,.]", "");
         assertTrue(Long.valueOf(value) > 0);
     }
 

@@ -15,22 +15,23 @@ import com.jecstar.etm.server.core.domain.principal.EtmSecurityEntity;
 import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
 import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalConverterJsonImpl;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.GetRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import com.jecstar.etm.signaler.SignalSearchRequestBuilderBuilder;
 import com.jecstar.etm.signaler.domain.Signal;
 import com.jecstar.etm.signaler.domain.Threshold;
 import com.jecstar.etm.signaler.domain.converter.SignalConverter;
 import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.HasAggregations;
+import org.elasticsearch.search.aggregations.ParsedMultiBucketAggregation;
 import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
-import org.elasticsearch.search.aggregations.bucket.SingleBucketAggregation;
-import org.elasticsearch.search.aggregations.metrics.InternalNumericMetricsAggregation;
+import org.elasticsearch.search.aggregations.bucket.ParsedSingleBucketAggregation;
 import org.elasticsearch.search.aggregations.metrics.valuecount.InternalValueCount;
 
 import javax.annotation.security.DeclareRoles;
@@ -46,14 +47,14 @@ import java.util.stream.Collectors;
 public class SignalService extends AbstractUserAttributeService {
 
 
-    private static Client client;
+    private static DataRepository dataRepository;
     private static EtmConfiguration etmConfiguration;
     private final EtmPrincipalConverterJsonImpl etmPrincipalConverter = new EtmPrincipalConverterJsonImpl();
     private final EtmPrincipalTags etmPrincipalTags = etmPrincipalConverter.getTags();
     private final SignalConverter signalConverter = new SignalConverter();
 
-    public static void initialize(Client client, EtmConfiguration etmConfiguration) {
-        SignalService.client = client;
+    public static void initialize(DataRepository dataRepository, EtmConfiguration etmConfiguration) {
+        SignalService.dataRepository = dataRepository;
         SignalService.etmConfiguration = etmConfiguration;
     }
 
@@ -87,13 +88,13 @@ public class SignalService extends AbstractUserAttributeService {
      * @return The keywords of a user or group.
      */
     private String getKeywords(String groupName) {
-        Map<String, Object> entity = getEntity(client, groupName, this.etmPrincipalTags.getSignalDatasourcesTag());
-        List<String> datasources = getArray(this.etmPrincipalTags.getSignalDatasourcesTag(), entity);
+        Map<String, Object> entity = getEntity(dataRepository, groupName, this.etmPrincipalTags.getSignalDatasourcesTag());
+        List<String> datasources = getArray(this.etmPrincipalTags.getSignalDatasourcesTag(), entity, Collections.emptyList());
         StringBuilder result = new StringBuilder();
         result.append("{ \"keywords\":[");
         boolean first = true;
         for (String indexName : datasources) {
-            Map<String, List<Keyword>> names = getIndexFields(client, indexName);
+            Map<String, List<Keyword>> names = getIndexFields(dataRepository, indexName);
             Set<Map.Entry<String, List<Keyword>>> entries = names.entrySet();
             for (Map.Entry<String, List<Keyword>> entry : entries) {
                 if (!first) {
@@ -150,13 +151,13 @@ public class SignalService extends AbstractUserAttributeService {
      * @return The signal context data of a user or group.
      */
     private String getContextData(String groupName) {
-        Map<String, Object> objectMap = getEntity(client, groupName, this.etmPrincipalTags.getSignalDatasourcesTag(), this.etmPrincipalTags.getNotifiersTag());
+        Map<String, Object> objectMap = getEntity(dataRepository, groupName, this.etmPrincipalTags.getSignalDatasourcesTag(), this.etmPrincipalTags.getNotifiersTag());
         List<String> notifiers = getArray(this.etmPrincipalTags.getNotifiersTag(), objectMap, new ArrayList<>());
         if (groupName == null) {
             // We try to get the data for the user but when the user is added to some groups the context of that groups needs to be added to the user context
             Set<EtmGroup> groups = getEtmPrincipal().getGroups();
             for (EtmGroup group : groups) {
-                Map<String, Object> groupObjectMap = getEntity(client, group.getName(), this.etmPrincipalTags.getSignalDatasourcesTag(), this.etmPrincipalTags.getNotifiersTag());
+                Map<String, Object> groupObjectMap = getEntity(dataRepository, group.getName(), this.etmPrincipalTags.getSignalDatasourcesTag(), this.etmPrincipalTags.getNotifiersTag());
                 mergeCollectionInValueMap(groupObjectMap, objectMap, this.etmPrincipalTags.getSignalDatasourcesTag());
                 List<String> groupNotifiers = getArray(this.etmPrincipalTags.getNotifiersTag(), groupObjectMap, new ArrayList<>());
                 for (String notifier : groupNotifiers) {
@@ -170,14 +171,17 @@ public class SignalService extends AbstractUserAttributeService {
         if (notifiers != null) {
             ArrayList<Map<String, Object>> notifiersList = new ArrayList<>();
             objectMap.put(this.etmPrincipalTags.getNotifiersTag(), notifiersList);
-            SearchRequestBuilder searchRequestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
+
+
+            SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder(), etmConfiguration)
+                    .setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
                     .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                     .setFetchSource(new String[]{
                             ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER + "." + Notifier.NAME,
                             ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER + "." + Notifier.NOTIFIER_TYPE
                     }, null)
                     .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER));
-            ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
+            ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
             for (SearchHit searchHit : scrollableSearch) {
                 Map<String, Object> notifierMap = toMapWithoutNamespace(searchHit.getSourceAsMap(), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER);
                 String notifierName = getString(Notifier.NAME, notifierMap);
@@ -220,7 +224,7 @@ public class SignalService extends AbstractUserAttributeService {
      * @return The signals of a user or group.
      */
     private String getSignals(String groupName) {
-        Map<String, Object> objectMap = getEntity(client, groupName, this.etmPrincipalTags.getSignalsTag());
+        Map<String, Object> objectMap = getEntity(dataRepository, groupName, this.etmPrincipalTags.getSignalsTag());
         if (objectMap == null || objectMap.isEmpty()) {
             return "{\"max_signals\": " + etmConfiguration.getMaxSignalCount() + "}";
         }
@@ -262,8 +266,8 @@ public class SignalService extends AbstractUserAttributeService {
      */
     private String addSignal(String groupName, String signalName, String json) {
         Signal signal = this.signalConverter.read(json);
-        EtmSecurityEntity etmSecurityEntity = getEtmSecurityEntity(this.client, groupName);
-        Map<String, Object> objectMap = getEntity(client, groupName, this.etmPrincipalTags.getSignalsTag(), this.etmPrincipalTags.getSignalDatasourcesTag(), this.etmPrincipalTags.getNotifiersTag());
+        EtmSecurityEntity etmSecurityEntity = getEtmSecurityEntity(dataRepository, groupName);
+        Map<String, Object> objectMap = getEntity(dataRepository, groupName, this.etmPrincipalTags.getSignalsTag(), this.etmPrincipalTags.getSignalDatasourcesTag(), this.etmPrincipalTags.getNotifiersTag());
         if (!etmSecurityEntity.isAuthorizedForSignalDatasource(signal.getData().getDataSource())) {
             throw new EtmException(EtmException.NOT_AUTHORIZED_FOR_SIGNAL_DATA_SOURCE);
         }
@@ -301,13 +305,13 @@ public class SignalService extends AbstractUserAttributeService {
         }
         Map<String, Object> source = new HashMap<>();
         source.put(this.etmPrincipalTags.getSignalsTag(), currentSignals);
-        updateEntity(client, etmConfiguration, groupName, source);
+        updateEntity(dataRepository, etmConfiguration, groupName, source);
         return "{\"status\":\"success\"}";
     }
 
-    private EtmSecurityEntity getEtmSecurityEntity(Client client, String groupName) {
+    private EtmSecurityEntity getEtmSecurityEntity(DataRepository dataRepository, String groupName) {
         if (groupName != null) {
-            return getEtmGroup(client, groupName);
+            return getEtmGroup(dataRepository, groupName);
         }
         return getEtmPrincipal();
     }
@@ -343,7 +347,7 @@ public class SignalService extends AbstractUserAttributeService {
      * @return The json result of the delete.
      */
     private String deleteSignal(String groupName, String signalName) {
-        Map<String, Object> objectMap = getEntity(client, groupName, this.etmPrincipalTags.getSignalsTag());
+        Map<String, Object> objectMap = getEntity(dataRepository, groupName, this.etmPrincipalTags.getSignalsTag());
 
         List<Map<String, Object>> currentSignals = new ArrayList<>();
         if (objectMap == null || objectMap.isEmpty()) {
@@ -364,7 +368,7 @@ public class SignalService extends AbstractUserAttributeService {
         // Prepare new source map with the remaining signals.
         Map<String, Object> source = new HashMap<>();
         source.put(this.etmPrincipalTags.getSignalsTag(), currentSignals);
-        updateEntity(client, etmConfiguration, groupName, source);
+        updateEntity(dataRepository, etmConfiguration, groupName, source);
         return "{\"status\":\"success\"}";
     }
 
@@ -375,7 +379,7 @@ public class SignalService extends AbstractUserAttributeService {
     public String getGraphData(String json) {
         Signal signal = this.signalConverter.read(json);
         EtmPrincipal etmPrincipal = getEtmPrincipal();
-        Map<String, Object> objectMap = getEntity(client, null, this.etmPrincipalTags.getSignalDatasourcesTag());
+        Map<String, Object> objectMap = getEntity(dataRepository, null, this.etmPrincipalTags.getSignalDatasourcesTag());
         List<String> allowedDatasources = getArray(this.etmPrincipalTags.getSignalDatasourcesTag(), objectMap);
         return getGraphData(signal, etmPrincipal, null, allowedDatasources);
     }
@@ -389,12 +393,12 @@ public class SignalService extends AbstractUserAttributeService {
         if (!getEtmPrincipal().isInGroup(groupName)) {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
-        GetResponse getResponse = client.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName).get();
+        GetResponse getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName));
         if (!getResponse.isExists()) {
             return Response.noContent().build();
         }
         EtmGroup etmGroup = this.etmPrincipalConverter.readGroup(getResponse.getSourceAsMap());
-        Map<String, Object> objectMap = getEntity(client, groupName, this.etmPrincipalTags.getSignalDatasourcesTag());
+        Map<String, Object> objectMap = getEntity(dataRepository, groupName, this.etmPrincipalTags.getSignalDatasourcesTag());
         List<String> allowedDatasources = getArray(this.etmPrincipalTags.getSignalDatasourcesTag(), objectMap);
         String content = getGraphData(signal, getEtmPrincipal(), etmGroup, allowedDatasources);
         if (content == null || content.trim().length() == 0) {
@@ -404,7 +408,7 @@ public class SignalService extends AbstractUserAttributeService {
     }
 
     private String getGraphData(Signal signal, EtmPrincipal etmPrincipal, EtmGroup etmGroup, List<String> allowedDatasources) {
-        SignalSearchRequestBuilderBuilder signalSearchRequestBuilderBuilder = new SignalSearchRequestBuilderBuilder(client, etmConfiguration).setSignal(signal);
+        SignalSearchRequestBuilderBuilder signalSearchRequestBuilderBuilder = new SignalSearchRequestBuilderBuilder(dataRepository, etmConfiguration).setSignal(signal);
         if (allowedDatasources.indexOf(signal.getData().getDataSource()) < 0) {
             throw new EtmException(EtmException.NOT_AUTHORIZED_FOR_DASHBOARD_DATA_SOURCE);
         }
@@ -419,7 +423,7 @@ public class SignalService extends AbstractUserAttributeService {
         result.append("{");
         result.append("\"locale\": ").append(getLocalFormatting(getEtmPrincipal()));
         int exceededCount = 0;
-        SearchResponse searchResponse = requestBuilder.get();
+        SearchResponse searchResponse = dataRepository.search(requestBuilder);
         Map<String, List<String>> seriesData = new LinkedHashMap<>();
         MultiBucketsAggregation multiBucketsAggregation = searchResponse.getAggregations().get(SignalSearchRequestBuilderBuilder.CARDINALITY_AGGREGATION_KEY);
         for (MultiBucketsAggregation.Bucket bucket : multiBucketsAggregation.getBuckets()) {
@@ -486,8 +490,8 @@ public class SignalService extends AbstractUserAttributeService {
             if (!showOnGraph) {
                 continue;
             }
-            if (aggregation instanceof MultiBucketsAggregation) {
-                MultiBucketsAggregation multiBucketsAggregation = (MultiBucketsAggregation) aggregation;
+            if (aggregation instanceof ParsedMultiBucketAggregation) {
+                ParsedMultiBucketAggregation multiBucketsAggregation = (ParsedMultiBucketAggregation) aggregation;
                 String bucketName = (String) multiBucketsAggregation.getMetaData().get(Aggregator.NAME);
                 name = createHierarchicalBucketName(name, bucketName);
                 for (MultiBucketsAggregation.Bucket subBucket : multiBucketsAggregation.getBuckets()) {
@@ -504,12 +508,12 @@ public class SignalService extends AbstractUserAttributeService {
                         exceededCount = processAggregations(root, subBucket, seriesData, name + "(" + subBucket.getKeyAsString() + ")", threshold, exceededCount);
                     }
                 }
-            } else if (aggregation instanceof SingleBucketAggregation) {
-                SingleBucketAggregation singleBucketAggregation = (SingleBucketAggregation) aggregation;
+            } else if (aggregation instanceof ParsedSingleBucketAggregation) {
+                ParsedSingleBucketAggregation singleBucketAggregation = (ParsedSingleBucketAggregation) aggregation;
                 String bucketName = (String) singleBucketAggregation.getMetaData().get(Aggregator.NAME);
                 name = createHierarchicalBucketName(name, bucketName);
                 exceededCount = processAggregations(root, singleBucketAggregation, seriesData, name, threshold, exceededCount);
-            } else if (aggregation instanceof InternalNumericMetricsAggregation.SingleValue || aggregation instanceof InternalNumericMetricsAggregation.MultiValue) {
+            } else {
                 final MetricValue metricValue = new MetricValue(aggregation);
                 if (name.length() == 0) {
                     name = metricValue.getName();

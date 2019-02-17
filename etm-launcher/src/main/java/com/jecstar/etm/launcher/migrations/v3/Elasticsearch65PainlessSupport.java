@@ -1,25 +1,22 @@
 package com.jecstar.etm.launcher.migrations.v3;
 
 import com.jecstar.etm.launcher.migrations.AbstractEtmMigrator;
-import org.elasticsearch.action.admin.cluster.storedscripts.GetStoredScriptAction;
-import org.elasticsearch.action.admin.cluster.storedscripts.GetStoredScriptRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.GetStoredScriptRequestBuilder;
 import org.elasticsearch.action.admin.cluster.storedscripts.GetStoredScriptResponse;
-import org.elasticsearch.client.Client;
 
 public class Elasticsearch65PainlessSupport extends AbstractEtmMigrator {
 
-    private final Client client;
+    private final DataRepository dataRepository;
 
-    public Elasticsearch65PainlessSupport(Client client) {
-        this.client = client;
+    public Elasticsearch65PainlessSupport(final DataRepository dataRepository) {
+        this.dataRepository = dataRepository;
     }
 
     @Override
     public boolean shouldBeExecuted() {
-        GetStoredScriptResponse response = new GetStoredScriptRequestBuilder(this.client, GetStoredScriptAction.INSTANCE)
-                .setId("etm_update-event")
-                .get();
-        return !response.getSource().getSource().endsWith("mainMethod(params);");
+        GetStoredScriptResponse response = this.dataRepository.getStoredScript(new GetStoredScriptRequestBuilder("etm_update-event"));
+        return response != null && !response.getSource().getSource().endsWith("mainMethod(ctx, params);");
     }
 
     @Override

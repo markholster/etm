@@ -7,11 +7,12 @@ import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalTagsJsonImpl;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.GetIndexRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.UpdateRequestBuilder;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
-import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.bulk.BulkProcessor;
-import org.elasticsearch.action.search.SearchRequestBuilder;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
@@ -29,26 +30,26 @@ public class SearchTemplateHandlingTimeMigrator extends AbstractEtmMigrator {
 
     private final ElasticsearchSessionTags sessionTags = new ElasticsearchSessionTagsJsonImpl();
     private final EtmPrincipalTags principalTags = new EtmPrincipalTagsJsonImpl();
-    private final Client client;
+    private final DataRepository dataRepository;
     private final JsonConverter jsonConverter = new JsonConverter();
 
-    public SearchTemplateHandlingTimeMigrator(Client client) {
-        this.client = client;
+    public SearchTemplateHandlingTimeMigrator(DataRepository dataRepository) {
+        this.dataRepository = dataRepository;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public boolean shouldBeExecuted() {
-        IndicesExistsResponse indicesExistsResponse = client.admin().indices().prepareExists(ElasticsearchLayout.CONFIGURATION_INDEX_NAME).get();
-        if (!indicesExistsResponse.isExists()) {
+        boolean indexExist = this.dataRepository.indicesExist(new GetIndexRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME));
+        if (!indexExist) {
             return false;
         }
-        SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+        SearchRequestBuilder searchRequestBuilder = new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
                 .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER))
                 .setTimeout(TimeValue.timeValueMillis(30000));
-        ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
+        ScrollableSearch scrollableSearch = new ScrollableSearch(this.dataRepository, searchRequestBuilder);
         for (SearchHit searchHit : scrollableSearch) {
             Map<String, Object> sourceMap = searchHit.getSourceAsMap();
             Map<String, Object> userMap = this.jsonConverter.getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, sourceMap);
@@ -87,15 +88,15 @@ public class SearchTemplateHandlingTimeMigrator extends AbstractEtmMigrator {
         }
         System.out.println("Start migrating search templates.");
         FailureDetectingBulkProcessorListener listener = new FailureDetectingBulkProcessorListener();
-        BulkProcessor bulkProcessor = createBulkProcessor(this.client, listener);
+        BulkProcessor bulkProcessor = createBulkProcessor(this.dataRepository, listener);
 
 
-        SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+        SearchRequestBuilder searchRequestBuilder = new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
                 .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER))
                 .setTimeout(TimeValue.timeValueMillis(30000));
-        ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
+        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
         long total = scrollableSearch.getNumberOfHits();
         long current = 0, lastPrint = 0;
         for (SearchHit searchHit : scrollableSearch) {
@@ -129,9 +130,9 @@ public class SearchTemplateHandlingTimeMigrator extends AbstractEtmMigrator {
                 }
             }
             if (updated) {
-                bulkProcessor.add(this.client.prepareUpdate(
+                bulkProcessor.add(new UpdateRequestBuilder(
                         ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, searchHit.getId())
-                        .setDoc(sourceMap).request());
+                        .setDoc(sourceMap).build());
             }
             lastPrint = printPercentageWhenChanged(lastPrint, ++current, total);
         }

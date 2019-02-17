@@ -85,10 +85,11 @@ public class IIBEventHandler extends AbstractMQEventHandler {
         // We use the event name field as it is the only field that can be set with hard values. All other fields can only be set with xpath values from the message payload.
         String nodeType = event.getEventPointData().getMessageFlowData().getNode().getNodeType();
         if (nodeType == null) {
+            String message = "NodeType of event with id '" + byteArrayToString(messageId) + "' is null. Unable to determine event type. Event will not be processed.";
             if (log.isDebugLevelEnabled()) {
-                log.logDebugMessage("NodeType of event with id '" + byteArrayToString(messageId) + "' is null. Unable to determine event type. Event will not be processed.");
+                log.logDebugMessage(message);
             }
-            return HandlerResult.failed();
+            return HandlerResult.failed(message);
         }
         // See https://www.ibm.com/support/knowledgecenter/SSMKHH_10.0.0/com.ibm.etools.mft.doc/as36001_.htm for node types.
         if (nodeType.startsWith("ComIbmMQ") || "ComIbmPublicationNode".equals(nodeType)) {
@@ -99,10 +100,11 @@ public class IIBEventHandler extends AbstractMQEventHandler {
                 (nodeType.startsWith("ComIbmSOAP") && !nodeType.equals("ComIbmSOAPWrapperNode") && !nodeType.equals("ComIbmSOAPExtractNode"))) {
             return processAsHttpEvent(messageId, event);
         }
+        String message = "Event with id '" + byteArrayToString(messageId) + "' has an unsupported NodeType '" + nodeType + "'. Event will not be processed.";
         if (log.isDebugLevelEnabled()) {
             log.logDebugMessage("Event with id '" + byteArrayToString(messageId) + "' has an unsupported NodeType '" + nodeType + "'. Event will not be processed.");
         }
-        return HandlerResult.failed();
+        return HandlerResult.failed(message);
     }
 
     private HandlerResult processAsMessagingEvent(byte[] messageId, Event event) {
@@ -160,28 +162,31 @@ public class IIBEventHandler extends AbstractMQEventHandler {
         }
         this.messagingTelemetryEventBuilder.addOrMergeEndpoint(endpointBuilder);
         if (event.getBitstreamData() == null || event.getBitstreamData().getBitstream() == null) {
+            String message = "Event with id '" + byteArrayToString(messageId) + "' has no bitstream. Event will not be processed.";
             if (log.isDebugLevelEnabled()) {
-                log.logDebugMessage("Event with id '" + byteArrayToString(messageId) + "' has no bitstream. Event will not be processed.");
+                log.logDebugMessage(message);
             }
-            return HandlerResult.failed();
+            return HandlerResult.failed(message);
         }
         if (!EncodingType.BASE_64_BINARY.equals(event.getBitstreamData().getBitstream().getEncoding())) {
+            String message = "Message with id '" + byteArrayToString(messageId)
+                    + "' has an unsupported bitstream encoding type '"
+                    + event.getBitstreamData().getBitstream().getEncoding().name() + "'. Use '"
+                    + EncodingType.BASE_64_BINARY.name() + "' instead.";
             if (log.isDebugLevelEnabled()) {
-                log.logDebugMessage("Message with id '" + byteArrayToString(messageId)
-                        + "' has an unsupported bitstream encoding type '"
-                        + event.getBitstreamData().getBitstream().getEncoding().name() + "'. Use '"
-                        + EncodingType.BASE_64_BINARY.name() + "' instead.");
+                log.logDebugMessage(message);
             }
-            return HandlerResult.failed();
+            return HandlerResult.failed(message);
         }
         byte[] decoded = Base64.getDecoder().decode(event.getBitstreamData().getBitstream().getValue());
         try {
             parseBitstreamAsMqMessage(event, decoded, this.messagingTelemetryEventBuilder, endpointHandlerBuilder, encoding, ccsid);
         } catch (MQDataException | IOException e) {
+            String message = "Failed to parse MQ bitstream of event with id '" + byteArrayToString(messageId) + "'.";
             if (log.isDebugLevelEnabled()) {
-                log.logDebugMessage("Failed to parse MQ bitstream of event with id '" + byteArrayToString(messageId) + "'.", e);
+                log.logDebugMessage(message, e);
             }
-            return HandlerResult.failed();
+            return HandlerResult.failed(message);
         }
         this.telemetryCommandProcessor.processTelemetryEvent(this.messagingTelemetryEventBuilder);
         return HandlerResult.processed();
@@ -234,32 +239,35 @@ public class IIBEventHandler extends AbstractMQEventHandler {
             this.httpTelemetryEventBuilder.setId(httpIdentifier);
         }
         if (event.getBitstreamData() == null || event.getBitstreamData().getBitstream() == null) {
+            String message = "Event with id '" + byteArrayToString(messageId) + "' has no bitstream. Event will not be processed.";
             if (log.isDebugLevelEnabled()) {
-                log.logDebugMessage("Event with id '" + byteArrayToString(messageId) + "' has no bitstream. Event will not be processed.");
+                log.logDebugMessage(message);
             }
-            return HandlerResult.failed();
+            return HandlerResult.failed(message);
         }
         if (!EncodingType.BASE_64_BINARY.equals(event.getBitstreamData().getBitstream().getEncoding())) {
+            String message = "Message with id '" + byteArrayToString(messageId)
+                    + "' has an unsupported bitstream encoding type '"
+                    + event.getBitstreamData().getBitstream().getEncoding().name() + "'. Use '"
+                    + EncodingType.BASE_64_BINARY.name() + "' instead.";
             if (log.isDebugLevelEnabled()) {
-                log.logDebugMessage("Message with id '" + byteArrayToString(messageId)
-                        + "' has an unsupported bitstream encoding type '"
-                        + event.getBitstreamData().getBitstream().getEncoding().name() + "'. Use '"
-                        + EncodingType.BASE_64_BINARY.name() + "' instead.");
+                log.logDebugMessage(message);
             }
-            return HandlerResult.failed();
+            return HandlerResult.failed(message);
         }
         byte[] decoded = Base64.getDecoder().decode(event.getBitstreamData().getBitstream().getValue());
         try {
             parseBitstreamAsHttpMessage(decoded, this.httpTelemetryEventBuilder, endpointBuilder, endpointHandlerBuilder, encoding, ccsid);
         } catch (UnsupportedEncodingException e) {
+            String message = "Failed to parse HTTP bitstream of event with id '" + byteArrayToString(messageId) + "'.";
             if (log.isDebugLevelEnabled()) {
-                log.logDebugMessage("Failed to parse HTTP bitstream of event with id '" + byteArrayToString(messageId) + "'.", e);
+                log.logDebugMessage(message, e);
             }
-            return HandlerResult.failed();
+            return HandlerResult.failed(message);
         }
         this.httpTelemetryEventBuilder.addOrMergeEndpoint(endpointBuilder);
         this.telemetryCommandProcessor.processTelemetryEvent(this.httpTelemetryEventBuilder);
-        return HandlerResult.failed();
+        return HandlerResult.processed();
     }
 
     private void addCorrelationInformation(Event event, TelemetryEventBuilder<?, ?> builder) {

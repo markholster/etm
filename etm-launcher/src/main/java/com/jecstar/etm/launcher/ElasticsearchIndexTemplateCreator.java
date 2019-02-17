@@ -17,28 +17,15 @@ import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
 import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalConverter;
 import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalConverterJsonImpl;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.*;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.util.BCrypt;
 import com.jecstar.etm.signaler.domain.Signal;
-import org.elasticsearch.action.admin.cluster.storedscripts.PutStoredScriptAction;
-import org.elasticsearch.action.admin.cluster.storedscripts.PutStoredScriptRequestBuilder;
 import org.elasticsearch.action.admin.indices.alias.Alias;
-import org.elasticsearch.action.admin.indices.create.CreateIndexAction;
-import org.elasticsearch.action.admin.indices.create.CreateIndexRequestBuilder;
-import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsAction;
-import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequestBuilder;
-import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
-import org.elasticsearch.action.admin.indices.settings.put.UpdateSettingsAction;
-import org.elasticsearch.action.admin.indices.settings.put.UpdateSettingsRequestBuilder;
-import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesAction;
-import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesRequestBuilder;
-import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesResponse;
-import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateAction;
-import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateRequestBuilder;
 import org.elasticsearch.action.support.ActiveShardCount;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
@@ -63,17 +50,17 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
     private final ElasticsearchSessionTags sessionTags = new ElasticsearchSessionTagsJsonImpl();
     private final EtmConfigurationConverter<String> etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
     private final EtmPrincipalConverter<String> etmPrincipalConverter = new EtmPrincipalConverterJsonImpl();
-    private final Client elasticClient;
+    private final DataRepository dataRepository;
     private EtmConfiguration etmConfiguration;
 
-    public ElasticsearchIndexTemplateCreator(Client elasticClient) {
-        this.elasticClient = elasticClient;
+    public ElasticsearchIndexTemplateCreator(DataRepository dataRepository) {
+        this.dataRepository = dataRepository;
     }
 
     public void createTemplates() {
         try {
-            GetIndexTemplatesResponse response = new GetIndexTemplatesRequestBuilder(this.elasticClient, GetIndexTemplatesAction.INSTANCE, ElasticsearchLayout.EVENT_TEMPLATE_NAME).get();
-            if (response.getIndexTemplates() == null || response.getIndexTemplates().isEmpty()) {
+            boolean templatesExist = this.dataRepository.indicesTemplatesExist(new IndexTemplatesExistRequestBuilder(ElasticsearchLayout.EVENT_TEMPLATE_NAME));
+            if (!templatesExist) {
                 creatEtmEventIndexTemplate(true, 5, 0);
                 insertPainlessScripts();
             }
@@ -85,40 +72,40 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
         }
 
         try {
-            GetIndexTemplatesResponse response = new GetIndexTemplatesRequestBuilder(this.elasticClient, GetIndexTemplatesAction.INSTANCE, ElasticsearchLayout.AUDIT_LOG_TEMPLATE_NAME).get();
-            if (response.getIndexTemplates() == null || response.getIndexTemplates().isEmpty()) {
+            boolean templatesExist = this.dataRepository.indicesTemplatesExist(new IndexTemplatesExistRequestBuilder(ElasticsearchLayout.AUDIT_LOG_TEMPLATE_NAME));
+            if (!templatesExist) {
                 creatEtmAuditLogIndexTemplate(true, 0);
             }
         } catch (IllegalArgumentException e) {
         }
 
         try {
-            GetIndexTemplatesResponse response = new GetIndexTemplatesRequestBuilder(this.elasticClient, GetIndexTemplatesAction.INSTANCE, ElasticsearchLayout.METRICS_TEMPLATE_NAME).get();
-            if (response.getIndexTemplates() == null || response.getIndexTemplates().isEmpty()) {
+            boolean templatesExist = this.dataRepository.indicesTemplatesExist(new IndexTemplatesExistRequestBuilder(ElasticsearchLayout.METRICS_TEMPLATE_NAME));
+            if (!templatesExist) {
                 creatEtmMetricsIndexTemplate(true, 0);
             }
         } catch (IllegalArgumentException e) {
         }
 
         try {
-            GetIndexTemplatesResponse response = new GetIndexTemplatesRequestBuilder(this.elasticClient, GetIndexTemplatesAction.INSTANCE, ElasticsearchLayout.CONFIGURATION_INDEX_NAME).get();
-            if (response.getIndexTemplates() == null || response.getIndexTemplates().isEmpty()) {
+            boolean templatesExist = this.dataRepository.indicesTemplatesExist(new IndexTemplatesExistRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME));
+            if (!templatesExist) {
                 creatEtmConfigurationIndexTemplate(true, 0);
             }
         } catch (IllegalArgumentException e) {
         }
 
         try {
-            GetIndexTemplatesResponse response = new GetIndexTemplatesRequestBuilder(this.elasticClient, GetIndexTemplatesAction.INSTANCE, ElasticsearchLayout.STATE_INDEX_NAME).get();
-            if (response.getIndexTemplates() == null || response.getIndexTemplates().isEmpty()) {
+            boolean templatesExist = this.dataRepository.indicesTemplatesExist(new IndexTemplatesExistRequestBuilder(ElasticsearchLayout.STATE_INDEX_NAME));
+            if (!templatesExist) {
                 creatEtmStateIndexTemplate(true, 0);
-                IndicesExistsResponse indicesExistsResponse = new IndicesExistsRequestBuilder(this.elasticClient, IndicesExistsAction.INSTANCE, ElasticsearchLayout.STATE_INDEX_NAME).get();
-                if (indicesExistsResponse == null || !indicesExistsResponse.isExists()) {
+                boolean indicesExist = this.dataRepository.indicesExist(new GetIndexRequestBuilder().setIndices(ElasticsearchLayout.STATE_INDEX_NAME));
+                if (!indicesExist) {
                     // Create the index over here because the first thing we do is getting a session from the index. If index insn't already present that get will fail with an exception.
-                    new CreateIndexRequestBuilder(this.elasticClient, CreateIndexAction.INSTANCE, ElasticsearchLayout.STATE_INDEX_NAME).setSettings(Settings.builder()
+                    CreateIndexRequestBuilder createIndexRequestBuilder = new CreateIndexRequestBuilder().setIndex(ElasticsearchLayout.STATE_INDEX_NAME).setSettings(Settings.builder()
                             .put("index.number_of_shards", 1)
-                            .put("index.number_of_replicas", 0)).get();
-
+                            .put("index.number_of_replicas", 0));
+                    this.dataRepository.indicesCreate(createIndexRequestBuilder);
                 }
             }
         } catch (IllegalArgumentException e) {
@@ -126,54 +113,54 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
     }
 
     private void insertPainlessScripts() throws IOException {
-        new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE)
+        PutStoredScriptRequestBuilder builder = new PutStoredScriptRequestBuilder()
                 .setId("etm_update-search-template").setContent(BytesReference.bytes(JsonXContent.contentBuilder().startObject()
-                .field("script").startObject()
-                .field("lang", "painless")
-                .field("source", createUpdateSearchTemplateScript())
-                .endObject()
-                .endObject()), XContentType.JSON)
-                .get();
-        new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE)
+                        .field("script").startObject()
+                        .field("lang", "painless")
+                        .field("source", createUpdateSearchTemplateScript())
+                        .endObject()
+                        .endObject()), XContentType.JSON);
+        this.dataRepository.putStoredScript(builder);
+        builder = new PutStoredScriptRequestBuilder()
                 .setId("etm_remove-search-template").setContent(BytesReference.bytes(JsonXContent.contentBuilder().startObject()
                 .field("script").startObject()
                 .field("lang", "painless")
                 .field("source", createRemoveSearchTemplateScript())
                 .endObject()
-                .endObject()), XContentType.JSON)
-                .get();
-        new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE)
+                        .endObject()), XContentType.JSON);
+        this.dataRepository.putStoredScript(builder);
+        builder = new PutStoredScriptRequestBuilder()
                 .setId("etm_update-search-history").setContent(BytesReference.bytes(JsonXContent.contentBuilder().startObject()
                 .field("script").startObject()
                 .field("lang", "painless")
                 .field("source", createUpdateSearchHistoryScript())
                 .endObject()
-                .endObject()), XContentType.JSON)
-                .get();
-        new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE)
+                        .endObject()), XContentType.JSON);
+        this.dataRepository.putStoredScript(builder);
+        builder = new PutStoredScriptRequestBuilder()
                 .setId("etm_update-event").setContent(BytesReference.bytes(JsonXContent.contentBuilder().startObject()
                 .field("script").startObject()
                 .field("lang", "painless")
                 .field("source", createUpdateEventScript())
                 .endObject()
-                .endObject()), XContentType.JSON)
-                .get();
-        new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE)
+                        .endObject()), XContentType.JSON);
+        this.dataRepository.putStoredScript(builder);
+        builder = new PutStoredScriptRequestBuilder()
                 .setId("etm_update-event-with-correlation").setContent(BytesReference.bytes(JsonXContent.contentBuilder().startObject()
                 .field("script").startObject()
                 .field("lang", "painless")
                 .field("source", createUpdateEventWithCorrelationScript())
                 .endObject()
-                .endObject()), XContentType.JSON)
-                .get();
-        new PutStoredScriptRequestBuilder(this.elasticClient, PutStoredScriptAction.INSTANCE)
+                        .endObject()), XContentType.JSON);
+        this.dataRepository.putStoredScript(builder);
+        builder = new PutStoredScriptRequestBuilder()
                 .setId("etm_update-request-with-response").setContent(BytesReference.bytes(JsonXContent.contentBuilder().startObject()
                 .field("script").startObject()
                 .field("lang", "painless")
                 .field("source", createUpdateRequestWithResponseScript())
                 .endObject()
-                .endObject()), XContentType.JSON)
-                .get();
+                        .endObject()), XContentType.JSON);
+        this.dataRepository.putStoredScript(builder);
     }
 
     /**
@@ -191,7 +178,8 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
     }
 
     private void creatEtmEventIndexTemplate(boolean create, int shardsPerIndex, int replicasPerIndex) {
-        new PutIndexTemplateRequestBuilder(this.elasticClient, PutIndexTemplateAction.INSTANCE, ElasticsearchLayout.EVENT_TEMPLATE_NAME)
+        PutIndexTemplateRequestBuilder builder = new PutIndexTemplateRequestBuilder()
+                .setName(ElasticsearchLayout.EVENT_TEMPLATE_NAME)
                 .setCreate(create)
                 .setPatterns(Collections.singletonList(ElasticsearchLayout.EVENT_INDEX_PREFIX + "*"))
                 .setSettings(Settings.builder()
@@ -199,60 +187,64 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
                         .put("index.number_of_replicas", replicasPerIndex)
                         .put("index.translog.durability", "async")
                 )
-                .addMapping(ElasticsearchLayout.ETM_DEFAULT_TYPE, createEventMapping(ElasticsearchLayout.ETM_DEFAULT_TYPE), XContentType.JSON)
-                .addAlias(new Alias(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL))
-                .get();
+                .setMapping(ElasticsearchLayout.ETM_DEFAULT_TYPE, createEventMapping(ElasticsearchLayout.ETM_DEFAULT_TYPE), XContentType.JSON)
+                .setAlias(new Alias(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL));
+        this.dataRepository.indicesPutTemplate(builder);
     }
 
     private void creatEtmMetricsIndexTemplate(boolean create, int replicasPerIndex) {
-        new PutIndexTemplateRequestBuilder(this.elasticClient, PutIndexTemplateAction.INSTANCE, ElasticsearchLayout.METRICS_TEMPLATE_NAME)
+        PutIndexTemplateRequestBuilder builder = new PutIndexTemplateRequestBuilder()
+                .setName(ElasticsearchLayout.METRICS_TEMPLATE_NAME)
                 .setCreate(create)
                 .setPatterns(Collections.singletonList(ElasticsearchLayout.METRICS_INDEX_PREFIX + "*"))
                 .setSettings(Settings.builder()
                         .put("number_of_shards", 2)
                         .put("number_of_replicas", replicasPerIndex))
-                .addMapping(ElasticsearchLayout.ETM_DEFAULT_TYPE, createMetricsMapping(ElasticsearchLayout.ETM_DEFAULT_TYPE), XContentType.JSON)
-                .addAlias(new Alias(ElasticsearchLayout.METRICS_INDEX_ALIAS_ALL))
-                .get();
+                .setMapping(ElasticsearchLayout.ETM_DEFAULT_TYPE, createMetricsMapping(ElasticsearchLayout.ETM_DEFAULT_TYPE), XContentType.JSON)
+                .setAlias(new Alias(ElasticsearchLayout.METRICS_INDEX_ALIAS_ALL));
+        this.dataRepository.indicesPutTemplate(builder);
     }
 
     private void creatEtmAuditLogIndexTemplate(boolean create, int replicasPerIndex) {
-        new PutIndexTemplateRequestBuilder(this.elasticClient, PutIndexTemplateAction.INSTANCE, ElasticsearchLayout.AUDIT_LOG_TEMPLATE_NAME)
+        PutIndexTemplateRequestBuilder builder = new PutIndexTemplateRequestBuilder()
+                .setName(ElasticsearchLayout.AUDIT_LOG_TEMPLATE_NAME)
                 .setCreate(create)
                 .setPatterns(Collections.singletonList(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + "*"))
                 .setSettings(Settings.builder()
                         .put("index.number_of_shards", 2)
                         .put("index.number_of_replicas", replicasPerIndex)
                 )
-                .addMapping(ElasticsearchLayout.ETM_DEFAULT_TYPE, createAuditMapping(ElasticsearchLayout.ETM_DEFAULT_TYPE), XContentType.JSON)
-                .addAlias(new Alias(ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL))
-                .get();
+                .setMapping(ElasticsearchLayout.ETM_DEFAULT_TYPE, createAuditMapping(ElasticsearchLayout.ETM_DEFAULT_TYPE), XContentType.JSON)
+                .setAlias(new Alias(ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL));
+        this.dataRepository.indicesPutTemplate(builder);
     }
 
     private void creatEtmConfigurationIndexTemplate(boolean create, int replicasPerIndex) {
-        new PutIndexTemplateRequestBuilder(this.elasticClient, PutIndexTemplateAction.INSTANCE, ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+        PutIndexTemplateRequestBuilder builder = new PutIndexTemplateRequestBuilder()
+                .setName(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
                 .setCreate(create)
                 .setPatterns(Collections.singletonList(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
                 .setSettings(Settings.builder()
                         .put("number_of_shards", 1)
                         .put("number_of_replicas", replicasPerIndex))
-                .addMapping(ElasticsearchLayout.ETM_DEFAULT_TYPE, createEtmConfigurationMapping(ElasticsearchLayout.ETM_DEFAULT_TYPE), XContentType.JSON)
-                .get();
+                .setMapping(ElasticsearchLayout.ETM_DEFAULT_TYPE, createEtmConfigurationMapping(ElasticsearchLayout.ETM_DEFAULT_TYPE), XContentType.JSON);
+        this.dataRepository.indicesPutTemplate(builder);
         if (create) {
-            insertDefaultEtmConfiguration(this.elasticClient);
-            insertAdminUser(this.elasticClient);
+            insertDefaultEtmConfiguration(this.dataRepository);
+            insertAdminUser(this.dataRepository);
         }
     }
 
     private void creatEtmStateIndexTemplate(boolean create, int replicasPerIndex) {
-        new PutIndexTemplateRequestBuilder(this.elasticClient, PutIndexTemplateAction.INSTANCE, ElasticsearchLayout.STATE_INDEX_NAME)
+        PutIndexTemplateRequestBuilder builder = new PutIndexTemplateRequestBuilder()
+                .setName(ElasticsearchLayout.STATE_INDEX_NAME)
                 .setCreate(create)
                 .setPatterns(Collections.singletonList(ElasticsearchLayout.STATE_INDEX_NAME))
                 .setSettings(Settings.builder()
                         .put("number_of_shards", 1)
                         .put("number_of_replicas", replicasPerIndex))
-                .addMapping(ElasticsearchLayout.ETM_DEFAULT_TYPE, createEtmStateMapping(ElasticsearchLayout.ETM_DEFAULT_TYPE), XContentType.JSON)
-                .get();
+                .setMapping(ElasticsearchLayout.ETM_DEFAULT_TYPE, createEtmStateMapping(ElasticsearchLayout.ETM_DEFAULT_TYPE), XContentType.JSON);
+        this.dataRepository.indicesPutTemplate(builder);
     }
 
     private String createEventMapping(String name) {
@@ -307,23 +299,23 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
                 + "}";
     }
 
-    private void insertDefaultEtmConfiguration(Client elasticClient) {
-        elasticClient.prepareIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_NODE_DEFAULT)
+    private void insertDefaultEtmConfiguration(DataRepository dataRepository) {
+        IndexRequestBuilder builder = new IndexRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_NODE_DEFAULT)
                 .setWaitForActiveShards(ActiveShardCount.ALL)
-                .setSource(this.etmConfigurationConverter.write(null, new EtmConfiguration("temp-for-creating-default")), XContentType.JSON)
-                .get();
+                .setSource(this.etmConfigurationConverter.write(null, new EtmConfiguration("temp-for-creating-default")), XContentType.JSON);
+        dataRepository.index(builder);
     }
 
-    private void insertAdminUser(Client elasticClient) {
+    private void insertAdminUser(DataRepository dataRepository) {
         EtmPrincipal adminUser = new EtmPrincipal("admin", BCrypt.hashpw("password", BCrypt.gensalt()));
         adminUser.addRoles(Arrays.stream(SecurityRoles.ALL_READ_WRITE_SECURITY_ROLES).collect(Collectors.toCollection(ArrayList::new)));
         adminUser.addSignalDatasources(Arrays.stream(ElasticsearchLayout.ALL_DATASOURCES).collect(Collectors.toCollection(ArrayList::new)));
         adminUser.addDashboardDatasources(Arrays.stream(ElasticsearchLayout.ALL_DATASOURCES).collect(Collectors.toCollection(ArrayList::new)));
         adminUser.setChangePasswordOnLogon(true);
-        elasticClient.prepareIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + adminUser.getId())
+        IndexRequestBuilder builder = new IndexRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + adminUser.getId())
                 .setWaitForActiveShards(ActiveShardCount.ALL)
-                .setSource(this.etmPrincipalConverter.writePrincipal(adminUser), XContentType.JSON)
-                .get();
+                .setSource(this.etmPrincipalConverter.writePrincipal(adminUser), XContentType.JSON);
+        dataRepository.index(builder);
     }
 
 
@@ -385,7 +377,7 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
 
     private String createUpdateEventWithCorrelationScript() {
         return "String correlatingId = (String)params.get(\"correlating_id\");\n" +
-                "Map targetSource = (Map)((Map)params.get(\"ctx\")).get(\"_source\");\n" +
+                "Map targetSource = (Map)ctx.get(\"_source\");\n" +
                 "\n" +
                 "List correlations = (List)targetSource.get(\"correlations\");\n" +
                 "if (correlations == null) {\n" +
@@ -495,9 +487,9 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
                 "    return updateResponseTimeInEndpointHandlers(endpoints, applicationName, handlingTime, \"WRITER\");\n" +
                 "}\n" +
                 "\n" +
-                "boolean mainMethod(Map params) {\n" +
+                "boolean mainMethod(Map ctx, Map params) {\n" +
                 "    Map inputSource = (Map)params.get(\"source\");\n" +
-                "    Map targetSource = (Map)((Map)params.get(\"ctx\")).get(\"_source\");\n" +
+                "    Map targetSource = (Map)ctx.get(\"_source\");\n" +
                 "\n" +
                 "    // Check if we have handled this message before. Each message has an unique hashcode. We keep track of this hashcode in the elasticsearch db.\n" +
                 "    // If the provided hashcode is already stored with the document we assume a duplicate offering for storage and quit processing.\n" +
@@ -523,7 +515,7 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
                 "        if (tempForCorrelations != null) {\n" +
                 "            targetSource.put(\"temp_for_correlations\", tempForCorrelations);\n" +
                 "        }\n" +
-                "        ((Map)params.get(\"ctx\")).put(\"_source\", targetSource);\n" +
+                "        ctx.put(\"_source\", targetSource);\n" +
                 "    }\n" +
                 "\n" +
                 "    // Merge several fields\n" +
@@ -651,7 +643,7 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
                 "    }\n" +
                 "    return true;\n" +
                 "}\n" +
-                "mainMethod(params);";
+                "mainMethod(ctx, params);";
     }
 
     private String createUpdateRequestWithResponseScript() {
@@ -746,9 +738,9 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
                 "\tdataForWriters.add(writer);\n" +
                 "}\n" +
                 "\n" +
-                "boolean mainMethod(Map params) {\n" +
+                "boolean mainMethod(Map ctx, Map params) {\n" +
                 "    Map inputSource = (Map)params.get(\"source\");\n" +
-                "    Map targetSource = (Map)((Map)params.get(\"ctx\")).get(\"_source\");\n" +
+                "    Map targetSource = (Map)ctx.get(\"_source\");\n" +
                 "    String inputEventId = (String)params.get(\"event_id\");\n" +
                 "\n" +
                 "    List correlations = (List)targetSource.get(\"correlations\");\n" +
@@ -844,7 +836,7 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
                 "    }\n" +
                 "    return true;\n" +
                 "}\n" +
-                "mainMethod(params);";
+                "mainMethod(ctx, params);";
     }
 
     public void addConfigurationChangeNotificationListener(EtmConfiguration etmConfiguration) {
@@ -873,12 +865,13 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
             reinitializeTemplates();
         }
         if (event.isChanged(EtmConfiguration.CONFIG_KEY_REPLICAS_PER_INDEX)) {
-            GetIndexResponse response = this.elasticClient.admin().indices().prepareGetIndex().addIndices(ElasticsearchLayout.ETM_INDEX_PREFIX + "*").get();
+            GetIndexResponse response = this.dataRepository.indicesGet(new GetIndexRequestBuilder().setIndices(ElasticsearchLayout.ETM_INDEX_PREFIX + "*"));
             String[] indices = response.getIndices();
             if (indices != null && indices.length > 0) {
-                new UpdateSettingsRequestBuilder(this.elasticClient, UpdateSettingsAction.INSTANCE, indices)
-                        .setSettings(Settings.builder().put("index.number_of_replicas", this.etmConfiguration.getReplicasPerIndex()))
-                        .get();
+
+                UpdateIndexSettingsRequestBuilder builder = new UpdateIndexSettingsRequestBuilder().setIndices(indices)
+                        .setSettings(Settings.builder().put("index.number_of_replicas", this.etmConfiguration.getReplicasPerIndex()));
+                this.dataRepository.indicesUpdateSettings(builder);
             }
         }
     }

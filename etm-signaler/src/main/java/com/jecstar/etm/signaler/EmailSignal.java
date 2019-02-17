@@ -11,12 +11,13 @@ import com.jecstar.etm.server.core.domain.principal.EtmSecurityEntity;
 import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalConverter;
 import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalConverterJsonImpl;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import com.jecstar.etm.signaler.domain.Signal;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
@@ -52,7 +53,7 @@ class EmailSignal implements Closeable {
     /**
      * Send an exceedance notification of a <code>Signal</code> by email.
      *
-     * @param client               The Elasticsearch client.
+     * @param dataRepository      The <code>DataRepository</code>.
      * @param etmConfiguration     The <code>EtmConfiguration</code> instance.
      * @param clusterName          The name of the ETM cluster.
      * @param signal               The <code>Signal</code> of which the threshold is exceeded more often that the configured limit.
@@ -60,7 +61,7 @@ class EmailSignal implements Closeable {
      * @param thresholdExceedances A <code>Map</code> with dates and their values when the threshold was exceeded.
      * @param etmSecurityEntity    An <code>EtmSecurityEntity</code> to which the <code>Signal</code> belongs.
      */
-    void sendExceedanceNotification(Client client,
+    void sendExceedanceNotification(DataRepository dataRepository,
                                     EtmConfiguration etmConfiguration,
                                     String clusterName,
                                     Signal signal,
@@ -70,12 +71,12 @@ class EmailSignal implements Closeable {
     ) {
         try {
             SessionAndTransport sessionAndTransport = getSessionAndTransport(notifier);
-            for (String recipient : determineRecipients(client, etmConfiguration, signal, etmSecurityEntity)) {
+            for (String recipient : determineRecipients(dataRepository, etmConfiguration, signal, etmSecurityEntity)) {
                 final String subject = "[" + clusterName + "] - Signal: " + signal.getName();
                 InternetAddress toAddress = new InternetAddress(recipient);
                 DateFormat dateFormat = this.defaultDateFormat;
                 NumberFormat numberFormat = this.defaultNumberFormat;
-                EtmPrincipal etmRecipient = getUserByEmail(client, etmConfiguration, recipient);
+                EtmPrincipal etmRecipient = getUserByEmail(dataRepository, etmConfiguration, recipient);
                 if (etmRecipient != null) {
                     dateFormat = etmRecipient.getISO8601DateFormat();
                     numberFormat = etmRecipient.getNumberFormat();
@@ -115,14 +116,14 @@ class EmailSignal implements Closeable {
     /**
      * Send a no longer exceedance notification of a <code>Signal</code> by email.
      *
-     * @param client            The Elasticsearch client.
+     * @param dataRepository    The <code>DataRepository</code>.
      * @param etmConfiguration  The <code>EtmConfiguration</code> instance.
      * @param clusterName       The name of the ETM cluster.
      * @param signal            The <code>Signal</code> of which the threshold is no longer exceeded.
      * @param notifier          The <code>Notifier</code> to be used to send the email.
      * @param etmSecurityEntity An <code>etmSecurityEntity</code> to which the <code>Signal</code> belongs. <code>null</code> if the
      */
-    void sendNoLongerExceededNotification(Client client,
+    void sendNoLongerExceededNotification(DataRepository dataRepository,
                                           EtmConfiguration etmConfiguration,
                                           String clusterName,
                                           Signal signal,
@@ -131,10 +132,10 @@ class EmailSignal implements Closeable {
     ) {
         try {
             SessionAndTransport sessionAndTransport = getSessionAndTransport(notifier);
-            for (String recipient : determineRecipients(client, etmConfiguration, signal, etmSecurityEntity)) {
+            for (String recipient : determineRecipients(dataRepository, etmConfiguration, signal, etmSecurityEntity)) {
                 final String subject = "[" + clusterName + "] - Signal fixed: " + signal.getName();
                 InternetAddress toAddress = new InternetAddress(recipient);
-                EtmPrincipal etmRecipient = getUserByEmail(client, etmConfiguration, recipient);
+                EtmPrincipal etmRecipient = getUserByEmail(dataRepository, etmConfiguration, recipient);
                 if (etmRecipient != null) {
                     toAddress = new InternetAddress(recipient, etmRecipient.getName());
                 }
@@ -192,20 +193,20 @@ class EmailSignal implements Closeable {
     /**
      * Determine all email recipients of a <code>Signal</code> and the owning <code>EtmGroup</code>.
      *
-     * @param client            The Elasticsearch client.
+     * @param dataRepository   The <code>DataRepository</code>.
      * @param etmConfiguration  The <code>EtmConfiguration</code> instance.
      * @param signal            The <code>Signal</code> to retrieve the recipients for.
      * @param etmSecurityEntity The <code>EtmSecurityEntity</code> if the given <code>Signal</code> is owned by an <code>EtmGroup</code>.
      * @return A <code>Set</code> with email addresses that should receive an email.
      */
-    private Set<String> determineRecipients(Client client, EtmConfiguration etmConfiguration, Signal signal, EtmSecurityEntity etmSecurityEntity) {
+    private Set<String> determineRecipients(DataRepository dataRepository, EtmConfiguration etmConfiguration, Signal signal, EtmSecurityEntity etmSecurityEntity) {
         EtmGroup etmGroup = null;
         if (etmSecurityEntity instanceof EtmGroup) {
             etmGroup = (EtmGroup) etmSecurityEntity;
         }
         Set<String> recipients = new HashSet<>(signal.getNotifications().getEmailRecipients());
         if (signal.getNotifications().getEmailAllEtmGroupMembers() != null && signal.getNotifications().getEmailAllEtmGroupMembers() && etmGroup != null) {
-            ScrollableSearch scrollableSearch = new ScrollableSearch(client, client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+            ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
                     .setQuery(QueryBuilders.boolQuery()
                             .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER))
                             .must(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getGroupsTag(), etmGroup.getName()))
@@ -227,24 +228,24 @@ class EmailSignal implements Closeable {
     /**
      * Get a user by it's email address.
      *
-     * @param client           The Elasticsearch client.
+     * @param dataRepository  The <code>DataRepository</code>.
      * @param etmConfiguration The <code>EtmConfiguration</code> instance.
      * @param email            The email address.
      * @return The first <code>EtmPrincipal</code> with the given email address, or <code>null</code> if no such principal found.
      */
-    private EtmPrincipal getUserByEmail(Client client, EtmConfiguration etmConfiguration, String email) {
-        if (client == null || etmConfiguration == null || email == null) {
+    private EtmPrincipal getUserByEmail(DataRepository dataRepository, EtmConfiguration etmConfiguration, String email) {
+        if (dataRepository == null || etmConfiguration == null || email == null) {
             // Should only be reached in test cases.
             return null;
         }
-        SearchResponse searchResponse = client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+        SearchRequestBuilder searchRequestBuilder = new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
                 .setQuery(QueryBuilders.boolQuery()
                         .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER))
                         .must(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getEmailTag(), email))
                 )
                 .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-                .setFetchSource(true)
-                .get();
+                .setFetchSource(true);
+        SearchResponse searchResponse = dataRepository.search(searchRequestBuilder);
         if (searchResponse.getHits().getHits().length > 0) {
             return this.etmPrincipalConverter.readPrincipal(searchResponse.getHits().getAt(0).getSourceAsString());
         }

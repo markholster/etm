@@ -22,9 +22,9 @@ import java.util.function.Function;
  */
 public class JsonEntityConverter<T> implements EntityConverter<T, String> {
 
-    private final LogWrapper log = LogFactory.getLogger(getClass());
+    protected final LogWrapper log = LogFactory.getLogger(getClass());
 
-    private final JsonConverter jsonConverter = new JsonConverter();
+    protected final JsonConverter jsonConverter = new JsonConverter();
 
     private final Function<Map<String, Object>, T> objectFactory;
 

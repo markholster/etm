@@ -1,9 +1,10 @@
 package com.jecstar.etm.launcher.http;
 
 import com.jecstar.etm.domain.writer.json.JsonWriter;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.ClusterHealthRequestBuilder;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 
 import javax.servlet.http.HttpServlet;
@@ -22,12 +23,12 @@ public class HealthCheckServlet extends HttpServlet {
      */
     private static final long serialVersionUID = -7829850779479859389L;
 
-    private static Client client;
+    private static DataRepository dataRepository;
 
     private final JsonWriter jsonWriter = new JsonWriter();
 
-    public static void initialize(Client client) {
-        HealthCheckServlet.client = client;
+    public static void initialize(DataRepository dataRepository) {
+        HealthCheckServlet.dataRepository = dataRepository;
     }
 
     @Override
@@ -44,7 +45,7 @@ public class HealthCheckServlet extends HttpServlet {
 
     private String getElasticsearchStatus() {
         try {
-            ClusterHealthResponse healths = client.admin().cluster().prepareHealth().setTimeout(TimeValue.timeValueSeconds(10)).get();
+            ClusterHealthResponse healths = dataRepository.clusterHealth(new ClusterHealthRequestBuilder().setTimeout(TimeValue.timeValueSeconds(10)));
             return healths.getStatus().name();
         } catch (ElasticsearchException e) {
             return "DOWN - " + e.getMessage();

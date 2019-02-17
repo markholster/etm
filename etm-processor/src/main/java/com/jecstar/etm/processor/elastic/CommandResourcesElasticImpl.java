@@ -11,13 +11,18 @@ import com.jecstar.etm.server.core.domain.configuration.ConfigurationChangedEven
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.converter.json.EndpointConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.GetRequestBuilder;
 import com.jecstar.etm.server.core.enhancers.DefaultTelemetryEventEnhancer;
 import com.jecstar.etm.server.core.persisting.TelemetryEventPersister;
 import com.jecstar.etm.server.core.persisting.elastic.*;
 import com.jecstar.etm.server.core.util.LruCache;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.bulk.BulkProcessor;
+import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.client.Client;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.common.unit.ByteSizeUnit;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
@@ -25,12 +30,13 @@ import org.elasticsearch.common.unit.TimeValue;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 public class CommandResourcesElasticImpl implements CommandResources, ConfigurationChangeListener {
 
     private static final long ENDPOINT_CACHE_VALIDITY = 60_000;
 
-    private final Client elasticClient;
+    private final DataRepository dataRepository;
     private final EtmConfiguration etmConfiguration;
     private final BulkProcessorListener bulkProcessorListener;
 
@@ -45,8 +51,8 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
 
     private final LruCache<String, EndpointConfiguration> endpointCache;
 
-    CommandResourcesElasticImpl(final Client elasticClient, final EtmConfiguration etmConfiguration, final MetricRegistry metricRegistry) {
-        this.elasticClient = elasticClient;
+    CommandResourcesElasticImpl(final DataRepository dataRepository, final EtmConfiguration etmConfiguration, final MetricRegistry metricRegistry) {
+        this.dataRepository = dataRepository;
         this.etmConfiguration = etmConfiguration;
         this.endpointCache = new LruCache<>(etmConfiguration.getEndpointConfigurationCacheSize());
         this.bulkProcessorListener = new BulkProcessorListener(metricRegistry);
@@ -87,11 +93,10 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
                 return cachedItem;
             }
         }
-        GetResponse getResponse = this.elasticClient.prepareGet(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
+        GetResponse getResponse = this.dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 ElasticsearchLayout.ETM_DEFAULT_TYPE,
                 ElasticsearchLayout.CONFIGURATION_OBJECT_ID_ENDPOINT_DEFAULT.equals(endpointName) ? ElasticsearchLayout.CONFIGURATION_OBJECT_ID_ENDPOINT_DEFAULT : ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT_ID_PREFIX + endpointName)
-                .setFetchSource(true)
-                .get();
+                .setFetchSource(true));
         if (getResponse.isExists() && !getResponse.isSourceEmpty()) {
             EndpointConfiguration loadedConfig = this.endpointConfigurationConverter.read(getResponse.getSourceAsMap());
             loadedConfig.retrievalTimestamp = System.currentTimeMillis();
@@ -126,7 +131,10 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
     }
 
     private BulkProcessor createBulkProcessor() {
-        return BulkProcessor.builder(this.elasticClient, this.bulkProcessorListener)
+        BiConsumer<BulkRequest, ActionListener<BulkResponse>> bulkConsumer =
+                (request, bulkListener) ->
+                        this.dataRepository.getClient().bulkAsync(request, RequestOptions.DEFAULT, bulkListener);
+        return BulkProcessor.builder(bulkConsumer, this.bulkProcessorListener)
                 .setBulkActions(this.etmConfiguration.getPersistingBulkCount() <= 0 ? -1 : this.etmConfiguration.getPersistingBulkCount())
                 .setBulkSize(new ByteSizeValue(this.etmConfiguration.getPersistingBulkSize() <= 0 ? -1 : this.etmConfiguration.getPersistingBulkSize(), ByteSizeUnit.BYTES))
                 .setFlushInterval(this.etmConfiguration.getPersistingBulkTime() <= 0 ? null : TimeValue.timeValueMillis(this.etmConfiguration.getPersistingBulkTime()))

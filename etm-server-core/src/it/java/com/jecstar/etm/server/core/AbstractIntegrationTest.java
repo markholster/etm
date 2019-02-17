@@ -1,18 +1,21 @@
 package com.jecstar.etm.server.core;
 
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.GetRequestBuilder;
+import org.apache.http.HttpHost;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.bulk.BulkProcessor;
+import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.TransportAddress;
-import org.elasticsearch.transport.client.PreBuiltTransportClient;
-import org.elasticsearch.xpack.client.PreBuiltXPackTransportClient;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
-import java.net.InetAddress;
+import java.util.function.BiConsumer;
 
 /**
  * Super class for all integration tests. This class requires a running
@@ -24,28 +27,21 @@ import java.net.InetAddress;
 public abstract class AbstractIntegrationTest {
 
     protected final EtmConfiguration etmConfiguration = new EtmConfiguration("integration-test");
-    private Client client;
     protected BulkProcessor bulkProcessor;
-    private final String elasticCredentials = "elastic:5+2vTgPUNPxJas*LBm9~";
+    private DataRepository dataRepository;
 
-    protected abstract BulkProcessor.Listener createBuilkListener();
+    protected abstract BulkProcessor.Listener createBulkListener();
 
     @BeforeEach
     public void setup() {
         this.etmConfiguration.setEventBufferSize(1);
-        Settings.Builder builder = Settings.builder()
-                .put("cluster.name", "Enterprise Telemetry Monitor")
-                .put("client.transport.sniff", false);
-        TransportClient transportClient = null;
-        if (this.elasticCredentials != null) {
-            builder.put("xpack.security.user", elasticCredentials);
-            transportClient = new PreBuiltXPackTransportClient(builder.build());
-        } else {
-            transportClient = new PreBuiltTransportClient(builder.build());
-        }
-        transportClient.addTransportAddress(new TransportAddress(InetAddress.getLoopbackAddress(), 9300));
-        this.client = transportClient;
-        this.bulkProcessor = BulkProcessor.builder(this.client, createBuilkListener())
+        RestHighLevelClient highLevelClient = new RestHighLevelClient(RestClient.builder(HttpHost.create("127.0.0.1:9200")));
+        this.dataRepository = new DataRepository(highLevelClient);
+
+        BiConsumer<BulkRequest, ActionListener<BulkResponse>> bulkConsumer =
+                (request, bulkListener) ->
+                        highLevelClient.bulkAsync(request, RequestOptions.DEFAULT, bulkListener);
+        this.bulkProcessor = BulkProcessor.builder(bulkConsumer, createBulkListener())
                 .setBulkActions(1)
                 .build();
     }
@@ -64,7 +60,7 @@ public abstract class AbstractIntegrationTest {
     protected GetResponse waitFor(String index, String type, String id, Long version) throws InterruptedException {
         long startTime = System.currentTimeMillis();
         do {
-            GetResponse getResponse = this.client.prepareGet(index, type, id).get();
+            GetResponse getResponse = this.dataRepository.get(new GetRequestBuilder(index, type, id));
             if (getResponse.isExists()) {
                 if (version == null || getResponse.getVersion() == version) {
                     return getResponse;

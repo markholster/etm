@@ -9,7 +9,8 @@ import com.jecstar.etm.server.core.domain.aggregator.bucket.BucketAggregator;
 import com.jecstar.etm.server.core.domain.aggregator.bucket.DateHistogramBucketAggregator;
 import com.jecstar.etm.server.core.domain.aggregator.bucket.SignificantTermBucketAggregator;
 import com.jecstar.etm.server.core.domain.aggregator.bucket.TermBucketAggregator;
-import org.elasticsearch.action.search.SearchRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
 
 import java.util.stream.Collectors;
 
@@ -88,10 +89,10 @@ public abstract class AxesGraph<T extends AxesGraph> extends Graph<T> {
     }
 
     @Override
-    public void addAggregators(SearchRequestBuilder searchRequest) {
+    public void addAggregators(SearchRequestBuilder searchRequestBuilder) {
         BucketAggregator bucketAggregator = getXAxis().getBucketAggregator().clone();
         bucketAggregator.addAggregators(getYAxis().getAggregators().stream().map(Aggregator::clone).collect(Collectors.toList()));
-        searchRequest.addAggregation(bucketAggregator.toAggregationBuilder());
+        searchRequestBuilder.addAggregation(bucketAggregator.toAggregationBuilder());
     }
 
     @Override
@@ -118,9 +119,9 @@ public abstract class AxesGraph<T extends AxesGraph> extends Graph<T> {
     }
 
     @Override
-    public void prepareForSearch(SearchRequestBuilder searchRequest) {
-        getXAxis().getBucketAggregator().prepareForSearch(searchRequest);
-        getYAxis().getAggregators().stream().filter(p -> p instanceof BucketAggregator).forEach(c -> ((BucketAggregator) c).prepareForSearch(searchRequest));
+    public void prepareForSearch(final DataRepository dataRepository, final SearchRequestBuilder searchRequestBuilder) {
+        getXAxis().getBucketAggregator().prepareForSearch(dataRepository, searchRequestBuilder);
+        getYAxis().getAggregators().stream().filter(p -> p instanceof BucketAggregator).forEach(c -> ((BucketAggregator) c).prepareForSearch(dataRepository, searchRequestBuilder));
     }
 }
 

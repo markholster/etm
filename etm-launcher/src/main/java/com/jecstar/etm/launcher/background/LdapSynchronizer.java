@@ -5,14 +5,16 @@ import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalTagsJsonImpl;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.DeleteRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.UpdateRequestBuilder;
 import com.jecstar.etm.server.core.ldap.Directory;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import com.jecstar.etm.server.core.rest.AbstractJsonService;
 import com.jecstar.etm.server.core.util.ObjectUtils;
-import org.elasticsearch.action.search.SearchRequestBuilder;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 
@@ -33,12 +35,12 @@ public class LdapSynchronizer extends AbstractJsonService implements Runnable {
     private static final LogWrapper log = LogFactory.getLogger(LdapSynchronizer.class);
 
     private final EtmConfiguration etmConfiguration;
-    private final Client client;
+    private final DataRepository dataRepository;
     private final EtmPrincipalTags tags = new EtmPrincipalTagsJsonImpl();
 
-    public LdapSynchronizer(final EtmConfiguration etmConfiguration, final Client client) {
+    public LdapSynchronizer(final EtmConfiguration etmConfiguration, final DataRepository dataRepository) {
         this.etmConfiguration = etmConfiguration;
-        this.client = client;
+        this.dataRepository = dataRepository;
     }
 
     @Override
@@ -54,7 +56,7 @@ public class LdapSynchronizer extends AbstractJsonService implements Runnable {
             log.logDebugMessage("Start synchronizing LDAP directory.");
         }
         try {
-            SearchRequestBuilder searchRequestBuilder = enhanceRequest(client.prepareSearch(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
+            SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
                     .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                     .setFetchSource(new String[]{
                             ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.tags.getIdTag(),
@@ -69,7 +71,7 @@ public class LdapSynchronizer extends AbstractJsonService implements Runnable {
                                     QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.tags.getLdapBaseTag(), true)
                             )
                     );
-            ScrollableSearch scrollableSearch = new ScrollableSearch(client, searchRequestBuilder);
+            ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
             if (!scrollableSearch.hasNext()) {
                 return;
             }
@@ -84,10 +86,10 @@ public class LdapSynchronizer extends AbstractJsonService implements Runnable {
                     if (log.isInfoLevelEnabled()) {
                         log.logInfoMessage("User with id '" + userId + "' no longer found in LDAP directory. Removing user.");
                     }
-                    enhanceRequest(
-                            this.client.prepareDelete(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId),
+                    this.dataRepository.delete(enhanceRequest(
+                            new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId),
                             etmConfiguration
-                    ).get();
+                    ));
                 } else {
                     updateLdapPrincipalWhenChanged(values, principal);
                 }
@@ -122,13 +124,13 @@ public class LdapSynchronizer extends AbstractJsonService implements Runnable {
             userObject.put(this.tags.getNameTag(), ldapPrincipal.getName());
             userObject.put(this.tags.getEmailTag(), ldapPrincipal.getEmailAddress());
             updateMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, userObject);
-            enhanceRequest(
-                    client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + ldapPrincipal.getId()),
+            this.dataRepository.update(enhanceRequest(
+                    new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + ldapPrincipal.getId()),
                     etmConfiguration
-            )
+                    )
                     .setDoc(updateMap)
                     .setDetectNoop(true)
-                    .get();
+            );
         }
 
     }

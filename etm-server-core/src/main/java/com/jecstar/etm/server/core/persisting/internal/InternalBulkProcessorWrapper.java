@@ -8,17 +8,20 @@ import com.jecstar.etm.server.core.domain.converter.json.BusinessTelemetryEventC
 import com.jecstar.etm.server.core.domain.converter.json.LogTelemetryEventConverterJsonImpl;
 import com.jecstar.etm.server.core.persisting.elastic.BusinessTelemetryEventPersister;
 import com.jecstar.etm.server.core.persisting.elastic.LogTelemetryEventPersister;
+import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkProcessor.Listener;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.client.Client;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.unit.ByteSizeUnit;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 /**
  * Bulk processor for ETM internal logging. Used for persisting events without
@@ -55,8 +58,13 @@ public class InternalBulkProcessorWrapper implements AutoCloseable {
         }
     }
 
-    public void setClient(Client elasticClient) {
-        this.bulkProcessor = BulkProcessor.builder(elasticClient, new Listener() {
+    public void setClient(RestHighLevelClient client) {
+        BiConsumer<BulkRequest, ActionListener<BulkResponse>> bulkConsumer =
+                (request, bulkListener) ->
+                        client.bulkAsync(request, RequestOptions.DEFAULT, bulkListener);
+
+
+        this.bulkProcessor = BulkProcessor.builder(bulkConsumer, new Listener() {
                     @Override
                     public void beforeBulk(long executionId, BulkRequest request) {
                     }

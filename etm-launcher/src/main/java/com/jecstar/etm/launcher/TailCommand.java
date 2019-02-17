@@ -4,9 +4,9 @@ import com.jecstar.etm.domain.writer.TelemetryEventTags;
 import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
 import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
-import org.elasticsearch.action.search.SearchRequestBuilder;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.MatchAllQueryBuilder;
@@ -24,25 +24,26 @@ import java.util.Map;
 
 class TailCommand extends AbstractCommand {
 
-    private Client elasticClient;
+    private DataRepository dateRepository;
 
     private final TelemetryEventTags tags = new TelemetryEventTagsJsonImpl();
     private final DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
     private final String timestampField = this.tags.getEndpointsTag() + "." + this.tags.getEndpointHandlersTag() + "." + this.tags.getEndpointHandlerHandlingTimeTag();
 
     void tail(Configuration configuration) {
-        if (this.elasticClient != null) {
+        if (this.dateRepository != null) {
             return;
         }
         addShutdownHooks();
-        this.elasticClient = createElasticsearchClient(configuration);
-        SearchRequestBuilder builder = this.elasticClient.prepareSearch(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL)
+        this.dateRepository = createElasticsearchClient(configuration);
+        SearchRequestBuilder builder = new SearchRequestBuilder()
+                .setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL)
                 .setQuery(new BoolQueryBuilder().must(new MatchAllQueryBuilder()).filter(getFilterQuery()))
                 .setFetchSource(getDisplayFields(), null)
                 .setSize(50)
-                .addSort(this.timestampField, SortOrder.DESC)
+                .setSort(this.timestampField, SortOrder.DESC)
                 .setTimeout(TimeValue.timeValueSeconds(30));
-        SearchHits hits = builder.get().getHits();
+        SearchHits hits = this.dateRepository.search(builder).getHits();
         LastPrinted lastPrinted = new LastPrinted();
         if (hits != null) {
             for (int i = hits.getHits().length - 1; i >= 0; i--) {
@@ -58,12 +59,14 @@ class TailCommand extends AbstractCommand {
             if (Thread.interrupted()) {
                 break;
             }
-            builder = this.elasticClient.prepareSearch(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL)
+            builder = new SearchRequestBuilder()
+                    .setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL)
                     .setQuery(new BoolQueryBuilder().must(new MatchAllQueryBuilder()).filter(getFilterQuery().must(new RangeQueryBuilder(this.timestampField).gte(lastPrinted.timestamp))))
                     .setFetchSource(getDisplayFields(), null)
-                    .addSort(this.timestampField, SortOrder.ASC)
+                    .setSize(50)
+                    .setSort(this.timestampField, SortOrder.DESC)
                     .setTimeout(TimeValue.timeValueSeconds(30));
-            ScrollableSearch searchHits = new ScrollableSearch(this.elasticClient, builder);
+            ScrollableSearch searchHits = new ScrollableSearch(this.dateRepository, builder);
             boolean lastFound = false;
             for (SearchHit searchHit : searchHits) {
                 if (searchHit.getId().equals(lastPrinted.id)) {
@@ -119,9 +122,9 @@ class TailCommand extends AbstractCommand {
 
     private void addShutdownHooks() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            if (TailCommand.this.elasticClient != null) {
+            if (TailCommand.this.dateRepository != null) {
                 try {
-                    TailCommand.this.elasticClient.close();
+                    TailCommand.this.dateRepository.close();
                 } catch (Throwable t) {
                 }
             }

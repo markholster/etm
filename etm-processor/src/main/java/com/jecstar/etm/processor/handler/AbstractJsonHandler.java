@@ -20,7 +20,7 @@ public abstract class AbstractJsonHandler {
     /**
      * The <code>LogWrapper</code> for this class.
      */
-    private final LogWrapper log = LogFactory.getLogger(getClass());
+    protected final LogWrapper log = LogFactory.getLogger(getClass());
 
     protected final ObjectMapper objectMapper = new ObjectMapper();
     protected final TelemetryEventTags tags = new TelemetryEventTagsJsonImpl();
@@ -96,7 +96,7 @@ public abstract class AbstractJsonHandler {
     private void handleEvent(Map<String, Object> event, HandlerResults results) {
         TelemetryCommand.CommandType commandType = determineCommandType(event);
         if (commandType == null) {
-            results.addHandlerResult(HandlerResult.failed());
+            results.addHandlerResult(HandlerResult.failed("Unable to determine command type"));
         } else {
             Map<String, Object> eventData = (Map<String, Object>) event.get("data");
             process(commandType, eventData);

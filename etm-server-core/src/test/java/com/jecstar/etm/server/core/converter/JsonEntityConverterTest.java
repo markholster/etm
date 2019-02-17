@@ -3,6 +3,7 @@ package com.jecstar.etm.server.core.converter;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -159,8 +160,8 @@ class JsonEntityConverterTest {
     @Test
     void testInstantConversion() {
         InstantAnnotatedClass entity = new InstantAnnotatedClass();
-        Instant instant1 = Instant.now();
-        Instant instant2 = Instant.now();
+        Instant instant1 = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+        Instant instant2 = Instant.now().truncatedTo(ChronoUnit.MILLIS);
         entity.setFirstValue(instant1);
         entity.setSecondValue(instant2);
 

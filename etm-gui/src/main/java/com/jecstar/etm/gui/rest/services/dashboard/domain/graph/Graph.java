@@ -2,7 +2,8 @@ package com.jecstar.etm.gui.rest.services.dashboard.domain.graph;
 
 import com.jecstar.etm.domain.writer.json.JsonWriter;
 import com.jecstar.etm.server.core.converter.JsonField;
-import org.elasticsearch.action.search.SearchRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
 
 public abstract class Graph<T extends Graph> {
 
@@ -52,7 +53,8 @@ public abstract class Graph<T extends Graph> {
     /**
      * Prepares the <code>Graph</code> for the search to be executed. This gives <code>Aggregator</code>s the option to configure themselves in the context of the search to be executed. As an example <code>Aggregator</code>s with an automatic range can determine their range by inspecting the range configured in the query.
      *
-     * @param searchRequest The <code>SearchRequestBuilder</code> to be executed in the next step.
+     * @param dataRepository        The <code>DataRepository</code>.
+     * @param searchRequestBuilder  The <code>SearchRequestBuilder</code> to be executed in the next step.
      */
-    public abstract void prepareForSearch(SearchRequestBuilder searchRequest);
+    public abstract void prepareForSearch(DataRepository dataRepository, SearchRequestBuilder searchRequestBuilder);
 }

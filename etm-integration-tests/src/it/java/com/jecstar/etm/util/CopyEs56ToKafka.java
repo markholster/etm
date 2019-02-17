@@ -1,30 +1,29 @@
 package com.jecstar.etm.util;
 
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
+import org.apache.http.HttpHost;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.elasticsearch.action.search.SearchRequestBuilder;
-import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.TransportAddress;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestClientBuilder;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.SortBuilders;
-import org.elasticsearch.transport.client.PreBuiltTransportClient;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Properties;
 
 public class CopyEs56ToKafka {
 
-    private static final String ES_CLUSTER_NAME = "etm2-acceptatie";
 
-    public static void main(String[] args) throws UnknownHostException {
+    @SuppressWarnings("unchecked")
+    public static void main(String[] args) {
         Properties props = new Properties();
         props.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:9092");
         props.put(ProducerConfig.ACKS_CONFIG, "all");
@@ -36,20 +35,18 @@ public class CopyEs56ToKafka {
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
         KafkaProducer kafkaProducer = new KafkaProducer(props);
 
-        Settings.Builder settingsBuilder = Settings.builder()
-                .put("cluster.name", ES_CLUSTER_NAME)
-                .put("client.transport.sniff", true);
-        TransportClient client = new PreBuiltTransportClient(settingsBuilder.build())
-                .addTransportAddress(new TransportAddress(InetAddress.getByName("127.0.0.1"), 9300));
+        RestClientBuilder restClientBuilder = RestClient.builder(HttpHost.create("http://127.0.0.1:9200"));
+        RestHighLevelClient client = new RestHighLevelClient(restClientBuilder);
+        DataRepository dataRepository = new DataRepository(client);
 
-        SearchRequestBuilder searchRequestBuilder = client.prepareSearch(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL)
+        SearchRequestBuilder searchRequestBuilder = new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL)
                 .setQuery(QueryBuilders.matchAllQuery())
                 .setTimeout(TimeValue.timeValueSeconds(30))
-                .addSort(SortBuilders.fieldSort("_doc"))
+                .setSort(SortBuilders.fieldSort("_doc"))
                 .setFetchSource(true);
 
 
-        ScrollableSearch searchHits = new ScrollableSearch(client, searchRequestBuilder);
+        ScrollableSearch searchHits = new ScrollableSearch(dataRepository, searchRequestBuilder);
         int i = 1;
         while (searchHits.hasNext()) {
             SearchHit searchHit = searchHits.next();

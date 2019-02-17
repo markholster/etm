@@ -9,15 +9,14 @@ import com.consol.citrus.selenium.endpoint.SeleniumBrowser;
 import com.jecstar.etm.gui.AbstractCitrusSeleniumTest;
 import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
 import com.jecstar.etm.server.core.ldap.EmbeddableLdapServer;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 
 import java.time.Month;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(CitrusExtension.class)
 public class ClusterSettingsIntegrationTest extends AbstractCitrusSeleniumTest {
 
@@ -43,6 +42,12 @@ public class ClusterSettingsIntegrationTest extends AbstractCitrusSeleniumTest {
             this.server.stopServer();
             this.server = null;
         }
+    }
+
+    @AfterAll
+    private void afterAll() {
+        this.firefox.stop();
+        this.chrome.stop();
     }
 
     @Test

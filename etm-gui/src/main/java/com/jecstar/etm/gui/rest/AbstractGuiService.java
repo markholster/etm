@@ -4,9 +4,10 @@ import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.principal.EtmGroup;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalConverterJsonImpl;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.GetRequestBuilder;
 import com.jecstar.etm.server.core.rest.AbstractJsonService;
 import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.client.Client;
 
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.SecurityContext;
@@ -28,15 +29,14 @@ public abstract class AbstractGuiService extends AbstractJsonService {
      * @param groupName The name of the <code>EtmGroup</code> to load.
      * @return The <code>EtmGroup</code> with the given groupName, or <code>null</code> when no such group exists.
      */
-    protected EtmGroup getEtmGroup(Client client, String groupName) {
+    protected EtmGroup getEtmGroup(DataRepository dataRepository, String groupName) {
         if (groupName == null) {
             return null;
         }
-        GetResponse getResponse = client.prepareGet(
+        GetResponse getResponse = dataRepository.get(new GetRequestBuilder(
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 ElasticsearchLayout.ETM_DEFAULT_TYPE,
-                ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName)
-                .get();
+                ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName));
         if (!getResponse.isExists()) {
             return null;
         }

@@ -31,8 +31,8 @@ class InstantAnnotatedClass {
     public boolean equals(Object obj) {
         if (obj instanceof InstantAnnotatedClass) {
             InstantAnnotatedClass other = (InstantAnnotatedClass) obj;
-            return Objects.equals(getFirstValue() == null ? null : getFirstValue(), other.getFirstValue() == null ? null : other.getFirstValue())
-                    && Objects.equals(getSecondValue() == null ? null : getSecondValue(), other.getSecondValue() == null ? null : other.getSecondValue());
+            return Objects.equals(getFirstValue(), other.getFirstValue())
+                    && Objects.equals(getSecondValue(), other.getSecondValue());
         }
         return super.equals(obj);
     }

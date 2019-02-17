@@ -14,7 +14,9 @@ import com.jecstar.etm.domain.writer.json.LogTelemetryEventWriterJsonImpl;
 import com.jecstar.etm.domain.writer.json.MessagingTelemetryEventWriterJsonImpl;
 import com.jecstar.etm.domain.writer.json.SqlTelemetryEventWriterJsonImpl;
 import com.jecstar.etm.gui.AbstractCitrusSeleniumTest;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -30,6 +32,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(CitrusExtension.class)
 public class SearchIntegrationTest extends AbstractCitrusSeleniumTest {
 
@@ -44,6 +47,12 @@ public class SearchIntegrationTest extends AbstractCitrusSeleniumTest {
 
     @CitrusEndpoint(name = "chrome")
     private SeleniumBrowser chrome;
+
+    @AfterAll
+    private void afterAll() {
+        this.firefox.stop();
+        this.chrome.stop();
+    }
 
     @Test
     @CitrusTest
@@ -103,6 +112,7 @@ public class SearchIntegrationTest extends AbstractCitrusSeleniumTest {
         runner.selenium(action -> action.setInput("").element(By.id("query-string-till")));
         runner.selenium(action -> action.setInput(query).element(By.id("query-string")));
         runner.selenium(action -> action.click().element(By.id("btn-search")));
+        waitForAjaxToComplete(runner);
         // Check the response table
         runner.selenium(action -> action.waitUntil().visible().element(By.id("result_card")));
         runner.selenium(action -> action.waitUntil().visible().element(By.id("search_result_table")));

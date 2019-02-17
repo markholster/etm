@@ -1,13 +1,14 @@
 package com.jecstar.etm.gui.rest;
 
 import com.jecstar.etm.gui.rest.services.dashboard.DashboardService;
+import com.jecstar.etm.gui.rest.services.iib.IIBService;
 import com.jecstar.etm.gui.rest.services.search.SearchService;
 import com.jecstar.etm.gui.rest.services.settings.AuditService;
 import com.jecstar.etm.gui.rest.services.settings.SettingsService;
 import com.jecstar.etm.gui.rest.services.signal.SignalService;
 import com.jecstar.etm.gui.rest.services.user.UserService;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
-import org.elasticsearch.client.Client;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 
 import javax.ws.rs.core.Application;
 import java.util.HashSet;
@@ -15,15 +16,15 @@ import java.util.Set;
 
 public class RestGuiApplication extends Application {
 
-    public RestGuiApplication(Client client, EtmConfiguration etmConfiguration) {
-        SearchService.initialize(client, etmConfiguration);
-        UserService.initialize(client, etmConfiguration);
-        SettingsService.initialize(client, etmConfiguration);
-        AuditService.initialize(client, etmConfiguration);
-        DashboardService.initialize(client, etmConfiguration);
-        SignalService.initialize(client, etmConfiguration);
+    public RestGuiApplication(DataRepository dataRepository, EtmConfiguration etmConfiguration) {
+        SearchService.initialize(dataRepository, etmConfiguration);
+        UserService.initialize(dataRepository, etmConfiguration);
+        SettingsService.initialize(dataRepository, etmConfiguration);
+        AuditService.initialize(dataRepository, etmConfiguration);
+        DashboardService.initialize(dataRepository, etmConfiguration);
+        SignalService.initialize(dataRepository, etmConfiguration);
         if (IIBApi.IIB_PROXY_ON_CLASSPATH) {
-            com.jecstar.etm.gui.rest.services.iib.IIBService.initialize(client, etmConfiguration);
+            IIBService.initialize(dataRepository, etmConfiguration);
         }
     }
 

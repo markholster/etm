@@ -31,7 +31,7 @@ spec:
       - name: "etm"
         env:
         - name: elasticsearch_connectAddresses
-          value: "elasticsearch-client:9300"
+          value: "elasticsearch-client:9200"
         - name: elasticsearch_clusterName
           value: etm-demo-01
         - name: instanceName

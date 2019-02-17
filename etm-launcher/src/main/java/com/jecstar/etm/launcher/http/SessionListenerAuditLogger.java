@@ -5,6 +5,8 @@ import com.jecstar.etm.server.core.domain.audit.converter.LogoutAuditLogConverte
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.IndexRequestBuilder;
 import com.jecstar.etm.server.core.util.DateUtils;
 import io.undertow.security.api.AuthenticatedSessionManager.AuthenticatedSession;
 import io.undertow.server.HttpServerExchange;
@@ -12,7 +14,6 @@ import io.undertow.server.session.Session;
 import io.undertow.server.session.SessionListener;
 import io.undertow.servlet.handlers.security.CachedAuthenticatedSessionHandler;
 import org.elasticsearch.action.support.ActiveShardCount;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 
@@ -23,12 +24,12 @@ class SessionListenerAuditLogger implements SessionListener {
 
     private static final DateTimeFormatter dateTimeFormatterIndexPerDay = DateUtils.getIndexPerDayFormatter();
 
-    private final Client client;
+    private final DataRepository dataRepository;
     private final EtmConfiguration etmConfiguration;
     private final LogoutAuditLogConverter auditLogConverter = new LogoutAuditLogConverter();
 
-    public SessionListenerAuditLogger(Client client, EtmConfiguration etmConfiguration) {
-        this.client = client;
+    public SessionListenerAuditLogger(DataRepository dataRepository, EtmConfiguration etmConfiguration) {
+        this.dataRepository = dataRepository;
         this.etmConfiguration = etmConfiguration;
     }
 
@@ -36,11 +37,13 @@ class SessionListenerAuditLogger implements SessionListener {
         Instant now = Instant.now();
         LogoutAuditLogBuilder auditLogBuilder = new LogoutAuditLogBuilder().setTimestamp(now).setHandlingTime(now)
                 .setPrincipalId(id).setExpired(expired);
-        client.prepareIndex(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now),
+        dataRepository.indexAsync(new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now),
                 ElasticsearchLayout.ETM_DEFAULT_TYPE)
-                .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
-                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-                .setSource(this.auditLogConverter.write(auditLogBuilder.build()), XContentType.JSON).execute();
+                        .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
+                        .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
+                        .setSource(this.auditLogConverter.write(auditLogBuilder.build()), XContentType.JSON)
+                , DataRepository.noopActionListener()
+        );
     }
 
     private ActiveShardCount getActiveShardCount(EtmConfiguration etmConfiguration) {

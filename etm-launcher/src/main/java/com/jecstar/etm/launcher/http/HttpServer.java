@@ -8,6 +8,7 @@ import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.rest.RestTelemetryEventProcessorApplication;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.ssl.SSLContextBuilder;
@@ -27,7 +28,6 @@ import io.undertow.server.handlers.resource.ResourceHandler;
 import io.undertow.server.session.SessionAttachmentHandler;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.*;
-import org.elasticsearch.client.Client;
 import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
 import org.jboss.resteasy.spi.ResteasyDeployment;
 
@@ -57,8 +57,8 @@ public class HttpServer {
             final Configuration configuration,
             final EtmConfiguration etmConfiguration,
             final TelemetryCommandProcessor processor,
-            final Client client) {
-        this.sessionManagerFactory = new ElasticsearchSessionManagerFactory(client, etmConfiguration);
+            final DataRepository dataRepository) {
+        this.sessionManagerFactory = new ElasticsearchSessionManagerFactory(dataRepository, etmConfiguration);
         final PathHandler root = Handlers.path();
         this.shutdownHandler = Handlers.gracefulShutdown(root);
         final ServletContainer container = ServletContainer.Factory.newInstance();
@@ -101,7 +101,7 @@ public class HttpServer {
             }
         }
         this.server = builder.setHandler(root).build();
-        SessionListenerAuditLogger sessionListenerAuditLogger = new SessionListenerAuditLogger(client, etmConfiguration);
+        SessionListenerAuditLogger sessionListenerAuditLogger = new SessionListenerAuditLogger(dataRepository, etmConfiguration);
         final ServletSessionConfig servletSessionConfig = new ServletSessionConfig();
         servletSessionConfig.setHttpOnly(true).setSecure(configuration.http.secureCookies);
 
@@ -135,7 +135,7 @@ public class HttpServer {
             }
         }
         if (configuration.http.guiEnabled) {
-            DeploymentInfo di = createGuiDeploymentInfo(client, identityManager, etmConfiguration);
+            DeploymentInfo di = createGuiDeploymentInfo(dataRepository, identityManager, etmConfiguration);
             di.setDefaultSessionTimeout(new Long(etmConfiguration.getSessionTimeout() / 1000).intValue());
             di.setServletSessionConfig(servletSessionConfig);
             DeploymentManager manager = container.addDeployment(di);
@@ -170,7 +170,7 @@ public class HttpServer {
         }
         // Add the healthcheck servlet
         try {
-            HealthCheckServlet.initialize(client);
+            HealthCheckServlet.initialize(dataRepository);
             DeploymentInfo di = Servlets.deployment()
                     .setClassLoader(HealthCheckServlet.class.getClassLoader())
                     .setContextPath("/")
@@ -236,9 +236,9 @@ public class HttpServer {
         return di;
     }
 
-    private DeploymentInfo createGuiDeploymentInfo(Client client, IdentityManager identityManager, EtmConfiguration etmConfiguration) {
+    private DeploymentInfo createGuiDeploymentInfo(DataRepository dataRepository, IdentityManager identityManager, EtmConfiguration etmConfiguration) {
         final String contextRoot = "/gui";
-        RestGuiApplication guiApplication = new RestGuiApplication(client, etmConfiguration);
+        RestGuiApplication guiApplication = new RestGuiApplication(dataRepository, etmConfiguration);
         ResteasyDeployment deployment = new ResteasyDeployment();
         deployment.setApplication(guiApplication);
         deployment.getProviderClasses().add(EtmExceptionMapper.class.getName());

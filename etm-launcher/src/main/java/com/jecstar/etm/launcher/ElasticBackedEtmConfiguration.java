@@ -4,14 +4,17 @@ import com.jecstar.etm.server.core.domain.configuration.*;
 import com.jecstar.etm.server.core.domain.configuration.converter.EtmConfigurationConverter;
 import com.jecstar.etm.server.core.domain.configuration.converter.LdapConfigurationConverter;
 import com.jecstar.etm.server.core.domain.configuration.converter.json.EtmConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.SyncActionListener;
+import com.jecstar.etm.server.core.elasticsearch.builder.GetRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.IndicesStatsRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.domain.IndicesStatsResponse;
 import com.jecstar.etm.server.core.ldap.Directory;
 import com.jecstar.etm.server.core.util.DateUtils;
-import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.ActionListener;
-import org.elasticsearch.action.admin.indices.stats.IndicesStatsResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.Client;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
 
@@ -22,7 +25,7 @@ import java.util.Map;
 public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 
     private static final DateTimeFormatter dateTimeFormatterIndexPerDay = DateUtils.getIndexPerDayFormatter();
-    private final Client elasticClient;
+    private final DataRepository dataRepository;
     private final String elasticsearchIndexName;
     private final EtmConfigurationConverter<String> etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
     private final LdapConfigurationConverter ldapConfigurationConverter = new LdapConfigurationConverter();
@@ -35,11 +38,11 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
     /**
      * Creates a new <code>ElasticBackedEtmConfiguration</code> instance.
      *
-     * @param nodeName      The name of the node this instance is running on.
-     * @param elasticClient The elasticsearch client.
+     * @param nodeName          The name of the node this instance is running on.
+     * @param dataRepository    The <code>DataRepository</code>.
      */
-    public ElasticBackedEtmConfiguration(String nodeName, final Client elasticClient) {
-        this(nodeName, elasticClient, ElasticsearchLayout.CONFIGURATION_INDEX_NAME);
+    ElasticBackedEtmConfiguration(String nodeName, final DataRepository dataRepository) {
+        this(nodeName, dataRepository, ElasticsearchLayout.CONFIGURATION_INDEX_NAME);
     }
 
     /**
@@ -48,13 +51,13 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
      * This constructor is mainly used when converting the database by an <code>EtmMigrator</code>.
      *
      * @param nodeName               The name of the node this instance is running on.
-     * @param elasticClient          The elasticsearch client.
+     * @param dataRepository         The <code>DataRepository</code>.
      * @param elasticsearchIndexName The name of the elasticsearch index to load the data from.
      */
-    public ElasticBackedEtmConfiguration(String nodeName, final Client elasticClient, String elasticsearchIndexName) {
+    public ElasticBackedEtmConfiguration(String nodeName, final DataRepository dataRepository, String elasticsearchIndexName) {
         super(nodeName);
         this.elasticsearchIndexName = elasticsearchIndexName;
-        this.elasticClient = elasticClient;
+        this.dataRepository = dataRepository;
         reloadConfigurationWhenNecessary();
     }
 
@@ -252,24 +255,26 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
         if (System.currentTimeMillis() - this.lastCheckedForUpdates <= updateCheckInterval) {
             return false;
         }
+        this.lastCheckedForUpdates = System.currentTimeMillis();
 
         String indexNameOfToday = ElasticsearchLayout.EVENT_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now());
-        this.elasticClient.admin().indices().prepareStats(indexNameOfToday)
-                .clear()
-                .setStore(true)
-                .execute(new ActionListener<IndicesStatsResponse>() {
+        this.dataRepository.indicesGetStatsAsync(new IndicesStatsRequestBuilder()
+                        .setIndices(indexNameOfToday)
+                        .clear()
+                        .setStore(true),
+                new ActionListener<IndicesStatsResponse>() {
                     @Override
                     public void onResponse(IndicesStatsResponse response) {
-                        sizePersistedToday = response.getTotal().store.getSizeInBytes();
+                        sizePersistedToday = response.getPrimaries().getStore().getSizeInBytes();
                     }
 
                     @Override
                     public void onFailure(Exception e) {
                     }
                 });
-        this.elasticClient.prepareSearch(indexNameOfToday)
-                .setQuery(new BoolQueryBuilder().mustNot(new QueryStringQueryBuilder("endpoints.endpoint_handlers.application.name: \"Enterprise Telemetry Monitor\"")))
-                .execute(new ActionListener<SearchResponse>() {
+        this.dataRepository.searchAsync(
+                new SearchRequestBuilder().setIndices(indexNameOfToday).setQuery(new BoolQueryBuilder().mustNot(new QueryStringQueryBuilder("endpoints.endpoint_handlers.application.name: \"Enterprise Telemetry Monitor\""))),
+                new ActionListener<SearchResponse>() {
                     @Override
                     public void onResponse(SearchResponse response) {
                         eventsPersistedToday = response.getHits().getTotalHits();
@@ -278,11 +283,15 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
                     @Override
                     public void onFailure(Exception e) {
                     }
-                });
-        ActionFuture<GetResponse> licenseExecute = this.elasticClient.prepareGet(this.elasticsearchIndexName, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LICENSE_DEFAULT).execute();
-        ActionFuture<GetResponse> ldapExecute = this.elasticClient.prepareGet(this.elasticsearchIndexName, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LDAP_DEFAULT).execute();
-        GetResponse defaultResponse = this.elasticClient.prepareGet(this.elasticsearchIndexName, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_NODE_DEFAULT).get();
-        GetResponse nodeResponse = this.elasticClient.prepareGet(this.elasticsearchIndexName, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getNodeName()).get();
+                }
+        );
+
+        SyncActionListener<GetResponse> licenseExecute = DataRepository.syncActionListener(30);
+        SyncActionListener<GetResponse> ldapExecute = DataRepository.syncActionListener(30);
+        this.dataRepository.getAsync(new GetRequestBuilder(this.elasticsearchIndexName, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LICENSE_DEFAULT), licenseExecute);
+        this.dataRepository.getAsync(new GetRequestBuilder(this.elasticsearchIndexName, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LDAP_DEFAULT), ldapExecute);
+        GetResponse defaultResponse = this.dataRepository.get(new GetRequestBuilder(this.elasticsearchIndexName, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_NODE_DEFAULT));
+        GetResponse nodeResponse = this.dataRepository.get(new GetRequestBuilder(this.elasticsearchIndexName, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getNodeName()));
 
         String defaultContent = defaultResponse.getSourceAsString();
         String nodeContent = null;
@@ -291,16 +300,16 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
             nodeContent = nodeResponse.getSourceAsString();
         }
         EtmConfiguration etmConfiguration = this.etmConfigurationConverter.read(nodeContent, defaultContent, "temp-for-reload-merge");
-        GetResponse licenseResponse = licenseExecute.actionGet();
-        if (licenseResponse.isExists() && !licenseResponse.isSourceEmpty() && licenseResponse.getSourceAsMap().containsKey(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LICENSE)) {
+        GetResponse licenseResponse = licenseExecute.get();
+        if (licenseResponse != null && licenseResponse.isExists() && !licenseResponse.isSourceEmpty() && licenseResponse.getSourceAsMap().containsKey(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LICENSE)) {
             Map<String, Object> licenseObject = (Map<String, Object>) licenseResponse.getSourceAsMap().get(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LICENSE);
             Object license = licenseObject.get(this.etmConfigurationConverter.getTags().getLicenseTag());
             if (license != null && isValidLicenseKey(license.toString())) {
                 etmConfiguration.setLicenseKey(license.toString());
             }
         }
-        GetResponse ldapResponse = ldapExecute.actionGet();
-        if (ldapResponse.isExists() && !ldapResponse.isSourceEmpty()) {
+        GetResponse ldapResponse = ldapExecute.get();
+        if (ldapResponse != null && ldapResponse.isExists() && !ldapResponse.isSourceEmpty()) {
             LdapConfiguration ldapConfiguration = this.ldapConfigurationConverter.read(ldapResponse.getSourceAsString());
             if (super.getDirectory() != null) {
                 super.getDirectory().merge(ldapConfiguration);
@@ -312,7 +321,6 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
             setDirectory(null);
         }
         boolean changed = this.mergeAndNotify(etmConfiguration);
-        this.lastCheckedForUpdates = System.currentTimeMillis();
         return changed;
     }
 }

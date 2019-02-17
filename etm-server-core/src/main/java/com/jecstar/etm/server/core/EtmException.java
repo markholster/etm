@@ -7,6 +7,7 @@ public class EtmException extends RuntimeException {
     // 100_* reserved for common errors.
     public static final int WRAPPED_EXCEPTION = 100_000;
     public static final int UNAUTHORIZED = 100_001;
+    public static final int DATA_COMMUNICATION_EXCEPTION = 100_002;
 
     // 200_* reserved for license errors.
     public static final int INVALID_LICENSE_KEY = 200_000;

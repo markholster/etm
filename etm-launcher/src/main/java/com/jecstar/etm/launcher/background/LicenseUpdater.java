@@ -4,10 +4,11 @@ import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.configuration.License;
 import com.jecstar.etm.server.core.domain.configuration.converter.json.EtmConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.UpdateRequestBuilder;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.rest.AbstractJsonService;
-import org.elasticsearch.client.Client;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -27,12 +28,12 @@ public class LicenseUpdater extends AbstractJsonService implements Runnable {
 
 
     private final EtmConfiguration etmConfiguration;
-    private final Client client;
+    private final DataRepository dataRepository;
     private final EtmConfigurationConverterJsonImpl etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
 
-    public LicenseUpdater(final EtmConfiguration etmConfiguration, final Client client) {
+    public LicenseUpdater(final EtmConfiguration etmConfiguration, final DataRepository dataRepository) {
         this.etmConfiguration = etmConfiguration;
-        this.client = client;
+        this.dataRepository = dataRepository;
     }
 
     @Override
@@ -48,13 +49,13 @@ public class LicenseUpdater extends AbstractJsonService implements Runnable {
                     Map<String, Object> licenseObject = new HashMap<>();
                     licenseObject.put(this.etmConfigurationConverter.getTags().getLicenseTag(), licenseKey);
                     values.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LICENSE, licenseObject);
-                    enhanceRequest(
-                            client.prepareUpdate(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LICENSE_DEFAULT),
+                    UpdateRequestBuilder builder = enhanceRequest(
+                            new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LICENSE_DEFAULT),
                             etmConfiguration
                     )
                             .setDoc(values)
-                            .setDocAsUpsert(true)
-                            .get();
+                            .setDocAsUpsert(true);
+                    dataRepository.update(builder);
                     // Because the access to the etmConfiguration in the above statement could cause a reload of the configuration
                     // the old license may still be applied. To prevent this, we set the license again at this place.
                     etmConfiguration.setLicenseKey(licenseKey);

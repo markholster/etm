@@ -1,21 +1,28 @@
 package com.jecstar.etm.launcher;
 
 import com.jecstar.etm.launcher.configuration.Configuration;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
+import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.http.ssl.SSLContexts;
+import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.cluster.block.ClusterBlockException;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.TransportAddress;
-import org.elasticsearch.discovery.MasterNotDiscoveredException;
-import org.elasticsearch.transport.client.PreBuiltTransportClient;
-import org.elasticsearch.xpack.client.PreBuiltXPackTransportClient;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestClientBuilder;
+import org.elasticsearch.client.RestHighLevelClient;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.List;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.security.KeyStore;
+
 
 public abstract class AbstractCommand {
 
@@ -24,99 +31,59 @@ public abstract class AbstractCommand {
      */
     private final LogWrapper log = LogFactory.getLogger(getClass());
 
-    protected Client createElasticsearchClient(Configuration configuration) {
-        Settings.Builder settingsBuilder = Settings.builder()
-                .put("cluster.name", configuration.elasticsearch.clusterName)
-                .put("client.transport.sniff", true);
-        TransportClient transportClient;
-        if (configuration.elasticsearch.username != null && configuration.elasticsearch.password != null) {
-            settingsBuilder.put("xpack.security.user", configuration.elasticsearch.username + ":" + configuration.elasticsearch.password);
-            if (configuration.elasticsearch.sslKeyLocation != null) {
-                settingsBuilder.put("xpack.ssl.key", configuration.elasticsearch.sslKeyLocation.getAbsolutePath());
+    protected DataRepository createElasticsearchClient(Configuration configuration) {
+        HttpHost[] hosts = configuration.elasticsearch.connectAddresses.stream().map(HttpHost::create).toArray(HttpHost[]::new);
+        RestClientBuilder restClientBuilder = RestClient.builder(hosts);
+
+        restClientBuilder.setHttpClientConfigCallback(httpClientBuilder -> {
+            if (configuration.elasticsearch.username != null && configuration.elasticsearch.password != null) {
+                CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+                credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(configuration.elasticsearch.username, configuration.elasticsearch.password));
+                httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
             }
-            if (configuration.elasticsearch.sslCertificateLocation != null) {
-                settingsBuilder.put("xpack.ssl.certificate", configuration.elasticsearch.sslCertificateLocation.getAbsolutePath());
-            }
-            if (configuration.elasticsearch.sslCertificateAuthoritiesLocation != null) {
-                settingsBuilder.put("xpack.ssl.certificate_authorities", configuration.elasticsearch.sslCertificateAuthoritiesLocation.getAbsolutePath());
-            }
-            if (configuration.elasticsearch.sslEnabled) {
-                settingsBuilder.put("xpack.security.transport.ssl.enabled", "true");
-            }
-            transportClient = new PreBuiltXPackTransportClient(settingsBuilder.build());
-        } else {
-            transportClient = new PreBuiltTransportClient(settingsBuilder.build());
-        }
-        int hostsAdded = addElasticsearchHostsToTransportClient(configuration.elasticsearch.connectAddresses, transportClient);
-        if (configuration.elasticsearch.waitForConnectionOnStartup) {
-            while (hostsAdded == 0) {
-                // Currently this can only happen in docker swarm installations where the elasticsearch service isn't fully started when ETM starts. This will result in a
-                // UnknownHostException so that leaves with a transportclient without any hosts. Also this may happen when the end users misspells the hostname in the configuration.
-                if (Thread.currentThread().isInterrupted()) {
-                    break;
-                }
+            if (configuration.elasticsearch.sslTrustStoreLocation != null) {
                 try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-                hostsAdded = addElasticsearchHostsToTransportClient(configuration.elasticsearch.connectAddresses, transportClient);
-            }
-            waitForActiveConnection(transportClient);
-        }
-        return transportClient;
-    }
-
-    private int addElasticsearchHostsToTransportClient(List<String> hosts, TransportClient transportClient) {
-        int added = 0;
-        for (String host : hosts) {
-            TransportAddress transportAddress = createTransportAddress(host);
-            if (transportAddress != null) {
-                transportClient.addTransportAddress(transportAddress);
-                added++;
-            }
-        }
-        return added;
-    }
-
-    private TransportAddress createTransportAddress(String host) {
-        int ix = host.lastIndexOf(":");
-        if (ix != -1) {
-            try {
-                InetAddress inetAddress = InetAddress.getByName(host.substring(0, ix));
-                int port = Integer.parseInt(host.substring(ix + 1));
-                return new TransportAddress(inetAddress, port);
-            } catch (UnknownHostException e) {
-                if (log.isWarningLevelEnabled()) {
-                    log.logWarningMessage("Unable to connect to '" + host + "'", e);
+                    KeyStore truststore = KeyStore.getInstance("jks");
+                    try (InputStream is = Files.newInputStream(configuration.elasticsearch.sslTrustStoreLocation.toPath())) {
+                        truststore.load(is, configuration.elasticsearch.sslTrustStorePassword == null ? null : configuration.elasticsearch.sslTrustStorePassword.toCharArray());
+                    }
+                    SSLContextBuilder sslBuilder = SSLContexts.custom().loadTrustMaterial(truststore, null);
+                    httpClientBuilder.setSSLContext(sslBuilder.build());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    if (log.isErrorLevelEnabled()) {
+                        log.logErrorMessage(e.getMessage(), e);
+                    }
                 }
             }
+            return httpClientBuilder;
+        });
+
+        RestHighLevelClient client = new RestHighLevelClient(restClientBuilder);
+
+
+        if (configuration.elasticsearch.waitForConnectionOnStartup) {
+            waitForActiveConnection(client);
         }
-        return null;
+        return new DataRepository(client);
     }
 
-    private void waitForActiveConnection(TransportClient transportClient) {
-        while (transportClient.connectedNodes().isEmpty()) {
-            if (Thread.currentThread().isInterrupted()) {
-                return;
-            }
-            // Wait for any elasticsearch node to become active.
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
+    private void waitForActiveConnection(RestHighLevelClient client) {
         boolean esClusterInitialized = false;
         while (!esClusterInitialized) {
             try {
-                ClusterHealthResponse clusterHealthResponse = transportClient.admin().cluster().prepareHealth().get();
-                if (clusterHealthResponse.getInitializingShards() == 0
-                        && clusterHealthResponse.getNumberOfPendingTasks() == 0
-                        && clusterHealthResponse.getNumberOfDataNodes() > 0) {
+                ClusterHealthResponse healthResponse = client.cluster().health(
+                        new ClusterHealthRequest()
+                                .waitForNoInitializingShards(true)
+                                .waitForYellowStatus(),
+                        RequestOptions.DEFAULT
+                );
+                if (healthResponse.getInitializingShards() == 0
+                        && healthResponse.getNumberOfPendingTasks() == 0
+                        && healthResponse.getNumberOfDataNodes() > 0) {
                     esClusterInitialized = true;
                 }
-            } catch (MasterNotDiscoveredException | ClusterBlockException e) {
+            } catch (IOException e) {
                 if (log.isDebugLevelEnabled()) {
                     log.logDebugMessage("Waiting for cluster to te available", e);
                 }

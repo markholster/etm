@@ -22,15 +22,13 @@ import com.jecstar.etm.processor.jms.JmsProcessorImpl;
 import com.jecstar.etm.processor.kafka.KafkaProcessor;
 import com.jecstar.etm.processor.kafka.KafkaProcessorImpl;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.persisting.internal.BusinessEventLogger;
 import com.jecstar.etm.server.core.persisting.internal.InternalBulkProcessorWrapper;
 import com.jecstar.etm.server.core.util.NamedThreadFactory;
 import com.jecstar.etm.signaler.Signaler;
-import io.netty.util.internal.logging.InternalLoggerFactory;
-import io.netty.util.internal.logging.Slf4JLoggerFactory;
-import org.elasticsearch.client.Client;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.ScheduledExecutorService;
@@ -47,7 +45,7 @@ class LaunchEtmCommand extends AbstractCommand {
     private ElasticsearchIndexTemplateCreator indexTemplateCreator;
     private TelemetryCommandProcessor processor;
     private HttpServer httpServer;
-    private Client elasticClient;
+    private DataRepository dataRepository;
     private ScheduledReporter metricReporter;
     private IbmMqProcessor ibmMqProcessor;
     private JmsProcessor jmsProcessor;
@@ -57,18 +55,17 @@ class LaunchEtmCommand extends AbstractCommand {
 
     public void launch(CommandLineParameters commandLineParameters, Configuration configuration, InternalBulkProcessorWrapper bulkProcessorWrapper) {
         this.bulkProcessorWrapper = bulkProcessorWrapper;
-        addShutdownHooks(configuration);
-        InternalLoggerFactory.setDefaultFactory(Slf4JLoggerFactory.INSTANCE);
+        addShutdownHooks();
         try {
-            if (this.elasticClient == null) {
-                this.elasticClient = createElasticsearchClient(configuration);
+            if (this.dataRepository == null) {
+                this.dataRepository = createElasticsearchClient(configuration);
             }
-            this.bulkProcessorWrapper.setClient(this.elasticClient);
-            boolean reinitializeTemplates = executeDatabaseMigrations(this.elasticClient);
-            new MultiTypeDetector().detect(this.elasticClient);
-            this.indexTemplateCreator = new ElasticsearchIndexTemplateCreator(this.elasticClient);
+            this.bulkProcessorWrapper.setClient(this.dataRepository.getClient());
+            boolean reinitializeTemplates = executeDatabaseMigrations(this.dataRepository);
+            new MultiTypeDetector().detect(this.dataRepository);
+            this.indexTemplateCreator = new ElasticsearchIndexTemplateCreator(this.dataRepository);
             this.indexTemplateCreator.createTemplates();
-            EtmConfiguration etmConfiguration = new ElasticBackedEtmConfiguration(configuration.instanceName, this.elasticClient);
+            EtmConfiguration etmConfiguration = new ElasticBackedEtmConfiguration(configuration.instanceName, this.dataRepository);
             this.bulkProcessorWrapper.setConfiguration(etmConfiguration);
             this.indexTemplateCreator.addConfigurationChangeNotificationListener(etmConfiguration);
             if (commandLineParameters.isReinitialize() || reinitializeTemplates) {
@@ -78,17 +75,19 @@ class LaunchEtmCommand extends AbstractCommand {
                 }
                 if (commandLineParameters.isReinitialize()) {
                     // When the --reinitialize option is passed to the command line, we stop processing over here because reinitializing is done.
+                    this.bulkProcessorWrapper.close();
+                    this.dataRepository.close();
                     return;
                 }
             }
             MetricRegistry metricRegistry = new MetricRegistry();
             initializeMetricReporter(metricRegistry, configuration);
             initializeProcessor(metricRegistry, configuration, etmConfiguration);
-            initializeBackgroundProcesses(configuration, etmConfiguration, this.elasticClient);
+            initializeBackgroundProcesses(configuration, etmConfiguration, this.dataRepository);
 
             if (configuration.isHttpServerNecessary()) {
                 System.setProperty("org.jboss.logging.provider", "slf4j");
-                this.httpServer = new HttpServer(new ElasticsearchIdentityManager(this.elasticClient, etmConfiguration), configuration, etmConfiguration, this.processor, this.elasticClient);
+                this.httpServer = new HttpServer(new ElasticsearchIdentityManager(this.dataRepository, etmConfiguration), configuration, etmConfiguration, this.processor, this.dataRepository);
                 this.httpServer.start();
             }
             if (configuration.ibmMq.enabled) {
@@ -118,7 +117,7 @@ class LaunchEtmCommand extends AbstractCommand {
         }
     }
 
-    private void addShutdownHooks(Configuration configuration) {
+    private void addShutdownHooks() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
                 if (log.isInfoLevelEnabled()) {
@@ -181,9 +180,9 @@ class LaunchEtmCommand extends AbstractCommand {
                 } catch (Throwable t) {
                 }
             }
-            if (LaunchEtmCommand.this.elasticClient != null) {
+            if (LaunchEtmCommand.this.dataRepository != null) {
                 try {
-                    LaunchEtmCommand.this.elasticClient.close();
+                    LaunchEtmCommand.this.dataRepository.close();
                 } catch (Throwable t) {
                 }
             }
@@ -191,7 +190,7 @@ class LaunchEtmCommand extends AbstractCommand {
     }
 
 
-    private void initializeBackgroundProcesses(final Configuration configuration, final EtmConfiguration etmConfiguration, final Client client) {
+    private void initializeBackgroundProcesses(final Configuration configuration, final EtmConfiguration etmConfiguration, final DataRepository dataRepository) {
         int threadPoolSize = 2;
         if (configuration.http.guiEnabled || configuration.http.restProcessorEnabled) {
             threadPoolSize += 2;
@@ -200,14 +199,14 @@ class LaunchEtmCommand extends AbstractCommand {
             threadPoolSize++;
         }
         this.backgroundScheduler = new ScheduledThreadPoolExecutor(threadPoolSize, new NamedThreadFactory("etm_background_scheduler"));
-        this.backgroundScheduler.scheduleAtFixedRate(new LicenseUpdater(etmConfiguration, client), 0, 6, TimeUnit.HOURS);
-        this.backgroundScheduler.scheduleAtFixedRate(new IndexCleaner(etmConfiguration, client), 1, 15, TimeUnit.MINUTES);
+        this.backgroundScheduler.scheduleAtFixedRate(new LicenseUpdater(etmConfiguration, dataRepository), 0, 6, TimeUnit.HOURS);
+        this.backgroundScheduler.scheduleAtFixedRate(new IndexCleaner(etmConfiguration, dataRepository), 1, 15, TimeUnit.MINUTES);
         if (configuration.http.guiEnabled || configuration.http.restProcessorEnabled) {
-            this.backgroundScheduler.scheduleAtFixedRate(new LdapSynchronizer(etmConfiguration, client), 1, 3, TimeUnit.HOURS);
-            this.backgroundScheduler.scheduleAtFixedRate(new HttpSessionCleaner(etmConfiguration, client), 2, 15, TimeUnit.MINUTES);
+            this.backgroundScheduler.scheduleAtFixedRate(new LdapSynchronizer(etmConfiguration, dataRepository), 1, 3, TimeUnit.HOURS);
+            this.backgroundScheduler.scheduleAtFixedRate(new HttpSessionCleaner(etmConfiguration, dataRepository), 2, 15, TimeUnit.MINUTES);
         }
         if (configuration.signaler.enabled) {
-            this.backgroundScheduler.scheduleAtFixedRate(new Signaler(configuration.clusterName, etmConfiguration, client), 1, 1, TimeUnit.MINUTES);
+            this.backgroundScheduler.scheduleAtFixedRate(new Signaler(configuration.clusterName, etmConfiguration, dataRepository), 1, 1, TimeUnit.MINUTES);
         }
     }
 
@@ -217,43 +216,43 @@ class LaunchEtmCommand extends AbstractCommand {
         }
         if (this.processor == null) {
             this.processor = new TelemetryCommandProcessorImpl(metricRegistry);
-            this.processor.start(new NamedThreadFactory("etm_processor"), new PersistenceEnvironmentElasticImpl(etmConfiguration, this.elasticClient), etmConfiguration);
+            this.processor.start(new NamedThreadFactory("etm_processor"), new PersistenceEnvironmentElasticImpl(etmConfiguration, this.dataRepository), etmConfiguration);
         }
     }
 
     /**
      * Execute all necessary Elasticsearch data migrations.
      *
-     * @param client The Elasticsearch client.
+     * @param dataRepository The <code>DataRepository</code>.
      * @return <code>true</code> when the index templates need to be reinitialized, <code>false</code> otherwise.
      */
-    private boolean executeDatabaseMigrations(Client client) {
+    private boolean executeDatabaseMigrations(DataRepository dataRepository) {
         boolean reinitialze = false;
-        EtmMigrator etmMigrator = new Version2xTo3xMigrator(client);
+        EtmMigrator etmMigrator = new Version2xTo3xMigrator(dataRepository);
         if (etmMigrator.shouldBeExecuted()) {
             etmMigrator.migrate();
             reinitialze = true;
         }
-        etmMigrator = new Version300To301Migrator(client);
+        etmMigrator = new Version300To301Migrator(dataRepository);
         if (etmMigrator.shouldBeExecuted()) {
             etmMigrator.migrate();
             reinitialze = true;
         }
-        etmMigrator = new EndpointHandlerToSingleListMigrator(client);
+        etmMigrator = new EndpointHandlerToSingleListMigrator(dataRepository);
         if (etmMigrator.shouldBeExecuted()) {
             etmMigrator.migrate();
             reinitialze = true;
         }
-        etmMigrator = new SearchTemplateHandlingTimeMigrator(client);
+        etmMigrator = new SearchTemplateHandlingTimeMigrator(dataRepository);
         if (etmMigrator.shouldBeExecuted()) {
             etmMigrator.migrate();
         }
-        etmMigrator = new Elasticsearch65PainlessSupport(client);
+        etmMigrator = new Elasticsearch65PainlessSupport(dataRepository);
         if (etmMigrator.shouldBeExecuted()) {
             etmMigrator.migrate();
             reinitialze = true;
         }
-        etmMigrator = new VisualizationAndSignalMigrator(client);
+        etmMigrator = new VisualizationAndSignalMigrator(dataRepository);
         if (etmMigrator.shouldBeExecuted()) {
             etmMigrator.migrate();
         }
@@ -293,7 +292,7 @@ class LaunchEtmCommand extends AbstractCommand {
 
 
     private void initializeMetricReporter(MetricRegistry metricRegistry, Configuration configuration) {
-        this.metricReporter = new MetricReporterElasticImpl(metricRegistry, configuration.instanceName, this.elasticClient);
+        this.metricReporter = new MetricReporterElasticImpl(metricRegistry, configuration.instanceName, this.dataRepository);
         this.metricReporter.start(1, TimeUnit.MINUTES);
     }
 

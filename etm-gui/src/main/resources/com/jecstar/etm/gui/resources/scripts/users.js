@@ -169,14 +169,14 @@ function buildUserPage() {
                 $('#card-acl').find("option[value='" + role + "']").parent().val(role);
             });
 		}
+        $('#dashboard-datasource-block').find("input[type='checkbox']").prop('checked', false);
         if (userData.dashboard_datasources) {
-            $('#dashboard-datasource-block').find("input[type='checkbox']").prop('checked', false);
             $.each(userData.dashboard_datasources, function (index, ds) {
                 $('#check-dashboard-datasource-' + ds).prop('checked', true);
             });
         }
+        $('#signal-datasource-block').find("input[type='checkbox']").prop('checked', false);
         if (userData.signal_datasources) {
-            $('#signal-datasource-block').find("input[type='checkbox']").prop('checked', false);
             $.each(userData.signal_datasources, function (index, ds) {
                 $('#check-signal-datasource-' + ds).prop('checked', true);
             });

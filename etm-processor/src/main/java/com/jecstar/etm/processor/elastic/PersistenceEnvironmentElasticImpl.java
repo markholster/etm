@@ -4,9 +4,9 @@ import com.codahale.metrics.MetricRegistry;
 import com.jecstar.etm.processor.core.CommandResources;
 import com.jecstar.etm.processor.core.PersistenceEnvironment;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
-import org.elasticsearch.client.Client;
 
 import java.io.IOException;
 
@@ -18,19 +18,19 @@ public class PersistenceEnvironmentElasticImpl implements PersistenceEnvironment
     private static final LogWrapper log = LogFactory.getLogger(PersistenceEnvironmentElasticImpl.class);
 
     private final EtmConfiguration etmConfiguration;
-    private final Client elasticClient;
+    private final DataRepository dataRepository;
     private CommandResources commandResources;
 
-    public PersistenceEnvironmentElasticImpl(final EtmConfiguration etmConfiguration, final Client elasticClient) {
+    public PersistenceEnvironmentElasticImpl(final EtmConfiguration etmConfiguration, final DataRepository dataRepository) {
         this.etmConfiguration = etmConfiguration;
-        this.elasticClient = elasticClient;
+        this.dataRepository = dataRepository;
     }
 
     @Override
     public CommandResources getCommandResources(final MetricRegistry metricRegistry) {
         synchronized (this) {
             if (this.commandResources == null) {
-                this.commandResources = new CommandResourcesElasticImpl(this.elasticClient, this.etmConfiguration, metricRegistry);
+                this.commandResources = new CommandResourcesElasticImpl(this.dataRepository, this.etmConfiguration, metricRegistry);
             }
         }
         return this.commandResources;

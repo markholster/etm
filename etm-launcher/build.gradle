@@ -12,5 +12,5 @@ dependencies {
             dep_resteasyWadl,
             dep_snakeyaml,
             dep_undertowServlet,
-            dep_elasticsearchXpackTransportClient
+            dep_elasticsearchClient
 }

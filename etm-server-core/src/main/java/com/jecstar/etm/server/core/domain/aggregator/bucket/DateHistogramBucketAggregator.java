@@ -2,7 +2,8 @@ package com.jecstar.etm.server.core.domain.aggregator.bucket;
 
 import com.jecstar.etm.server.core.converter.JsonField;
 import com.jecstar.etm.server.core.domain.aggregator.DateInterval;
-import org.elasticsearch.action.search.SearchRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
@@ -86,13 +87,13 @@ public class DateHistogramBucketAggregator extends BucketAggregator {
     }
 
     @Override
-    public void prepareForSearch(SearchRequestBuilder searchRequest) {
+    public void prepareForSearch(DataRepository dataRepository, SearchRequestBuilder searchRequestBuilder) {
         // This method can be removed as soon as the AutoDateHistogramBucketAggregator of elasticsearch supports minDocCount.
-        super.prepareForSearch(searchRequest);
-        SearchResponse searchResponse = searchRequest
+        super.prepareForSearch(dataRepository, searchRequestBuilder);
+        searchRequestBuilder
                 .addAggregation(AggregationBuilders.min(getId() + "-min").field(getField()))
-                .addAggregation(AggregationBuilders.max(getId() + "-max").field(getField()))
-                .get();
+                .addAggregation(AggregationBuilders.max(getId() + "-max").field(getField()));
+        SearchResponse searchResponse = dataRepository.search(searchRequestBuilder);
         long min = new Double(((Min) searchResponse.getAggregations().get(getId() + "-min")).getValue()).longValue();
         long max = new Double(((Max) searchResponse.getAggregations().get(getId() + "-max")).getValue()).longValue();
         long diffInSeconds = (max - min) / 1000;

@@ -6,9 +6,9 @@ import com.jecstar.etm.server.core.domain.cluster.notifier.SnmpNotifier;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import com.jecstar.etm.server.core.domain.principal.EtmSecurityEntity;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.persisting.internal.BusinessEventLogger;
 import com.jecstar.etm.signaler.domain.Signal;
-import org.elasticsearch.client.Client;
 import org.joda.time.DateTime;
 
 import java.io.Closeable;
@@ -39,8 +39,7 @@ public class NotificationExecutor implements Closeable {
 
     /**
      * Notify an exceedance <code>Signal</code> to a <code>Notifier</code>.
-     *
-     * @param client               The Elasticsearch client.
+     * @param dataRepository       The Elasticsearch dataRepository.
      * @param etmConfiguration     The <code>EtmConfiguration</code> instance.
      * @param clusterName          The name of the ETM cluster.
      * @param signal               The <code>Signal</code> of which the threshold is exceeded more often that the configured limit.
@@ -48,7 +47,7 @@ public class NotificationExecutor implements Closeable {
      * @param thresholdExceedances A <code>Map</code> with dates and their values when the threshold was exceeded.
      * @param etmSecurityEntity    An <code>EtmSecurityEntity/code> to which the <code>Signal</code> belongs.
      */
-    public void notifyExceedance(Client client,
+    public void notifyExceedance(DataRepository dataRepository,
                                  EtmConfiguration etmConfiguration,
                                  String clusterName,
                                  Signal signal,
@@ -58,7 +57,7 @@ public class NotificationExecutor implements Closeable {
                                  long systemStartTime
     ) {
         if (Notifier.NotifierType.EMAIL.equals(notifier.getNotifierType())) {
-            this.emailSignal.sendExceedanceNotification(client, etmConfiguration, clusterName, signal, (EmailNotifier) notifier, thresholdExceedances, etmSecurityEntity);
+            this.emailSignal.sendExceedanceNotification(dataRepository, etmConfiguration, clusterName, signal, (EmailNotifier) notifier, thresholdExceedances, etmSecurityEntity);
         } else if (Notifier.NotifierType.SNMP.equals(notifier.getNotifierType())) {
             this.snmpSignal.sendExceedanceNotification(clusterName, signal, (SnmpNotifier) notifier, thresholdExceedances, systemStartTime);
         } else if (Notifier.NotifierType.ETM_BUSINESS_EVENT.equals(notifier.getNotifierType())) {
@@ -86,15 +85,14 @@ public class NotificationExecutor implements Closeable {
 
     /**
      * Notify an exceedance fixed <code>Signal</code> to a <code>Notifier</code>.
-     *
-     * @param client            The Elasticsearch client.
+     *  @param dataRepository  The <code>DataRepository</code>.
      * @param etmConfiguration  The <code>EtmConfiguration</code> instance.
      * @param clusterName       The name of the ETM cluster.
      * @param signal            The <code>Signal</code> of which the threshold is no longer exceeded.
      * @param notifier          The <code>Notifier</code> to be used to send the actual notification.
      * @param etmSecurityEntity An <code>EtmSecurityEntity</code> to which the <code>Signal</code> belongs.
      */
-    public void notifyNoLongerExceeded(Client client,
+    public void notifyNoLongerExceeded(DataRepository dataRepository,
                                        EtmConfiguration etmConfiguration,
                                        String clusterName,
                                        Signal signal,
@@ -102,7 +100,7 @@ public class NotificationExecutor implements Closeable {
                                        EtmSecurityEntity etmSecurityEntity
     ) {
         if (Notifier.NotifierType.EMAIL.equals(notifier.getNotifierType())) {
-            this.emailSignal.sendNoLongerExceededNotification(client, etmConfiguration, clusterName, signal, (EmailNotifier) notifier, etmSecurityEntity);
+            this.emailSignal.sendNoLongerExceededNotification(dataRepository, etmConfiguration, clusterName, signal, (EmailNotifier) notifier, etmSecurityEntity);
         } else if (Notifier.NotifierType.ETM_BUSINESS_EVENT.equals(notifier.getNotifierType())) {
             final StringBuilder buffer = new StringBuilder();
             buffer.append("{");

@@ -1,6 +1,7 @@
 == Changelog
 === Version 3.4.0
 * [ETM-17] Migrate etm-domain to public repository.
+* [ETM-51] Migrate to Elasticsearch REST client.
 * [ETM-76] Advanced graphs.
 * [ETM-77] Fix "Accessing variable [ctx] via [params.ctx] from within a update script is deprecated in favor of directly accessing [ctx]".
 * [ETM-78] Unable to show event chain when response time is sub millisecond.
@@ -133,10 +134,11 @@ Additional labels for pre-release and build metadata are available as extensions
 Sometimes your {etm} configuration needs additional changes before it can be upgraded. This section describes these changes necessary before upgrading.
 
 ===== Upgrade from versions before 3.4.0 to 3.4.x or higher
-. From version 3.4 and up a minimum version of Elasticsearch 6.5 is required.
+. Change the 'connectAddresses' in the elasticsearch chapter from the Elasticsearch transport address to the Elasticsearch http address.
+. Remove the options 'sslEnabled', 'sslKeyLocation', 'sslCertificateLocation' & 'sslCertificateAuthoritiesLocation' in the elasticsearch chapter in the file 'config/etm.yml'. These options are replaced by 'sslTrustStoreLocation' and 'sslTrustStorePassword' which can hold a jks key store.
 
 ===== Upgrade from versions before 2.3.0 to 2.3.x or higher
-. Remove the options 'maxConcurrentRequests', 'maxQueuedRequests' & 'sessionTimeout' under the http chapter in the file 'config/etm.yml'. These parameters may now be provided for the GUI and REST processor separately. See the <<Http section in etm.yml>> for more information.
+. Remove the options 'maxConcurrentRequests', 'maxQueuedRequests' & 'sessionTimeout' in the http chapter in the file 'config/etm.yml'. These parameters may now be provided for the GUI and REST processor separately. See the <<Http section in etm.yml>> for more information.
 
 === Upgrade from version 2.4.0 to 3.x
 . Your data will be converted during the upgrade so as always make sure you have a backup of all Elasticsearch data!
