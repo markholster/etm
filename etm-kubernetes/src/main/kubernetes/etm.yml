@@ -1,0 +1,55 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: "etm"
+    component: "client"
+    release: "${etm-version}"
+  name: "etm-client"
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: "etm"
+        component: "client"
+        release: "${etm-version}"
+    spec:
+      securityContext:
+        fsGroup: 1000
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels:
+                  app: "etm"
+                  component: "client"
+      containers:
+      - name: "etm"
+        env:
+        - name: elasticsearch_connectAddresses
+          value: "elasticsearch-client:9300"
+        - name: elasticsearch_clusterName
+          value: etm-demo-01
+        - name: instanceName
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        readinessProbe:
+          httpGet:
+            path: /status
+            port: 8080
+          initialDelaySeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /status
+            port: 8080
+          initialDelaySeconds: 90          
+        image: "www.jecstar.com/etm:${etm-version}"
+        imagePullPolicy: "IfNotPresent"
+        ports:
+        - containerPort: 8080
+          name: http

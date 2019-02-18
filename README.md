@@ -22,4 +22,4 @@ A few sample usecases that Enterprise Telemetry Monitor could be used for:
 
 ## License
 
-This project is licensed under the LGP License - see the [LICENSE](LICENSE) file for details
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details

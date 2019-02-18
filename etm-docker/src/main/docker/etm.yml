@@ -1,0 +1,24 @@
+instanceName: Docker_node_1
+bindingAddress: 0.0.0.0
+bindingPortOffset: 0
+clusterName: Enterprise Telemetry Monitor
+elasticsearch:
+  clusterName: Enterprise Telemetry Monitor
+  connectAddresses:
+    - "127.0.0.1:9300"
+  waitForConnectionOnStartup: true
+http:
+  guiEnabled: true
+  httpPort: 8080
+  httpsPort: 8443
+  restProcessorEnabled: true
+  sslKeystoreLocation: 
+  sslKeystorePassword: 
+  sslKeystoreType: PKCS12
+  sslProtocol: TLSv1.2
+  sslTruststoreLocation: 
+  sslTruststorePassword: 
+  sslTruststoreType: JKS
+logging:
+  loggers: {}
+  rootLogger: INFO

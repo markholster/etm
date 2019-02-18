@@ -12,15 +12,13 @@ public class MessagingTelemetryEventWriterJsonImpl extends AbstractJsonTelemetry
     }
 
     @Override
-	protected boolean doWrite(MessagingTelemetryEvent event, StringBuilder buffer, boolean firstElement) {
-		boolean added = !firstElement;
-		if (event.expiry != null) {
-			added = this.jsonWriter.addLongElementToJsonBuffer(getTags().getExpiryTag(), event.expiry.toInstant().toEpochMilli(), buffer, !added) || added;
-		}
-		if (event.messagingEventType != null) {
-			added = this.jsonWriter.addStringElementToJsonBuffer(getTags().getMessagingEventTypeTag(), event.messagingEventType.name(), buffer, !added) || added;
-		}
-		return added;
-	}
+    protected boolean doWrite(MessagingTelemetryEvent event, StringBuilder buffer, boolean firstElement) {
+        boolean added = !firstElement;
+        added = this.jsonWriter.addInstantElementToJsonBuffer(getTags().getExpiryTag(), event.expiry, buffer, !added) || added;
+        if (event.messagingEventType != null) {
+            added = this.jsonWriter.addStringElementToJsonBuffer(getTags().getMessagingEventTypeTag(), event.messagingEventType.name(), buffer, !added) || added;
+        }
+        return added;
+    }
 
 }
