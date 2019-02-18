@@ -8,7 +8,7 @@ WORKDIR /usr/share/etm
 RUN addgroup -g 1000 etm && \
     adduser -u 1000 -G etm -D -h /usr/share/etm etm && \
     apk update && \
-    apk add ca-certificates wget && \                                                                                                                                                                                                      
+    apk add ca-certificates wget && \
     update-ca-certificates && \
     wget https://www.jecstar.com/downloads/etm/etm-${etm-version}.tgz && \
     wget https://www.jecstar.com/downloads/etm/etm-${etm-version}.tgz.sha512 && \
