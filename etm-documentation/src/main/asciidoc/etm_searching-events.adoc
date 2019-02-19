@@ -76,7 +76,7 @@ Lets consider the following event chain:
 .Event chain
 image::images/etm-v3/etm-hc-event-chain.png["Event chain",link="./images/etm-v3/etm-hc-event-chain.png"]
 
-This chain shows chronologically an incoming (received) http request, a sent ShoppingCardRequest and finally a received ShoppingCardRequest plotted on time. Hovering over one of the time bars show the application and endpoint information. As you can see the bottom time bar is filled for 87%. This indicates that 87% of the total transaction time is spent in that request. When you are experiencing performance issues the 'ShoppingCard (received)' event is a good place to start your investigation.
+This chain shows an incoming (received) http request, a sent ShoppingCardRequest and finally a received ShoppingCardRequest chronologically plotted on time. Hovering over one of the time bars show the application and endpoint information. As you can see the bottom time bar is filled for 87%. This indicates that 87% of the total transaction time is spent in that request. When you are experiencing performance issues the 'ShoppingCard (received)' event is a good place to start your investigation.
 
 By clicking on the bottom time bar you will see everything that happened within that transaction:
 

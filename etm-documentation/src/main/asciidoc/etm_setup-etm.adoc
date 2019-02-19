@@ -69,7 +69,7 @@ Another option of configuring the Docker image is by mounting a custom configura
 -v full_path_to/custom_etm.yml:/usr/share/etm/config/etm.yml
 ----
 
-to the Docker run command. Also if you need an <<Integration with IBM MQ and/or IBM Integration Bus>> you need to mound the directory that contains the proprietary IIB and/or MQ jar files to the image: 
+to the Docker run command. Also if you need an <<Integration with IBM MQ and/or IBM Integration Bus>> you need to mount the directory that contains the proprietary IIB and/or MQ jar files to the image:
 
 [source,bash,subs=attributes+]
 ----
@@ -78,113 +78,25 @@ to the Docker run command. Also if you need an <<Integration with IBM MQ and/or 
 
 IMPORTANT: The container runs {etm} as user etm using uid:gid 1000:1000. Bind mounted host directories and files, such as custom_etm.yml above, need to be accessible by this user. 
 
-Because the {etm} Docker image has a dependency to Elasticsearch, and Elasticsearch is also capable of running as a Docker service it might be convenient to create a docker-compose.yml file. The following snippet may be a good starting point for your needs.
+=== Installation with Kubernetes
 
-[source,yaml,subs=attributes+]
-----
-version: "3"
-services:
-  es-master-node-1:
-    image: docker.elastic.co/elasticsearch/elasticsearch:{elasticsearch-version}
-    deploy:
-      replicas: 1
-      resources:
-        limits:
-          memory: 3G
-        reservations:
-          memory: 2G
-    environment:
-      cluster.name: Enterprise Telemetry Monitor
-      bootstrap.memory_lock: 'true'
-      node.data: 'false'
-      node.ingest: 'false'
-      xpack.security.enabled: 'false'
-      xpack.monitoring.enabled: 'false'
-      xpack.ml.enabled: 'false'
-      xpack.graph.enabled: 'false'
-      xpack.watcher.enabled: 'false'
-      network.host: 0.0.0.0
-      http.port: 9200
-      transport.tcp.port: 9300
-      discovery.zen.ping.unicast.hosts: es-master-node-1:9300
-    networks:
-      - etm
-    ulimits:
-      nofile: 65536
-      memlock: -1
-  es-data-node-1:
-    image: docker.elastic.co/elasticsearch/elasticsearch:{elasticsearch-version}
-    deploy:
-      replicas: 1
-      resources:
-        limits:
-          memory: 3G
-        reservations:
-          memory: 2G
-    depends_on:
-      - es-master-node-1  
-    environment:
-      cluster.name: Enterprise Telemetry Monitor
-      bootstrap.memory_lock: 'true'
-      node.master: 'false'
-      node.ingest: 'false'
-      xpack.security.enabled: 'false'
-      xpack.monitoring.enabled: 'false'
-      xpack.ml.enabled: 'false'
-      xpack.graph.enabled: 'false'
-      xpack.watcher.enabled: 'false'
-      network.host: 0.0.0.0
-      http.port: 9205
-      transport.tcp.port: 9305
-      discovery.zen.ping.unicast.hosts: es-master-node-1:9300
-    networks:
-      - etm
-    ulimits:
-      nofile: 65536
-      memlock: -1
-    volumes:
-      - es-data-node-1:/usr/share/elasticsearch/data
-  etm-node-1:
-    image: www.jecstar.com/etm:{project-version}
-    deploy:
-      replicas: 1
-      resources:
-        limits:
-          memory: 2G
-        reservations:
-          memory: 1G
-    depends_on:
-      - es-master-node-1
-      - es-data-node-1
-    environment:
-      instanceName: etm-node-1
-      clusterName: Enterprise Telemetry Monitor
-      elasticsearch_clusterName: Enterprise Telemetry Monitor
-      elasticsearch_connectAddresses: es-data-node-1:9205,es-master-node-1:9200
-      elasticsearch_waitForConnectionOnStartup: 'true'
-      http.httpPort: 8080
-    networks:
-      - etm
-    ports:
-      - "8080:8080"
-networks:
-  etm:
-volumes:
-  es-data-node-1:      
-----
+Both {etm} and Elasticsearch are capable of running on Kubernetes. Templates of Kubernetes configuration files can be found at the link:https://github.com/jecstarinnovations/etm/tree/v{project-version}/etm-kubernetes/src/main/kubernetes[Jecstar Github Repository] of {etm}.
 
-
-By executing the following command you will bring up the services. 
+These templates give you a good starting point with great flexibility on setting up your cluster. To create an {etm} cluster with 3 Elasticsearch master nodes, 2 Elasticsearch data nodes, 2 Elasticsearch client nodes and 2 {etm} nodes run the following commands on a Google Cloud Platform connected Kubernetes cluster:
 
 [source,bash,subs=attributes+]
 ----
-docker stack deploy -c docker-compose.yml etm
+kubectl create -f storage.yaml
+kubectl create -f elasticearch-master-svc.yml
+kubectl create -f elasticearch-client-svc.yml
+kubectl create -f etm-svc.yml
+kubectl create -f elasticearch-master.yml
+kubectl create -f elasticearch-data.yml
+kubectl create -f elasticearch-client.yml
+kubectl create -f etm.yml
 ----
 
-The above yaml file is a good starting point for deploying {etm} in a Docker Swarm. An Elasticsearch master node, and a separate data node will be created. Also a single instance of an {etm} node is added as service and is referencing th Elasticsearch instances. Although it is possible to assign more replicas to the {etm} service, you have to understand that all instances will be given the exact same {etm} node name. This means they cannot be separately configured. Also if they are deployed on the same host all instances try to bind on the same http port, which of course won't work. 
-It might be better to add a new service to your yaml file and redeploy the stack to your swarm.
-Another thing to take into account are the data volumes. In the above yaml example file a named volume is used. This named volume default to the ''local'' driver which means the data of your Elasticsearch data node will be stored on the node the service is deployed to. If your Docker swarm contains more than 1 node you have to make sure the data volume is configured with a driver/location all nodes can access and write to. You can avoid this situation by defining a link:https://docs.docker.com/compose/compose-file/#placement[placement contraints] in your yaml configuration file. With such a constraint it is possible to make sure a service will always deployed on a specific Docker host.
-
+Of course this 9 node cluster created with the templates might be overkill for your situation, but nothing should stop you from creating a single node Elasticsearch cluster with the use of these templates.
 
 === Integration with IBM MQ and/or IBM Integration Bus
 {etm} is capable of providing deep integration with IBM MQ and or IBM Integration Bus. To make use of any of these integrations the classpath of {etm} needs to be extended. Due to the MQ license Jecstar is not allowed to provide this specific library with {etm}. 
@@ -271,7 +183,7 @@ The ''elasticsearch'' section contains all options that are necessary to connect
 |=======================
 |Name|Default value|Description
 |clusterName|elasticsearch|The name of the Elasticsearch cluster to connect to.
-|connectAddresses|127.0.0.1:9300|A list of Elasticsearch nodes to connect to. When high availability is a demand of your production environment you should provide at least 2 addresses. The servers must be added in the format "<servername_or_ip>:<port>".
+|connectAddresses|127.0.0.1:9200|A list of Elasticsearch nodes to connect to. When high availability is a demand of your production environment you should provide at least 2 addresses. The servers must be added in the format "<servername_or_ip>:<port>".
 |waitForConnectionOnStartup|false|Wait for any of the connections supplied in the ''connectAddresses'' to be established before fully starting {etm}. This option is usefull when {etm} is started before any of the Elasticsearch nodes is started.
 |username||The username used to connect to a secured Elasticsearch cluster.
 |password||The password used to connect to a secured Elasticsearch cluster.
@@ -301,10 +213,10 @@ The ''http'' section contains all options that are necessary to start the gui an
 |sslKeystoreLocation||The location of you ssl keystore. The keystore contains your public/private key pair to identify your server.
 |sslKeystorePassword||The password of the ssl keystore.
 |sslKeystoreType|PKCS12|The ssl keystore type.
-|sslKeystoreLocation||The location of you ssl truststore. The trust store contains certificates of machines that are allowed to connect to this Node. When not provided, everybody is allowed to access this Node although a a username and password are still necessary to login.
-|sslKeystorePassword||The password of the ssl truststore.
-|sslKeystoreType|JSK|The ssl truststore type.
-|secureCookies|false|Should the secure flag be set on the session cookies? Set this value to true when your etm instance is accessed via https.
+|sslTruststoreLocation||The location of you ssl truststore. The trust store contains certificates of machines that are allowed to connect to this Node. When not provided, everybody is allowed to access this Node although a a username and password are still necessary to login.
+|sslTruststorePassword||The password of the ssl truststore.
+|sslTruststoreType|JSK|The ssl truststore type.
+|secureCookies|false|Should the secure flag be set on the session cookies? Set this value to true when your {etm} instance is accessed via https.
 |=======================
 
 ==== IBM MQ section in etm.yml

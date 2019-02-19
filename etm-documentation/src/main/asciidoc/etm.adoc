@@ -1,7 +1,7 @@
-Enterprise Telemetry Monitor
-============================
+= Enterprise Telemetry Monitor
 :revnumber: {project-version} 
 :revdate: {docdate}
+:sectanchors:
 
 include::etm_getting-started.adoc[]
 include::etm_setup-etm.adoc[]
