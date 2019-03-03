@@ -575,6 +575,11 @@ function buildGraphsPage(groupName) {
                         }
                     };
                 }
+                if (chartConfig.chart) {
+                    chartConfig.chart.style = {
+                        fontFamily: 'inherit'
+                    };
+                }
                 if ('number' === response.type) {
                     chartConfig.chart = {
                         events: {

@@ -390,7 +390,7 @@ function addListeners(readonly) {
                 if (event.pageY < yLowest || event.pageY > yHighest || event.pageX < xLowest || event.pageX > xHighest) {
                     // Mouseup outside of div. fire the mouseout event manually
                     dragStatus = null;
-                    resizedDiv.trigger('mouseout');
+                    $resizedDiv.trigger('mouseout');
                 }
                 saveDashboard();
                 dragStatus = null;
@@ -741,6 +741,9 @@ function appendCell($cellContainer, graph, readonly) {
                 }
             },
             chart: {
+                style: {
+                    fontFamily: 'inherit'
+                },
                 renderTo: $renderTo[0],
             }
         });
@@ -870,6 +873,11 @@ function updateChart(graph, $container, readonly) {
                     }
                 };
             }
+            if (chartConfig.chart) {
+                chartConfig.chart.style = {
+                    fontFamily: 'inherit'
+                };
+            }
             if ('number' === response.type) {
                 chartConfig.chart = {
                     events: {
@@ -883,7 +891,8 @@ function updateChart(graph, $container, readonly) {
                                 })
                                 .attr('text-anchor', 'middle')
                                 .add();
-
+                            $container.css('overflow', 'visible');
+                            $container.children('.highcharts-container').css('overflow', 'visible');
                         },
                         redraw: function () {
                             if (this.textBox) {
@@ -895,6 +904,15 @@ function updateChart(graph, $container, readonly) {
                                 })
                                 .attr('text-anchor', 'middle')
                                 .add();
+                        }
+                    }
+                }
+            } else {
+                chartConfig.chart = {
+                    events: {
+                        load: function () {
+                            $container.css('overflow', 'visible');
+                            $container.children('.highcharts-container').css('overflow', 'visible');
                         }
                     }
                 }
