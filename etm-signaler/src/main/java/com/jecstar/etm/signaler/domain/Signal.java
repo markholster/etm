@@ -7,14 +7,16 @@ import com.jecstar.etm.signaler.domain.converter.ThresholdConverter;
 
 public class Signal {
 
-
     public static final String NAME = "name";
+    public static final String ENABLED = "enabled";
     public static final String DATA = "data";
     public static final String THRESHOLD = "threshold";
     public static final String NOTIFICATIONS = "notifications";
 
     @JsonField(NAME)
     private String name;
+    @JsonField(ENABLED)
+    private boolean enabled = true;
     @JsonField(value = DATA, converterClass = DataConverter.class)
     private Data data;
     @JsonField(value = THRESHOLD, converterClass = ThresholdConverter.class)
@@ -37,6 +39,10 @@ public class Signal {
 
     public String getName() {
         return this.name;
+    }
+
+    public boolean isEnabled() {
+        return this.enabled;
     }
 
     public Data getData() {

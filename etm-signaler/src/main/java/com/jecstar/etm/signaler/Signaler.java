@@ -128,6 +128,9 @@ public class Signaler extends AbstractJsonService implements Runnable {
             for (SearchHit searchHit : scrollableSearch)
                 for (int i = 0; i < MAX_RETRIES; i++) {
                     if (Thread.currentThread().isInterrupted()) {
+                        if (log.isInfoLevelEnabled()) {
+                            log.logInfoMessage("Thread interrupted. Stopped processing of Signals.");
+                        }
                         return;
                     }
                     if (handleEntity(batchStart, thresholdExceededNotifier, searchHit.getIndex(), searchHit.getType(), searchHit.getId())) {
@@ -186,6 +189,9 @@ public class Signaler extends AbstractJsonService implements Runnable {
             }
             Instant lastExecuted = getInstant(Signal.LAST_EXECUTED, signalValues);
             Signal signal = this.signalConverter.read(signalValues);
+            if (!signal.isEnabled()) {
+                continue;
+            }
             if (lastExecuted != null && Instant.now().isBefore(lastExecuted.plus(signal.getNotifications().getIntervalUnit().toDuration(signal.getNotifications().getInterval())))) {
                 continue;
             }

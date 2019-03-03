@@ -212,6 +212,7 @@ function buildSignalsPage(groupName) {
 
     function resetValues() {
         $('#input-signal-name').val('');
+        $('#sel-signal-enabled').val('true');
         document.getElementById('form-data').reset();
         document.getElementById('form-threshold').reset();
         document.getElementById('form-notifications').reset();
@@ -226,6 +227,7 @@ function buildSignalsPage(groupName) {
 
     function setValuesFromData(signalData) {
         $('#input-signal-name').val(signalData.name);
+        $('#sel-signal-enabled').val(signalData.enabled ? 'true' : 'false');
         $('#sel-data-source').val(signalData.data.data_source);
         $('#input-signal-from').val(signalData.data.from);
         $('#input-signal-till').val(signalData.data.till);
@@ -336,6 +338,7 @@ function buildSignalsPage(groupName) {
         const signalQuery = $('#input-signal-query').val();
         const signalData = {
             name: signalName ? signalName : null,
+            enabled: $('#sel-signal-enabled').val() === 'true',
             data: {
                 data_source: dataSource,
                 from: signalFrom ? signalFrom : null,

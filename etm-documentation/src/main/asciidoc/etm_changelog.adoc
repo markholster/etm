@@ -2,6 +2,7 @@
 === Version 3.5.0
 * [ETM-86] Dashboard and signal datasources not refreshed in groups settings screen.
 * [ETM-87] Dashboard context menu hidden when insufficient height in column.
+* [ETM-88] Option to disable a Signal.
 
 === Version 3.4.0
 * [ETM-17] Migrate etm-domain to public repository.
