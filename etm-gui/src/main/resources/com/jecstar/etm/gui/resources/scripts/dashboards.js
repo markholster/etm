@@ -744,6 +744,12 @@ function appendCell($cellContainer, graph, readonly) {
                 style: {
                     fontFamily: 'inherit'
                 },
+                events: {
+                    load: function () {
+                        $container.css('overflow', 'visible');
+                        $container.children('.highcharts-container').css('overflow', 'visible');
+                    }
+                },
                 renderTo: $renderTo[0],
             }
         });
