@@ -1,4 +1,7 @@
 == Changelog
+=== Version 3.5.0
+* [ETM-86] Dasboard and signal datasources not refreshed in groups settings screen.
+
 === Version 3.4.0
 * [ETM-17] Migrate etm-domain to public repository.
 * [ETM-51] Migrate to Elasticsearch REST client.

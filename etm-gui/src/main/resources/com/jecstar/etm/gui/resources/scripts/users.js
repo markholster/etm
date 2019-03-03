@@ -1,6 +1,6 @@
 function buildUserPage() {
-	$groupSelect = $('<select>').addClass('form-control custom-select etm-group');
-    $notifierSelect = $('<select>').addClass('form-control custom-select etm-notifier');
+	const $groupSelect = $('<select>').addClass('form-control custom-select etm-group');
+	const $notifierSelect = $('<select>').addClass('form-control custom-select etm-notifier');
 
 	$.when(
 	    $.ajax({
@@ -73,7 +73,7 @@ function buildUserPage() {
 	            		$groupSelect.append($('<option>').attr('value', group.name).text(group.name));
 	            	}
 	            });
-	            if ($groupSelect.children('option').length == 0) {
+				if ($groupSelect.children('option').length === 0) {
 	            	// Only ldap groups present. remove the add-group link
 	            	$('#lnk-add-group').remove();
 	            }
@@ -236,7 +236,7 @@ function buildUserPage() {
 		}
 	});
 
-    $('#link-request-download').click(function(event) {
+	$('#link-request-download').on('click', function (event) {
         event.preventDefault();
         $('#modal-download-users').modal();
     });
@@ -249,8 +249,8 @@ function buildUserPage() {
         };
         window.location.href = '../rest/settings/download/users?q=' + encodeURIComponent(JSON.stringify(q));
     });
-	
-	$('#btn-confirm-save-user').click(function(event) {
+
+	$('#btn-confirm-save-user').on('click', function (event) {
 		$('#input-new-password1, #input-new-password2').parent().removeClass('has-danger');
 		if (!document.getElementById('user_form').checkValidity()) {
 			return;
@@ -259,7 +259,7 @@ function buildUserPage() {
 			return false;
 		}
 		event.preventDefault();
-		var userId = $('#input-user-id').val();
+		const userId = $('#input-user-id').val();
 		if (isUserExistent(userId)) {
 			$('#overwrite-user-id').text(userId);
 			$('#modal-user-overwrite').modal();
@@ -267,30 +267,32 @@ function buildUserPage() {
 			saveUser();
 		}
 	});
-	
-	$('#btn-save-user').click(function(event) {
+
+	$('#btn-save-user').on('click', function (event) {
+		event.preventDefault();
 		saveUser();
 	});
-	
-	$('#btn-confirm-remove-user').click(function(event) {
+
+	$('#btn-confirm-remove-user').on('click', function (event) {
 		event.preventDefault();
 		$('#remove-user-id').text($('#input-user-id').val());
         $('#modal-user-remove').modal();
-	});	
+	});
 
-	$('#btn-remove-user').click(function(event) {
+	$('#btn-remove-user').on('click', function (event) {
+		event.preventDefault();
 		removeUser($('#input-user-id').val());
 	});
 
-	$('#btn-confirm-import-user').click(function(event) {
+	$('#btn-confirm-import-user').on('click', function (event) {
 		event.preventDefault();
 		$('#input-import-user-id').val('');
 		$('#modal-user-import').modal();
 	});
-	
-	$('#btn-import-user').click(function(event) {
+
+	$('#btn-import-user').on('click', function (event) {
 		event.preventDefault();
-		var userId = $("#input-import-user-id").val();
+		const userId = $("#input-import-user-id").val();
 		if (!userId) {
 			return false;
 		}
@@ -305,7 +307,7 @@ function buildUserPage() {
 		        }
 				// First remove the user when it is already present
 				$('#sel-user > option').each(function () {
-				    if(user.id == $(this).attr('value')) {
+					if (user.id === $(this).attr('value')) {
 				        $(this).remove();
 				    }
 				});
@@ -319,13 +321,13 @@ function buildUserPage() {
             commons.hideModals($('#modal-user-import'));
         });
 	});
-	
-	$('#lnk-add-group').click(function(event) {
+
+	$('#lnk-add-group').on('click', function (event) {
 		event.preventDefault();
 		$('#list-groups').append(createGroupRow());
 	});
 
-    $('#lnk-add-notifier').click(function (event) {
+	$('#lnk-add-notifier').on('click', function (event) {
         event.preventDefault();
         $('#list-notifiers').append(createNotifierRow());
     });
@@ -414,7 +416,7 @@ function buildUserPage() {
                     return;
                 }
         		if (!isUserExistent(userData.id)) {
-        			$userSelect = $('#sel-user');
+					const $userSelect = $('#sel-user');
         			$userSelect.append($('<option>').attr('value', userData.id).text(userData.name ? (userData.id + ' - ' + userData.name) : (userData.id + ' - ' + userData.id)));
                     commons.sortSelectOptions($userSelect);
         		}
@@ -437,8 +439,8 @@ function buildUserPage() {
                     return;
                 }
         		delete userMap[userId];
-        		$("#sel-user > option").filter(function(i){
-        		       return $(this).attr("value") == userId;
+				$("#sel-user > option").filter(function () {
+					return $(this).attr("value") === userId;
         		}).remove();
         		$('#users_infoBox').text('User \'' + userId + '\' removed.').show('fast').delay(5000).hide('fast');
             }
@@ -448,8 +450,8 @@ function buildUserPage() {
 	}
 	
 	function checkOrInvalidateFormInCaseOfPasswordMismatch() {
-        var new1 = $('#input-new-password1').val();
-        var new2 = $('#input-new-password2').val();
+		const new1 = $('#input-new-password1').val();
+		const new2 = $('#input-new-password2').val();
         if (new1 !== new2) {
             $('#input-new-password1, #input-new-password2').parent().addClass('has-danger');
             $("#users_errorBox").text('The new password didn\'t match the retyped password').show('fast');
@@ -459,7 +461,7 @@ function buildUserPage() {
 	}
 	
 	function createUserData() {
-		var userData = {
+		const userData = {
 			id: $('#input-user-id').val(),
 			name: $('#input-user-name').val() ? $('#input-user-name').val() : null,
 			email: $('#input-user-email').val() ? $('#input-user-email').val() : null,
@@ -470,7 +472,7 @@ function buildUserPage() {
 			time_zone: $('sel-time-zone').val(),
 			search_history_size: $('#input-search-history-size').val() ? Number($('#input-search-history-size').val()) : 0,
 			default_search_range: $('#input-default-search-range').val() ? Number($('#input-default-search-range').val()) * 1000 : null,
-			change_password_on_logon: $('#sel-change-password-on-logon').val() == 'true' ? true : false, 
+			change_password_on_logon: $('#sel-change-password-on-logon').val() === 'true' ? true : false,
 			roles: [],
             groups: [],
             dashboard_datasources: $('#dashboard-datasource-block')
@@ -484,7 +486,7 @@ function buildUserPage() {
                     return $(this).val();
                 }).get(),
             notifiers: []
-		}
+		};
         if ($('#input-new-password1').val()) {
         	userData.new_password = $('#input-new-password1').val();
         }
@@ -494,14 +496,14 @@ function buildUserPage() {
             }
         });
 		$('.etm-group').each(function () {
-			var groupName = $(this).val();
-			if (-1 == userData.groups.indexOf(groupName)) {
+			const groupName = $(this).val();
+			if (-1 === userData.groups.indexOf(groupName)) {
 				userData.groups.push(groupName);
 			}
 		});
         $('.etm-notifier').each(function () {
-            var notifierName = $(this).val();
-            if (-1 == userData.notifiers.indexOf(notifierName)) {
+			const notifierName = $(this).val();
+			if (-1 === userData.notifiers.indexOf(notifierName)) {
                 userData.notifiers.push(notifierName);
             }
         });

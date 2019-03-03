@@ -1,5 +1,5 @@
 function buildGroupPage() {
-    $notifierSelect = $('<select>').addClass('form-control custom-select etm-notifier');
+	const $notifierSelect = $('<select>').addClass('form-control custom-select etm-notifier');
 
     $.when(
         $.ajax({
@@ -53,16 +53,16 @@ function buildGroupPage() {
                     $groupSelect.append($('<option>').attr('value', group.name).text(group.name));
                     groupMap[group.name] = group;
                 });
-                commons.sortSelectOptions($groupSelect)
+				commons.sortSelectOptions($groupSelect);
                 $groupSelect.val('');
             }
         });
     });
 
-	var groupMap = {};
-	$('#sel-group').change(function(event) {
+	const groupMap = {};
+	$('#sel-group').on('change', function (event) {
 		event.preventDefault();
-		var groupData = groupMap[$(this).val()];
+		const groupData = groupMap[$(this).val()];
 		if ('undefined' == typeof groupData) {
 			resetValues();
 			return;
@@ -80,12 +80,14 @@ function buildGroupPage() {
 			    $('#card-acl').find("option[value='" + role + "']").parent().val(role);
 			});
 		}
+		$('#dashboard-datasource-block').find("input[type='checkbox']").prop('checked', false);
         if (groupData.dashboard_datasources) {
             $('#dashboard-datasource-block').find("input[type='checkbox']").prop('checked', false);
             $.each(groupData.dashboard_datasources, function (index, ds) {
                 $('#check-dashboard-datasource-' + ds).prop('checked', true);
             });
         }
+		$('#signal-datasource-block').find("input[type='checkbox']").prop('checked', false);
         if (groupData.signal_datasources) {
             $('#signal-datasource-block').find("input[type='checkbox']").prop('checked', false);
             $.each(groupData.signal_datasources, function (index, ds) {
@@ -100,12 +102,12 @@ function buildGroupPage() {
 		enableOrDisableButtons();
 	});
 
-	$('#btn-confirm-save-group').click(function(event) {
+	$('#btn-confirm-save-group').on('click', function (event) {
 		event.preventDefault();
 		if (!document.getElementById('group_form').checkValidity()) {
 			return;
 		}
-		var groupName = $('#input-group-name').val();
+		const groupName = $('#input-group-name').val();
 		if (isGroupExistent(groupName)) {
 			$('#overwrite-group-name').text(groupName);
 			$('#modal-group-overwrite').modal();
@@ -113,22 +115,24 @@ function buildGroupPage() {
 			saveGroup();
 		}
 	});
-	
-	$('#btn-save-group').click(function(event) {
+
+	$('#btn-save-group').on('click', function (event) {
+		event.preventDefault();
 		saveGroup();
 	});
-	
-	$('#btn-confirm-remove-group').click(function(event) {
+
+	$('#btn-confirm-remove-group').on('click', function (event) {
 		event.preventDefault();
 		$('#remove-group-name').text($('#input-group-name').val());
         $('#modal-group-remove').modal();
-	});	
+	});
 
-	$('#btn-remove-group').click(function(event) {
+	$('#btn-remove-group').on('click', function (event) {
+		event.preventDefault();
 		removeGroup($('#input-group-name').val());
 	});
-	
-	$('#btn-confirm-import-group').click(function(event) {
+
+	$('#btn-confirm-import-group').on('click', function (event) {
 		event.preventDefault();
 		$("#sel-import-group").empty();
 		$.ajax({
@@ -144,14 +148,14 @@ function buildGroupPage() {
 		        $.each(data.groups, function(index, group) {
 		        	$groupSelect.append($('<option>').attr('value', group.name).text(group.name));
 		        });
-                commons.sortSelectOptions($groupSelect)
+				commons.sortSelectOptions($groupSelect);
 		        $groupSelect.val('');
 		        $('#modal-group-import').modal();
 		    }
 		});		
 	});
 
-	$('#btn-import-group').click(function(event) {
+	$('#btn-import-group').on('click', function (event) {
 		event.preventDefault();
 		var groupName = $("#sel-import-group").val();
 		if (!groupName) {
@@ -168,7 +172,7 @@ function buildGroupPage() {
 		        }
 				// First the group if it is already present
 				$('#sel-group > option').each(function () {
-				    if(group.name == $(this).attr('value')) {
+					if (group.name === $(this).attr('value')) {
 				        $(this).remove();
 				    }
 				});
@@ -183,7 +187,7 @@ function buildGroupPage() {
         });
 	});
 
-    $('#lnk-add-notifier').click(function (event) {
+	$('#lnk-add-notifier').on('click', function (event) {
         event.preventDefault();
         $('#list-notifiers').append(createNotifierRow());
     });
@@ -244,8 +248,8 @@ function buildGroupPage() {
                     return;
                 }
         		delete groupMap[groupName];
-        		$("#sel-group > option").filter(function(i){
-        		       return $(this).attr("value") == groupName;
+				$("#sel-group > option").filter(function () {
+					return $(this).attr("value") === groupName;
         		}).remove();
         		$('#groups_infoBox').text('Group \'' + groupName + '\' removed.').show('fast').delay(5000).hide('fast');
             }
@@ -277,7 +281,7 @@ function buildGroupPage() {
     }
 	
 	function createGroupData() {
-		var groupData = {
+		const groupData = {
 			name: $('#input-group-name').val(),
 			display_name: $('#input-group-display-name').val() ? $('#input-group-display-name').val() : null,
 			filter_query: $('#input-filter-query').val() ? $('#input-filter-query').val() : null,
@@ -295,15 +299,15 @@ function buildGroupPage() {
                     return $(this).val();
                 }).get(),
             notifiers: []
-		}
+		};
 		$('#card-acl').find('select').each(function () {
 		    if ($(this).val() !== 'none') {
 			    groupData.roles.push($(this).val());
 			}
 		});
         $('.etm-notifier').each(function () {
-            var notifierName = $(this).val();
-            if (-1 == groupData.notifiers.indexOf(notifierName)) {
+			const notifierName = $(this).val();
+			if (-1 === groupData.notifiers.indexOf(notifierName)) {
                 groupData.notifiers.push(notifierName);
             }
         });
