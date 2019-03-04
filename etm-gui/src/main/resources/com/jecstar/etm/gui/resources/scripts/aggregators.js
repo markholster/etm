@@ -604,7 +604,7 @@ const aggregators = (function () {
                             $('<option>').attr('value', 'count').text('Count'),
                             $('<option>').attr('value', 'max').text('Max'),
                             $('<option>').attr('value', 'median').text('Median'),
-                            $('<option>').attr('value', 'median_absolute_deviation').text('Media absolute deviation'),
+                            $('<option>').attr('value', 'median_absolute_deviation').text('Median absolute deviation'),
                             $('<option>').attr('value', 'min').text('Min'),
                             $('<option>').attr('value', 'percentile').text('Percentile'),
                             $('<option>').attr('value', 'percentile_rank').text('Percentile rank'),
