@@ -1,6 +1,6 @@
 "use strict";
 let eventEndpointsChart;
-let eventChaintChart;
+let eventChainChart;
 let transactionMap = {};
 let eventMap = {};
 let clipboards = [];
@@ -42,9 +42,11 @@ function showEvent(scrollTo, type, id) {
 	function initialize() {
         if (eventEndpointsChart) {
             eventEndpointsChart.destroy();
+			eventEndpointsChart = null;
         }
-        if (eventChaintChart) {
-            eventChaintChart.destroy();
+		if (eventChainChart) {
+			eventChainChart.destroy();
+			eventChainChart = null;
 		}
 		$.map(transactionMap, function(value, index) {
     		return [value];
@@ -1051,7 +1053,7 @@ function showEvent(scrollTo, type, id) {
 
                         $('#event-chain').attr('style', 'height: ' + ((chartConfig.yAxis.categories.length * emPerLine) + 5.5) + 'em; width: 100%;');
 
-                        eventChaintChart = Highcharts.chart('event-chain', chartConfig);
+						eventChainChart = Highcharts.chart('event-chain', chartConfig);
 				    }
                 });
 
