@@ -706,7 +706,7 @@ const aggregators = (function () {
                         .addClass('form-control form-control-sm')
                         .val(aggregatorData.reduce_script ? aggregatorData.reduce_script : defaultData.reduce_script)
                 )
-            ),
+            )
         );
         $container.append(
             $('<a>').attr('href', '#').addClass('float-right')
