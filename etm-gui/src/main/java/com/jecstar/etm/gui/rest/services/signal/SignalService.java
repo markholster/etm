@@ -89,7 +89,15 @@ public class SignalService extends AbstractUserAttributeService {
      */
     private String getKeywords(String groupName) {
         Map<String, Object> entity = getEntity(dataRepository, groupName, this.etmPrincipalTags.getSignalDatasourcesTag());
-        List<String> datasources = getArray(this.etmPrincipalTags.getSignalDatasourcesTag(), entity, Collections.emptyList());
+        Set<String> datasources = new HashSet<>(getArray(this.etmPrincipalTags.getSignalDatasourcesTag(), entity, Collections.emptyList()));
+        if (groupName == null) {
+//          We try to get the data for the user but when the user is added to some groups the context of that groups needs to be added to the user context
+            Set<EtmGroup> groups = getEtmPrincipal().getGroups();
+            for (EtmGroup group : groups) {
+                Map<String, Object> groupObjectMap = getEntity(dataRepository, group.getName(), this.etmPrincipalTags.getSignalDatasourcesTag());
+                datasources.addAll(getArray(this.etmPrincipalTags.getSignalDatasourcesTag(), groupObjectMap, Collections.emptyList()));
+            }
+        }
         StringBuilder result = new StringBuilder();
         result.append("{ \"keywords\":[");
         boolean first = true;

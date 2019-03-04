@@ -92,7 +92,15 @@ public class DashboardService extends AbstractUserAttributeService {
      */
     private String getKeywords(String groupName) {
         Map<String, Object> entity = getEntity(dataRepository, groupName, this.principalTags.getDashboardDatasourcesTag());
-        List<String> datasources = getArray(this.principalTags.getDashboardDatasourcesTag(), entity, Collections.emptyList());
+        Set<String> datasources = new HashSet<>(getArray(this.principalTags.getDashboardDatasourcesTag(), entity, Collections.emptyList()));
+        if (groupName == null) {
+//          We try to get the data for the user but when the user is added to some groups the context of that groups needs to be added to the user context
+            Set<EtmGroup> groups = getEtmPrincipal().getGroups();
+            for (EtmGroup group : groups) {
+                Map<String, Object> groupObjectMap = getEntity(dataRepository, group.getName(), this.principalTags.getDashboardDatasourcesTag());
+                datasources.addAll(getArray(this.principalTags.getDashboardDatasourcesTag(), groupObjectMap, Collections.emptyList()));
+            }
+        }
         StringBuilder result = new StringBuilder();
         result.append("{ \"keywords\":[");
         boolean first = true;
