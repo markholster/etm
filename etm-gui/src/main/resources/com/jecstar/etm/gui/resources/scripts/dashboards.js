@@ -868,6 +868,7 @@ function updateChart(graph, $container, readonly) {
             d3.formatDefaultLocale({
                 decimal: response.locale.decimal,
                 thousands: response.locale.thousands,
+                grouping: [3],
                 currency: response.locale.currency
             });
             const chartConfig = response.chart_config;

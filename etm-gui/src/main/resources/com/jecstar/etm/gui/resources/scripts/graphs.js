@@ -563,6 +563,7 @@ function buildGraphsPage(groupName) {
                 d3.formatDefaultLocale({
                     decimal: response.locale.decimal,
                     thousands: response.locale.thousands,
+                    grouping: [3],
                     currency: response.locale.currency
                 });
                 const chartConfig = response.chart_config;
@@ -669,6 +670,7 @@ function buildGraphsPage(groupName) {
                 });
             } else if ('number' === graphContainer.graph.type ||
                 'pie' === graphContainer.graph.type) {
+                $('#input-parts-format').val(graphContainer.graph.y_axis.format);
                 const $container = $('#acc-collapse-parts > .card-body > .aggregator-container-block');
                 $.each(graphContainer.graph.y_axis.aggregators, function (index, aggregator) {
                     addAggregator('parts', $container, 0, index, aggregator);
