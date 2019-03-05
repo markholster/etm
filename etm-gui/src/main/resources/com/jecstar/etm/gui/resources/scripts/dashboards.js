@@ -746,8 +746,8 @@ function appendCell($cellContainer, graph, readonly) {
                 },
                 events: {
                     load: function () {
-                        $container.css('overflow', 'visible');
-                        $container.children('.highcharts-container').css('overflow', 'visible');
+                        $cellContainer.css('overflow', 'visible');
+                        $cellContainer.children('.highcharts-container').css('overflow', 'visible');
                     }
                 },
                 renderTo: $renderTo[0],

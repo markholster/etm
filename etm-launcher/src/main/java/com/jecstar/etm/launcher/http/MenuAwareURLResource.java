@@ -299,7 +299,6 @@ public class MenuAwareURLResource extends URLResource {
                 if (hasGroupMenu) {
                     html.append("</ul>");
                 }
-                html.append("</li>");
             }
             html.append("</ul></li>");
         }

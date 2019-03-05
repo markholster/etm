@@ -379,7 +379,6 @@ function buildGraphsPage(groupName) {
             $form.find('[data-required]').attr('required', 'required');
             return valid;
         }
-
     }
 
     function shapeXAxisBucketAggregator(bucketContainer) {
@@ -387,8 +386,8 @@ function buildGraphsPage(groupName) {
         $bucketContainer.find('.bucket-aggregator-header').remove();
         $bucketContainer.children('.aggregator-container-block').removeAttr('style').removeClass('bg border rounded bg-light');
         const $children = $bucketContainer.find(".bucket-aggregator-block > .form-group");
-        $children[0].remove();
-        $children[1].remove();
+        $children.first().next().remove();
+        $children.first().remove();
         // Remove options from select...
         $bucketContainer.find("select[data-element-type='bucket-aggregator-selector']").children().each(function () {
             if (isSingleValueBucketAggregator($(this).attr('value'))) {
@@ -402,8 +401,8 @@ function buildGraphsPage(groupName) {
         $bucketContainer.find('.bucket-aggregator-header').remove();
         $bucketContainer.children('.aggregator-container-block').removeAttr('style').removeClass('bg border rounded bg-light');
         const $children = $bucketContainer.find(".bucket-aggregator-block > .form-group");
-        $children[0].remove();
-        $children[1].remove();
+        $children.first().next().remove();
+        $children.first().remove();
         // Remove options from select...
         $bucketContainer.find("select[data-element-type='bucket-aggregator-selector']").children().each(function () {
             if (!('term' === $(this).attr('value') || 'significant_term' === $(this).attr('value'))) {

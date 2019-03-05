@@ -1,6 +1,7 @@
 const aggregators = (function () {
     'use strict';
 
+    const MAX_SAFE_INTEGER = Number.MAX_SAFE_INTEGER || 9007199254740991;
     const ewmaScript = 'MovingFunctions.ewma(values, params.alpha)';
     const holtScript = 'MovingFunctions.holt(values, params.alpha, params.beta)';
     const holtWinterScript = 'if (values.length > params.bootstrap_window) {MovingFunctions.holtWinters(values, params.alpha, params.beta, params.gamma, params.period, params.multiplicative)}';
@@ -1141,7 +1142,7 @@ const aggregators = (function () {
                             $('<option>').attr('value', 'MovingFunctions.stdDev(values, MovingFunctions.unweightedAvg(values))').text('Standard deviation'),
                             $('<option>').attr('value', 'MovingFunctions.sum(values)').text('Sum'),
                             $('<option>').attr('value', holtWinterScript).text('Triple exponential weighted average'),
-                            $('<option>').attr('value', 'MovingFunctions.unweightedAvg(values)').text('Unweighted average'),
+                            $('<option>').attr('value', 'MovingFunctions.unweightedAvg(values)').text('Unweighted average')
                         )
                         .val(aggregatorData.script ? aggregatorData.script : defaultData.script)
                 )
@@ -1355,7 +1356,7 @@ const aggregators = (function () {
 
     const validateNumberOfMetricsAndPipelines = function validateNumberOfMetricsAndPipelines(formId) {
         const min = 1;
-        let max = Number.MAX_SAFE_INTEGER;
+        let max = MAX_SAFE_INTEGER;
         const $form = $('#' + formId);
         const $rootContainer = $form.find('div.aggregator-container-block[data-aggregator-level="0"]');
         if ('true' === $rootContainer.attr('data-require-single-value')) {
