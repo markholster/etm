@@ -902,15 +902,10 @@ function updateChart(graph, $container, readonly) {
                             $container.children('.highcharts-container').css('overflow', 'visible');
                         },
                         redraw: function () {
-                            if (this.textBox) {
-                                this.textBox.destroy();
-                            }
-                            this.textBox = this.renderer.text(formatLabel(response.valueFormat, response.value), this.chartWidth / 2, this.chartHeight / 2)
-                                .css({
-                                    fontSize: '4em',
-                                })
-                                .attr('text-anchor', 'middle')
-                                .add();
+                            this.textBox.attr({
+                                x: this.chartWidth / 2,
+                                y: this.chartHeight / 2
+                            });
                         }
                     }
                 }
@@ -958,6 +953,11 @@ function updateChart(graph, $container, readonly) {
             }
             if (graph.chart) {
                 graph.chart.update(chartConfig);
+                if ('number' === response.type) {
+                    graph.chart.textBox.attr({
+                        text: formatLabel(response.valueFormat, response.value)
+                    })
+                }
             } else {
                 graph.chart = Highcharts.chart($container[0], chartConfig);
             }

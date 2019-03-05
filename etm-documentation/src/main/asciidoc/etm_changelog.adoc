@@ -8,6 +8,7 @@
 * [ETM-91] Click on search result might show an empty page.
 * [ETM-92] Wrong name in pipeline path selector when referencing other pipelines.
 * [ETM-93] Missing thousands separator in Number graphs.
+* [ETM-94] Number graphs not refreshing on dashboard.
 
 === Version 3.4.0
 * [ETM-17] Migrate etm-domain to public repository.
@@ -131,7 +132,7 @@ Additional labels for pre-release and build metadata are available as extensions
 . Stop all {etm} nodes.
 . Stop your current Elasticsearch nodes.
 . Copy the 'config/elasticsearch.yml' file from your current Elasticsearch nodes to your new ones.
-. Merge changes from the 'config/jvm.options' and 'config/log4j2.properties' files in your current Elasticsearch nodes to your new ones.
+. Merge changes from the 'config/jvm.options' and 'config/log4j2.properties' files in your current Elasticsearch nodes to your new ones. Note that merging is only recommended when you have made changes to those files. When you've not changed anything in those files it is recommended to leave them untouched in your new Elasticsearch installation.
 . If your Elasticsearch data resides in the same directory as your Elasticsearch installation make sure you copy the data to the new Elasticsearch installation.
 . Start your new Elasticsearch nodes and wait for the message ''Cluster health status changed from [RED] to [GREEN]'' to appear.
 . Download and uncompress {etm} to a new directory.
