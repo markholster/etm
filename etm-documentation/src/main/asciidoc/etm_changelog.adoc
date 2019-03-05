@@ -6,6 +6,7 @@
 * [ETM-89] Autocomplete not working in graphs and signals.
 * [ETM-90] Graphs not working on IE.
 * [ETM-91] Click on search result might show an empty page.
+* [ETM-92] Wrong name in pipeline path selector when referencing other pipelines.
 
 === Version 3.4.0
 * [ETM-17] Migrate etm-domain to public repository.

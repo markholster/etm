@@ -81,7 +81,7 @@ const aggregators = (function () {
             if ($pipelineAggregatorBlock.is($pipelineAggregator)) {
                 return true;
             }
-            let optionName = $pipelineAggregator.find('[id^=input-pipeline-name-]').val()[0];
+            let optionName = $pipelineAggregator.find('[id^=input-pipeline-name-]').val();
             let $pipelineContainer = $pipelineAggregator.closest('.aggregator-container-block');
             let optionValue = $pipelineContainer.attr('data-aggregator-level') + '-' + $pipelineAggregator.attr('data-aggregator-ix');
             let addOption = false;
@@ -193,7 +193,7 @@ const aggregators = (function () {
             const $metricAggregators = $aggregatorContainer.find('.metrics-aggregator-block');
             $metricAggregators.each(function (index, metricAggregator) {
                 const $metricAggregator = $(metricAggregator);
-                let optionName = $metricAggregator.find('[id^=input-metrics-name-]').val()[0];
+                let optionName = $metricAggregator.find('[id^=input-metrics-name-]').val();
                 let $metricContainer = $metricAggregator.closest('.aggregator-container-block');
                 let optionValue = $metricContainer.attr('data-aggregator-level') + '-' + $metricAggregator.attr('data-aggregator-ix');
                 while (Number(level) < Number($metricContainer.attr('data-aggregator-level'))) {
@@ -527,7 +527,7 @@ const aggregators = (function () {
 
         aggregators.config.page.on('change', "input[data-element-type='pipeline-periodicity']", function () {
             const $input = $(this);
-            const period = $input.val()[0];
+            const period = Number($input.val());
             const $pipelineContainer = $input.closest('.pipeline-aggregator-block');
             $pipelineContainer.find('[id^=input-pipeline-window-]').attr('min', period * 2);
             aggregators.config.enableOrDisableButtons();
