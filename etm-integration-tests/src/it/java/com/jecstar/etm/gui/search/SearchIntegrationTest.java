@@ -144,6 +144,7 @@ public class SearchIntegrationTest extends AbstractCitrusSeleniumTest {
         login(runner, browser);
         runner.selenium(action -> action.navigate(getEtmUrl() + searchPath));
         runner.selenium(action -> action.waitUntil().visible().element(By.id("search-container")));
+        waitForAjaxToComplete(runner);
         // First remove all existing templates
         removeSearchTemplates(runner, browser);
         // Check the state of some elements
