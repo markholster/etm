@@ -910,12 +910,10 @@ function updateChart(graph, $container, readonly) {
                     }
                 }
             } else {
-                chartConfig.chart = {
-                    events: {
-                        load: function () {
-                            $container.css('overflow', 'visible');
-                            $container.children('.highcharts-container').css('overflow', 'visible');
-                        }
+                chartConfig.chart.events = {
+                    load: function () {
+                        $container.css('overflow', 'visible');
+                        $container.children('.highcharts-container').css('overflow', 'visible');
                     }
                 }
             }

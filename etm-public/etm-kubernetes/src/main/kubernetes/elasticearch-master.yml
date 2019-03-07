@@ -9,6 +9,11 @@ metadata:
 spec:
   serviceName: "elasticsearch-discovery"
   replicas: 3
+  selector:
+    matchLabels:
+      app: "elasticsearch"
+      component: "master"
+      release: "${elasticsearch-version}"
   template:
     metadata:
       labels:
