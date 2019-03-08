@@ -15,6 +15,11 @@ public class EtmPrincipalTagsJsonImpl implements EtmPrincipalTags {
     }
 
     @Override
+    public String getApiKeyTag() {
+        return "api_key";
+    }
+
+    @Override
     public String getFilterQueryTag() {
         return "filter_query";
     }

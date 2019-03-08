@@ -27,6 +27,7 @@ public class EtmPrincipal implements EtmSecurityEntity, Principal, Serializable 
     private String passwordHash;
     private String name = null;
     private String emailAddress = null;
+    private String apiKey;
     private Locale locale = Locale.getDefault();
     private TimeZone timeZone = TimeZone.getDefault();
     private String filterQuery = null;
@@ -86,6 +87,14 @@ public class EtmPrincipal implements EtmSecurityEntity, Principal, Serializable 
 
     public void setEmailAddress(String emailAddress) {
         this.emailAddress = emailAddress;
+    }
+
+    public String getApiKey() {
+        return this.apiKey;
+    }
+
+    public void setApiKey(String apiKey) {
+        this.apiKey = apiKey;
     }
 
     public Locale getLocale() {

@@ -7,7 +7,9 @@ The following settings can be changed:
 |=======================
 |Name|Description
 |Id|The unique ID of the user. This id is also used for logging in to the {etm} Gui and is a read-only field.
-|Name|Your full name. 
+|Name|Your full name.
+|Email address|
+|Api key|The api key that must be added as http header when making calls to the <<Rest processor>>.
 |Locale|The locale you want to use.
 |Time zone|The time zone you are in. Time based properties will be converted to the selected time zone.
 |Search history size|The number of queries that need to be remembered.

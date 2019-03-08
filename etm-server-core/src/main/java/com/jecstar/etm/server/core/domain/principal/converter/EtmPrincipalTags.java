@@ -6,6 +6,8 @@ public interface EtmPrincipalTags {
 
     String getEmailTag();
 
+    String getApiKeyTag();
+
     String getFilterQueryTag();
 
     String getFilterQueryOccurrenceTag();

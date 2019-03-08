@@ -27,6 +27,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
         sb.append(", " + this.converter.escapeToJson(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, true) + ": {");
         boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getIdTag(), etmPrincipal.getId(), sb, true);
         added = this.converter.addStringElementToJsonBuffer(this.tags.getEmailTag(), etmPrincipal.getEmailAddress(), true, sb, !added) || added;
+        added = this.converter.addStringElementToJsonBuffer(this.tags.getApiKeyTag(), etmPrincipal.getApiKey(), true, sb, !added) || added;
         added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryTag(), etmPrincipal.getFilterQuery(), true, sb, !added) || added;
         added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryOccurrenceTag(), etmPrincipal.getFilterQueryOccurrence().name(), true, sb, !added) || added;
         added = this.converter.addBooleanElementToJsonBuffer(this.tags.getAlwaysShowCorrelatedEventsTag(), etmPrincipal.isAlwaysShowCorrelatedEvents(), sb, !added) || added;
@@ -83,6 +84,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
         principal.setPasswordHash(this.converter.getString(this.tags.getPasswordHashTag(), valueMap));
         principal.setName(this.converter.getString(this.tags.getNameTag(), valueMap));
         principal.setEmailAddress(this.converter.getString(this.tags.getEmailTag(), valueMap));
+        principal.setApiKey(this.converter.getString(this.tags.getApiKeyTag(), valueMap));
         principal.setFilterQuery(this.converter.getString(this.tags.getFilterQueryTag(), valueMap));
         principal.setFilterQueryOccurrence(QueryOccurrence.valueOf(this.converter.getString(this.tags.getFilterQueryOccurrenceTag(), valueMap)));
         principal.setAlwaysShowCorrelatedEvents(this.converter.getBoolean(this.tags.getAlwaysShowCorrelatedEventsTag(), valueMap));

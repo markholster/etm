@@ -3,6 +3,7 @@ package com.jecstar.etm.launcher.http;
 import com.jecstar.etm.gui.rest.EtmExceptionMapper;
 import com.jecstar.etm.gui.rest.RestGuiApplication;
 import com.jecstar.etm.launcher.configuration.Configuration;
+import com.jecstar.etm.launcher.http.auth.ApiKeyAuthenticationMechanism;
 import com.jecstar.etm.launcher.http.session.ElasticsearchSessionManagerFactory;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.rest.RestTelemetryEventProcessorApplication;
@@ -33,6 +34,7 @@ import org.jboss.resteasy.spi.ResteasyDeployment;
 
 import javax.net.ssl.SSLContext;
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
@@ -106,7 +108,7 @@ public class HttpServer {
         servletSessionConfig.setHttpOnly(true).setSecure(configuration.http.secureCookies);
 
         if (configuration.http.restProcessorEnabled) {
-            DeploymentInfo di = createProcessorDeploymentInfo(processor, configuration.http.restProcessorLoginRequired ? identityManager : null);
+            DeploymentInfo di = createProcessorDeploymentInfo(processor, identityManager);
             di.setDefaultSessionTimeout(new Long(etmConfiguration.getSessionTimeout() / 1000).intValue());
             di.setServletSessionConfig(servletSessionConfig);
             DeploymentManager manager = container.addDeployment(di);
@@ -216,6 +218,7 @@ public class HttpServer {
         DeploymentInfo di = undertowRestDeployment(deployment, "/");
         di.setContextPath("/rest/processor/");
         di.setSessionManagerFactory(this.sessionManagerFactory);
+        di.getAuthenticationMechanisms().put(ApiKeyAuthenticationMechanism.NAME, ApiKeyAuthenticationMechanism.FACTORY);
         if (identityManager != null) {
             deployment.setSecurityEnabled(true);
             di.addSecurityConstraint(new SecurityConstraint()
@@ -223,7 +226,7 @@ public class HttpServer {
                     .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/*")));
             di.addSecurityRoles(SecurityRoles.ETM_EVENT_WRITE, SecurityRoles.ETM_EVENT_READ_WRITE);
             di.setIdentityManager(identityManager);
-            di.setLoginConfig(new LoginConfig("BASIC", "Enterprise Telemetry Monitor"));
+            di.setLoginConfig(new LoginConfig(HttpServletRequest.BASIC_AUTH, "Enterprise Telemetry Monitor").addFirstAuthMethod(ApiKeyAuthenticationMechanism.NAME));
         }
         di.setClassLoader(processorApplication.getClass().getClassLoader());
         di.setDeploymentName("Rest event processor - " + di.getContextPath());

@@ -89,6 +89,7 @@ public class UserService extends AbstractGuiService {
         }
         userObject.put(this.tags.getSearchHistorySizeTag(), newHistorySize);
         userObject.put(this.tags.getDefaultSearchRangeTag(), valueMap.get(this.tags.getDefaultSearchRangeTag()));
+        userObject.put(this.tags.getApiKeyTag(), valueMap.get(this.tags.getApiKeyTag()));
 
         updateMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, userObject);
         UpdateRequestBuilder builder = enhanceRequest(
@@ -112,6 +113,13 @@ public class UserService extends AbstractGuiService {
         }
         etmPrincipal.forceReload = true;
         return "{ \"status\": \"success\" }";
+    }
+
+    @GET
+    @Path("/api_key")
+    @Produces(MediaType.APPLICATION_JSON)
+    public String createNewApiKey() {
+        return "{" + this.escapeObjectToJsonNameValuePair("api_key", UUID.randomUUID().toString()) + "}";
     }
 
     @PUT

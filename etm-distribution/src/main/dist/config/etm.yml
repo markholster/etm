@@ -39,8 +39,6 @@ http:
   guiMaxQueuedRequests: 50
 # Should the rest processor be enabled. Set this option to false if you don't want this node to process events over a rest interface.
   restProcessorEnabled: true
-# Should the rest processor protected with a basic authentication login?
-  restProcessorLoginRequired: false
 # The maximum number of requests that can be handled concurrently. If the number of requests exceeds this number they will be queued.
   restProcessorMaxConcurrentRequests: 50
 # The maximum number of request that can be queued before the server will reject further requests.

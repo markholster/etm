@@ -65,4 +65,65 @@ public class LruCacheTest {
         }
         assertTrue(cache.isEmpty());
     }
+
+
+    @Test
+    public void testCacheExpiryWithSizeMethod() {
+        final int maxSize = 100;
+        final int expiry = 10;
+        LruCache<Integer, Integer> cache = new LruCache<>(maxSize, expiry);
+        for (int i = 0; i < maxSize; i++) {
+            cache.put(i, i);
+        }
+        try {
+            Thread.sleep(expiry + 1);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        assertEquals(0, cache.size());
+    }
+
+    @Test
+    public void testCacheExpiryWithEmptyMethod() {
+        final int maxSize = 100;
+        final int expiry = 10;
+        LruCache<Integer, Integer> cache = new LruCache<>(maxSize, expiry);
+        for (int i = 0; i < maxSize; i++) {
+            cache.put(i, i);
+        }
+        try {
+            Thread.sleep(expiry + 1);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        assertTrue(cache.isEmpty());
+    }
+
+    @Test
+    public void testCacheExpiryWithGetMethod() {
+        final int maxSize = 1;
+        final int expiry = 1000;
+        final Integer key = new Integer(200);
+        LruCache<Integer, Integer> cache = new LruCache<>(maxSize, expiry);
+        cache.put(key, 1);
+        assertNotNull(cache.get(key));
+        try {
+            Thread.sleep(expiry + 1);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        assertNull(cache.get(key));
+    }
+
+
+    @Test
+    public void testCacheSizeWithExpiry() {
+        final int maxSize = 1;
+        final int expiry = 100_000;
+        LruCache<Integer, Integer> cache = new LruCache<>(maxSize, expiry);
+        for (int i = 0; i < 10; i++) {
+            cache.put(i, i);
+        }
+        assertEquals(maxSize, cache.size());
+    }
 }

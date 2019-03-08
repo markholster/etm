@@ -1,6 +1,7 @@
 package com.jecstar.etm.launcher.http;
 
 import com.jecstar.etm.gui.rest.services.search.DefaultSearchTemplates;
+import com.jecstar.etm.launcher.http.auth.ApiKeyCredentials;
 import com.jecstar.etm.server.core.domain.audit.builder.LoginAuditLogBuilder;
 import com.jecstar.etm.server.core.domain.audit.converter.LoginAuditLogConverter;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
@@ -12,22 +13,22 @@ import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalConver
 import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalConverterJsonImpl;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
-import com.jecstar.etm.server.core.elasticsearch.builder.GetRequestBuilder;
-import com.jecstar.etm.server.core.elasticsearch.builder.IndexRequestBuilder;
-import com.jecstar.etm.server.core.elasticsearch.builder.MultiGetRequestBuilder;
-import com.jecstar.etm.server.core.elasticsearch.builder.UpdateRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.*;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.util.BCrypt;
 import com.jecstar.etm.server.core.util.DateUtils;
+import com.jecstar.etm.server.core.util.LruCache;
 import com.jecstar.etm.server.core.util.ObjectUtils;
 import io.undertow.security.idm.*;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.get.MultiGetItemResponse;
 import org.elasticsearch.action.get.MultiGetResponse;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.QueryBuilders;
 
 import java.security.cert.X509Certificate;
 import java.time.Instant;
@@ -51,6 +52,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
     private final JsonConverter jsonConverter = new JsonConverter();
     private final LoginAuditLogConverter auditLogConverter = new LoginAuditLogConverter();
 
+    private final LruCache<ApiKeyCredentials, EtmAccount> apiKeyCache = new LruCache<>(50, 30_000L);
 
     public ElasticsearchIdentityManager(final DataRepository dataRepository, final EtmConfiguration etmConfiguration) {
         this.dataRepository = dataRepository;
@@ -165,7 +167,30 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 
     @Override
     public Account verify(Credential credential) {
-        if (credential instanceof X509CertificateCredential) {
+        if (credential instanceof ApiKeyCredentials) {
+            ApiKeyCredentials apiKeyCredentials = (ApiKeyCredentials) credential;
+            EtmAccount etmAccount = this.apiKeyCache.get(apiKeyCredentials);
+            if (etmAccount != null) {
+                return etmAccount;
+            }
+            SearchResponse searchResponse = this.dataRepository.search(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+                    .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
+                    .setFetchSource(false)
+                    .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getApiKeyTag(), apiKeyCredentials.getApiKey()))
+                    .setSize(1)
+            );
+            if (searchResponse.getHits().totalHits == 0) {
+                return null;
+            }
+            String docId = searchResponse.getHits().getAt(0).getId();
+            EtmPrincipal principal = loadPrincipal(docId.substring(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX.length()));
+            if (principal == null) {
+                return null;
+            }
+            etmAccount = new EtmAccount(principal);
+            this.apiKeyCache.put(apiKeyCredentials, etmAccount);
+            return etmAccount;
+        } else if (credential instanceof X509CertificateCredential) {
             X509Certificate certificate = ((X509CertificateCredential) credential).getCertificate();
             EtmPrincipal principal = loadPrincipal(certificate.getSerialNumber().toString());
             if (principal == null) {

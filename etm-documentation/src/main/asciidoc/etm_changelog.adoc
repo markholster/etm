@@ -1,4 +1,7 @@
 == Changelog
+=== Version 3.5.0
+* [ETM-95] Add api key to user for for authorisation on rest processor.
+
 === Version 3.4.1
 * [ETM-86] Dashboard and signal datasources not refreshed in groups settings screen.
 * [ETM-87] Dashboard context menu hidden when insufficient height in column.
@@ -143,6 +146,9 @@ Additional labels for pre-release and build metadata are available as extensions
 
 ==== Version specific changes
 Sometimes your {etm} configuration needs additional changes before it can be upgraded. This section describes these changes necessary before upgrading.
+
+===== Upgrade from versions before 3.5.0 to 3.5.x or higher
+. Remove the option 'restProcessorLoginRequired' in the http chapter in the file 'config/etm.yml'. This option is replaced by the api key functionality.
 
 ===== Upgrade from versions before 3.4.0 to 3.4.x or higher
 . Change the 'connectAddresses' in the elasticsearch chapter from the Elasticsearch transport address to the Elasticsearch http address.

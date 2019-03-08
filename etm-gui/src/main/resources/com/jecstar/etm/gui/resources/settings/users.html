@@ -84,6 +84,15 @@
                                         <input id="input-user-email" type="text" class="form-control"/>
                                     </div>
                                 </div>
+                                <div class="form-group row">
+                                    <label for="input-user-api-key" class="col-sm-3 col-form-label">Api key</label>
+                                    <div class="col-sm-7">
+                                        <code id="input-user-api-key" class="col-sm-3 col-form-label"></code>
+                                    </div>
+                                    <div class="col-sm-2">
+                                        <a id="lnk-refresh-api-key" class="float-right" href="#">Refresh api key</a>
+                                    </div>
+                                </div>
                                 <div class="form-group">
                                     <a id="lnk-add-group" class="float-right" href="#">Add group</a>
                                     <label>Groups</label>
@@ -547,6 +556,27 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                 <button id="btn-import-user" type="button" class="btn btn-primary">Import</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-update-user-api-key">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="user-update-api-key-modal-label">Refresh api key</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want update the api key of user '<i id="update-api-key-user-id"></i>'?<br/>
+                The new api key will not be activated until you save the user.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+                <button id="btn-update-api-key" type="button" class="btn btn-primary">Yes</button>
             </div>
         </div>
     </div>

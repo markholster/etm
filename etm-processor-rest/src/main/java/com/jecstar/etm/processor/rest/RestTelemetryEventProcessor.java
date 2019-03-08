@@ -2,6 +2,7 @@ package com.jecstar.etm.processor.rest;
 
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.handler.AbstractJsonHandler;
+import com.jecstar.etm.processor.handler.HandlerResult;
 import com.jecstar.etm.processor.handler.HandlerResults;
 
 import javax.ws.rs.*;
@@ -31,13 +32,7 @@ public class RestTelemetryEventProcessor extends AbstractJsonHandler {
     @Produces(MediaType.APPLICATION_JSON)
     public Response addEvent(InputStream data) {
         HandlerResults results = handleSingleEvent(data);
-        if (results.hasFailures()) {
-            if (log.isErrorLevelEnabled()) {
-                log.logErrorMessage("Failed to add event: " + results.getFailures().stream().map(f -> f.toString()).collect(Collectors.joining(", ")));
-            }
-            throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
-        }
-        return Response.accepted("{ \"status\": \"acknowledged\" }").build();
+        return generateResponse(results);
     }
 
 
@@ -47,9 +42,13 @@ public class RestTelemetryEventProcessor extends AbstractJsonHandler {
     @Produces(MediaType.APPLICATION_JSON)
     public Response addEvents(InputStream data) {
         HandlerResults results = handleBulkEvents(data);
-        if (results.hasFailures()) {
+        return generateResponse(results);
+    }
+
+    private Response generateResponse(HandlerResults handlerResults) {
+        if (handlerResults.hasFailures()) {
             if (log.isErrorLevelEnabled()) {
-                log.logErrorMessage("Failed to add event: " + results.getFailures().stream().map(f -> f.toString()).collect(Collectors.joining(", ")));
+                log.logErrorMessage("Failed to add event: " + handlerResults.getFailures().stream().map(HandlerResult::toString).collect(Collectors.joining(", ")));
             }
             throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
         }

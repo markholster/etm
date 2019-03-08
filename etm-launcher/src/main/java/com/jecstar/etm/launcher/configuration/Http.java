@@ -16,7 +16,6 @@ public class Http {
     public int guiMaxQueuedRequests = 50;
 
     public boolean restProcessorEnabled = true;
-    public boolean restProcessorLoginRequired = false;
     public int restProcessorMaxConcurrentRequests = 50;
     public int restProcessorMaxQueuedRequests = 50;
 
