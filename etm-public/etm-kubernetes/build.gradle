@@ -15,6 +15,10 @@ build {
             ant.replace(file: it, token: '${elasticsearch-version}', value: version_elasticsearch)
             ant.replace(file: it, token: '${etm-version}', value: project.version)
         }
+        new File(buildDir, 'kubernetes/gce').eachFile(FileType.FILES) {
+            ant.replace(file: it, token: '${elasticsearch-version}', value: version_elasticsearch)
+            ant.replace(file: it, token: '${etm-version}', value: project.version)
+        }
     }
 }
 

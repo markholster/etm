@@ -1,0 +1,230 @@
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: ssd
+provisioner: kubernetes.io/gce-pd
+parameters:
+  type: pd-ssd
+  zone: europe-west4-a
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: etm-demo
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: etm-demo
+  labels:
+    app: "elasticsearch"
+    release: "${elasticsearch-version}"
+  name: "elasticsearch-discovery"
+spec:
+  clusterIP: None
+  ports:
+    - port: 9200
+      name: http
+      targetPort: http
+    - port: 9300
+      targetPort: transport
+      name: transport
+  selector:
+    app: "elasticsearch"
+    release: "${elasticsearch-version}"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: etm-demo
+  labels:
+    app: "etm"
+    component: "client"
+    release: "${etm-version}"
+  name: "etm-client"
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 8080
+      name: http
+      targetPort: http
+  selector:
+    app: "etm"
+    component: "client"
+    release: "${etm-version}"
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  namespace: etm-demo
+  labels:
+    app: "elasticsearch"
+    release: "${elasticsearch-version}"
+  name: "elasticsearch-master"
+spec:
+  serviceName: "elasticsearch-discovery"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "elasticsearch"
+      release: "${elasticsearch-version}"
+  template:
+    metadata:
+      labels:
+        app: "elasticsearch"
+        release: "${elasticsearch-version}"
+    spec:
+      securityContext:
+        fsGroup: 1000
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    app: "elasticsearch"
+                    component: "master"
+      initContainers:
+        # see https://www.elastic.co/guide/en/elasticsearch/reference/current/vm-max-map-count.html
+        # and https://www.elastic.co/guide/en/elasticsearch/reference/current/setup-configuration-memory.html#mlockall
+        - name: "sysctl"
+          image: "busybox"
+          imagePullPolicy: "Always"
+          command: ["sysctl", "-w", "vm.max_map_count=262144"]
+          securityContext:
+            privileged: true
+        - name: "chown"
+          image: "docker.elastic.co/elasticsearch/elasticsearch-oss:${elasticsearch-version}"
+          imagePullPolicy: "IfNotPresent"
+          command:
+            - /bin/bash
+            - -c
+            - chown -R elasticsearch:elasticsearch /usr/share/elasticsearch/data &&
+              chown -R elasticsearch:elasticsearch /usr/share/elasticsearch/logs
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - mountPath: /usr/share/elasticsearch/data
+              name: data
+      containers:
+        - name: "elasticsearch"
+          env:
+            - name: cluster.name
+              value: etm-demo-01
+            - name: node.master
+              value: "true"
+            - name: node.data
+              value: "true"
+            - name: node.ingest
+              value: "false"
+            - name: discovery.zen.ping.unicast.hosts
+              value: "elasticsearch-discovery"
+            - name: discovery.zen.minimum_master_nodes
+              value: "1"
+            - name: ES_JAVA_OPTS
+              value: "-Djava.net.preferIPv4Stack=true -Xms8G -Xmx8G"
+            - name: node.name
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          resources:
+            requests:
+              memory: "8Gi"
+              cpu: "4000m"
+            limits:
+              memory: "9Gi"
+              cpu: "8000m"
+          readinessProbe:
+            httpGet:
+              path: /_cluster/health?local=true
+              port: 9200
+            initialDelaySeconds: 5
+          image: "docker.elastic.co/elasticsearch/elasticsearch-oss:${elasticsearch-version}"
+          imagePullPolicy: "IfNotPresent"
+          ports:
+            - containerPort: 9200
+              name: http
+            - containerPort: 9300
+              name: transport
+          volumeMounts:
+            - mountPath: /usr/share/elasticsearch/data
+              name: data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: ssd
+        resources:
+          requests:
+            storage: 100Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: etm-demo
+  labels:
+    app: "etm"
+    component: "client"
+    release: "${etm-version}"
+  name: "etm-client"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "etm"
+      component: "client"
+      release: "${etm-version}"
+  template:
+    metadata:
+      labels:
+        app: "etm"
+        component: "client"
+        release: "${etm-version}"
+    spec:
+      securityContext:
+        fsGroup: 1000
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    app: "etm"
+                    component: "client"
+      containers:
+        - name: "etm"
+          env:
+            - name: elasticsearch_connectAddresses
+              value: "elasticsearch-discovery:9200"
+            - name: instanceName
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "4000m"
+            limits:
+              memory: "2Gi"
+              cpu: "8000m"
+          readinessProbe:
+            httpGet:
+              path: /status
+              port: 8080
+            initialDelaySeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /status
+              port: 8080
+            initialDelaySeconds: 10
+          image: "www.jecstar.com/etm:${etm-version}"
+          imagePullPolicy: "IfNotPresent"
+          ports:
+            - containerPort: 8080
+              name: http

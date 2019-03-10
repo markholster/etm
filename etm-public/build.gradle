@@ -1,6 +1,7 @@
 ext {
     version_elasticsearch = "6.6.0"
     dep_junit = "junit:junit:4.12"
+    dep_jsonPath = "com.jayway.jsonpath:json-path:2.4.0"
 }
 
 allprojects {
