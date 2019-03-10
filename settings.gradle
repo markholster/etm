@@ -1,7 +1,6 @@
 include 'etm-public:etm-domain',
         'etm-public:etm-docker',
         'etm-public:etm-kubernetes',
-        'etm-public:etm-cloud-management',
         'etm-server-core',
         'etm-processor',
         'etm-processor-rest',

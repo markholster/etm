@@ -1,8 +1,0 @@
-plugins {
-    id 'java'
-}
-
-dependencies {
-    compile 'io.fabric8:kubernetes-client:4.1.1'
-
-}
