@@ -1,4 +1,5 @@
 var max_search_templates;
+let timeZone;
 
 $('#template-name').on('input', function() {
     if (!$(this).val()) {
@@ -8,7 +9,7 @@ $('#template-name').on('input', function() {
     }
 });
 
-$('#btn-save-template').click(function() {
+$('#btn-save-template').on('click', function () {
     var template = createTemplate();
     var current = $('#list-template-links > li > a').filter(function() {
         return $(this).text() === template.name;
@@ -21,12 +22,12 @@ $('#btn-save-template').click(function() {
     }
 });
 
-$('#btn-overwrite-template').click(function() {
+$('#btn-overwrite-template').on('click', function () {
     commons.hideModals($('#modal-template-overwrite'));
     storeTemplate(createTemplate(), true);
 });
 
-$('#btn-remove-template').click(function(event) {
+$('#btn-remove-template').on('click', function (event) {
     event.preventDefault();
     var templateName = $('#remove-template-name').text();
     $.ajax({
@@ -63,7 +64,7 @@ $.ajax({
                     $('<li>').append(
                         $('<a href="#">').on('click', function (event) {
                            event.preventDefault();
-                            setValuesFromTemplate(template, data.timeZone)
+                            setValuesFromTemplate(template)
                         }).text(template.name),
                         $('<a href="#" class="fa fa-times text-danger float-right">').on('click', function (event) {
                            event.preventDefault();
@@ -85,10 +86,9 @@ $.ajax({
             $.each(data.search_history, function (index, query) {
                 $('#list-search-history-links').append(
                     $('<li>').append(
-                        $('<a href="#">')
-                            .click(function (event) {
+                        $('<a href="#">').on('click', function (event) {
                                 event.preventDefault();
-                                setValuesFromHistory(query, data.timeZone)
+                            setValuesFromHistory(query)
                             })
                             .text(query.query)
                             .attr('title', query.query)
@@ -96,6 +96,7 @@ $.ajax({
                 );
             });
         }
+        timeZone = data.timeZone;
     }
 });
 
@@ -109,20 +110,20 @@ function validateMaxTemplates() {
 	}
 }
 
-function setValuesFromTemplate(template, timeZone) {
+function setValuesFromTemplate(template) {
     // the template and query object are exactly the same.
-    setValuesFromHistory(template, timeZone);
+    setValuesFromHistory(template);
     $('#template-name').val(template.name).trigger('input');
 }
 
-function setValuesFromHistory(query, timeZone) {
+function setValuesFromHistory(query) {
     $('[id^=check-type-]').prop('checked', false);
     $.each(query.types, function(index, type){
         $('#check-type-' + type).prop('checked', true);    
     });
     $('#query-string').val(query.query);
     if (query.start_time) {
-        var momentValue = moment(query.start_time, 'x', true);
+        const momentValue = moment(query.start_time, 'x', true);
         if (momentValue.isValid() && timeZone) {
             $('#query-string-from').val(momentValue.tz(timeZone).format('YYYY-MM-DDTHH:mm:ss'));
         } else {
@@ -132,7 +133,7 @@ function setValuesFromHistory(query, timeZone) {
         flatPickrStartDate.setDate(null);
     }
     if (query.end_time) {
-        var momentValue = moment(query.end_time, 'x', true);
+        const momentValue = moment(query.end_time, 'x', true);
         if (momentValue.isValid() && timeZone) {
             $('#query-string-till').val(momentValue.tz(timeZone).format('YYYY-MM-DDTHH:mm:ss'));
         } else {
