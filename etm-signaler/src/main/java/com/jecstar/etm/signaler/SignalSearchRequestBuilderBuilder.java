@@ -9,6 +9,7 @@ import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
+import com.jecstar.etm.server.core.util.DateUtils;
 import com.jecstar.etm.signaler.domain.Data;
 import com.jecstar.etm.signaler.domain.Signal;
 import org.elasticsearch.common.unit.TimeValue;
@@ -21,6 +22,7 @@ import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramAggre
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
 import org.joda.time.DateTimeZone;
 
+import java.time.Instant;
 import java.util.function.Function;
 
 public class SignalSearchRequestBuilderBuilder {
@@ -64,11 +66,27 @@ public class SignalSearchRequestBuilderBuilder {
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder().must(queryStringBuilder);
         if (data.getFrom() != null || data.getTill() != null) {
             RangeQueryBuilder timestampFilter = new RangeQueryBuilder(data.getTimeFilterField());
+            boolean needsUtcZone = false;
             if (data.getFrom() != null) {
-                timestampFilter.gte(data.getFrom());
+                Instant instant = DateUtils.parseDateString(data.getFrom(), etmPrincipal.getTimeZone().toZoneId(), true);
+                if (instant != null) {
+                    timestampFilter.gte("" + instant.toEpochMilli());
+                    needsUtcZone = true;
+                } else {
+                    timestampFilter.gte(data.getFrom());
+                }
             }
             if (data.getTill() != null) {
-                timestampFilter.lte(data.getTill());
+                Instant instant = DateUtils.parseDateString(data.getTill(), etmPrincipal.getTimeZone().toZoneId(), false);
+                if (instant != null) {
+                    timestampFilter.lte("" + instant.toEpochMilli());
+                    needsUtcZone = true;
+                } else {
+                    timestampFilter.lte(data.getTill());
+                }
+            }
+            if (!needsUtcZone && etmPrincipal != null) {
+                timestampFilter.timeZone(etmPrincipal.getTimeZone().getID());
             }
             boolQueryBuilder.filter(timestampFilter);
         }

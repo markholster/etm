@@ -8,7 +8,9 @@ import com.jecstar.etm.gui.rest.export.MultiSelect;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import com.jecstar.etm.server.core.util.DateUtils;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -66,8 +68,18 @@ class SearchRequestParameters {
         layout.put("link", false);
         layout.put("name", "Name");
         addFieldLayout(layout);
-        this.startTime = startTime;
-        this.endTime = endTime;
+        Instant instant = DateUtils.parseDateString(startTime, etmPrincipal.getTimeZone().toZoneId(), true);
+        if (instant != null) {
+            this.startTime = "" + instant.toEpochMilli();
+        } else {
+            this.startTime = startTime;
+        }
+        instant = DateUtils.parseDateString(endTime, etmPrincipal.getTimeZone().toZoneId(), false);
+        if (instant != null) {
+            this.endTime = "" + instant.toEpochMilli();
+        } else {
+            this.endTime = endTime;
+        }
         this.timeFilterField = "timestamp";
     }
 
@@ -88,8 +100,18 @@ class SearchRequestParameters {
         }
         this.fieldsLayout = new ArrayList<>();
         this.converter.getArray("fieldsLayout", requestValues, new ArrayList<Map<String, Object>>()).forEach(c -> addFieldLayout(c));
-        this.startTime = this.converter.getString("start_time", requestValues);
-        this.endTime = this.converter.getString("end_time", requestValues);
+        Instant instant = DateUtils.parseDateString(this.converter.getString("start_time", requestValues), etmPrincipal.getTimeZone().toZoneId(), true);
+        if (instant != null) {
+            this.startTime = "" + instant.toEpochMilli();
+        } else {
+            this.startTime = this.converter.getString("start_time", requestValues);
+        }
+        instant = DateUtils.parseDateString(this.converter.getString("end_time", requestValues), etmPrincipal.getTimeZone().toZoneId(), false);
+        if (instant != null) {
+            this.endTime = "" + instant.toEpochMilli();
+        } else {
+            this.endTime = this.converter.getString("end_time", requestValues);
+        }
         this.timeFilterField = this.converter.getString("time_filter_field", requestValues);
     }
 

@@ -234,9 +234,10 @@ public class SignalService extends AbstractUserAttributeService {
     private String getSignals(String groupName) {
         Map<String, Object> objectMap = getEntity(dataRepository, groupName, this.etmPrincipalTags.getSignalsTag());
         if (objectMap == null || objectMap.isEmpty()) {
-            return "{\"max_signals\": " + etmConfiguration.getMaxSignalCount() + "}";
+            objectMap = new HashMap<>();
         }
         objectMap.put("max_signals", etmConfiguration.getMaxSignalCount());
+        objectMap.put("timeZone", getEtmPrincipal().getTimeZone().getID());
         return toString(objectMap);
     }
 
@@ -274,6 +275,7 @@ public class SignalService extends AbstractUserAttributeService {
      */
     private String addSignal(String groupName, String signalName, String json) {
         Signal signal = this.signalConverter.read(json);
+        signal.normalizeQueryTimesToInstant(getEtmPrincipal());
         EtmSecurityEntity etmSecurityEntity = getEtmSecurityEntity(dataRepository, groupName);
         Map<String, Object> objectMap = getEntity(dataRepository, groupName, this.etmPrincipalTags.getSignalsTag(), this.etmPrincipalTags.getSignalDatasourcesTag(), this.etmPrincipalTags.getNotifiersTag());
         if (!etmSecurityEntity.isAuthorizedForSignalDatasource(signal.getData().getDataSource())) {

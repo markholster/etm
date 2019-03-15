@@ -4,6 +4,10 @@ import com.jecstar.etm.gui.rest.services.dashboard.domain.converter.DataConverte
 import com.jecstar.etm.gui.rest.services.dashboard.domain.converter.GraphConverter;
 import com.jecstar.etm.gui.rest.services.dashboard.domain.graph.Graph;
 import com.jecstar.etm.server.core.converter.JsonField;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import com.jecstar.etm.server.core.util.DateUtils;
+
+import java.time.Instant;
 
 /**
  * A <code>GraphContainer</code> holds all information to display a visual representation of one ore more groups of data.
@@ -57,6 +61,23 @@ public class GraphContainer {
         }
         if (column.getGraph() != null) {
             getGraph().mergeFromColumn(column.getGraph());
+        }
+    }
+
+    public void normalizeQueryTimesToInstant(EtmPrincipal etmPrincipal) {
+        if (this.data != null) {
+            if (this.data.getFrom() != null) {
+                Instant instant = DateUtils.parseDateString(this.data.getFrom(), etmPrincipal.getTimeZone().toZoneId(), true);
+                if (instant != null) {
+                    this.data.setFrom("" + instant.toEpochMilli());
+                }
+            }
+            if (this.data.getTill() != null) {
+                Instant instant = DateUtils.parseDateString(this.data.getTill(), etmPrincipal.getTimeZone().toZoneId(), false);
+                if (instant != null) {
+                    this.data.setTill("" + instant.toEpochMilli());
+                }
+            }
         }
     }
 }

@@ -8,6 +8,7 @@ function buildSignalsPage(groupName) {
     }
     const signalMap = {};
     let keywords = [];
+    let timeZone;
     const $page = $('body > .container-fluid');
 
     $('#input-signal-from').parent()
@@ -130,6 +131,7 @@ function buildSignalsPage(groupName) {
             });
             commons.sortSelectOptions($signalSelect);
             $signalSelect.val('');
+            timeZone = data.timeZone;
         }
     });
 
@@ -229,8 +231,19 @@ function buildSignalsPage(groupName) {
         $('#input-signal-name').val(signalData.name);
         $('#sel-signal-enabled').val(signalData.enabled ? 'true' : 'false');
         $('#sel-data-source').val(signalData.data.data_source);
-        $('#input-signal-from').val(signalData.data.from);
-        $('#input-signal-till').val(signalData.data.till);
+
+        let momentValue = moment(signalData.data.from, 'x', true);
+        if (momentValue.isValid() && timeZone) {
+            $('#input-signal-from').val(momentValue.tz(timeZone).format('YYYY-MM-DDTHH:mm:ss'));
+        } else {
+            $('#input-signal-from').val(signalData.data.from);
+        }
+        momentValue = moment(signalData.data.till, 'x', true);
+        if (momentValue.isValid() && timeZone) {
+            $('#input-signal-till').val(momentValue.tz(timeZone).format('YYYY-MM-DDTHH:mm:ss'));
+        } else {
+            $('#input-signal-till').val(signalData.data.from);
+        }
         $('#input-signal-time-filter-field').val(signalData.data.time_filter_field);
         $('#input-signal-query').val(signalData.data.query);
 

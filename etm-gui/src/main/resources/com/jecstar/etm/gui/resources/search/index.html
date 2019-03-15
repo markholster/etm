@@ -495,7 +495,7 @@
             queryKeywords = data.keywords;
         }
     });
-    var flatPickrStartDate = $('#query-string-from').parent()
+    const flatPickrStartDate = $('#query-string-from').parent()
         .flatpickr({
             dateFormat: "Y-m-dTH:i:S",
             enableTime: true,
@@ -507,7 +507,7 @@
             clickOpens: false,
             wrap: true
         });
-    var flatPickrEndDate = $('#query-string-till').parent()
+    const flatPickrEndDate = $('#query-string-till').parent()
         .flatpickr({
             dateFormat: "Y-m-dTH:i:S",
             enableTime: true,
@@ -573,12 +573,12 @@
     	startNewQuery();
     });
 
-    $('#link-request-download').click(function(event) {
+    $('#link-request-download').on('click', function (event) {
     	event.preventDefault();
     	$('#modal-download-results').modal();
     });
 
-    $('#btn-download-results').click(function(event) {
+    $('#btn-download-results').on('click', function (event) {
     	event.preventDefault();
     	$('#modal-download-results').modal('hide');
     	var q = createQuery(true);
@@ -671,23 +671,13 @@
         }
         let dateValue = $('#query-string-from').val();
         if (dateValue) {
-            const momentValue = moment(dateValue, moment.HTML5_FMT.DATETIME_LOCAL_SECONDS, true);
-            if (momentValue.isValid()) {
-                tableLayout.start_time = Number(momentValue.valueOf());
-            } else {
-                tableLayout.start_time = dateValue;
-            }
+            tableLayout.start_time = dateValue;
         } else {
             tableLayout.start_time = null;
         }
         dateValue = $('#query-string-till').val();
         if (dateValue) {
-            const momentValue = moment(dateValue, moment.HTML5_FMT.DATETIME_LOCAL_SECONDS, true);
-            if (momentValue.isValid()) {
-                tableLayout.end_time = Number(momentValue.valueOf());
-            } else {
-                tableLayout.end_time = dateValue;
-            }
+            tableLayout.end_time = dateValue;
         } else {
             tableLayout.end_time = null;
         }

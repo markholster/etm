@@ -4,6 +4,7 @@ function buildGraphsPage(groupName) {
     if (groupName) {
         contextRoot += encodeURIComponent(groupName) + '/'
     }
+    let timeZone;
 
     const graphConfig = {
         area: {
@@ -227,6 +228,7 @@ function buildGraphsPage(groupName) {
                 });
                 commons.sortSelectOptions($graphSelect);
                 $graphSelect.val('');
+                timeZone = data.timeZone;
             }
         })
     ).done(function () {
@@ -622,8 +624,18 @@ function buildGraphsPage(groupName) {
         $('#input-graph-name').val(graphContainer.name);
         // Set the data block
         $('#sel-data-source').val(graphContainer.data.data_source);
-        $('#input-graph-from').val(graphContainer.data.from);
-        $('#input-graph-till').val(graphContainer.data.till);
+        let momentValue = moment(graphContainer.data.from, 'x', true);
+        if (momentValue.isValid() && timeZone) {
+            $('#input-graph-from').val(momentValue.tz(timeZone).format('YYYY-MM-DDTHH:mm:ss'));
+        } else {
+            $('#input-graph-from').val(graphContainer.data.from);
+        }
+        momentValue = moment(graphContainer.data.till, 'x', true);
+        if (momentValue.isValid() && timeZone) {
+            $('#input-graph-till').val(momentValue.tz(timeZone).format('YYYY-MM-DDTHH:mm:ss'));
+        } else {
+            $('#input-graph-till').val(graphContainer.data.from);
+        }
         $('#input-graph-time-filter-field').val(graphContainer.data.time_filter_field);
         $('#input-graph-query').val(graphContainer.data.query);
         // Set the graph block

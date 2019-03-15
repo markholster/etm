@@ -23,6 +23,7 @@ import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalTagsJsonImpl;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
+import com.jecstar.etm.server.core.util.DateUtils;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
@@ -42,6 +43,7 @@ import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.time.Instant;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -206,9 +208,10 @@ public class DashboardService extends AbstractUserAttributeService {
     private String getGraphs(String groupName) {
         Map<String, Object> objectMap = getEntity(dataRepository, groupName, this.principalTags.getGraphsTag());
         if (objectMap == null || objectMap.isEmpty()) {
-            return "{\"max_graphs\": " + etmConfiguration.getMaxGraphCount() + "}";
+            objectMap = new HashMap<>();
         }
         objectMap.put("max_graphs", etmConfiguration.getMaxGraphCount());
+        objectMap.put("timeZone", getEtmPrincipal().getTimeZone().getID());
         return toString(objectMap);
     }
 
@@ -251,6 +254,7 @@ public class DashboardService extends AbstractUserAttributeService {
         if (!etmSecurityEntity.isAuthorizedForDashboardDatasource(graphContainer.getData().getDataSource())) {
             throw new EtmException(EtmException.NOT_AUTHORIZED_FOR_DASHBOARD_DATA_SOURCE);
         }
+        graphContainer.normalizeQueryTimesToInstant(getEtmPrincipal());
         createGraphSearchRequest(getEtmPrincipal(), graphContainer);
 
         // Data seems ok, now store the graph.
@@ -866,11 +870,27 @@ public class DashboardService extends AbstractUserAttributeService {
         boolQueryBuilder.must(queryStringBuilder);
         if (data.getFrom() != null || data.getTill() != null) {
             RangeQueryBuilder timestampFilter = new RangeQueryBuilder(data.getTimeFilterField() != null ? data.getTimeFilterField() : "timestamp");
+            boolean needsUtcZone = false;
             if (data.getFrom() != null) {
-                timestampFilter.gte(data.getFrom());
+                Instant instant = DateUtils.parseDateString(data.getFrom(), etmPrincipal.getTimeZone().toZoneId(), true);
+                if (instant != null) {
+                    timestampFilter.gte("" + instant.toEpochMilli());
+                    needsUtcZone = true;
+                } else {
+                    timestampFilter.gte(data.getFrom());
+                }
             }
             if (data.getTill() != null) {
-                timestampFilter.lte(data.getTill());
+                Instant instant = DateUtils.parseDateString(data.getTill(), etmPrincipal.getTimeZone().toZoneId(), false);
+                if (instant != null) {
+                    timestampFilter.lte("" + instant.toEpochMilli());
+                    needsUtcZone = true;
+                } else {
+                    timestampFilter.lte(data.getTill());
+                }
+            }
+            if (!needsUtcZone) {
+                timestampFilter.timeZone(etmPrincipal.getTimeZone().getID());
             }
             boolQueryBuilder.filter(timestampFilter);
         }

@@ -1,6 +1,7 @@
 == Changelog
 === Version 3.5.0
 * [ETM-95] Add api key to user for for authorisation on rest processor.
+* [ETM-96] Wrong timestamp when using flatpickr.
 
 === Version 3.4.1
 * [ETM-86] Dashboard and signal datasources not refreshed in groups settings screen.

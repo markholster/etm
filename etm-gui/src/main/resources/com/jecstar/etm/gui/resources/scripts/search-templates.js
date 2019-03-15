@@ -50,7 +50,7 @@ $('#btn-remove-template').click(function(event) {
 $.ajax({
     type: 'GET',
     contentType: 'application/json',
-    url: '../rest/search/templates',
+    url: '../rest/search/userdata',
     cache: false,
     success: function(data) {
         if (!data) {
@@ -63,7 +63,7 @@ $.ajax({
                     $('<li>').append(
                         $('<a href="#">').on('click', function (event) {
                            event.preventDefault();
-                           setValuesFromTemplate(template)
+                            setValuesFromTemplate(template, data.timeZone)
                         }).text(template.name),
                         $('<a href="#" class="fa fa-times text-danger float-right">').on('click', function (event) {
                            event.preventDefault();
@@ -74,36 +74,28 @@ $.ajax({
             });
             validateMaxTemplates();
         }
+
         if (data.default_search_range) {
             $('#query-string-from').val('now-' + (data.default_search_range / 1000) + 's');
             $('#query-string-till').val('now')
         }
-    }
-});
 
-$.ajax({
-    type: 'GET',
-    contentType: 'application/json',
-    url: '../rest/search/history',
-    cache: false,
-    success: function(data) {
-        if (!data || !data.search_history) {
-            return;
+        if (data.search_history) {
+            data.search_history.reverse();
+            $.each(data.search_history, function (index, query) {
+                $('#list-search-history-links').append(
+                    $('<li>').append(
+                        $('<a href="#">')
+                            .click(function (event) {
+                                event.preventDefault();
+                                setValuesFromHistory(query, data.timeZone)
+                            })
+                            .text(query.query)
+                            .attr('title', query.query)
+                    )
+                );
+            });
         }
-        data.search_history.reverse();
-        $.each(data.search_history, function(index, query){
-            $('#list-search-history-links').append(
-                $('<li>').append(
-                    $('<a href="#">')
-                    .click(function(event) {
-                       event.preventDefault();
-                       setValuesFromHistory(query)
-                    })
-                    .text(query.query)
-                    .attr('title', query.query)
-                )
-            );
-        });
     }
 });
 
@@ -117,13 +109,13 @@ function validateMaxTemplates() {
 	}
 }
 
-function setValuesFromTemplate(template) {
+function setValuesFromTemplate(template, timeZone) {
     // the template and query object are exactly the same.
-    setValuesFromHistory(template);
+    setValuesFromHistory(template, timeZone);
     $('#template-name').val(template.name).trigger('input');
 }
 
-function setValuesFromHistory(query) {
+function setValuesFromHistory(query, timeZone) {
     $('[id^=check-type-]').prop('checked', false);
     $.each(query.types, function(index, type){
         $('#check-type-' + type).prop('checked', true);    
@@ -131,8 +123,8 @@ function setValuesFromHistory(query) {
     $('#query-string').val(query.query);
     if (query.start_time) {
         var momentValue = moment(query.start_time, 'x', true);
-        if (momentValue.isValid()) {
-            flatPickrStartDate.setDate(momentValue.toDate());
+        if (momentValue.isValid() && timeZone) {
+            $('#query-string-from').val(momentValue.tz(timeZone).format('YYYY-MM-DDTHH:mm:ss'));
         } else {
             $('#query-string-from').val(query.start_time);
         }
@@ -141,8 +133,8 @@ function setValuesFromHistory(query) {
     }
     if (query.end_time) {
         var momentValue = moment(query.end_time, 'x', true);
-        if (momentValue.isValid()) {
-            flatPickrEndDate.setDate(momentValue.toDate());
+        if (momentValue.isValid() && timeZone) {
+            $('#query-string-till').val(momentValue.tz(timeZone).format('YYYY-MM-DDTHH:mm:ss'));
         } else {
             $('#query-string-till').val(query.end_time);
         }

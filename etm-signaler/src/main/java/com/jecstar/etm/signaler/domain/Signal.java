@@ -1,9 +1,13 @@
 package com.jecstar.etm.signaler.domain;
 
 import com.jecstar.etm.server.core.converter.JsonField;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import com.jecstar.etm.server.core.util.DateUtils;
 import com.jecstar.etm.signaler.domain.converter.DataConverter;
 import com.jecstar.etm.signaler.domain.converter.NotificationsConverter;
 import com.jecstar.etm.signaler.domain.converter.ThresholdConverter;
+
+import java.time.Instant;
 
 public class Signal {
 
@@ -75,5 +79,22 @@ public class Signal {
     public Signal setNotifications(Notifications notifications) {
         this.notifications = notifications;
         return this;
+    }
+
+    public void normalizeQueryTimesToInstant(EtmPrincipal etmPrincipal) {
+        if (this.data != null) {
+            if (this.data.getFrom() != null) {
+                Instant instant = DateUtils.parseDateString(this.data.getFrom(), etmPrincipal.getTimeZone().toZoneId(), true);
+                if (instant != null) {
+                    this.data.setFrom("" + instant.toEpochMilli());
+                }
+            }
+            if (this.data.getTill() != null) {
+                Instant instant = DateUtils.parseDateString(this.data.getTill(), etmPrincipal.getTimeZone().toZoneId(), false);
+                if (instant != null) {
+                    this.data.setTill("" + instant.toEpochMilli());
+                }
+            }
+        }
     }
 }

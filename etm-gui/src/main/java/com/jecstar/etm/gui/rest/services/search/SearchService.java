@@ -87,34 +87,26 @@ public class SearchService extends AbstractIndexMetadataService {
     }
 
     @GET
-    @Path("/templates")
+    @Path("/userdata")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
     public String getSearchTemplates() {
         EtmPrincipal etmPrincipal = getEtmPrincipal();
         GetResponse getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + etmPrincipal.getId())
-                .setFetchSource(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + ".search_templates", null));
+                .setFetchSource(new String[]{
+                        ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + ".search_templates",
+                        ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.configurationTags.getSearchHistoryTag(),
+                }, null));
+        Map<String, Object> valueMap;
         if (getResponse.isSourceEmpty() || getResponse.getSourceAsMap().isEmpty() || !getResponse.getSourceAsMap().containsKey(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER)) {
-            return "{\"max_search_templates\": " + etmConfiguration.getMaxSearchTemplateCount() + ", \"default_search_range\": " + etmPrincipal.getDefaultSearchRange() + "}";
+            valueMap = new HashMap<>();
+        } else {
+            valueMap = getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, getResponse.getSourceAsMap(), Collections.emptyMap());
+
         }
-        Map<String, Object> valueMap = getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, getResponse.getSourceAsMap(), Collections.emptyMap());
         valueMap.put("max_search_templates", etmConfiguration.getMaxSearchTemplateCount());
         valueMap.put("default_search_range", etmPrincipal.getDefaultSearchRange());
-        return toString(valueMap);
-    }
-
-    @GET
-    @Path("/history")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
-    public String getRecentQueries() {
-        EtmPrincipal etmPrincipal = getEtmPrincipal();
-        GetResponse getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + etmPrincipal.getId())
-                .setFetchSource(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.configurationTags.getSearchHistoryTag(), null));
-        if (getResponse.isSourceEmpty() || !getResponse.getSourceAsMap().containsKey(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER)) {
-            return "{}";
-        }
-        Map<String, Object> valueMap = getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, getResponse.getSourceAsMap());
+        valueMap.put("timeZone", etmPrincipal.getTimeZone().getID());
         return toString(valueMap);
     }
 
@@ -283,6 +275,7 @@ public class SearchService extends AbstractIndexMetadataService {
 
 
         boolean notAfterFilterNecessary = true;
+        boolean needsUtcZone = false;
         if (parameters.getEndTime() != null || parameters.getStartTime() != null) {
             RangeQueryBuilder timestampFilter = new RangeQueryBuilder(parameters.getTimeFilterField());
             if (parameters.getEndTime() != null) {
@@ -291,27 +284,34 @@ public class SearchService extends AbstractIndexMetadataService {
                     long endTime = Long.valueOf(parameters.getEndTime());
                     timestampFilter.lte(endTime < parameters.getNotAfterTimestamp() ? endTime : parameters.getNotAfterTimestamp());
                     notAfterFilterNecessary = false;
+                    needsUtcZone = true;
                 } catch (NumberFormatException e) {
                     // Endtime was an elasticsearch date math. Check if it is the exact value of "now"
                     if ("now" .equalsIgnoreCase(parameters.getEndTime())) {
                         // Replace "now" with the notAfter timestamp which is in essence the same
                         timestampFilter.lte(parameters.getNotAfterTimestamp());
                         notAfterFilterNecessary = false;
+                        needsUtcZone = true;
                     } else {
                         timestampFilter.lte(parameters.getEndTime());
                     }
                 }
             } else {
                 timestampFilter.lte(parameters.getNotAfterTimestamp());
+                needsUtcZone = true;
             }
             if (parameters.getStartTime() != null) {
                 try {
                     // Check if the starttime is given as an exact timestamp or an elasticsearch date math.
                     long endTime = Long.valueOf(parameters.getStartTime());
                     timestampFilter.gte(endTime);
+                    needsUtcZone = true;
                 } catch (NumberFormatException e) {
                     timestampFilter.gte(parameters.getStartTime());
                 }
+            }
+            if (!needsUtcZone) {
+                timestampFilter.timeZone(etmPrincipal.getTimeZone().getID());
             }
             boolQueryBuilder.filter(timestampFilter);
         }
