@@ -280,9 +280,7 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
     private String createEtmConfigurationMapping(String name) {
         return "{ \"" + name + "\": "
                 + "{\"dynamic_templates\": ["
-                + "{ \"" + this.configurationTags.getStartTimeTag() + "\": { \"path_match\": \"" + ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.configurationTags.getSearchHistoryTag() + "." + this.configurationTags.getStartTimeTag() + "\", \"mapping\": {\"type\": \"date\"}}}"
-                + ", { \"" + this.configurationTags.getEndTimeTag() + "\": { \"path_match\": \"" + ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.configurationTags.getSearchHistoryTag() + "." + this.configurationTags.getEndTimeTag() + "\", \"mapping\": {\"type\": \"date\"}}}"
-                + ", { \"" + Signal.LAST_EXECUTED + "\": { \"match\": \"" + Signal.LAST_EXECUTED + "\", \"mapping\": {\"type\": \"date\"}}}"
+                + "{ \"" + Signal.LAST_EXECUTED + "\": { \"match\": \"" + Signal.LAST_EXECUTED + "\", \"mapping\": {\"type\": \"date\"}}}"
                 + ", { \"" + Signal.LAST_FAILED + "\": { \"match\": \"" + Signal.LAST_FAILED + "\", \"mapping\": {\"type\": \"date\"}}}"
                 + ", { \"" + Signal.LAST_PASSED + "\": { \"match\": \"" + Signal.LAST_PASSED + "\", \"mapping\": {\"type\": \"date\"}}}"
                 + ", { \"string_as_keyword\": { \"match_mapping_type\": \"string\", \"mapping\": {\"type\": \"keyword\"}}}"
