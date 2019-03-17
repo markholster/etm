@@ -1,7 +1,5 @@
 package com.jecstar.etm.launcher.migrations.v3;
 
-import com.jecstar.etm.launcher.http.session.ElasticsearchSessionTags;
-import com.jecstar.etm.launcher.http.session.ElasticsearchSessionTagsJsonImpl;
 import com.jecstar.etm.launcher.migrations.AbstractEtmMigrator;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
@@ -28,7 +26,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class SearchTemplateHandlingTimeMigrator extends AbstractEtmMigrator {
 
-    private final ElasticsearchSessionTags sessionTags = new ElasticsearchSessionTagsJsonImpl();
     private final EtmPrincipalTags principalTags = new EtmPrincipalTagsJsonImpl();
     private final DataRepository dataRepository;
     private final JsonConverter jsonConverter = new JsonConverter();

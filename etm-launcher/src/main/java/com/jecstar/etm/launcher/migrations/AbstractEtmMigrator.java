@@ -107,8 +107,24 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
-                flushIndices(dataRepository, index);
                 printPercentageWhenChanged(lastPrint, current, total);
+                long startTime = System.currentTimeMillis();
+                boolean indexExist = dataRepository.indicesExist(new GetIndexRequestBuilder().setIndices(index.substring(migrationIndexPrefix.length())));
+                if (!indexExist) {
+                    if (System.currentTimeMillis() - startTime > 30_000L) {
+                        // Wait for 15 seconds for the index to become available.
+                    }
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                    indexExist = dataRepository.indicesExist(new GetIndexRequestBuilder().setIndices(index.substring(migrationIndexPrefix.length())));
+                }
+                if (indexExist) {
+                    flushIndices(dataRepository, index.substring(migrationIndexPrefix.length()));
+                }
             }
         }
         System.out.println("Done moving temporary indices to permanent indices.");

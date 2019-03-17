@@ -94,6 +94,7 @@ public class VisualizationAndSignalMigrator extends AbstractEtmMigrator {
             System.out.println("Errors detected. Quitting migration. Migrated indices are prefixed with '" + this.migrationIndexPrefix + "' and are still existent in your Elasticsearch cluster!");
             return;
         }
+        flushIndices(this.dataRepository, this.migrationIndexPrefix + "*");
         deleteIndices(this.dataRepository, "old indices", ElasticsearchLayout.CONFIGURATION_INDEX_NAME);
         flushIndices(this.dataRepository, this.migrationIndexPrefix + ElasticsearchLayout.CONFIGURATION_INDEX_NAME);
         reindexTemporaryIndicesToNew(this.dataRepository, listener, this.migrationIndexPrefix);

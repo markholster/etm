@@ -256,6 +256,10 @@ class LaunchEtmCommand extends AbstractCommand {
         if (etmMigrator.shouldBeExecuted()) {
             etmMigrator.migrate();
         }
+        etmMigrator = new SearchHistoryTimestampMigrator(dataRepository);
+        if (etmMigrator.shouldBeExecuted()) {
+            etmMigrator.migrate();
+        }
         return reinitialze;
     }
 
