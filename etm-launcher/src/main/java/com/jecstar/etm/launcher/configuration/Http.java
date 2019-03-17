@@ -10,6 +10,7 @@ public class Http {
 
     public int ioThreads = 2;
     public int workerThreads = 16;
+    public String contextRoot = "/";
 
     public boolean guiEnabled = true;
     public int guiMaxConcurrentRequests = 50;
@@ -26,4 +27,14 @@ public class Http {
     public File sslTruststoreLocation;
     public String sslTruststoreType = "JKS";
     public String sslTruststorePassword;
+
+    public String getContextRoot() {
+        if (this.contextRoot == null) {
+            this.contextRoot = "/";
+        }
+        if (!this.contextRoot.endsWith("/")) {
+            this.contextRoot += "/";
+        }
+        return contextRoot;
+    }
 }

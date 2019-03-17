@@ -192,7 +192,7 @@ The ''elasticsearch'' section contains all options that are necessary to connect
 |=======================
 
 ==== Http section in etm.yml
-The ''http'' section contains all options that are necessary to start the gui and rest processor:
+The ''http'' section contains all options that are necessary to start the gui and REST processor:
 
 .Http configuration options
 [options="header"]
@@ -200,6 +200,7 @@ The ''http'' section contains all options that are necessary to start the gui an
 |Name|Default value|Description
 |httpPort|8080|The port to bind the http listener to. To disable the http listener set the value to zero or lower.
 |httpsPort|8443|The port to bind the secure https listener to. The listener will not start unless the sslKeystore is properly configured.
+|contextRoot|/|The context root under which the gui and REST processor will be available.
 |ioThreads|2|The number of IO threads. IO threads handle all non-blocking calls to the web server. One thread per cpu core should be more than sufficient.
 |workerThreads|16|The number of worker threads to handle all blocking calls to the web server. Around 10 threads per cpu cure should be a good starting point for servers under a high load.
 |guiEnabled|true|Should the GUI be enabled? Set this value to false if you don't want users to use the gui on this node. The gui is bound to the ''/gui'' context on your server and can be accessed by browsing to \http://<bindingAddress>:<httpPort>/gui/

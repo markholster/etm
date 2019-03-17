@@ -31,6 +31,8 @@ http:
   httpPort: 8080
 # The https port this node should be listening on. If no keystore is provides, no https binding will be created.
   httpsPort: 8443
+  # The context root for the gui and rest processor.
+  contextRoot: /
 # Should the gui be enabled. Set this option to false if you want this node to be an processing node only.
   guiEnabled: true
 # The maximum number of requests that can be handled concurrently. If the number of requests exceeds this number they will be queued.

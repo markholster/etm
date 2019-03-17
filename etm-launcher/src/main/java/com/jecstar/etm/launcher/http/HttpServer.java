@@ -21,6 +21,7 @@ import io.undertow.predicate.Predicates;
 import io.undertow.security.idm.IdentityManager;
 import io.undertow.server.handlers.GracefulShutdownHandler;
 import io.undertow.server.handlers.PathHandler;
+import io.undertow.server.handlers.RedirectHandler;
 import io.undertow.server.handlers.encoding.ContentEncodingRepository;
 import io.undertow.server.handlers.encoding.DeflateEncodingProvider;
 import io.undertow.server.handlers.encoding.EncodingHandler;
@@ -108,7 +109,7 @@ public class HttpServer {
         servletSessionConfig.setHttpOnly(true).setSecure(configuration.http.secureCookies);
 
         if (configuration.http.restProcessorEnabled) {
-            DeploymentInfo di = createProcessorDeploymentInfo(processor, identityManager);
+            DeploymentInfo di = createProcessorDeploymentInfo(configuration.http.getContextRoot(), processor, identityManager);
             di.setDefaultSessionTimeout(new Long(etmConfiguration.getSessionTimeout() / 1000).intValue());
             di.setServletSessionConfig(servletSessionConfig);
             DeploymentManager manager = container.addDeployment(di);
@@ -137,7 +138,7 @@ public class HttpServer {
             }
         }
         if (configuration.http.guiEnabled) {
-            DeploymentInfo di = createGuiDeploymentInfo(dataRepository, identityManager, etmConfiguration);
+            DeploymentInfo di = createGuiDeploymentInfo(configuration.http.getContextRoot(), dataRepository, identityManager, etmConfiguration);
             di.setDefaultSessionTimeout(new Long(etmConfiguration.getSessionTimeout() / 1000).intValue());
             di.setServletSessionConfig(servletSessionConfig);
             DeploymentManager manager = container.addDeployment(di);
@@ -161,6 +162,8 @@ public class HttpServer {
                         )
                 );
                 root.addExactPath("/favicon.ico", new ResourceHandler(new FavIconResourceSupplier()));
+                root.addExactPath("/", new RedirectHandler(configuration.http.getContextRoot() + "gui/"));
+                root.addExactPath(configuration.http.getContextRoot(), new RedirectHandler(configuration.http.getContextRoot() + "gui/"));
                 if (log.isInfoLevelEnabled()) {
                     log.logInfoMessage("Bound GUI to '" + di.getContextPath() + "'.");
                 }
@@ -175,7 +178,7 @@ public class HttpServer {
             HealthCheckServlet.initialize(dataRepository);
             DeploymentInfo di = Servlets.deployment()
                     .setClassLoader(HealthCheckServlet.class.getClassLoader())
-                    .setContextPath("/")
+                    .setContextPath(configuration.http.getContextRoot())
                     .setDeploymentName("Health check")
                     .addServlets(Servlets.servlet("healthCheckServlet", HealthCheckServlet.class)
                             .addMapping("/status"));
@@ -211,12 +214,12 @@ public class HttpServer {
         }
     }
 
-    private DeploymentInfo createProcessorDeploymentInfo(TelemetryCommandProcessor processor, IdentityManager identityManager) {
+    private DeploymentInfo createProcessorDeploymentInfo(String contextRoot, TelemetryCommandProcessor processor, IdentityManager identityManager) {
         RestTelemetryEventProcessorApplication processorApplication = new RestTelemetryEventProcessorApplication(processor);
         ResteasyDeployment deployment = new ResteasyDeployment();
         deployment.setApplication(processorApplication);
-        DeploymentInfo di = undertowRestDeployment(deployment, "/");
-        di.setContextPath("/rest/processor/");
+        DeploymentInfo di = undertowRestDeployment(deployment, "/*");
+        di.setContextPath(contextRoot + "rest/processor/");
         di.setSessionManagerFactory(this.sessionManagerFactory);
         di.getAuthenticationMechanisms().put(ApiKeyAuthenticationMechanism.NAME, ApiKeyAuthenticationMechanism.FACTORY);
         if (identityManager != null) {
@@ -239,17 +242,16 @@ public class HttpServer {
         return di;
     }
 
-    private DeploymentInfo createGuiDeploymentInfo(DataRepository dataRepository, IdentityManager identityManager, EtmConfiguration etmConfiguration) {
-        final String contextRoot = "/gui";
+    private DeploymentInfo createGuiDeploymentInfo(String contextRoot, DataRepository dataRepository, IdentityManager identityManager, EtmConfiguration etmConfiguration) {
         RestGuiApplication guiApplication = new RestGuiApplication(dataRepository, etmConfiguration);
         ResteasyDeployment deployment = new ResteasyDeployment();
         deployment.setApplication(guiApplication);
         deployment.getProviderClasses().add(EtmExceptionMapper.class.getName());
-        DeploymentInfo di = undertowRestDeployment(deployment, "/rest/");
+        DeploymentInfo di = undertowRestDeployment(deployment, "rest/*");
         di.setSessionManagerFactory(this.sessionManagerFactory);
-        di.addInnerHandlerChainWrapper(handler -> new ChangePasswordHandler("/gui/", handler));
+        di.addInnerHandlerChainWrapper(handler -> new ChangePasswordHandler(contextRoot + "gui/", handler));
         di.addWelcomePage("index.html");
-        di.setContextPath(contextRoot);
+        di.setContextPath(contextRoot + "gui/");
         deployment.setSecurityEnabled(true);
         di.addSecurityConstraint(new SecurityConstraint()
                 .addRolesAllowed(SecurityRoles.ALL_ROLES_ARRAY)
@@ -313,15 +315,8 @@ public class HttpServer {
 
     private DeploymentInfo undertowRestDeployment(ResteasyDeployment deployment, String mapping) {
         if (mapping == null) {
-            mapping = "/";
+            mapping = "*";
         }
-        if (!mapping.startsWith("/")) {
-            mapping = "/" + mapping;
-        }
-        if (!mapping.endsWith("/")) {
-            mapping += "/";
-        }
-        mapping = mapping + "*";
         String prefix = null;
         if (!mapping.equals("/*")) {
             prefix = mapping.substring(0, mapping.length() - 2);

@@ -12,20 +12,20 @@
       const contextRoot = '/gui/';
       const ix = window.location.pathname.indexOf(contextRoot);
       let path = './';
-	if (ix != -1) {
-        const requestPath = window.location.pathname.substring(ix + contextRoot.length);
-        const match = requestPath.match(/\//g);
-        const additions = match ? match.length : 0;
-		for (i = 0; i < additions; i++) {
-		    path += '../';
-		}
-	}
+      if (ix !== -1) {
+          const requestPath = window.location.pathname.substring(ix + contextRoot.length);
+          const match = requestPath.match(/\//g);
+          const additions = match ? match.length : 0;
+          for (i = 0; i < additions; i++) {
+              path += '../';
+          }
+      }
       const styles = document.createElement('link');
-  	styles.rel = 'stylesheet';
-  	styles.type = 'text/css';
-  	styles.media = 'screen';
-  	styles.href =  path + 'styles/bootstrap.min.css';
-  	document.getElementsByTagName('head')[0].appendChild(styles);
+      styles.rel = 'stylesheet';
+      styles.type = 'text/css';
+      styles.media = 'screen';
+      styles.href = path + 'styles/bootstrap.min.css';
+      document.getElementsByTagName('head')[0].appendChild(styles);
   })();
 
 </script>
