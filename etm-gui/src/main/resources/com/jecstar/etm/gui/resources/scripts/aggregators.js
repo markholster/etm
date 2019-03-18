@@ -972,7 +972,17 @@ const aggregators = (function () {
                 $container.find("select[data-element-type='show-on-graph-selector']").attr('disabled', 'disabled');
             }
         }
-        if (aggregatorData && aggregatorData.aggregators) {
+        const $orderBySelector = $container.find('select[data-element-type=term-order-by]');
+        const orderByValue = aggregatorData.order_by ? aggregatorData.order_by : defaultData.order_by;
+        if (orderByValue && orderByValue !== $orderBySelector.val()) {
+            // The value that should be set could not be set on the select element because the correct option isn't available yet. We add a dummy option here so the updateBucketTermOrders method can set the correct value later on.
+            $orderBySelector.append(
+                $('<option>').attr('value', orderByValue).text('Unknown')
+            );
+            $orderBySelector.val(orderByValue);
+        }
+
+        if (aggregatorData.aggregators) {
             $.each(aggregatorData.aggregators, function (ix, aggregator) {
                 if ('metrics' === aggregator.type) {
                     addMetricsAggregator(dataContext, $container, level, ix, aggregator);
@@ -1238,9 +1248,18 @@ const aggregators = (function () {
             }
         }
         $parent.append($container);
-        $container.find('select[data-element-type=pipeline-path]').each(function (index, element) {
-            updatePipelinePathSelectOptions($(element));
-        });
+
+        const $pipelinePathSelector = $container.find('select[data-element-type=pipeline-path]');
+        const pipelinePathValue = aggregatorData.path ? aggregatorData.path : defaultData.path;
+        if (pipelinePathValue && pipelinePathValue !== $pipelinePathSelector.val()) {
+            // The value that should be set could not be set on the select element because the correct option isn't available yet. We add a dummy option here so the updatePipelinePathSelectOptions method can set the correct value later on.
+            $pipelinePathSelector.append(
+                $('<option>').attr('value', pipelinePathValue).text('Unknown')
+            );
+            $pipelinePathSelector.val(pipelinePathValue);
+        }
+        updatePipelinePathSelectOptions($pipelinePathSelector);
+
     };
 
     const createAggregatorData = function createAggregatorBlockData(dataContext, $aggregatorBlock) {
