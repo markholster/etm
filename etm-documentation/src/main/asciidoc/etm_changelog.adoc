@@ -4,6 +4,7 @@
 * [ETM-96] Wrong timestamp when using flatpickr.
 * [ETM-97] License reload may fail when system under stress.
 * [ETM-98] Option to configure the context root of the gui and rest processor.
+* [ETM-99] Order By and Path not correctly displayed when showing graph data.
 
 === Version 3.4.1
 * [ETM-86] Dashboard and signal datasources not refreshed in groups settings screen.
