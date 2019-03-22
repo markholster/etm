@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeListener {
@@ -309,6 +310,7 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
         adminUser.addRoles(Arrays.stream(SecurityRoles.ALL_READ_WRITE_SECURITY_ROLES).collect(Collectors.toCollection(ArrayList::new)));
         adminUser.addSignalDatasources(Arrays.stream(ElasticsearchLayout.ALL_DATASOURCES).collect(Collectors.toCollection(ArrayList::new)));
         adminUser.addDashboardDatasources(Arrays.stream(ElasticsearchLayout.ALL_DATASOURCES).collect(Collectors.toCollection(ArrayList::new)));
+        adminUser.setApiKey(UUID.randomUUID().toString());
         adminUser.setChangePasswordOnLogon(true);
         IndexRequestBuilder builder = new IndexRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + adminUser.getId())
                 .setWaitForActiveShards(ActiveShardCount.ALL)
