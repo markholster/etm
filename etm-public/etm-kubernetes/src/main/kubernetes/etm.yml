@@ -53,8 +53,8 @@ spec:
           httpGet:
             path: /status
             port: 8080
-          initialDelaySeconds: 90          
-        image: "www.jecstar.com/etm:${etm-version}"
+          initialDelaySeconds: 90
+        image: "docker.jecstar.com/etm:${etm-version}"
         imagePullPolicy: "IfNotPresent"
         ports:
         - containerPort: 8080

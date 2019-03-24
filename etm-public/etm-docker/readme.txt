@@ -1,3 +1,3 @@
 run from build:
-docker image build -t www.jecstar.com/etm:<etm-version> .
-docker push www.jecstar.com/etm:<etm-version>
+docker image build -t docker.jecstar.com/etm:<etm-version> .
+docker push docker.jecstar.com/etm:<etm-version>

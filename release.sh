@@ -46,12 +46,12 @@ read -n1 -r -p "Press any key when the distibution is available for download..."
 
 echo "Generating docker image"
 cd etm-public/etm-docker/build/docker
-docker image build -t www.jecstar.com/etm:$VERSION .
+docker image build -t docker.jecstar.com/etm:$VERSION .
 if [ $? -ne 0 ]; then
     echo "Generating docker image failed"
     exit 1
 fi
-#docker push www.jecstar.com/etm:$VERSION
+#docker push docker.jecstar.com/etm:$VERSION
 
 
 #==== Push subtree

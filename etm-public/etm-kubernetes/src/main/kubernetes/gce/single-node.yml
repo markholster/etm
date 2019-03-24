@@ -223,7 +223,7 @@ spec:
               path: /status
               port: 8080
             initialDelaySeconds: 10
-          image: "www.jecstar.com/etm:${etm-version}"
+          image: "docker.jecstar.com/etm:${etm-version}"
           imagePullPolicy: "IfNotPresent"
           ports:
             - containerPort: 8080

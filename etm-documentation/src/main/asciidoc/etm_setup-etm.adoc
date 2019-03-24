@@ -50,14 +50,14 @@ Although {etm} best performs on linux like systems it can be run under windows a
 
 [source,bash,subs=attributes+]
 ----
-docker pull www.jecstar.com/etm:{project-version}
+docker pull docker.jecstar.com/etm:{project-version}
 ----
 
 To run the Docker image {etm} needs to know where to find Elasticsearch. The most simple way of doing this is to use an environment variable:
 
 [source,bash,subs=attributes+]
 ----
-docker run -p 8080:8080 -e "elasticsearch_connectAddresses=<my-elasticsearch-host>:<my-elasticsearch-port>" -e "elasticsearch_clusterName=elasticsearch" www.jecstar.com/etm:{project-version}
+docker run -p 8080:8080 -e "elasticsearch_connectAddresses=<my-elasticsearch-host>:<my-elasticsearch-port>" -e "elasticsearch_clusterName=elasticsearch" docker.jecstar.com/etm:{project-version}
 ----
 
 Most of the properties mentioned in the <<Node configuration>> chapter can be passed as environment variables to the Docker container. Properties not mentioned in the <<General configuration in etm.yml>> but is a separate section of the configuration should be prefixed by their section names. For example, the properties ''elasticsearch.clusterName'' in the configuration file should be passed as environment variable ''elasticsearch_clusterName''. In short, the 'dot' in the configuration file should be replaced with an 'underscore' in the environment variable name.
