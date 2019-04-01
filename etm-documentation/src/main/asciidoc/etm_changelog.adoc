@@ -1,6 +1,7 @@
 == Changelog
 === Version 3.6.0
 * [ETM-100] Log to console when quiet = false.
+* [ETM-101] Calendar buttons in signals & graphs not working in IE.
 
 === Version 3.5.0
 * [ETM-95] Add api key to user for for authorisation on rest processor.

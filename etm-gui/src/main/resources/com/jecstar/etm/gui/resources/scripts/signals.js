@@ -11,7 +11,11 @@ function buildSignalsPage(groupName) {
     let timeZone;
     const $page = $('body > .container-fluid');
 
-    $('#input-signal-from').parent()
+
+    const originalFromValue = $('#input-signal-from').val();
+    const originalTillValue = $('#input-signal-till').val();
+
+    $('#input-signal-from').val('').parent()
         .flatpickr({
             dateFormat: "Y-m-dTH:i:S",
             enableTime: true,
@@ -23,7 +27,7 @@ function buildSignalsPage(groupName) {
             clickOpens: false,
             wrap: true
         });
-    $('#input-signal-till').parent()
+    $('#input-signal-till').val('').parent()
         .flatpickr({
             dateFormat: "Y-m-dTH:i:S",
             enableTime: true,
@@ -35,6 +39,12 @@ function buildSignalsPage(groupName) {
             clickOpens: false,
             wrap: true
         });
+    if (originalFromValue) {
+        $('#input-signal-from').val(originalFromValue);
+    }
+    if (originalTillValue) {
+        $('#input-signal-till').val(originalTillValue)
+    }
 
     $.ajax({
         type: 'GET',

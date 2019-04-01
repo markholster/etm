@@ -146,7 +146,10 @@ function buildGraphsPage(groupName) {
     let keywords = [];
     const $page = $('body > .container-fluid');
 
-    $('#input-graph-from').parent()
+    const originalFromValue = $('#input-graph-from').val();
+    const originalTillValue = $('#input-graph-till').val();
+
+    $('#input-graph-from').val('').parent()
         .flatpickr({
             dateFormat: "Y-m-dTH:i:S",
             enableTime: true,
@@ -158,7 +161,7 @@ function buildGraphsPage(groupName) {
             clickOpens: false,
             wrap: true
         });
-    $('#input-graph-till').parent()
+    $('#input-graph-till').val('').parent()
         .flatpickr({
             dateFormat: "Y-m-dTH:i:S",
             enableTime: true,
@@ -170,6 +173,12 @@ function buildGraphsPage(groupName) {
             clickOpens: false,
             wrap: true
         });
+    if (originalFromValue) {
+        $('#input-graph-from').val(originalFromValue);
+    }
+    if (originalTillValue) {
+        $('#input-graph-till').val(originalTillValue)
+    }
 
     $.ajax({
         type: 'GET',
