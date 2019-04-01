@@ -18,10 +18,18 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
+import java.util.Locale;
 
 class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger {
 
     private static final long serialVersionUID = 3661857038951845151L;
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSxxx")
+                    .withLocale(Locale.getDefault())
+                    .withZone(ZoneId.systemDefault());
+
 
     private static final String LEVEL_TRACE = "TRACE";
     private static final String LEVEL_DEBUG = "DEBUG";
@@ -34,13 +42,15 @@ class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger {
     private final LogConfiguration configuration;
     private final InternalBulkProcessorWrapper internalBulkProcessorWrapper;
     private final int logLevelAsInt;
+    private final boolean quiet;
 
-    EtmLogger(String loggerName, LogConfiguration configuration, InternalBulkProcessorWrapper internalBulkProcessorWrapper) {
+    EtmLogger(String loggerName, LogConfiguration configuration, InternalBulkProcessorWrapper internalBulkProcessorWrapper, boolean quiet) {
         this.name = loggerName;
         this.configuration = configuration;
         String logLevel = this.configuration.getLogLevel(getName());
         this.logLevelAsInt = determineLevelAsInteger(logLevel);
         this.internalBulkProcessorWrapper = internalBulkProcessorWrapper;
+        this.quiet = quiet;
     }
 
     @Override
@@ -341,6 +351,7 @@ class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger {
 
 
     private void log(String callerFQCN, String logLevel, String payload, Throwable throwable) {
+        Instant now = Instant.now();
         LogLocation logLocation = new LogLocation(new Throwable(), callerFQCN);
         String stackTrace = null;
         if (throwable != null) {
@@ -359,7 +370,7 @@ class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger {
                 .addOrMergeEndpoint(new EndpointBuilder().setName(logLocation.fullInfo)
                         .addEndpointHandler(new EndpointHandlerBuilder()
                                 .setType(EndpointHandler.EndpointHandlerType.WRITER)
-                                .setHandlingTime(Instant.now())
+                                .setHandlingTime(now)
                                 .setApplication(new ApplicationBuilder()
                                         .setName(this.configuration.getApplicationName())
                                         .setVersion(this.configuration.getApplicationVersion())
@@ -371,6 +382,9 @@ class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger {
                 )
                 .build();
         this.internalBulkProcessorWrapper.persist(logTelemetryEvent);
+        if (!this.quiet) {
+            System.out.println("[" + formatter.format(now) + "][" +  logLevel + "][" + logLocation.fullInfo + "] " + payload);
+        }
     }
 
 }

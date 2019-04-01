@@ -10,6 +10,7 @@ The End of Life policy defines how long a given release is considered supported,
 [options="header"]
 |=======================
 |         |Release date|Oracle/OpenJDK 1.8.0u111+|Oracle/OpenJDK 11|Elasticsearch|EOL       |Maintained until
+|ETM 3.6.x| |Yes                      |Yes              |6.6.x        ||3.7.0
 |ETM 3.5.x|2019-03-19  |Yes                      |Yes              |6.6.x        |2021-03-19|3.6.0
 |ETM 3.4.x|2019-02-18  |Yes                      |Yes              |6.6.x        |2021-02-18|3.5.0
 |ETM 3.3.x|2018-11-09  |Yes                      |Yes              |6.4.x        |2020-11-09|3.4.0

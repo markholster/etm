@@ -9,13 +9,16 @@ import java.util.concurrent.ConcurrentMap;
 
 public class EtmLoggerFactory implements ILoggerFactory {
 
+    private static boolean quiet;
+    private static InternalBulkProcessorWrapper bulkProcessorWrapper;
+
     private final ConcurrentMap<String, Logger> loggerMap;
     private final LogConfiguration logConfiguration;
 
-    private static InternalBulkProcessorWrapper bulkProcessorWrapper;
 
-    public static void initialize(InternalBulkProcessorWrapper bulkProcessorWrapper) {
+    public static void initialize(InternalBulkProcessorWrapper bulkProcessorWrapper, boolean quiet) {
         EtmLoggerFactory.bulkProcessorWrapper = bulkProcessorWrapper;
+        EtmLoggerFactory.quiet = quiet;
     }
 
     public EtmLoggerFactory() {
@@ -29,7 +32,7 @@ public class EtmLoggerFactory implements ILoggerFactory {
         if (etmLogger != null) {
             return etmLogger;
         } else {
-            Logger newInstance = new EtmLogger(name, this.logConfiguration, bulkProcessorWrapper);
+            Logger newInstance = new EtmLogger(name, this.logConfiguration, bulkProcessorWrapper, quiet);
             Logger oldInstance = loggerMap.putIfAbsent(name, newInstance);
             return oldInstance == null ? newInstance : oldInstance;
         }

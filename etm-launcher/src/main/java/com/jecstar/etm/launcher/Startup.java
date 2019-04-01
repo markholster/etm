@@ -39,7 +39,7 @@ class Startup {
             LogConfiguration.applicationInstance = configuration.instanceName;
             LogConfiguration.hostAddress = InetAddress.getByName(configuration.bindingAddress);
             InternalBulkProcessorWrapper bulkProcessorWrapper = new InternalBulkProcessorWrapper();
-            EtmLoggerFactory.initialize(bulkProcessorWrapper);
+            EtmLoggerFactory.initialize(bulkProcessorWrapper, commandLineParameters.isQuiet());
             BusinessEventLogger.initialize(bulkProcessorWrapper,
                     new EndpointBuilder().setName(configuration.instanceName)
                             .addEndpointHandler(new EndpointHandlerBuilder().setHandlingTime(Instant.now())
