@@ -2,6 +2,10 @@ package com.jecstar.etm.server.core.util;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -125,5 +129,40 @@ public class LruCacheTest {
             cache.put(i, i);
         }
         assertEquals(maxSize, cache.size());
+    }
+
+    @Test
+    public void testMaxSizeMultiThreads() {
+        final int maxSize = 5000;
+        final int expiry = 5000;
+        LruCache<Integer, Integer> cache = new LruCache<>(maxSize, expiry);
+
+        ExecutorService executorService = Executors.newFixedThreadPool(5);
+        for (int i=0; i < 5; i++) {
+            final int instanceIx = i;
+            executorService.submit(() -> {
+                for (int j = 0; j < 500_000; j++) {
+                    Integer uniqueValue = Integer.valueOf("" + instanceIx + j);
+                    cache.put(uniqueValue, uniqueValue);
+                }
+            });
+        }
+        executorService.shutdown();
+        try {
+            executorService.awaitTermination(30, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            fail(e);
+        }
+        assertEquals(maxSize, cache.size());
+
+        try {
+            Thread.sleep(expiry);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            fail(e);
+        }
+        // After the expiry period the cache should be empty.
+        assertTrue(cache.isEmpty());
     }
 }

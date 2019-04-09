@@ -3,7 +3,15 @@ package com.jecstar.etm.server.core.util;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+/**
+ * A thread safe least recently used cache with a maximum size, and an optional expiry for all entries.
+ *
+ * @param <K> The cache key type.
+ * @param <V> The cache value type.
+ */
 public class LruCache<K, V> extends LinkedHashMap<K, V> {
 
     private static final long serialVersionUID = 4586456566155987636L;
@@ -11,6 +19,7 @@ public class LruCache<K, V> extends LinkedHashMap<K, V> {
     private final long expiry;
 
     private int maxSize;
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     public LruCache(final int maxSize) {
         this(maxSize, -1);
@@ -33,7 +42,10 @@ public class LruCache<K, V> extends LinkedHashMap<K, V> {
 
     @Override
     protected boolean removeEldestEntry(java.util.Map.Entry<K, V> eldest) {
-        return size() > this.maxSize;
+        // Calling super.size instead of this.size() because this.size() would trigger a #removeAllExpired() on each insert.
+        // The #removeAllExpired() is not necessary at this point because if an entry needs to be removed it will always be
+        // the eldest at this point.
+        return super.size() > this.maxSize;
     }
 
     /**
@@ -54,16 +66,26 @@ public class LruCache<K, V> extends LinkedHashMap<K, V> {
 
     @Override
     public void clear() {
-        if (this.expiryMap != null) {
-            this.expiryMap.clear();
+        this.lock.writeLock().lock();
+        try {
+            if (this.expiryMap != null) {
+                this.expiryMap.clear();
+            }
+            super.clear();
+        } finally {
+            this.lock.writeLock().unlock();
         }
-        super.clear();
     }
 
     @Override
     public boolean containsKey(Object key) {
         removeWhenExpired(key);
-        return super.containsKey(key);
+        this.lock.readLock().lock();
+        try {
+            return super.containsKey(key);
+        } finally {
+            this.lock.readLock().unlock();
+        }
     }
 
     @Override
@@ -71,82 +93,137 @@ public class LruCache<K, V> extends LinkedHashMap<K, V> {
         if (this.expiryMap != null) {
             throw new UnsupportedOperationException();
         }
-        return super.containsValue(value);
+        this.lock.readLock().lock();
+        try {
+            return super.containsValue(value);
+        } finally {
+            this.lock.readLock().unlock();
+        }
     }
 
     @Override
     public V put(K key, V value) {
-        if (this.expiryMap != null) {
-            this.expiryMap.put(key, System.currentTimeMillis());
+        this.lock.writeLock().lock();
+        try {
+            if (this.expiryMap != null) {
+                this.expiryMap.put(key, System.currentTimeMillis());
+            }
+            return super.put(key, value);
+        } finally {
+            this.lock.writeLock().unlock();
         }
-        return super.put(key, value);
     }
 
     @Override
     public void putAll(Map<? extends K, ? extends V> m) {
-        if (this.expiryMap != null) {
-            long time = System.currentTimeMillis();
-            m.forEach((k, v) -> this.expiryMap.put(k, time));
+        this.lock.writeLock().lock();
+        try {
+            if (this.expiryMap != null) {
+                long time = System.currentTimeMillis();
+                m.forEach((k, v) -> this.expiryMap.put(k, time));
+            }
+            super.putAll(m);
+        } finally {
+            this.lock.writeLock().unlock();
         }
-        super.putAll(m);
     }
 
     @Override
     public V get(Object key) {
         removeWhenExpired(key);
-        return super.get(key);
+        this.lock.readLock().lock();
+        try {
+            return super.get(key);
+        } finally {
+            this.lock.readLock().unlock();
+        }
     }
 
     @Override
     public V getOrDefault(Object key, V defaultValue) {
         removeWhenExpired(key);
-        return super.getOrDefault(key, defaultValue);
+        this.lock.readLock().lock();
+        try {
+            return super.getOrDefault(key, defaultValue);
+        } finally {
+            this.lock.readLock().unlock();
+        }
     }
 
     @Override
     public boolean remove(Object key, Object value) {
-        boolean removed = super.remove(key, value);
-        if (removed && this.expiryMap != null) {
-            this.expiryMap.remove(key);
+        this.lock.writeLock().lock();
+        try {
+            boolean removed = super.remove(key, value);
+            if (removed && this.expiryMap != null) {
+                this.expiryMap.remove(key);
+            }
+            return removed;
+        } finally {
+            this.lock.writeLock().unlock();
         }
-        return removed;
     }
 
     @Override
     public V remove(Object key) {
-        if (this.expiryMap != null) {
-            this.expiryMap.remove(key);
+        this.lock.writeLock().lock();
+        try {
+            if (this.expiryMap != null) {
+                this.expiryMap.remove(key);
+            }
+            return super.remove(key);
+        } finally {
+            this.lock.writeLock().unlock();
         }
-        return super.remove(key);
     }
 
     @Override
     public V replace(K key, V value) {
-        if (this.expiryMap != null) {
-            this.expiryMap.replace(key, System.currentTimeMillis());
+        this.lock.writeLock().lock();
+        try {
+            if (this.expiryMap != null) {
+                this.expiryMap.replace(key, System.currentTimeMillis());
+            }
+            return super.replace(key, value);
+        } finally {
+            this.lock.writeLock().unlock();
         }
-        return super.replace(key, value);
     }
 
     @Override
     public boolean replace(K key, V oldValue, V newValue) {
-        boolean replaced = super.replace(key, oldValue, newValue);
-        if (replaced && this.expiryMap != null) {
-            this.expiryMap.replace(key, System.currentTimeMillis());
+        this.lock.writeLock().lock();
+        try {
+            boolean replaced = super.replace(key, oldValue, newValue);
+            if (replaced && this.expiryMap != null) {
+                this.expiryMap.replace(key, System.currentTimeMillis());
+            }
+            return replaced;
+        } finally {
+            this.lock.writeLock().unlock();
         }
-        return replaced;
     }
 
     @Override
     public int size() {
         removeAllExpired();
-        return super.size();
+        this.lock.readLock().lock();
+        try {
+            return super.size();
+        } finally {
+            this.lock.readLock().unlock();
+        }
     }
 
     @Override
     public boolean isEmpty() {
         removeAllExpired();
-        return super.isEmpty();
+        this.lock.readLock().lock();
+        try {
+            return super.isEmpty();
+        } finally {
+            this.lock.readLock().unlock();
+        }
     }
 
     private void removeWhenExpired(Object key) {
@@ -165,8 +242,13 @@ public class LruCache<K, V> extends LinkedHashMap<K, V> {
                 Map.Entry<K, V> entry = iterator.next();
                 Long insertAt = this.expiryMap.get(entry.getKey());
                 if (insertAt != null && System.currentTimeMillis() - insertAt > this.expiry) {
-                    iterator.remove();
-                    this.expiryMap.remove(entry.getKey());
+                    this.lock.writeLock().lock();
+                    try {
+                        iterator.remove();
+                        this.expiryMap.remove(entry.getKey());
+                    } finally {
+                        this.lock.writeLock().unlock();
+                    }
                 }
             }
         }

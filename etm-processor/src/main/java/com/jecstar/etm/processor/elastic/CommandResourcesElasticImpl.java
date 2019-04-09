@@ -54,7 +54,7 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
     CommandResourcesElasticImpl(final DataRepository dataRepository, final EtmConfiguration etmConfiguration, final MetricRegistry metricRegistry) {
         this.dataRepository = dataRepository;
         this.etmConfiguration = etmConfiguration;
-        this.endpointCache = new LruCache<>(etmConfiguration.getEndpointConfigurationCacheSize());
+        this.endpointCache = new LruCache<>(etmConfiguration.getEndpointConfigurationCacheSize(), ENDPOINT_CACHE_VALIDITY);
         this.bulkProcessorListener = new BulkProcessorListener(metricRegistry);
         this.bulkProcessor = createBulkProcessor();
         this.etmConfiguration.addConfigurationChangeListener(this);
@@ -87,11 +87,7 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
     private EndpointConfiguration retrieveEndpoint(String endpointName) {
         EndpointConfiguration cachedItem = endpointCache.get(endpointName);
         if (cachedItem != null) {
-            if (System.currentTimeMillis() - cachedItem.retrievalTimestamp > ENDPOINT_CACHE_VALIDITY) {
-                this.endpointCache.remove(endpointName);
-            } else {
-                return cachedItem;
-            }
+            return cachedItem;
         }
         GetResponse getResponse = this.dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 ElasticsearchLayout.ETM_DEFAULT_TYPE,
@@ -99,12 +95,10 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
                 .setFetchSource(true));
         if (getResponse.isExists() && !getResponse.isSourceEmpty()) {
             EndpointConfiguration loadedConfig = this.endpointConfigurationConverter.read(getResponse.getSourceAsMap());
-            loadedConfig.retrievalTimestamp = System.currentTimeMillis();
             this.endpointCache.put(endpointName, loadedConfig);
             return loadedConfig;
         } else {
             NonExsistentEndpointConfiguration endpointConfig = new NonExsistentEndpointConfiguration();
-            endpointConfig.retrievalTimestamp = System.currentTimeMillis();
             this.endpointCache.put(endpointName, endpointConfig);
             return endpointConfig;
         }
