@@ -61,7 +61,6 @@ class LicenseGenerator {
                 + ",\"license_type\":\"ON_PREM\""
         + "}";
 
-
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
         PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(
                 Base64.getDecoder().decode(PRIVATE_KEY));

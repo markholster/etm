@@ -35,7 +35,7 @@ public class LicenseUpdater extends AbstractJsonService implements Runnable {
     public LicenseUpdater(final EtmConfiguration etmConfiguration, final DataRepository dataRepository, final String licenseUpdateUrl) {
         this.etmConfiguration = etmConfiguration;
         this.dataRepository = dataRepository;
-        this.licenseUpdateUrl = licenseUpdateUrl != null ? licenseUpdateUrl : "https://www.jecstar.com/rest/license/etm/free/Jecstar%20Free%20License";
+        this.licenseUpdateUrl = licenseUpdateUrl != null ? licenseUpdateUrl : "https://www.jecstar.com/rest/license/v2/etm/free/Jecstar%20Free%20License";
     }
 
     @Override
