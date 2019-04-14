@@ -5,7 +5,7 @@ ENV PATH /usr/share/etm/bin:$PATH
 
 WORKDIR /usr/share/etm
 
-RUN addgroup -g 1000 etm && \
+RUN groupadd -g 1000 etm && \
     adduser -u 1000 -G etm -D -h /usr/share/etm etm && \
     apk update && \
     apk add ca-certificates wget && \

@@ -30,16 +30,26 @@ public class LicenseUpdater extends AbstractJsonService implements Runnable {
     private final EtmConfiguration etmConfiguration;
     private final DataRepository dataRepository;
     private final EtmConfigurationConverterJsonImpl etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
+    private final String licenseUpdateUrl;
 
-    public LicenseUpdater(final EtmConfiguration etmConfiguration, final DataRepository dataRepository) {
+    public LicenseUpdater(final EtmConfiguration etmConfiguration, final DataRepository dataRepository, final String licenseUpdateUrl) {
         this.etmConfiguration = etmConfiguration;
         this.dataRepository = dataRepository;
+        this.licenseUpdateUrl = licenseUpdateUrl != null ? licenseUpdateUrl : "https://www.jecstar.com/rest/license/etm/free/Jecstar%20Free%20License";
     }
 
     @Override
     public void run() {
         License license = etmConfiguration.getLicense();
-        if (license == null || (license.getOwner().equals("Jecstar Free License") && license.getExpiryDate().isBefore(Instant.now().plus(18, ChronoUnit.HOURS)))) {
+        // No license available OR
+        if (license == null || (
+                // license is almost expired AND
+                license.getExpiryDate().isBefore(Instant.now().plus(18, ChronoUnit.HOURS)) && (
+                        // it's an on prem free license OR
+                        (license.getOwner().equals("Jecstar Free License") && License.LicenseType.ON_PREM.equals(license.getLicenseType())) ||
+                                // it's a cloud license
+                                License.LicenseType.CLOUD.equals(license.getLicenseType()))
+        )) {
             String licenseKey = downloadLicenseKey();
             if (licenseKey != null) {
                 try {
@@ -71,7 +81,7 @@ public class LicenseUpdater extends AbstractJsonService implements Runnable {
     private String downloadLicenseKey() {
         BufferedReader in = null;
         try {
-            URL url = new URL("https://www.jecstar.com/rest/license/etm/free/Jecstar%20Free%20License");
+            URL url = new URL(this.licenseUpdateUrl);
             in = new BufferedReader(new InputStreamReader(url.openStream()));
 
             String inputLine;
@@ -83,7 +93,7 @@ public class LicenseUpdater extends AbstractJsonService implements Runnable {
             return getString("key", valueMap);
         } catch (IOException e) {
             if (log.isDebugLevelEnabled()) {
-                log.logDebugMessage("Unable to retrieve free license.", e);
+                log.logDebugMessage("Unable to retrieve license.", e);
             }
         } finally {
             if (in != null) {

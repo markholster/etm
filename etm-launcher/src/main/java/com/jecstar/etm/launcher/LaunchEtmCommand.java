@@ -199,7 +199,7 @@ class LaunchEtmCommand extends AbstractCommand {
             threadPoolSize++;
         }
         this.backgroundScheduler = new ScheduledThreadPoolExecutor(threadPoolSize, new NamedThreadFactory("etm_background_scheduler"));
-        this.backgroundScheduler.scheduleAtFixedRate(new LicenseUpdater(etmConfiguration, dataRepository), 0, 6, TimeUnit.HOURS);
+        this.backgroundScheduler.scheduleAtFixedRate(new LicenseUpdater(etmConfiguration, dataRepository, configuration.licenseUpdateUrl), 0, 6, TimeUnit.HOURS);
         this.backgroundScheduler.scheduleAtFixedRate(new IndexCleaner(etmConfiguration, dataRepository), 1, 15, TimeUnit.MINUTES);
         if (configuration.http.guiEnabled || configuration.http.restProcessorEnabled) {
             this.backgroundScheduler.scheduleAtFixedRate(new LdapSynchronizer(etmConfiguration, dataRepository), 1, 3, TimeUnit.HOURS);
