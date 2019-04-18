@@ -7,6 +7,9 @@
 
   function closeEffect(target, closedItems) {
     const windowWidth = window.innerWidth;
+    $('.u-header-brand').fadeOut(200, function () {
+      $(this).removeClass('d-lg-block');
+    });
 
     $(target).addClass('toggled');
 
@@ -26,6 +29,9 @@
 
   function openEffect(target, closedItems) {
     const windowWidth = window.innerWidth;
+    $('.u-header-brand').fadeIn(200, function () {
+      $(this).addClass('d-lg-block');
+    });
 
     $(target).removeClass('mini action toggled');
     $body.removeClass('side-nav-on-action');

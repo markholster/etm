@@ -82,7 +82,7 @@ function buildEventPage() {
 			if (applicationData) {
 				$applicationFields = $('div[data-container-type="application"]');
 				$applicationFields.append(
-					$('<h5>').text('Application ' + applicationData.name)
+					$('<h3>').text('Application ' + applicationData.name)
 				);
 				$.each(applicationData.flows, function(index, flow) {
 					$flowDiv = $('<div>').attr('data-flow-type', 'application.flow');
@@ -102,7 +102,7 @@ function buildEventPage() {
 			if (flowData) {
 				$flowFields = $('div[data-container-type="flow"]');
 				$flowFields.append(
-					$('<h5>').text('Flow ' + flowData.name)
+					$('<h3>').text('Flow ' + flowData.name)
 				);
 				appendFlowData($flowFields, flowData);
 				$flowFields.show();
