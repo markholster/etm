@@ -12,7 +12,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="../images/favicon/favicon-16x16.png">
     <link rel="mask-icon" href="../images/favicon/safari-pinned-tab.svg" color="#5bbad5">
 
-    <link rel="stylesheet" href="../styles/bootstrap.min.css">
+    <link rel="stylesheet" href="../styles/theme.min.css">
     <link rel="stylesheet" href="../styles/font-awesome.min.css">
     <link rel="stylesheet" href="../styles/jquery-ui.min.css">
     <link rel="stylesheet" href="../styles/autocomplete.css">
@@ -31,417 +31,450 @@
     <script src="../scripts/highcharts/highcharts.js"></script>
 </head>
 <body>
-<nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
-    <a class="navbar-brand animated infinite" href="https://www.jecstar.com" target="_blank">
-        <img src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" class="d-inline-block align-top"
-             alt="">
-        Jecstar
-    </a>
-    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
-            data-target="#collapsing_navbar" aria-controls="collapsing_navbar" aria-expanded="false"
-            aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="collapsing_navbar">
-        <ul id="etm_mainmenu" class="navbar-nav mr-auto">
-            <li id="placeholder-for-MenuAwareURLResource"></li>
-        </ul>
+<header class="u-header">
+    <div class="u-header-left">
+        <a class="u-header-logo" href="https://www.jecstar.com" target="_blank">
+            <img class="u-logo-desktop" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website" />
+            <img class="img-fluid u-logo-mobile" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website" />
+        </a>
     </div>
-</nav>
 
-<div class="container-fluid" style="margin-top: 1em;">
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card card-block">
-                <div class="card-body">
-                    <h5 class="card-title">Graphs</h5>
-                    <div class="card-text">
-                        <div id="graphs_errorBox" class="alert alert-danger errorBox" style="display: none;"
-                             role="alert"></div>
-                        <div id="graphs_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
-                        <div id="graphs_box">
-                            <div class="row">
-                                <div class=col-sm-12>
-                                    <select id="sel-graph"
-                                            class="form-control form-control-sm custom-select custom-select-sm"
-                                            autofocus="autofocus">
-                                        <option selected="selected"></option>
-                                    </select>
+    <div class="u-header-middle">
+        <a class="js-sidebar-invoker u-sidebar-invoker" href="#"
+           data-is-close-all-except-this="true"
+           data-target="#sidebar">
+            <i class="fa fa-bars u-sidebar-invoker__icon--open"></i>
+        </a>
+    </div>
+
+    <div class="u-header-right">
+        <div class="ml-2">
+            Logged in as: <span class="text-dark d-none d-sm-inline-block">placeholder-for-contextUser</span>
+        </div>
+    </div>
+</header>
+<main class="u-main" role="main">
+    <aside id="sidebar" class="u-sidebar">
+        <div class="u-sidebar-inner">
+            <header class="u-sidebar-header">
+                <a class="u-sidebar-logo" href="https://www.jecstar.com">
+                    <img class="img-fluid" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website">
+                </a>
+            </header>
+
+            <nav class="u-sidebar-nav">
+                <ul class="u-sidebar-nav-menu u-sidebar-nav-menu--top-level">
+                    <li id="placeholder-for-MenuAwareURLResource"></li>
+                </ul>
+            </nav>
+        </div>
+    </aside>
+    <div class="u-content">
+        <div class="container-fluid" style="margin-top: 1em;">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card card-block">
+                        <div class="card-body">
+                            <h5 class="card-title">Graphs</h5>
+                            <div class="card-text">
+                                <div id="graphs_errorBox" class="alert alert-danger errorBox" style="display: none;"
+                                     role="alert"></div>
+                                <div id="graphs_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
+                                <div id="graphs_box">
+                                    <div class="row">
+                                        <div class=col-sm-12>
+                                            <select id="sel-graph"
+                                                    class="form-control form-control-sm custom-select custom-select-sm"
+                                                    autofocus="autofocus">
+                                                <option selected="selected"></option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <hr/>
+                                    <div class="row">
+                                        <div class=col-sm-12>
+                                            <div class="form-group row">
+                                                <label for="input-graph-name"
+                                                       class="col-sm-3 col-form-label col-form-label-sm">Name</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-graph-name" type="text"
+                                                           class="form-control form-control-sm" required="required"/>
+                                                </div>
+                                            </div>
+                                            <div class="accordion" id="graph-accordion">
+                                                <div class="card">
+                                                    <div class="card-header p-0" id="acc-heading-data">
+                                                        <button id="btn-heading=data" class="btn btn-link" type="button"
+                                                                data-toggle="collapse"
+                                                                data-target="#acc-collapse-data" aria-expanded="true"
+                                                                aria-controls="acc-collapse-data">
+                                                            <span class="fa fa-database hidden-md-down">&nbsp;</span>Data
+                                                        </button>
+                                                    </div>
+                                                    <form id="form-data">
+                                                        <div id="acc-collapse-data" class="collapse show"
+                                                             aria-labelledby="acc-heading-data" data-parent="#graph-accordion">
+                                                            <div class="card-body">
+                                                                <div class="form-group row">
+                                                                    <label for="sel-data-source"
+                                                                           class="col-sm-3 col-form-label col-form-label-sm">Data
+                                                                        source</label>
+                                                                    <div class="col-sm-9">
+                                                                        <select id="sel-data-source"
+                                                                                class="form-control form-control-sm custom-select custom-select-sm"
+                                                                                data-required="required" required="required">
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <label for="input-graph-from"
+                                                                           class="col-sm-3 col-form-label col-form-label-sm">Start
+                                                                        date</label>
+                                                                    <div class="col-sm-9">
+                                                                        <div class="input-group input-group-sm flatpickr">
+                                                                            <input id="input-graph-from" type="text"
+                                                                                   class="form-control form-control-sm"
+                                                                                   value="now-1h"
+                                                                                   data-input/>
+                                                                            <div class="input-group-append">
+                                                                                <a class="btn btn-outline-secondary"
+                                                                                   title="Toggle calendar" data-toggle>
+                                                                                    <i class="fa fa-calendar"></i>
+                                                                                </a>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <label for="input-graph-till"
+                                                                           class="col-sm-3 col-form-label col-form-label-sm">End
+                                                                        date</label>
+                                                                    <div class="col-sm-9">
+                                                                        <div class="input-group input-group-sm flatpickr">
+                                                                            <input id="input-graph-till" type="text"
+                                                                                   class="form-control form-control-sm"
+                                                                                   value="now" data-input/>
+                                                                            <div class="input-group-append">
+                                                                                <a class="btn btn-outline-secondary"
+                                                                                   title="Toggle calendar" data-toggle>
+                                                                                    <i class="fa fa-calendar"></i>
+                                                                                </a>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="row form-group">
+                                                                    <label for="input-graph-time-filter-field"
+                                                                           class="col-sm-3 col-form-label col-form-label-sm">Time
+                                                                        field</label>
+                                                                    <div class="col-sm-9">
+                                                                        <div class="input-group input-group-sm">
+                                                                            <input id="input-graph-time-filter-field"
+                                                                                   type="text"
+                                                                                   class="form-control form-control-sm"
+                                                                                   value="timestamp"/>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="form-group row">
+                                                                    <label for="input-graph-query"
+                                                                           class="col-sm-3 col-form-label col-form-label-sm">Query</label>
+                                                                    <div class="col-sm-9">
+                                                                        <input id="input-graph-query" type="text"
+                                                                               class="form-control form-control-sm"
+                                                                               value="*"
+                                                                               data-required="required" required="required"/>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                                <div class="card">
+                                                    <div class="card-header p-0" id="acc-heading-graph">
+                                                        <button id="btn-heading-graph" class="btn btn-link collapsed"
+                                                                type="button"
+                                                                data-toggle="collapse" data-target="#acc-collapse-graph"
+                                                                aria-expanded="true" aria-controls="acc-collapse-graph">
+                                                            <span class="fa fa-chart-area hidden-md-down">&nbsp;</span>Graph
+                                                        </button>
+                                                    </div>
+                                                    <form id="form-graph">
+                                                        <div id="acc-collapse-graph" class="collapse"
+                                                             aria-labelledby="acc-heading-graph" data-parent="#graph-accordion">
+                                                            <div class="card-body">
+                                                                <div class="form-group row">
+                                                                    <label for="sel-graph-type"
+                                                                           class="col-sm-3 col-form-label col-form-label-sm">Type</label>
+                                                                    <div class="col-sm-9">
+                                                                        <select id="sel-graph-type"
+                                                                                class="form-control form-control-sm custom-select custom-select-sm"
+                                                                                data-required="required" required="required">
+                                                                            <option value="area">Area</option>
+                                                                            <option value="bar">Bar</option>
+                                                                            <option value="line">Line</option>
+                                                                            <option value="number">Number</option>
+                                                                            <option value="pie">Pie</option>
+                                                                            <option value="scatter">Scatter</option>
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                                <div id="grp-graph-subtype" class="form-group row">
+                                                                    <label for="sel-graph-subtype"
+                                                                           class="col-sm-3 col-form-label col-form-label-sm">Subtype</label>
+                                                                    <div class="col-sm-9">
+                                                                        <select id="sel-graph-subtype"
+                                                                                class="form-control form-control-sm custom-select custom-select-sm"
+                                                                                data-required="required" required="required">
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                                <div id="grp-graph-line-type" class="form-group row">
+                                                                    <label for="sel-graph-line-type"
+                                                                           class="col-sm-3 col-form-label col-form-label-sm">Line
+                                                                        type</label>
+                                                                    <div class="col-sm-9">
+                                                                        <select id="sel-graph-line-type"
+                                                                                class="form-control form-control-sm custom-select custom-select-sm"
+                                                                                data-required="required" required="required">
+                                                                            <option value="SMOOTH" selected="selected">Smooth
+                                                                            </option>
+                                                                            <option value="STEP_CENTER">Step center</option>
+                                                                            <option value="STEP_LEFT">Step left</option>
+                                                                            <option value="STEP_RIGHT">Step right</option>
+                                                                            <option value="STRAIGHT">Straight</option>
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                                <div id="grp-graph-orientation" class="form-group row">
+                                                                    <label for="sel-graph-orientation"
+                                                                           class="col-sm-3 col-form-label col-form-label-sm">Orientation</label>
+                                                                    <div class="col-sm-9">
+                                                                        <select id="sel-graph-orientation"
+                                                                                class="form-control form-control-sm custom-select custom-select-sm"
+                                                                                data-required="required" required="required">
+                                                                            <option value="HORIZONTAL">Horizontal</option>
+                                                                            <option value="VERTICAL" selected="selected">
+                                                                                Vertical
+                                                                            </option>
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                                <div id="grp-graph-show-markers" class="form-group row">
+                                                                    <label for="sel-graph-show-markers"
+                                                                           class="col-sm-3 col-form-label col-form-label-sm">Show
+                                                                        markers</label>
+                                                                    <div class="col-sm-9">
+                                                                        <select id="sel-graph-show-markers"
+                                                                                class="form-control form-control-sm custom-select custom-select-sm"
+                                                                                data-required="required" required="required">
+                                                                            <option value="true">Yes</option>
+                                                                            <option value="false" selected="selected">No
+                                                                            </option>
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                                <div id="grp-graph-show-data-labels" class="form-group row">
+                                                                    <label for="sel-graph-show-data-labels"
+                                                                           class="col-sm-3 col-form-label col-form-label-sm">Show
+                                                                        data labels</label>
+                                                                    <div class="col-sm-9">
+                                                                        <select id="sel-graph-show-data-labels"
+                                                                                class="form-control form-control-sm custom-select custom-select-sm"
+                                                                                data-required="required" required="required">
+                                                                            <option value="true">Yes</option>
+                                                                            <option value="false" selected="selected">No
+                                                                            </option>
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                                <div id="grp-graph-show-legend" class="form-group row">
+                                                                    <label for="sel-graph-show-legend"
+                                                                           class="col-sm-3 col-form-label col-form-label-sm">Show
+                                                                        legend</label>
+                                                                    <div class="col-sm-9">
+                                                                        <select id="sel-graph-show-legend"
+                                                                                class="form-control form-control-sm custom-select custom-select-sm"
+                                                                                data-required="required" required="required">
+                                                                            <option value="true" selected="selected">Yes
+                                                                            </option>
+                                                                            <option value="false">No</option>
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                                <div class="card" id="card-x-axis" data-context="x-axis">
+                                                    <div class="card-header p-0" id="acc-heading-x-axis">
+                                                        <button id="btn-heading-x-axis" class="btn btn-link collapsed"
+                                                                type="button"
+                                                                data-toggle="collapse" data-target="#acc-collapse-x-axis"
+                                                                aria-expanded="true" aria-controls="acc-collapse-x-axis">
+                                                            <span class="fa fa-ruler-horizontal hidden-md-down">&nbsp;</span>X-axis
+                                                        </button>
+                                                    </div>
+                                                    <form id="form-x-axis">
+                                                        <div id="acc-collapse-x-axis" class="collapse"
+                                                             aria-labelledby="acc-heading-x-axis"
+                                                             data-parent="#graph-accordion">
+                                                            <div class="card-body aggregator-container-block"
+                                                                 data-aggregator-level="0">
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                                <div class="card" id="card-y-axis" data-context="y-axis">
+                                                    <div class="card-header p-0" id="acc-heading-y-axis">
+                                                        <button id="btn-heading-y-axis" class="btn btn-link collapsed"
+                                                                type="button"
+                                                                data-toggle="collapse" data-target="#acc-collapse-y-axis"
+                                                                aria-expanded="true" aria-controls="acc-collapse-y-axis">
+                                                            <span class="fa fa-ruler-vertical hidden-md-down">&nbsp;</span>Y-axis
+                                                        </button>
+                                                    </div>
+                                                    <form id="form-y-axis">
+                                                        <div id="acc-collapse-y-axis" class="collapse"
+                                                             aria-labelledby="acc-heading-y-axis"
+                                                             data-parent="#graph-accordion">
+                                                            <div class="card-body">
+                                                                <div class="form-group row">
+                                                                    <label for="input-y-axis-title"
+                                                                           class="col-sm-3 col-form-label col-form-label-sm">Title</label>
+                                                                    <div class="col-sm-9">
+                                                                        <input id="input-y-axis-title"
+                                                                               class="form-control form-control-sm"/>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="form-group row">
+                                                                    <label for="input-y-axis-format"
+                                                                           class="col-sm-3 col-form-label col-form-label-sm">Format</label>
+                                                                    <div class="col-sm-9">
+                                                                        <input id="input-y-axis-format"
+                                                                               class="form-control form-control-sm"
+                                                                               data-required="required" required="required"
+                                                                               value="d"/>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="aggregator-container-block"
+                                                                     data-aggregator-level="0">
+                                                                    <div class="d-flex justify-content-end bucket-aggregator-header">
+                                                                        <div class="p-1">
+                                                                            <a href="#"
+                                                                               data-element-type="add-bucket-aggregator">Add
+                                                                                bucket</a>
+                                                                        </div>
+                                                                        <div class="p-1">
+                                                                            <a href="#"
+                                                                               data-element-type="add-metrics-aggregator">Add
+                                                                                metric</a>
+                                                                        </div>
+                                                                        <div class="p-1">
+                                                                            <a href="#"
+                                                                               data-element-type="add-pipeline-aggregator">Add
+                                                                                pipeline</a>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                                <div class="card" id="card-category" style="display: none;"
+                                                     data-context="category">
+                                                    <div class="card-header p-0" id="acc-heading-category">
+                                                        <button id="btn-heading-category" class="btn btn-link collapsed"
+                                                                type="button"
+                                                                data-toggle="collapse" data-target="#acc-collapse-category"
+                                                                aria-expanded="true" aria-controls="acc-collapse-category">
+                                                            <span class="fa fa-cubes hidden-md-down">&nbsp;</span>Category
+                                                        </button>
+                                                    </div>
+                                                    <form id="form-category">
+                                                        <div id="acc-collapse-category" class="collapse"
+                                                             aria-labelledby="acc-heading-category"
+                                                             data-parent="#graph-accordion">
+                                                            <div class="card-body aggregator-container-block"
+                                                                 data-aggregator-level="0">
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                                <div class="card" id="card-parts" style="display: none;"
+                                                     data-context="parts">
+                                                    <div class="card-header p-0" id="acc-heading-parts">
+                                                        <button id="btn-heading-parts" class="btn btn-link collapsed"
+                                                                type="button"
+                                                                data-toggle="collapse" data-target="#acc-collapse-parts"
+                                                                aria-expanded="true" aria-controls="acc-collapse-parts">
+                                                            <span class="fa fa-balance-scale hidden-md-down">&nbsp;</span>Parts
+                                                        </button>
+                                                    </div>
+                                                    <form id="form-parts">
+                                                        <div id="acc-collapse-parts" class="collapse"
+                                                             aria-labelledby="acc-heading-parts"
+                                                             data-parent="#graph-accordion">
+                                                            <div class="card-body">
+                                                                <div class="form-group row">
+                                                                    <label for="input-parts-format"
+                                                                           class="col-sm-3 col-form-label col-form-label-sm">Format</label>
+                                                                    <div class="col-sm-9">
+                                                                        <input id="input-parts-format"
+                                                                               class="form-control form-control-sm"
+                                                                               data-required="required" required="required"
+                                                                               value="d"/>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="aggregator-container-block"
+                                                                     data-aggregator-level="0" data-require-single-value="true">
+                                                                    <div class="d-flex justify-content-end bucket-aggregator-header">
+                                                                        <div class="p-1">
+                                                                            <a href="#"
+                                                                               data-element-type="add-bucket-aggregator">Add
+                                                                                bucket</a>
+                                                                        </div>
+                                                                        <div class="p-1">
+                                                                            <a href="#"
+                                                                               data-element-type="add-metrics-aggregator">Add
+                                                                                metric</a>
+                                                                        </div>
+                                                                        <div class="p-1">
+                                                                            <a href="#"
+                                                                               data-element-type="add-pipeline-aggregator">Add
+                                                                                pipeline</a>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+
+                                            <div class="modal-footer">
+                                                <input type="submit" id="btn-confirm-remove-graph"
+                                                       data-element-type="acl-aware"
+                                                       class="btn btn-danger" value="Remove" formnovalidate="formnovalidate"
+                                                       disabled="disabled"/>
+                                                <input type="submit" id="btn-preview-graph" class="btn btn-secondary"
+                                                       value="Preview" formnovalidate="formnovalidate" disabled="disabled"/>
+                                                <input type="submit" id="btn-confirm-save-graph"
+                                                       data-element-type="acl-aware"
+                                                       class="btn btn-primary" value="Save" disabled="disabled"/>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <hr/>
-                            <div class="row">
-                                <div class=col-sm-12>
-                                    <div class="form-group row">
-                                        <label for="input-graph-name"
-                                               class="col-sm-3 col-form-label col-form-label-sm">Name</label>
-                                        <div class="col-sm-9">
-                                            <input id="input-graph-name" type="text"
-                                                   class="form-control form-control-sm" required="required"/>
-                                        </div>
-                                    </div>
-                                    <div class="accordion" id="graph-accordion">
-                                        <div class="card">
-                                            <div class="card-header p-0" id="acc-heading-data">
-                                                <button id="btn-heading=data" class="btn btn-link" type="button"
-                                                        data-toggle="collapse"
-                                                        data-target="#acc-collapse-data" aria-expanded="true"
-                                                        aria-controls="acc-collapse-data">
-                                                    <span class="fa fa-database hidden-md-down">&nbsp;</span>Data
-                                                </button>
-                                            </div>
-                                            <form id="form-data">
-                                                <div id="acc-collapse-data" class="collapse show"
-                                                     aria-labelledby="acc-heading-data" data-parent="#graph-accordion">
-                                                    <div class="card-body">
-                                                        <div class="form-group row">
-                                                            <label for="sel-data-source"
-                                                                   class="col-sm-3 col-form-label col-form-label-sm">Data
-                                                                source</label>
-                                                            <div class="col-sm-9">
-                                                                <select id="sel-data-source"
-                                                                        class="form-control form-control-sm custom-select custom-select-sm"
-                                                                        data-required="required" required="required">
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                        <div class="row form-group">
-                                                            <label for="input-graph-from"
-                                                                   class="col-sm-3 col-form-label col-form-label-sm">Start
-                                                                date</label>
-                                                            <div class="col-sm-9">
-                                                                <div class="input-group input-group-sm flatpickr">
-                                                                    <input id="input-graph-from" type="text"
-                                                                           class="form-control form-control-sm"
-                                                                           value="now-1h"
-                                                                           data-input/>
-                                                                    <div class="input-group-append">
-                                                                        <a class="btn btn-outline-secondary"
-                                                                           title="Toggle calendar" data-toggle>
-                                                                            <i class="fa fa-calendar"></i>
-                                                                        </a>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="row form-group">
-                                                            <label for="input-graph-till"
-                                                                   class="col-sm-3 col-form-label col-form-label-sm">End
-                                                                date</label>
-                                                            <div class="col-sm-9">
-                                                                <div class="input-group input-group-sm flatpickr">
-                                                                    <input id="input-graph-till" type="text"
-                                                                           class="form-control form-control-sm"
-                                                                           value="now" data-input/>
-                                                                    <div class="input-group-append">
-                                                                        <a class="btn btn-outline-secondary"
-                                                                           title="Toggle calendar" data-toggle>
-                                                                            <i class="fa fa-calendar"></i>
-                                                                        </a>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="row form-group">
-                                                            <label for="input-graph-time-filter-field"
-                                                                   class="col-sm-3 col-form-label col-form-label-sm">Time
-                                                                field</label>
-                                                            <div class="col-sm-9">
-                                                                <div class="input-group input-group-sm">
-                                                                    <input id="input-graph-time-filter-field"
-                                                                           type="text"
-                                                                           class="form-control form-control-sm"
-                                                                           value="timestamp"/>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="form-group row">
-                                                            <label for="input-graph-query"
-                                                                   class="col-sm-3 col-form-label col-form-label-sm">Query</label>
-                                                            <div class="col-sm-9">
-                                                                <input id="input-graph-query" type="text"
-                                                                       class="form-control form-control-sm"
-                                                                       value="*"
-                                                                       data-required="required" required="required"/>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </form>
-                                        </div>
-                                        <div class="card">
-                                            <div class="card-header p-0" id="acc-heading-graph">
-                                                <button id="btn-heading-graph" class="btn btn-link collapsed"
-                                                        type="button"
-                                                        data-toggle="collapse" data-target="#acc-collapse-graph"
-                                                        aria-expanded="true" aria-controls="acc-collapse-graph">
-                                                    <span class="fa fa-chart-area hidden-md-down">&nbsp;</span>Graph
-                                                </button>
-                                            </div>
-                                            <form id="form-graph">
-                                                <div id="acc-collapse-graph" class="collapse"
-                                                     aria-labelledby="acc-heading-graph" data-parent="#graph-accordion">
-                                                    <div class="card-body">
-                                                        <div class="form-group row">
-                                                            <label for="sel-graph-type"
-                                                                   class="col-sm-3 col-form-label col-form-label-sm">Type</label>
-                                                            <div class="col-sm-9">
-                                                                <select id="sel-graph-type"
-                                                                        class="form-control form-control-sm custom-select custom-select-sm"
-                                                                        data-required="required" required="required">
-                                                                    <option value="area">Area</option>
-                                                                    <option value="bar">Bar</option>
-                                                                    <option value="line">Line</option>
-                                                                    <option value="number">Number</option>
-                                                                    <option value="pie">Pie</option>
-                                                                    <option value="scatter">Scatter</option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                        <div id="grp-graph-subtype" class="form-group row">
-                                                            <label for="sel-graph-subtype"
-                                                                   class="col-sm-3 col-form-label col-form-label-sm">Subtype</label>
-                                                            <div class="col-sm-9">
-                                                                <select id="sel-graph-subtype"
-                                                                        class="form-control form-control-sm custom-select custom-select-sm"
-                                                                        data-required="required" required="required">
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                        <div id="grp-graph-line-type" class="form-group row">
-                                                            <label for="sel-graph-line-type"
-                                                                   class="col-sm-3 col-form-label col-form-label-sm">Line
-                                                                type</label>
-                                                            <div class="col-sm-9">
-                                                                <select id="sel-graph-line-type"
-                                                                        class="form-control form-control-sm custom-select custom-select-sm"
-                                                                        data-required="required" required="required">
-                                                                    <option value="SMOOTH" selected="selected">Smooth
-                                                                    </option>
-                                                                    <option value="STEP_CENTER">Step center</option>
-                                                                    <option value="STEP_LEFT">Step left</option>
-                                                                    <option value="STEP_RIGHT">Step right</option>
-                                                                    <option value="STRAIGHT">Straight</option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                        <div id="grp-graph-orientation" class="form-group row">
-                                                            <label for="sel-graph-orientation"
-                                                                   class="col-sm-3 col-form-label col-form-label-sm">Orientation</label>
-                                                            <div class="col-sm-9">
-                                                                <select id="sel-graph-orientation"
-                                                                        class="form-control form-control-sm custom-select custom-select-sm"
-                                                                        data-required="required" required="required">
-                                                                    <option value="HORIZONTAL">Horizontal</option>
-                                                                    <option value="VERTICAL" selected="selected">
-                                                                        Vertical
-                                                                    </option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                        <div id="grp-graph-show-markers" class="form-group row">
-                                                            <label for="sel-graph-show-markers"
-                                                                   class="col-sm-3 col-form-label col-form-label-sm">Show
-                                                                markers</label>
-                                                            <div class="col-sm-9">
-                                                                <select id="sel-graph-show-markers"
-                                                                        class="form-control form-control-sm custom-select custom-select-sm"
-                                                                        data-required="required" required="required">
-                                                                    <option value="true">Yes</option>
-                                                                    <option value="false" selected="selected">No
-                                                                    </option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                        <div id="grp-graph-show-data-labels" class="form-group row">
-                                                            <label for="sel-graph-show-data-labels"
-                                                                   class="col-sm-3 col-form-label col-form-label-sm">Show
-                                                                data labels</label>
-                                                            <div class="col-sm-9">
-                                                                <select id="sel-graph-show-data-labels"
-                                                                        class="form-control form-control-sm custom-select custom-select-sm"
-                                                                        data-required="required" required="required">
-                                                                    <option value="true">Yes</option>
-                                                                    <option value="false" selected="selected">No
-                                                                    </option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                        <div id="grp-graph-show-legend" class="form-group row">
-                                                            <label for="sel-graph-show-legend"
-                                                                   class="col-sm-3 col-form-label col-form-label-sm">Show
-                                                                legend</label>
-                                                            <div class="col-sm-9">
-                                                                <select id="sel-graph-show-legend"
-                                                                        class="form-control form-control-sm custom-select custom-select-sm"
-                                                                        data-required="required" required="required">
-                                                                    <option value="true" selected="selected">Yes
-                                                                    </option>
-                                                                    <option value="false">No</option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </form>
-                                        </div>
-                                        <div class="card" id="card-x-axis" data-context="x-axis">
-                                            <div class="card-header p-0" id="acc-heading-x-axis">
-                                                <button id="btn-heading-x-axis" class="btn btn-link collapsed"
-                                                        type="button"
-                                                        data-toggle="collapse" data-target="#acc-collapse-x-axis"
-                                                        aria-expanded="true" aria-controls="acc-collapse-x-axis">
-                                                    <span class="fa fa-ruler-horizontal hidden-md-down">&nbsp;</span>X-axis
-                                                </button>
-                                            </div>
-                                            <form id="form-x-axis">
-                                                <div id="acc-collapse-x-axis" class="collapse"
-                                                     aria-labelledby="acc-heading-x-axis"
-                                                     data-parent="#graph-accordion">
-                                                    <div class="card-body aggregator-container-block"
-                                                         data-aggregator-level="0">
-                                                    </div>
-                                                </div>
-                                            </form>
-                                        </div>
-                                        <div class="card" id="card-y-axis" data-context="y-axis">
-                                            <div class="card-header p-0" id="acc-heading-y-axis">
-                                                <button id="btn-heading-y-axis" class="btn btn-link collapsed"
-                                                        type="button"
-                                                        data-toggle="collapse" data-target="#acc-collapse-y-axis"
-                                                        aria-expanded="true" aria-controls="acc-collapse-y-axis">
-                                                    <span class="fa fa-ruler-vertical hidden-md-down">&nbsp;</span>Y-axis
-                                                </button>
-                                            </div>
-                                            <form id="form-y-axis">
-                                                <div id="acc-collapse-y-axis" class="collapse"
-                                                     aria-labelledby="acc-heading-y-axis"
-                                                     data-parent="#graph-accordion">
-                                                    <div class="card-body">
-                                                        <div class="form-group row">
-                                                            <label for="input-y-axis-title"
-                                                                   class="col-sm-3 col-form-label col-form-label-sm">Title</label>
-                                                            <div class="col-sm-9">
-                                                                <input id="input-y-axis-title"
-                                                                       class="form-control form-control-sm"/>
-                                                            </div>
-                                                        </div>
-                                                        <div class="form-group row">
-                                                            <label for="input-y-axis-format"
-                                                                   class="col-sm-3 col-form-label col-form-label-sm">Format</label>
-                                                            <div class="col-sm-9">
-                                                                <input id="input-y-axis-format"
-                                                                       class="form-control form-control-sm"
-                                                                       data-required="required" required="required"
-                                                                       value="d"/>
-                                                            </div>
-                                                        </div>
-                                                        <div class="aggregator-container-block"
-                                                             data-aggregator-level="0">
-                                                            <div class="d-flex justify-content-end bucket-aggregator-header">
-                                                                <div class="p-1">
-                                                                    <a href="#"
-                                                                       data-element-type="add-bucket-aggregator">Add
-                                                                        bucket</a>
-                                                                </div>
-                                                                <div class="p-1">
-                                                                    <a href="#"
-                                                                       data-element-type="add-metrics-aggregator">Add
-                                                                        metric</a>
-                                                                </div>
-                                                                <div class="p-1">
-                                                                    <a href="#"
-                                                                       data-element-type="add-pipeline-aggregator">Add
-                                                                        pipeline</a>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </form>
-                                        </div>
-                                        <div class="card" id="card-category" style="display: none;"
-                                             data-context="category">
-                                            <div class="card-header p-0" id="acc-heading-category">
-                                                <button id="btn-heading-category" class="btn btn-link collapsed"
-                                                        type="button"
-                                                        data-toggle="collapse" data-target="#acc-collapse-category"
-                                                        aria-expanded="true" aria-controls="acc-collapse-category">
-                                                    <span class="fa fa-cubes hidden-md-down">&nbsp;</span>Category
-                                                </button>
-                                            </div>
-                                            <form id="form-category">
-                                                <div id="acc-collapse-category" class="collapse"
-                                                     aria-labelledby="acc-heading-category"
-                                                     data-parent="#graph-accordion">
-                                                    <div class="card-body aggregator-container-block"
-                                                         data-aggregator-level="0">
-                                                    </div>
-                                                </div>
-                                            </form>
-                                        </div>
-                                        <div class="card" id="card-parts" style="display: none;"
-                                             data-context="parts">
-                                            <div class="card-header p-0" id="acc-heading-parts">
-                                                <button id="btn-heading-parts" class="btn btn-link collapsed"
-                                                        type="button"
-                                                        data-toggle="collapse" data-target="#acc-collapse-parts"
-                                                        aria-expanded="true" aria-controls="acc-collapse-parts">
-                                                    <span class="fa fa-balance-scale hidden-md-down">&nbsp;</span>Parts
-                                                </button>
-                                            </div>
-                                            <form id="form-parts">
-                                                <div id="acc-collapse-parts" class="collapse"
-                                                     aria-labelledby="acc-heading-parts"
-                                                     data-parent="#graph-accordion">
-                                                    <div class="card-body">
-                                                        <div class="form-group row">
-                                                            <label for="input-parts-format"
-                                                                   class="col-sm-3 col-form-label col-form-label-sm">Format</label>
-                                                            <div class="col-sm-9">
-                                                                <input id="input-parts-format"
-                                                                       class="form-control form-control-sm"
-                                                                       data-required="required" required="required"
-                                                                       value="d"/>
-                                                            </div>
-                                                        </div>
-                                                        <div class="aggregator-container-block"
-                                                             data-aggregator-level="0" data-require-single-value="true">
-                                                            <div class="d-flex justify-content-end bucket-aggregator-header">
-                                                                <div class="p-1">
-                                                                    <a href="#"
-                                                                       data-element-type="add-bucket-aggregator">Add
-                                                                        bucket</a>
-                                                                </div>
-                                                                <div class="p-1">
-                                                                    <a href="#"
-                                                                       data-element-type="add-metrics-aggregator">Add
-                                                                        metric</a>
-                                                                </div>
-                                                                <div class="p-1">
-                                                                    <a href="#"
-                                                                       data-element-type="add-pipeline-aggregator">Add
-                                                                        pipeline</a>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-
-                                    <div class="modal-footer">
-                                        <input type="submit" id="btn-confirm-remove-graph"
-                                               data-element-type="acl-aware"
-                                               class="btn btn-danger" value="Remove" formnovalidate="formnovalidate"
-                                               disabled="disabled"/>
-                                        <input type="submit" id="btn-preview-graph" class="btn btn-secondary"
-                                               value="Preview" formnovalidate="formnovalidate" disabled="disabled"/>
-                                        <input type="submit" id="btn-confirm-save-graph"
-                                               data-element-type="acl-aware"
-                                               class="btn btn-primary" value="Save" disabled="disabled"/>
-                                    </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card card-block">
+                        <div class="card-body">
+                            <div class="card-text">
+                                <div id="preview_box" style="text-align: center;">
                                 </div>
                             </div>
                         </div>
@@ -449,18 +482,8 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
-            <div class="card card-block">
-                <div class="card-body">
-                    <div class="card-text">
-                        <div id="preview_box" style="text-align: center;">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
-</div>
+</main>
 
 <div class="modal fade" id="modal-graph-overwrite">
     <div class="modal-dialog" role="document">
@@ -482,7 +505,6 @@
         </div>
     </div>
 </div>
-
 <div class="modal fade" id="modal-graph-remove">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -507,6 +529,7 @@
 <script src="../scripts/aggregators.js"></script>
 <script src="../scripts/graphs.js"></script>
 <script src="../scripts/etm-commons.js"></script>
+<script src="../scripts/sidebar-nav.js"></script>
 <script>
     commons.addAjaxHandlers(
         null,

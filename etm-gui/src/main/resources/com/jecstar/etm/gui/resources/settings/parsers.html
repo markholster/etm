@@ -12,7 +12,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="../images/favicon/favicon-16x16.png">
     <link rel="mask-icon" href="../images/favicon/safari-pinned-tab.svg" color="#5bbad5">
 
-    <link rel="stylesheet" href="../styles/bootstrap.min.css">
+    <link rel="stylesheet" href="../styles/theme.min.css">
     <link rel="stylesheet" href="../styles/font-awesome.min.css">
     <link rel="stylesheet" href="../styles/etm-commons.css">
     <!-- jQuery first, then Bootstrap JS. -->
@@ -22,248 +22,271 @@
     <script src="../scripts/bootstrap.min.js"></script>
 </head>
 <body>
-<nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
-    <a class="navbar-brand animated infinite" href="https://www.jecstar.com" target="_blank">
-        <img src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" class="d-inline-block align-top"
-             alt="">
-        Jecstar
-    </a>
-    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
-            data-target="#collapsing_navbar" aria-controls="collapsing_navbar" aria-expanded="false"
-            aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="collapsing_navbar">
-        <ul id="etm_mainmenu" class="navbar-nav mr-auto">
-            <li id="placeholder-for-MenuAwareURLResource"></li>
-        </ul>
+<header class="u-header">
+    <div class="u-header-left">
+        <a class="u-header-logo" href="https://www.jecstar.com" target="_blank">
+            <img class="u-logo-desktop" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website" />
+            <img class="img-fluid u-logo-mobile" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website" />
+        </a>
     </div>
-</nav>
 
-<div class="container" style="margin-top: 1em;">
-    <div class="card card-block">
-        <div class="card-body">
-            <h5 class="card-title">Parsers</h5>
-            <div class="card-text">
-                <div id="parsers_errorBox" class="alert alert-danger errorBox" style="display: none;"
-                     role="alert"></div>
-                <div id="parsers_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
-                <div id="parsers_box">
-                    <div class="row">
-                        <div class=col-sm-12>
-                            <select id="sel-parser" class="form-control custom-select" autofocus="autofocus">
-                                <option selected="selected"></option>
-                            </select>
-                        </div>
-                    </div>
-                    <hr/>
-                    <div class="row">
-                        <div class=col-sm-12>
-                            <form id="parser_form">
-                                <div class="form-group row">
-                                    <label for="input-parser-name" class="col-sm-3 col-form-label">Name</label>
-                                    <div class="col-sm-9">
-                                        <input id="input-parser-name" type="text" class="form-control"
-                                               placeholder="Descriptive name of the parser..." required="required"/>
-                                    </div>
+    <div class="u-header-middle">
+        <a class="js-sidebar-invoker u-sidebar-invoker" href="#"
+           data-is-close-all-except-this="true"
+           data-target="#sidebar">
+            <i class="fa fa-bars u-sidebar-invoker__icon--open"></i>
+        </a>
+    </div>
+
+    <div class="u-header-right">
+        <div class="ml-2">
+            Logged in as: <span class="text-dark d-none d-sm-inline-block">placeholder-for-contextUser</span>
+        </div>
+    </div>
+</header>
+<main class="u-main" role="main">
+    <aside id="sidebar" class="u-sidebar">
+        <div class="u-sidebar-inner">
+            <header class="u-sidebar-header">
+                <a class="u-sidebar-logo" href="https://www.jecstar.com">
+                    <img class="img-fluid" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website">
+                </a>
+            </header>
+
+            <nav class="u-sidebar-nav">
+                <ul class="u-sidebar-nav-menu u-sidebar-nav-menu--top-level">
+                    <li id="placeholder-for-MenuAwareURLResource"></li>
+                </ul>
+            </nav>
+        </div>
+    </aside>
+    <div class="u-content">
+        <div class="container" style="margin-top: 1em;">
+            <div class="card card-block">
+                <div class="card-body">
+                    <h5 class="card-title">Parsers</h5>
+                    <div class="card-text">
+                        <div id="parsers_errorBox" class="alert alert-danger errorBox" style="display: none;"
+                             role="alert"></div>
+                        <div id="parsers_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
+                        <div id="parsers_box">
+                            <div class="row">
+                                <div class=col-sm-12>
+                                    <select id="sel-parser" class="form-control custom-select" autofocus="autofocus">
+                                        <option selected="selected"></option>
+                                    </select>
                                 </div>
-                                <div class="form-group row">
-                                    <label for="input-parser-type" class="col-sm-3 col-form-label">Type</label>
-                                    <div class="col-sm-9">
-                                        <select id="input-parser-type" class="form-control custom-select">
-                                            <option value="copy_value">Copy value</option>
-                                            <option value="fixed_position">Fixed position</option>
-                                            <option value="fixed_value">Fixed value</option>
-                                            <option value="jsonpath">JsonPath</option>
-                                            <option value="regex">Regular expression</option>
-                                            <option value="xpath">XPath</option>
-                                            <option value="xslt">XSLT</option>
-                                        </select>
-                                    </div>
+                            </div>
+                            <hr/>
+                            <div class="row">
+                                <div class=col-sm-12>
+                                    <form id="parser_form">
+                                        <div class="form-group row">
+                                            <label for="input-parser-name" class="col-sm-3 col-form-label">Name</label>
+                                            <div class="col-sm-9">
+                                                <input id="input-parser-name" type="text" class="form-control"
+                                                       placeholder="Descriptive name of the parser..." required="required"/>
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label for="input-parser-type" class="col-sm-3 col-form-label">Type</label>
+                                            <div class="col-sm-9">
+                                                <select id="input-parser-type" class="form-control custom-select">
+                                                    <option value="copy_value">Copy value</option>
+                                                    <option value="fixed_position">Fixed position</option>
+                                                    <option value="fixed_value">Fixed value</option>
+                                                    <option value="jsonpath">JsonPath</option>
+                                                    <option value="regex">Regular expression</option>
+                                                    <option value="xpath">XPath</option>
+                                                    <option value="xslt">XSLT</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div id="grp-copy_value">
+                                        </div>
+                                        <div id="grp-fixed_position" style="display: none;">
+                                            <div class="form-group row">
+                                                <label for="input-fixed_position-line"
+                                                       class="col-sm-3 col-form-label">Line</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-fixed_position-line" type="number" min="1"
+                                                           class="form-control" required="required" value="1"/>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="input-fixed_position-start-ix" class="col-sm-3 col-form-label">Start
+                                                    position</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-fixed_position-start-ix" type="number" min="1"
+                                                           class="form-control" required="required" value="1"/>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="input-fixed_position-end-ix" class="col-sm-3 col-form-label">End
+                                                    position (excluded)</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-fixed_position-end-ix" type="number" min="2"
+                                                           class="form-control" required="required" value="2"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div id="grp-fixed_value" style="display: none;">
+                                            <div class="form-group row">
+                                                <label for="input-fixed-value" class="col-sm-3 col-form-label">Fixed
+                                                    value</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-fixed-value" type="text" class="form-control"
+                                                           required="required" disabled="disabled"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div id="grp-jsonpath" style="display: none;">
+                                            <div class="form-group row">
+                                                <label for="input-jsonpath-expression" class="col-sm-3 col-form-label">JsonPath
+                                                    expression</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-jsonpath-expression" type="text" class="form-control"
+                                                           required="required" disabled="disabled"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div id="grp-regex" style="display: none;">
+                                            <div class="form-group row">
+                                                <label for="input-regex-expression" class="col-sm-3 col-form-label">Regular
+                                                    expression</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-regex-expression" type="text" class="form-control"
+                                                           required="required" disabled="disabled"/>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="input-regex-group" class="col-sm-3 col-form-label">Match
+                                                    group</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-regex-group" type="number" class="form-control"
+                                                           required="required" disabled="disabled" min="1" value="1"/>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="sel-regex-canonical-equivalence" class="col-sm-3 col-form-label">Canonical
+                                                    equivalence</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-regex-canonical-equivalence"
+                                                            class="form-control custom-select" disabled="disabled">
+                                                        <option value="true">Yes</option>
+                                                        <option value="false" selected="selected">No</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="sel-regex-case-insensitive" class="col-sm-3 col-form-label">Case
+                                                    insensitive</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-regex-case-insensitive" class="form-control custom-select"
+                                                            disabled="disabled">
+                                                        <option value="true">Yes</option>
+                                                        <option value="false" selected="selected">No</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="sel-regex-dotall" class="col-sm-3 col-form-label">Dotall</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-regex-dotall" class="form-control custom-select"
+                                                            disabled="disabled">
+                                                        <option value="true">Yes</option>
+                                                        <option value="false" selected="selected">No</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="sel-regex-literal" class="col-sm-3 col-form-label">Literal</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-regex-literal" class="form-control custom-select"
+                                                            disabled="disabled">
+                                                        <option value="true">Yes</option>
+                                                        <option value="false" selected="selected">No</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="sel-regex-multiline"
+                                                       class="col-sm-3 col-form-label">Multiline</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-regex-multiline" class="form-control custom-select"
+                                                            disabled="disabled">
+                                                        <option value="true">Yes</option>
+                                                        <option value="false" selected="selected">No</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="sel-regex-unicode-case" class="col-sm-3 col-form-label">Unicode
+                                                    case</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-regex-unicode-case" class="form-control custom-select"
+                                                            disabled="disabled">
+                                                        <option value="true">Yes</option>
+                                                        <option value="false" selected="selected">No</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="sel-regex-unicode-character-class" class="col-sm-3 col-form-label">Unicode
+                                                    character class</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-regex-unicode-character-class"
+                                                            class="form-control custom-select" disabled="disabled">
+                                                        <option value="true">Yes</option>
+                                                        <option value="false" selected="selected">No</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="sel-regex-unix-lines" class="col-sm-3 col-form-label">Unix
+                                                    lines</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-regex-unix-lines" class="form-control custom-select"
+                                                            disabled="disabled">
+                                                        <option value="true">Yes</option>
+                                                        <option value="false" selected="selected">No</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div id="grp-xpath" style="display: none;">
+                                            <div class="form-group row">
+                                                <label for="input-xpath-expression" class="col-sm-3 col-form-label">XPath
+                                                    expression</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-xpath-expression" type="text" class="form-control"
+                                                           required="required" disabled="disabled"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div id="grp-xslt" style="display: none;">
+                                            <div class="form-group row">
+                                                <label for="input-xslt-template">XSLT template</label>
+                                                <textarea id="input-xslt-template" class="form-control" rows="10"
+                                                          required="required" disabled="disabled"></textarea>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer" data-element-type="acl-aware">
+                                            <input type="submit" id="btn-confirm-remove-parser" class="btn btn-danger"
+                                                   value="Remove" formnovalidate="formnovalidate" disabled="disabled"/>
+                                            <input type="submit" id="btn-confirm-save-parser" class="btn btn-primary"
+                                                   value="Save" disabled="disabled"/>
+                                        </div>
+                                    </form>
                                 </div>
-                                <div id="grp-copy_value">
-                                </div>
-                                <div id="grp-fixed_position" style="display: none;">
-                                    <div class="form-group row">
-                                        <label for="input-fixed_position-line"
-                                               class="col-sm-3 col-form-label">Line</label>
-                                        <div class="col-sm-9">
-                                            <input id="input-fixed_position-line" type="number" min="1"
-                                                   class="form-control" required="required" value="1"/>
-                                        </div>
-                                    </div>
-                                    <div class="form-group row">
-                                        <label for="input-fixed_position-start-ix" class="col-sm-3 col-form-label">Start
-                                            position</label>
-                                        <div class="col-sm-9">
-                                            <input id="input-fixed_position-start-ix" type="number" min="1"
-                                                   class="form-control" required="required" value="1"/>
-                                        </div>
-                                    </div>
-                                    <div class="form-group row">
-                                        <label for="input-fixed_position-end-ix" class="col-sm-3 col-form-label">End
-                                            position (excluded)</label>
-                                        <div class="col-sm-9">
-                                            <input id="input-fixed_position-end-ix" type="number" min="2"
-                                                   class="form-control" required="required" value="2"/>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div id="grp-fixed_value" style="display: none;">
-                                    <div class="form-group row">
-                                        <label for="input-fixed-value" class="col-sm-3 col-form-label">Fixed
-                                            value</label>
-                                        <div class="col-sm-9">
-                                            <input id="input-fixed-value" type="text" class="form-control"
-                                                   required="required" disabled="disabled"/>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div id="grp-jsonpath" style="display: none;">
-                                    <div class="form-group row">
-                                        <label for="input-jsonpath-expression" class="col-sm-3 col-form-label">JsonPath
-                                            expression</label>
-                                        <div class="col-sm-9">
-                                            <input id="input-jsonpath-expression" type="text" class="form-control"
-                                                   required="required" disabled="disabled"/>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div id="grp-regex" style="display: none;">
-                                    <div class="form-group row">
-                                        <label for="input-regex-expression" class="col-sm-3 col-form-label">Regular
-                                            expression</label>
-                                        <div class="col-sm-9">
-                                            <input id="input-regex-expression" type="text" class="form-control"
-                                                   required="required" disabled="disabled"/>
-                                        </div>
-                                    </div>
-                                    <div class="form-group row">
-                                        <label for="input-regex-group" class="col-sm-3 col-form-label">Match
-                                            group</label>
-                                        <div class="col-sm-9">
-                                            <input id="input-regex-group" type="number" class="form-control"
-                                                   required="required" disabled="disabled" min="1" value="1"/>
-                                        </div>
-                                    </div>
-                                    <div class="form-group row">
-                                        <label for="sel-regex-canonical-equivalence" class="col-sm-3 col-form-label">Canonical
-                                            equivalence</label>
-                                        <div class="col-sm-9">
-                                            <select id="sel-regex-canonical-equivalence"
-                                                    class="form-control custom-select" disabled="disabled">
-                                                <option value="true">Yes</option>
-                                                <option value="false" selected="selected">No</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="form-group row">
-                                        <label for="sel-regex-case-insensitive" class="col-sm-3 col-form-label">Case
-                                            insensitive</label>
-                                        <div class="col-sm-9">
-                                            <select id="sel-regex-case-insensitive" class="form-control custom-select"
-                                                    disabled="disabled">
-                                                <option value="true">Yes</option>
-                                                <option value="false" selected="selected">No</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="form-group row">
-                                        <label for="sel-regex-dotall" class="col-sm-3 col-form-label">Dotall</label>
-                                        <div class="col-sm-9">
-                                            <select id="sel-regex-dotall" class="form-control custom-select"
-                                                    disabled="disabled">
-                                                <option value="true">Yes</option>
-                                                <option value="false" selected="selected">No</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="form-group row">
-                                        <label for="sel-regex-literal" class="col-sm-3 col-form-label">Literal</label>
-                                        <div class="col-sm-9">
-                                            <select id="sel-regex-literal" class="form-control custom-select"
-                                                    disabled="disabled">
-                                                <option value="true">Yes</option>
-                                                <option value="false" selected="selected">No</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="form-group row">
-                                        <label for="sel-regex-multiline"
-                                               class="col-sm-3 col-form-label">Multiline</label>
-                                        <div class="col-sm-9">
-                                            <select id="sel-regex-multiline" class="form-control custom-select"
-                                                    disabled="disabled">
-                                                <option value="true">Yes</option>
-                                                <option value="false" selected="selected">No</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="form-group row">
-                                        <label for="sel-regex-unicode-case" class="col-sm-3 col-form-label">Unicode
-                                            case</label>
-                                        <div class="col-sm-9">
-                                            <select id="sel-regex-unicode-case" class="form-control custom-select"
-                                                    disabled="disabled">
-                                                <option value="true">Yes</option>
-                                                <option value="false" selected="selected">No</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="form-group row">
-                                        <label for="sel-regex-unicode-character-class" class="col-sm-3 col-form-label">Unicode
-                                            character class</label>
-                                        <div class="col-sm-9">
-                                            <select id="sel-regex-unicode-character-class"
-                                                    class="form-control custom-select" disabled="disabled">
-                                                <option value="true">Yes</option>
-                                                <option value="false" selected="selected">No</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="form-group row">
-                                        <label for="sel-regex-unix-lines" class="col-sm-3 col-form-label">Unix
-                                            lines</label>
-                                        <div class="col-sm-9">
-                                            <select id="sel-regex-unix-lines" class="form-control custom-select"
-                                                    disabled="disabled">
-                                                <option value="true">Yes</option>
-                                                <option value="false" selected="selected">No</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div id="grp-xpath" style="display: none;">
-                                    <div class="form-group row">
-                                        <label for="input-xpath-expression" class="col-sm-3 col-form-label">XPath
-                                            expression</label>
-                                        <div class="col-sm-9">
-                                            <input id="input-xpath-expression" type="text" class="form-control"
-                                                   required="required" disabled="disabled"/>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div id="grp-xslt" style="display: none;">
-                                    <div class="form-group row">
-                                        <label for="input-xslt-template">XSLT template</label>
-                                        <textarea id="input-xslt-template" class="form-control" rows="10"
-                                                  required="required" disabled="disabled"></textarea>
-                                    </div>
-                                </div>
-                                <div class="modal-footer" data-element-type="acl-aware">
-                                    <input type="submit" id="btn-confirm-remove-parser" class="btn btn-danger"
-                                           value="Remove" formnovalidate="formnovalidate" disabled="disabled"/>
-                                    <input type="submit" id="btn-confirm-save-parser" class="btn btn-primary"
-                                           value="Save" disabled="disabled"/>
-                                </div>
-                            </form>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</main>
 
 <div class="modal fade" id="modal-parser-overwrite">
     <div class="modal-dialog" role="document">
@@ -285,7 +308,6 @@
         </div>
     </div>
 </div>
-
 <div class="modal fade" id="modal-parser-remove">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -308,6 +330,7 @@
 
 <script src="../scripts/parsers.js"></script>
 <script src="../scripts/etm-commons.js"></script>
+<script src="../scripts/sidebar-nav.js"></script>
 <script>
     commons.addAjaxHandlers(
         null,

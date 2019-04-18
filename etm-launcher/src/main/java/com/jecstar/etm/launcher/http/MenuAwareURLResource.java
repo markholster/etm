@@ -30,9 +30,12 @@ import java.util.stream.Collectors;
  */
 public class MenuAwareURLResource extends URLResource {
 
-    public enum MenuContext {SEARCH, DASHBOARD, PREFERENCES, SETTINGS, SIGNAL}
+
+
+    public enum MenuContext {SEARCH, DASHBOARD, PREFERENCES, SETTINGS, SIGNAL;}
 
     private static final String MENU_PLACEHOLDER = "<li id=\"placeholder-for-MenuAwareURLResource\"></li>";
+    private static final String USER_PLACEHOLDER = "placeholder-for-contextUser";
 
     private final EtmConfiguration etmConfiguration;
     private final String pathPrefixToContextRoot;
@@ -41,11 +44,24 @@ public class MenuAwareURLResource extends URLResource {
     private final String divider = "<hr style=\"margin-top: 0px; margin-bottom: 0px;\"/>";
 
 
-    MenuAwareURLResource(EtmConfiguration etmConfiguration, String pathPrefixToContextRoot, MenuContext menuContext, URL url, String path) {
+    MenuAwareURLResource(EtmConfiguration etmConfiguration, String pathPrefixToContextRoot, URL url, String path) {
         super(url, path);
         this.etmConfiguration = etmConfiguration;
         this.pathPrefixToContextRoot = pathPrefixToContextRoot;
-        this.menuContext = menuContext;
+        final String lowercasePath = getPath().toLowerCase();
+        if (lowercasePath.startsWith("/search/")) {
+            this.menuContext = MenuContext.SEARCH;
+        } else if (lowercasePath.startsWith("/dashboard/")) {
+            this.menuContext = MenuContext.DASHBOARD;
+        } else if (lowercasePath.startsWith("/signal/")) {
+            this.menuContext = MenuContext.SIGNAL;
+        } else if (lowercasePath.startsWith("/preferences/")) {
+            this.menuContext = MenuContext.PREFERENCES;
+        } else if (lowercasePath.startsWith("/settings/") || lowercasePath.startsWith("/iib/")) {
+            this.menuContext = MenuContext.SETTINGS;
+        } else {
+            this.menuContext = null;
+        }
         this.url = url;
     }
 
@@ -108,7 +124,11 @@ public class MenuAwareURLResource extends URLResource {
                 if (inputStream == null) {
                     try (BufferedReader buffer = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
                         String htmlContent = buffer.lines().collect(Collectors.joining("\n"));
-                        int ix = htmlContent.indexOf(MENU_PLACEHOLDER);
+                        int ix = htmlContent.indexOf(USER_PLACEHOLDER);
+                        if (ix != -1) {
+                            htmlContent = htmlContent.replace(USER_PLACEHOLDER, etmAccount.getPrincipal().getDisplayName());
+                        }
+                        ix = htmlContent.indexOf(MENU_PLACEHOLDER);
                         if (ix == -1) {
                             inputStream = new ByteArrayInputStream(htmlContent.getBytes(StandardCharsets.UTF_8));
                         } else {
@@ -208,7 +228,11 @@ public class MenuAwareURLResource extends URLResource {
         if (readOnly) {
             url += (page.contains("?") ? "&" : "?") + "readonly=true";
         }
-        html.append("<li class=\"u-sidebar-nav-menu__item\"><a class=\"u-sidebar-nav-menu__link\" href=\"")
+        String classes = "u-sidebar-nav-menu__link";
+        if (("/" + page).startsWith(this.getPath().toLowerCase())) {
+            classes += " active";
+        }
+        html.append("<li class=\"u-sidebar-nav-menu__item\"><a class=\"" + classes + "\" href=\"")
                 .append(this.pathPrefixToContextRoot)
                 .append(url + "\">");
         if (iconClass != null) {
@@ -257,7 +281,7 @@ public class MenuAwareURLResource extends URLResource {
                 html.append("<li class=\"u-sidebar-nav-menu__item\">");
             }
             html.append("<a class=\"u-sidebar-nav-menu__link\" data-target=\"#sub_visualizations\" href=\"#\"><i class=\"fa fa-tachometer-alt u-sidebar-nav-menu__item-icon\"></i><span class=\"u-sidebar-nav-menu__item-title\">Visualizations</span><i class=\"fa fa-angle-right u-sidebar-nav-menu__item-arrow\"></i><span class=\"u-sidebar-nav-menu__indicator\"></span></a>");
-            html.append("<ul id=\"sub_visualizations\" class=\"u-sidebar-nav-menu u-sidebar-nav-menu--second-level\" style=\"display: none;\">");
+            html.append("<ul id=\"sub_visualizations\" class=\"u-sidebar-nav-menu u-sidebar-nav-menu--second-level\" style=\"display: "+ (MenuContext.DASHBOARD.equals(menuContext) ? "block" : "none") + ";\">");
             if (principal.isInAnyRole(SecurityRoles.GROUP_DASHBOARD_READ, SecurityRoles.GROUP_DASHBOARD_READ_WRITE)) {
                 // First display the group names
                 for (EtmGroup group : groups) {
@@ -318,7 +342,7 @@ public class MenuAwareURLResource extends URLResource {
         }
         if (hasGroupMenu) {
             if (MenuContext.SIGNAL.equals(menuContext)) {
-                html.append("<li class=\"u-sidebar-nav-menu__item u-sidebar-nav--opened\">");
+                html.append("<li class=\"u-sidebar-nav-menu__item active\">");
             } else {
                 html.append("<li class=\"u-sidebar-nav-menu__item\">");
             }
@@ -337,7 +361,7 @@ public class MenuAwareURLResource extends URLResource {
             html.append("</ul></li>");
         } else if (principal.isInRole(SecurityRoles.USER_SIGNAL_READ_WRITE)) {
             if (MenuContext.SIGNAL.equals(menuContext)) {
-                html.append("<li class=\"u-sidebar-nav-menu__item u-sidebar-nav--opened\">");
+                html.append("<li class=\"u-sidebar-nav-menu__item active\">");
             } else {
                 html.append("<li class=\"u-sidebar-nav-menu__item\">");
             }
@@ -357,7 +381,7 @@ public class MenuAwareURLResource extends URLResource {
             return;
         }
         if (MenuContext.PREFERENCES.equals(menuContext)) {
-            html.append("<li class=\"u-sidebar-nav-menu__item u-sidebar-nav--opened\">");
+            html.append("<li class=\"u-sidebar-nav-menu__item active\">");
         } else {
             html.append("<li class=\"u-sidebar-nav-menu__item\">");
         }
@@ -398,7 +422,7 @@ public class MenuAwareURLResource extends URLResource {
             html.append("<li class=\"u-sidebar-nav-menu__item\">");
         }
         html.append("<a class=\"u-sidebar-nav-menu__link\" data-target=\"#sub_settings\"href=\"#\"><i class=\"fa fa-wrench u-sidebar-nav-menu__item-icon\"></i><span class=\"u-sidebar-nav-menu__item-title\">Settings</span><i class=\"fa fa-angle-right u-sidebar-nav-menu__item-arrow\"></i><span class=\"u-sidebar-nav-menu__indicator\"></span></a>");
-        html.append("<ul id=\"sub_settings\" class=\"u-sidebar-nav-menu u-sidebar-nav-menu--second-level\" style=\"display: none;\">");
+        html.append("<ul id=\"sub_settings\" class=\"u-sidebar-nav-menu u-sidebar-nav-menu--second-level\" style=\"display: " + (MenuContext.SETTINGS.equals(menuContext) ? "block" : "none") + ";\">");
         boolean addedBeforeDivider = false;
         if (principal.isInAnyRole(SecurityRoles.USER_SETTINGS_READ, SecurityRoles.USER_SETTINGS_READ_WRITE)) {
             addedBeforeDivider = true;

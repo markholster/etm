@@ -66,13 +66,13 @@
 <header class="u-header">
     <div class="u-header-left">
         <a class="u-header-logo" href="https://www.jecstar.com" target="_blank">
-            <img class="u-logo-desktop" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website">
-            <img class="img-fluid u-logo-mobile" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website">
+            <img class="u-logo-desktop" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website" />
+            <img class="img-fluid u-logo-mobile" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website" />
         </a>
     </div>
 
     <div class="u-header-middle">
-        <a class="js-sidebar-invoker u-sidebar-invoker" href="#!"
+        <a class="js-sidebar-invoker u-sidebar-invoker" href="#"
            data-is-close-all-except-this="true"
            data-target="#sidebar">
             <i class="fa fa-bars u-sidebar-invoker__icon--open"></i>
@@ -80,21 +80,17 @@
     </div>
 
     <div class="u-header-right">
-
-        <!-- User Profile -->
         <div class="ml-2">
-            Logged in as: <span class="text-dark d-none d-sm-inline-block">Mark Holster</span>
+            Logged in as: <span class="text-dark d-none d-sm-inline-block">placeholder-for-contextUser</span>
         </div>
-        <!-- End User Profile -->
     </div>
 </header>
 
 <main class="u-main" role="main">
-<!-- Sidebar -->
     <aside id="sidebar" class="u-sidebar">
         <div class="u-sidebar-inner">
             <header class="u-sidebar-header">
-                <a class="u-sidebar-logo" href="index.html">
+                <a class="u-sidebar-logo" href="https://www.jecstar.com">
                     <img class="img-fluid" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website">
                 </a>
             </header>
@@ -106,9 +102,7 @@
             </nav>
         </div>
     </aside>
-<!-- End Sidebar -->
     <div class="u-content">
-
         <div id="search-container" class="container-fluid">
         <div class="row">
             <div class="col-md-3 order-md-2 pt-3">
@@ -312,185 +306,181 @@
             </div>
         </div>
         </div>
-
-        <div class="modal fade" id="modal-template-overwrite">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title" id="template-overwrite-modal-label">Template already exists</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    A template with the name '<i id="overwrite-template-name"></i>' already exists. Do you want to overwrite
-                    that template?
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
-                    <button id="btn-overwrite-template" type="button" class="btn btn-primary">Yes</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-        <div class="modal fade" id="modal-template-remove">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title" id="template-remove-modal-label">Confirm removal</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    Are you sure you want to remove the template '<i id="remove-template-name"></i>'?
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
-                    <button id="btn-remove-template" type="button" class="btn btn-primary">Yes</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-        <div class="modal fade" id="modal-table-settings">
-        <div class="modal-dialog modal-lg" role="document" style="max-width: 60%;">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title" id="table-settings-modal-label">Table settings</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group row">
-                        <label for="table-settings-sort-field" class="col-sm-3 col-form-label">Sort field</label>
-                        <div class="col-sm-9">
-                            <input id="table-settings-sort-field" type="text" class="form-control"/>
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <label for="table-settings-sort-order" class="col-sm-3 col-form-label">Sort order</label>
-                        <div class="col-sm-9">
-                            <select id="table-settings-sort-order" class="form-control custom-select">
-                                <option value="asc">Ascending</option>
-                                <option value="desc">Descending</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <label for="table-settings-results-per-page" class="col-sm-3 col-form-label">Results per
-                            page</label>
-                        <div class="col-sm-9">
-                            <input id="table-settings-results-per-page" type="number" min="1" step="1" max="500"
-                                   class="form-control"/>
-                        </div>
-                    </div>
-                    <div class="card card-block">
-                        <div class="card-body">
-                            <div class="card-title"><h5>Columns</h5></div>
-                            <div id="table-settings-columns">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button id="btn-apply-table-settings" type="button" class="btn btn-primary">Apply</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-        <div class="modal fade" id="modal-download-results">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title" id="download-results-modal-label">Download results</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <p>Select the options you desire, and click on the link below to download the results.</p>
-                    <div class="form-group row">
-                        <label for="sel-download-include-payload" class="col-sm-3 col-form-label">Include payload</label>
-                        <div class="col-sm-9">
-                            <select id="sel-download-include-payload" class="form-control custom-select">
-                                <option value="true">Yes</option>
-                                <option value="false">No</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <label for="input-download-start-row" class="col-sm-3 col-form-label">Start row</label>
-                        <div class="col-sm-9">
-                            <!-- disable the field, as scrolling in elasticsearch always starts at ix=0 -->
-                            <input id="input-download-start-row" type="number" min="1" class="form-control" value="1"
-                                   disabled="disabled"/>
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <label for="input-download-number-of-rows" class="col-sm-3 col-form-label">Number of rows</label>
-                        <div class="col-sm-9">
-                            <input id="input-download-number-of-rows" type="number" min="1" class="form-control"
-                                   value="10"/>
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <label for="sel-download-type" class="col-sm-3 col-form-label">File type</label>
-                        <div class="col-sm-9">
-                            <select id="sel-download-type" class="form-control custom-select">
-                                <option value="csv">Comma separated file (csv)</option>
-                                <option value="xlsx">Microsoft Excel (xlsx)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button id="btn-download-results" type="button" class="btn btn-primary">Download</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-        <div class="modal fade" id="modal-download-transaction">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title" id="download-transaction-modal-label">Download transaction</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <p>Select the options you desire, and click on the link below to download the results.</p>
-                    <div class="form-group row">
-                        <label for="input-download-transaction-id" class="col-sm-3 col-form-label">Transaction id</label>
-                        <div class="col-sm-9">
-                            <input id="input-download-transaction-id" type="text" class="form-control" disabled="disabled"/>
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <label for="sel-download-transaction-type" class="col-sm-3 col-form-label">File type</label>
-                        <div class="col-sm-9">
-                            <select id="sel-download-transaction-type" class="form-control custom-select">
-                                <option value="csv">Comma separated file (csv)</option>
-                                <option value="xlsx">Microsoft Excel (xlsx)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button id="btn-download-transaction" type="button" class="btn btn-primary">Download</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     </div>
 </main>
+
+<div class="modal fade" id="modal-template-overwrite">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="template-overwrite-modal-label">Template already exists</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                A template with the name '<i id="overwrite-template-name"></i>' already exists. Do you want to overwrite
+                that template?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+                <button id="btn-overwrite-template" type="button" class="btn btn-primary">Yes</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modal-template-remove">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="template-remove-modal-label">Confirm removal</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to remove the template '<i id="remove-template-name"></i>'?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+                <button id="btn-remove-template" type="button" class="btn btn-primary">Yes</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modal-table-settings">
+    <div class="modal-dialog modal-lg" role="document" style="max-width: 60%;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="table-settings-modal-label">Table settings</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group row">
+                    <label for="table-settings-sort-field" class="col-sm-3 col-form-label">Sort field</label>
+                    <div class="col-sm-9">
+                        <input id="table-settings-sort-field" type="text" class="form-control"/>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="table-settings-sort-order" class="col-sm-3 col-form-label">Sort order</label>
+                    <div class="col-sm-9">
+                        <select id="table-settings-sort-order" class="form-control custom-select">
+                            <option value="asc">Ascending</option>
+                            <option value="desc">Descending</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="table-settings-results-per-page" class="col-sm-3 col-form-label">Results per
+                        page</label>
+                    <div class="col-sm-9">
+                        <input id="table-settings-results-per-page" type="number" min="1" step="1" max="500"
+                               class="form-control"/>
+                    </div>
+                </div>
+                <div class="card card-block">
+                    <div class="card-body">
+                        <div class="card-title"><h5>Columns</h5></div>
+                        <div id="table-settings-columns">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button id="btn-apply-table-settings" type="button" class="btn btn-primary">Apply</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modal-download-results">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="download-results-modal-label">Download results</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Select the options you desire, and click on the link below to download the results.</p>
+                <div class="form-group row">
+                    <label for="sel-download-include-payload" class="col-sm-3 col-form-label">Include payload</label>
+                    <div class="col-sm-9">
+                        <select id="sel-download-include-payload" class="form-control custom-select">
+                            <option value="true">Yes</option>
+                            <option value="false">No</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="input-download-start-row" class="col-sm-3 col-form-label">Start row</label>
+                    <div class="col-sm-9">
+                        <!-- disable the field, as scrolling in elasticsearch always starts at ix=0 -->
+                        <input id="input-download-start-row" type="number" min="1" class="form-control" value="1"
+                               disabled="disabled"/>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="input-download-number-of-rows" class="col-sm-3 col-form-label">Number of rows</label>
+                    <div class="col-sm-9">
+                        <input id="input-download-number-of-rows" type="number" min="1" class="form-control"
+                               value="10"/>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="sel-download-type" class="col-sm-3 col-form-label">File type</label>
+                    <div class="col-sm-9">
+                        <select id="sel-download-type" class="form-control custom-select">
+                            <option value="csv">Comma separated file (csv)</option>
+                            <option value="xlsx">Microsoft Excel (xlsx)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="btn-download-results" type="button" class="btn btn-primary">Download</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modal-download-transaction">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="download-transaction-modal-label">Download transaction</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Select the options you desire, and click on the link below to download the results.</p>
+                <div class="form-group row">
+                    <label for="input-download-transaction-id" class="col-sm-3 col-form-label">Transaction id</label>
+                    <div class="col-sm-9">
+                        <input id="input-download-transaction-id" type="text" class="form-control" disabled="disabled"/>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="sel-download-transaction-type" class="col-sm-3 col-form-label">File type</label>
+                    <div class="col-sm-9">
+                        <select id="sel-download-transaction-type" class="form-control custom-select">
+                            <option value="csv">Comma separated file (csv)</option>
+                            <option value="xlsx">Microsoft Excel (xlsx)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="btn-download-transaction" type="button" class="btn btn-primary">Download</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <script src="../scripts/moment.min.js"></script>
 <script src="../scripts/moment-timezone-with-data.min.js"></script>
@@ -892,6 +882,7 @@
         }
         tableLayout.current_ix = 0;
         executeQuery(createQuery(true));
+        <!-- End User Profile -->
     }
 
 	$(window).scroll(function(event) {

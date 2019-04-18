@@ -1,6 +1,5 @@
 package com.jecstar.etm.launcher.http;
 
-import com.jecstar.etm.launcher.http.MenuAwareURLResource.MenuContext;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import io.undertow.server.handlers.resource.ClassPathResourceManager;
 import io.undertow.server.handlers.resource.Resource;
@@ -38,20 +37,7 @@ class MenuAwareClassPathResourceManager extends ClassPathResourceManager {
             } else {
                 final int pathLevels = path.length() - path.replace("/", "").length();
                 final String pathPrefixToContextRoot = pathLevels <= 1 ? "./" : Collections.nCopies(pathLevels - 1, "../").stream().collect(Collectors.joining());
-                MenuContext menuContext = null;
-                final String lowerCasePath = path.toLowerCase();
-                if (lowerCasePath.startsWith("/search/")) {
-                    menuContext = MenuContext.SEARCH;
-                } else if (lowerCasePath.startsWith("/dashboard/")) {
-                    menuContext = MenuContext.DASHBOARD;
-                } else if (lowerCasePath.startsWith("/signal/")) {
-                    menuContext = MenuContext.SIGNAL;
-                } else if (lowerCasePath.startsWith("/preferences/")) {
-                    menuContext = MenuContext.PREFERENCES;
-                } else if (lowerCasePath.startsWith("/settings/") || lowerCasePath.startsWith("/iib/")) {
-                    menuContext = MenuContext.SETTINGS;
-                }
-                return new MenuAwareURLResource(this.etmConfiguration, pathPrefixToContextRoot, menuContext, resource, path);
+                return new MenuAwareURLResource(this.etmConfiguration, pathPrefixToContextRoot, resource, path);
             }
 
         }

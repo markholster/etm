@@ -274,7 +274,7 @@ const aggregators = (function () {
 
     const initialize = function (settings) {
         aggregators.config = {
-            page: $('body > .container-fluid'),
+            page: $('.container-fluid'),
             enableOrDisableButtons: function () {
             },
             keywords: []

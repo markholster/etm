@@ -12,7 +12,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="../images/favicon/favicon-16x16.png">
     <link rel="mask-icon" href="../images/favicon/safari-pinned-tab.svg" color="#5bbad5">
 
-    <link rel="stylesheet" href="../styles/bootstrap.min.css">
+    <link rel="stylesheet" href="../styles/theme.min.css">
     <link rel="stylesheet" href="../styles/font-awesome.min.css">
     <link rel="stylesheet" href="../styles/jquery-ui.min.css">
     <link rel="stylesheet" href="../styles/autocomplete.css">
@@ -25,233 +25,256 @@
     <script src="../scripts/bootstrap.min.js"></script>
 </head>
 <body>
-<nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
-    <a class="navbar-brand animated infinite" href="https://www.jecstar.com" target="_blank">
-        <img src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" class="d-inline-block align-top"
-             alt="">
-        Jecstar
-    </a>
-    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
-            data-target="#collapsing_navbar" aria-controls="collapsing_navbar" aria-expanded="false"
-            aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="collapsing_navbar">
-        <ul id="etm_mainmenu" class="navbar-nav mr-auto">
-            <li id="placeholder-for-MenuAwareURLResource"></li>
-        </ul>
+<header class="u-header">
+    <div class="u-header-left">
+        <a class="u-header-logo" href="https://www.jecstar.com" target="_blank">
+            <img class="u-logo-desktop" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website" />
+            <img class="img-fluid u-logo-mobile" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website" />
+        </a>
     </div>
-</nav>
 
-<div class="container" style="margin-top: 1em;">
-    <div class="card card-block">
-        <div class="card-body">
-            <h5 class="card-title">Notifiers</h5>
-            <div class="card-text">
-                <div id="notifiers_errorBox" class="alert alert-danger errorBox" style="display: none;"
-                     role="alert"></div>
-                <div id="notifiers_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
-                <div id="notifiers_box">
-                    <div class="row">
-                        <div class=col-sm-12>
-                            <select id="sel-notifier" class="form-control custom-select" autofocus="autofocus">
-                                <option selected="selected"></option>
-                            </select>
-                        </div>
-                    </div>
-                    <hr/>
-                    <div class="row">
-                        <div class=col-sm-12>
-                            <form id="notifier_form">
-                                <div class="form-group row">
-                                    <label for="input-notifier-name" class="col-sm-3 col-form-label">Notifier
-                                        name</label>
-                                    <div class="col-sm-9">
-                                        <input id="input-notifier-name" type="text" class="form-control"
-                                               placeholder="Unique name of the notifier..." data-required="required"
-                                               required="required"/>
-                                    </div>
-                                </div>
-                                <div class="form-group row">
-                                    <label for="sel-notifier-type" class="col-sm-3 col-form-label">Type</label>
-                                    <div class="col-sm-9">
-                                        <select id="sel-notifier-type" class="form-control custom-select">
-                                            <option value="ETM_BUSINESS_EVENT">Business event</option>
-                                            <option value="EMAIL">Email</option>
-                                            <option value="SNMP">SNMP</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div id="business-event-fields">
+    <div class="u-header-middle">
+        <a class="js-sidebar-invoker u-sidebar-invoker" href="#"
+           data-is-close-all-except-this="true"
+           data-target="#sidebar">
+            <i class="fa fa-bars u-sidebar-invoker__icon--open"></i>
+        </a>
+    </div>
 
+    <div class="u-header-right">
+        <div class="ml-2">
+            Logged in as: <span class="text-dark d-none d-sm-inline-block">placeholder-for-contextUser</span>
+        </div>
+    </div>
+</header>
+<main class="u-main" role="main">
+    <aside id="sidebar" class="u-sidebar">
+        <div class="u-sidebar-inner">
+            <header class="u-sidebar-header">
+                <a class="u-sidebar-logo" href="https://www.jecstar.com">
+                    <img class="img-fluid" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website">
+                </a>
+            </header>
+
+            <nav class="u-sidebar-nav">
+                <ul class="u-sidebar-nav-menu u-sidebar-nav-menu--top-level">
+                    <li id="placeholder-for-MenuAwareURLResource"></li>
+                </ul>
+            </nav>
+        </div>
+    </aside>
+    <div class="u-content">
+        <div class="container" style="margin-top: 1em;">
+            <div class="card card-block">
+                <div class="card-body">
+                    <h5 class="card-title">Notifiers</h5>
+                    <div class="card-text">
+                        <div id="notifiers_errorBox" class="alert alert-danger errorBox" style="display: none;"
+                             role="alert"></div>
+                        <div id="notifiers_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
+                        <div id="notifiers_box">
+                            <div class="row">
+                                <div class=col-sm-12>
+                                    <select id="sel-notifier" class="form-control custom-select" autofocus="autofocus">
+                                        <option selected="selected"></option>
+                                    </select>
                                 </div>
-                                <div id="email-fields" style="display: none;">
-                                    <div class="form-group row">
-                                        <label for="input-smtp-host" class="col-sm-3 col-form-label">Smtp host</label>
-                                        <div class="col-sm-9">
-                                            <input id="input-smtp-host" class="form-control" data-required="required"
-                                                   required="required"/>
+                            </div>
+                            <hr/>
+                            <div class="row">
+                                <div class=col-sm-12>
+                                    <form id="notifier_form">
+                                        <div class="form-group row">
+                                            <label for="input-notifier-name" class="col-sm-3 col-form-label">Notifier
+                                                name</label>
+                                            <div class="col-sm-9">
+                                                <input id="input-notifier-name" type="text" class="form-control"
+                                                       placeholder="Unique name of the notifier..." data-required="required"
+                                                       required="required"/>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="form-group row">
-                                        <label for="input-smtp-port" class="col-sm-3 col-form-label">Smtp port</label>
-                                        <div class="col-sm-9">
-                                            <input id="input-smtp-port" type="number" class="form-control" min="1"
-                                                   max="65535" data-required="required" required="required"/>
+                                        <div class="form-group row">
+                                            <label for="sel-notifier-type" class="col-sm-3 col-form-label">Type</label>
+                                            <div class="col-sm-9">
+                                                <select id="sel-notifier-type" class="form-control custom-select">
+                                                    <option value="ETM_BUSINESS_EVENT">Business event</option>
+                                                    <option value="EMAIL">Email</option>
+                                                    <option value="SNMP">SNMP</option>
+                                                </select>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="form-group row">
-                                        <label for="sel-smtp-connection-security" class="col-sm-3 col-form-label">Connection
-                                            security</label>
-                                        <div class="col-sm-9">
-                                            <select id="sel-smtp-connection-security"
-                                                    class="form-control custom-select">
-                                                <option selected="selected"></option>
-                                                <option value="SSL_TLS">SSL/TLS</option>
-                                                <option value="STARTTLS">STARTTLS</option>
-                                            </select>
+                                        <div id="business-event-fields">
+
                                         </div>
-                                    </div>
-                                    <div class="form-group row">
-                                        <label for="input-smtp-username"
-                                               class="col-sm-3 col-form-label">Username</label>
-                                        <div class="col-sm-9">
-                                            <input id="input-smtp-username" class="form-control"/>
+                                        <div id="email-fields" style="display: none;">
+                                            <div class="form-group row">
+                                                <label for="input-smtp-host" class="col-sm-3 col-form-label">Smtp host</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-smtp-host" class="form-control" data-required="required"
+                                                           required="required"/>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="input-smtp-port" class="col-sm-3 col-form-label">Smtp port</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-smtp-port" type="number" class="form-control" min="1"
+                                                           max="65535" data-required="required" required="required"/>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="sel-smtp-connection-security" class="col-sm-3 col-form-label">Connection
+                                                    security</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-smtp-connection-security"
+                                                            class="form-control custom-select">
+                                                        <option selected="selected"></option>
+                                                        <option value="SSL_TLS">SSL/TLS</option>
+                                                        <option value="STARTTLS">STARTTLS</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="input-smtp-username"
+                                                       class="col-sm-3 col-form-label">Username</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-smtp-username" class="form-control"/>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="input-smtp-password"
+                                                       class="col-sm-3 col-form-label">Password</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-smtp-password" type="password" class="form-control"/>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="input-from-address" class="col-sm-3 col-form-label">From email
+                                                    address</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-from-address" type="email" class="form-control"
+                                                           data-required="required" required="required"/>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="input-from-name" class="col-sm-3 col-form-label">From name</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-from-name" type="text" class="form-control"/>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="form-group row">
-                                        <label for="input-smtp-password"
-                                               class="col-sm-3 col-form-label">Password</label>
-                                        <div class="col-sm-9">
-                                            <input id="input-smtp-password" type="password" class="form-control"/>
+                                        <div id="snmp-fields" style="display: none;">
+                                            <div class="form-group row">
+                                                <label for="input-snmp-host" class="col-sm-3 col-form-label">Snmp host</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-snmp-host" class="form-control" data-required="required"
+                                                           required="required"/>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="input-snmp-port" class="col-sm-3 col-form-label">Snmp port</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-snmp-port" type="number" class="form-control" min="1"
+                                                           max="65535" data-required="required" required="required"
+                                                           value="162"/>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="sel-snmp-version" class="col-sm-3 col-form-label">Snmp
+                                                    version</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-snmp-version"
+                                                            class="form-control custom-select">
+                                                        <option value="V1">Version 1</option>
+                                                        <option value="V2C">Version 2c</option>
+                                                        <option value="V3">Version 3</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row" id="group-snmp-community">
+                                                <label for="input-snmp-community"
+                                                       class="col-sm-3 col-form-label">Community</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-snmp-community" type="password" class="form-control"/>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row" id="group-snmp-security-name" style="display: none;">
+                                                <label for="input-snmp-security-name"
+                                                       class="col-sm-3 col-form-label">Security name</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-snmp-security-name" class="form-control"
+                                                           data-required="required" required="required"/>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row" id="group-snmp-authentication-protocol"
+                                                 style="display: none;">
+                                                <label for="sel-snmp-authentication-protocol" class="col-sm-3 col-form-label">Authentication
+                                                    protocol</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-snmp-authentication-protocol"
+                                                            class="form-control custom-select">
+                                                        <option selected="selected"></option>
+                                                        <option value="HMAC128SHA224">HMAC-128-SHA-224</option>
+                                                        <option value="HMAC192SHA256">HMAC-192-SHA-256</option>
+                                                        <option value="HMAC256SHA384">HMAC-256-SHA-384</option>
+                                                        <option value="HMAC384SHA512">HMAC-384-SHA-512</option>
+                                                        <option value="MD5">MD5</option>
+                                                        <option value="SHA">SHA-1</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row" id="group-snmp-authentication-passphrase"
+                                                 style="display: none;">
+                                                <label for="input-snmp-authentication-passphrase"
+                                                       class="col-sm-3 col-form-label">Authentication passphrase</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-snmp-authentication-passphrase" type="password"
+                                                           class="form-control"/>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row" id="group-snmp-privacy-protocol" style="display: none;">
+                                                <label for="sel-snmp-privacy-protocol" class="col-sm-3 col-form-label">Privacy
+                                                    protocol</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-snmp-privacy-protocol"
+                                                            class="form-control custom-select">
+                                                        <option selected="selected"></option>
+                                                        <option value="AES128">AES-128</option>
+                                                        <option value="AES192">AES-192</option>
+                                                        <option value="AES192WITH3DES">AES-192-3DES</option>
+                                                        <option value="AES256">AES-256</option>
+                                                        <option value="AES256WITH3DES">AES-256-3DES</option>
+                                                        <option value="DES">DES</option>
+                                                        <option value="TDES">3DES</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row" id="group-input-snmp-privacy-passphrase"
+                                                 style="display: none;">
+                                                <label for="input-snmp-privacy-passphrase"
+                                                       class="col-sm-3 col-form-label">Privacy passphrase</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-snmp-privacy-passphrase" type="password"
+                                                           class="form-control"/>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="form-group row">
-                                        <label for="input-from-address" class="col-sm-3 col-form-label">From email
-                                            address</label>
-                                        <div class="col-sm-9">
-                                            <input id="input-from-address" type="email" class="form-control"
-                                                   data-required="required" required="required"/>
+                                        <div class="modal-footer" data-element-type="acl-aware">
+                                            <input type="submit" id="btn-confirm-remove-notifier" class="btn btn-danger"
+                                                   value="Remove" formnovalidate="formnovalidate" disabled="disabled"/>
+                                            <input type="submit" id="btn-confirm-save-notifier" class="btn btn-primary"
+                                                   value="Save"
+                                                   disabled="disabled"/>
                                         </div>
-                                    </div>
-                                    <div class="form-group row">
-                                        <label for="input-from-name" class="col-sm-3 col-form-label">From name</label>
-                                        <div class="col-sm-9">
-                                            <input id="input-from-name" type="text" class="form-control"/>
-                                        </div>
-                                    </div>
+                                    </form>
                                 </div>
-                                <div id="snmp-fields" style="display: none;">
-                                    <div class="form-group row">
-                                        <label for="input-snmp-host" class="col-sm-3 col-form-label">Snmp host</label>
-                                        <div class="col-sm-9">
-                                            <input id="input-snmp-host" class="form-control" data-required="required"
-                                                   required="required"/>
-                                        </div>
-                                    </div>
-                                    <div class="form-group row">
-                                        <label for="input-snmp-port" class="col-sm-3 col-form-label">Snmp port</label>
-                                        <div class="col-sm-9">
-                                            <input id="input-snmp-port" type="number" class="form-control" min="1"
-                                                   max="65535" data-required="required" required="required"
-                                                   value="162"/>
-                                        </div>
-                                    </div>
-                                    <div class="form-group row">
-                                        <label for="sel-snmp-version" class="col-sm-3 col-form-label">Snmp
-                                            version</label>
-                                        <div class="col-sm-9">
-                                            <select id="sel-snmp-version"
-                                                    class="form-control custom-select">
-                                                <option value="V1">Version 1</option>
-                                                <option value="V2C">Version 2c</option>
-                                                <option value="V3">Version 3</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="form-group row" id="group-snmp-community">
-                                        <label for="input-snmp-community"
-                                               class="col-sm-3 col-form-label">Community</label>
-                                        <div class="col-sm-9">
-                                            <input id="input-snmp-community" type="password" class="form-control"/>
-                                        </div>
-                                    </div>
-                                    <div class="form-group row" id="group-snmp-security-name" style="display: none;">
-                                        <label for="input-snmp-security-name"
-                                               class="col-sm-3 col-form-label">Security name</label>
-                                        <div class="col-sm-9">
-                                            <input id="input-snmp-security-name" class="form-control"
-                                                   data-required="required" required="required"/>
-                                        </div>
-                                    </div>
-                                    <div class="form-group row" id="group-snmp-authentication-protocol"
-                                         style="display: none;">
-                                        <label for="sel-snmp-authentication-protocol" class="col-sm-3 col-form-label">Authentication
-                                            protocol</label>
-                                        <div class="col-sm-9">
-                                            <select id="sel-snmp-authentication-protocol"
-                                                    class="form-control custom-select">
-                                                <option selected="selected"></option>
-                                                <option value="HMAC128SHA224">HMAC-128-SHA-224</option>
-                                                <option value="HMAC192SHA256">HMAC-192-SHA-256</option>
-                                                <option value="HMAC256SHA384">HMAC-256-SHA-384</option>
-                                                <option value="HMAC384SHA512">HMAC-384-SHA-512</option>
-                                                <option value="MD5">MD5</option>
-                                                <option value="SHA">SHA-1</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="form-group row" id="group-snmp-authentication-passphrase"
-                                         style="display: none;">
-                                        <label for="input-snmp-authentication-passphrase"
-                                               class="col-sm-3 col-form-label">Authentication passphrase</label>
-                                        <div class="col-sm-9">
-                                            <input id="input-snmp-authentication-passphrase" type="password"
-                                                   class="form-control"/>
-                                        </div>
-                                    </div>
-                                    <div class="form-group row" id="group-snmp-privacy-protocol" style="display: none;">
-                                        <label for="sel-snmp-privacy-protocol" class="col-sm-3 col-form-label">Privacy
-                                            protocol</label>
-                                        <div class="col-sm-9">
-                                            <select id="sel-snmp-privacy-protocol"
-                                                    class="form-control custom-select">
-                                                <option selected="selected"></option>
-                                                <option value="AES128">AES-128</option>
-                                                <option value="AES192">AES-192</option>
-                                                <option value="AES192WITH3DES">AES-192-3DES</option>
-                                                <option value="AES256">AES-256</option>
-                                                <option value="AES256WITH3DES">AES-256-3DES</option>
-                                                <option value="DES">DES</option>
-                                                <option value="TDES">3DES</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="form-group row" id="group-input-snmp-privacy-passphrase"
-                                         style="display: none;">
-                                        <label for="input-snmp-privacy-passphrase"
-                                               class="col-sm-3 col-form-label">Privacy passphrase</label>
-                                        <div class="col-sm-9">
-                                            <input id="input-snmp-privacy-passphrase" type="password"
-                                                   class="form-control"/>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="modal-footer" data-element-type="acl-aware">
-                                    <input type="submit" id="btn-confirm-remove-notifier" class="btn btn-danger"
-                                           value="Remove" formnovalidate="formnovalidate" disabled="disabled"/>
-                                    <input type="submit" id="btn-confirm-save-notifier" class="btn btn-primary"
-                                           value="Save"
-                                           disabled="disabled"/>
-                                </div>
-                            </form>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</main>
 
 <div class="modal fade" id="modal-notifier-overwrite">
     <div class="modal-dialog" role="document">
@@ -273,7 +296,6 @@
         </div>
     </div>
 </div>
-
 <div class="modal fade" id="modal-notifier-remove" tabindex="-1" role="dialog"
      aria-labelledby="notifier-remove-modal-label" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -297,6 +319,7 @@
 
 <script src="../scripts/notifiers.js"></script>
 <script src="../scripts/etm-commons.js"></script>
+<script src="../scripts/sidebar-nav.js"></script>
 <script>
     commons.addAjaxHandlers(
         null,
