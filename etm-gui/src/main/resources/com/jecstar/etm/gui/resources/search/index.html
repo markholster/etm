@@ -12,7 +12,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="../images/favicon/favicon-16x16.png">
     <link rel="mask-icon" href="../images/favicon/safari-pinned-tab.svg" color="#5bbad5">
 
-    <link rel="stylesheet" href="../styles/bootstrap.min.css">
+    <link rel="stylesheet" href="../styles/theme.min.css">
     <link rel="stylesheet" href="../styles/font-awesome.min.css">
     <link rel="stylesheet" href="../styles/jquery-ui.min.css">
     <link rel="stylesheet" href="../styles/autocomplete.css">
@@ -63,403 +63,434 @@
 
 </head>
 <body>
-<nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
-    <a class="navbar-brand animated infinite" href="https://www.jecstar.com" target="_blank">
-        <img src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" class="d-inline-block align-top"
-             alt="">
-        Jecstar
-    </a>
-    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse"
-            data-target="#collapsing_navbar" aria-controls="collapsing_navbar" aria-expanded="false"
-            aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="collapsing_navbar">
-        <ul id="etm_mainmenu" class="navbar-nav mr-auto">
-            <li id="placeholder-for-MenuAwareURLResource"></li>
-        </ul>
+<header class="u-header">
+    <div class="u-header-left">
+        <a class="u-header-logo" href="https://www.jecstar.com" target="_blank">
+            <img class="u-logo-desktop" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website">
+            <img class="img-fluid u-logo-mobile" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website">
+        </a>
     </div>
-</nav>
 
-<div id="search-container" class="container-fluid">
-    <div class="row">
-        <div class="col-md-3 order-md-2 pt-3">
-            <div class="row">
-                <div class="col-md">
-                    <div class="card col-md">
-                        <div class="card-body">
-                            <h5 class="card-title">Search templates</h5>
-                            <div class="card-text">
-                                <ul id="list-template-links" class="pl-1" style="word-wrap: break-word;"></ul>
-                            </div>
-                            <p id="no-more-tenplates-allowed" style="display: none;">Maximum number of templates
-                                reached!</p>
-                            <div id="template-save-group" class="input-group input-group-sm">
-                                <input id="template-name" type="text" class="form-control form-control-sm"
-                                       placeholder="Template name..."
-                                       disabled="disabled"/>
-                                <span class="input-group-btn btn-group-sm">
-                                    <button id="btn-save-template" class="btn btn-primary btn-sm" type="button"
-                                            disabled="disabled">Save</button>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row pt-3">
-                <div class="col-md">
-                    <div class="card card-block">
-                        <div class="card-body">
-                            <h5 class="card-title">Search history</h5>
-                            <div class="card-text">
-                                <ol id="list-search-history-links"
-                                    style="padding-left: 1em; word-wrap: break-word;"></ol>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <div class="u-header-middle">
+        <a class="js-sidebar-invoker u-sidebar-invoker" href="#!"
+           data-is-close-all-except-this="true"
+           data-target="#sidebar">
+            <i class="fa fa-bars u-sidebar-invoker__icon--open"></i>
+        </a>
+    </div>
+
+    <div class="u-header-right">
+
+        <!-- User Profile -->
+        <div class="ml-2">
+            Logged in as: <span class="text-dark d-none d-sm-inline-block">Mark Holster</span>
         </div>
-        <div class="col-md-9 order-md-1">
-            <div class="row pt-3">
-                <div class="col-md">
-                    <div id="search-card" class="card card-block">
-                        <div class="card-body">
-                            <h5 class="card-title">Search</h5>
-                            <div class="card-text">
-                                <p>
-                                    Please enter your search string in the field below and press the
-                                    'Search' button. Specific fields can be searched in the format
-                                    <mark>fieldname:&lt;value&gt;</mark>
-                                    . For example, if you want to search for all event generated from
-                                    application "My Application" the search string will be
-                                    <mark>endpoints.writing_endpoint_handler.application.name:"My application"</mark>
-                                    . Multiple field can be combined by using the
-                                    <mark>AND</mark>
-                                    or
-                                    <mark>OR</mark>
-                                    operator. Range values can be used by applying the format
-                                    <mark>[&lt;start&gt; TO &lt;end&gt;]</mark>
-                                    to the field value.
-                                </p>
-                                <div class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
-                                <div class="custom-control custom-checkbox custom-control-inline">
-                                    <input type="checkbox" id="check-type-business" value="business" checked="checked"
-                                           class="custom-control-input">
-                                    <label class="custom-control-label" for="check-type-business">Business</label>
+        <!-- End User Profile -->
+    </div>
+</header>
+
+<main class="u-main" role="main">
+<!-- Sidebar -->
+    <aside id="sidebar" class="u-sidebar">
+        <div class="u-sidebar-inner">
+            <header class="u-sidebar-header">
+                <a class="u-sidebar-logo" href="index.html">
+                    <img class="img-fluid" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website">
+                </a>
+            </header>
+
+            <nav class="u-sidebar-nav">
+                <ul class="u-sidebar-nav-menu u-sidebar-nav-menu--top-level">
+                    <li id="placeholder-for-MenuAwareURLResource"></li>
+                </ul>
+            </nav>
+        </div>
+    </aside>
+<!-- End Sidebar -->
+    <div class="u-content">
+
+        <div id="search-container" class="container-fluid">
+        <div class="row">
+            <div class="col-md-3 order-md-2 pt-3">
+                <div class="row">
+                    <div class="col-md">
+                        <div class="card col-md">
+                            <div class="card-body">
+                                <h5 class="card-title">Search templates</h5>
+                                <div class="card-text">
+                                    <ul id="list-template-links" class="pl-1" style="word-wrap: break-word;"></ul>
                                 </div>
-                                <div class="custom-control custom-checkbox custom-control-inline">
-                                    <input type="checkbox" id="check-type-http" value="http" checked="checked"
-                                           class="custom-control-input">
-                                    <label class="custom-control-label" for="check-type-http">Http</label>
+                                <p id="no-more-tenplates-allowed" style="display: none;">Maximum number of templates
+                                    reached!</p>
+                                <div id="template-save-group" class="input-group input-group-sm">
+                                    <input id="template-name" type="text" class="form-control form-control-sm"
+                                           placeholder="Template name..."
+                                           disabled="disabled"/>
+                                    <span class="input-group-btn btn-group-sm">
+                                        <button id="btn-save-template" class="btn btn-primary btn-sm" type="button"
+                                                disabled="disabled">Save</button>
+                                    </span>
                                 </div>
-                                <div class="custom-control custom-checkbox custom-control-inline">
-                                    <input type="checkbox" id="check-type-log" value="log" checked="checked"
-                                           class="custom-control-input">
-                                    <label class="custom-control-label" for="check-type-log">Log</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row pt-3">
+                    <div class="col-md">
+                        <div class="card card-block">
+                            <div class="card-body">
+                                <h5 class="card-title">Search history</h5>
+                                <div class="card-text">
+                                    <ol id="list-search-history-links"
+                                        style="padding-left: 1em; word-wrap: break-word;"></ol>
                                 </div>
-                                <div class="custom-control custom-checkbox custom-control-inline">
-                                    <input type="checkbox" id="check-type-messaging" value="messaging" checked="checked"
-                                           class="custom-control-input">
-                                    <label class="custom-control-label" for="check-type-messaging">Messaging</label>
-                                </div>
-                                <div class="custom-control custom-checkbox custom-control-inline">
-                                    <input type="checkbox" id="check-type-sql" value="sql" checked="checked"
-                                           class="custom-control-input">
-                                    <label class="custom-control-label" for="check-type-sql">SQL</label>
-                                </div>
-                                <div class="row" style="margin-top: 5px;">
-                                    <label for="query-string-from" class="col-sm-3 col-form-label-sm">Start date</label>
-                                    <div class="col-sm-3">
-                                        <div class="input-group flatpickr">
-                                            <input id="query-string-from" type="text"
-                                                   class="form-control form-control-sm" data-input/>
-                                            <div class="input-group-append">
-                                                <a class="btn btn-outline-secondary btn-sm" title="Toggle calendar"
-                                                   data-toggle>
-                                                    <i class="fa fa-calendar"></i>
-                                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-9 order-md-1">
+                <div class="row pt-3">
+                    <div class="col-md">
+                        <div id="search-card" class="card card-block">
+                            <div class="card-body">
+                                <h5 class="card-title">Search</h5>
+                                <div class="card-text">
+                                    <p>
+                                        Please enter your search string in the field below and press the
+                                        'Search' button. Specific fields can be searched in the format
+                                        <mark>fieldname:&lt;value&gt;</mark>
+                                        . For example, if you want to search for all event generated from
+                                        application "My Application" the search string will be
+                                        <mark>endpoints.writing_endpoint_handler.application.name:"My application"</mark>
+                                        . Multiple field can be combined by using the
+                                        <mark>AND</mark>
+                                        or
+                                        <mark>OR</mark>
+                                        operator. Range values can be used by applying the format
+                                        <mark>[&lt;start&gt; TO &lt;end&gt;]</mark>
+                                        to the field value.
+                                    </p>
+                                    <div class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
+                                    <div class="custom-control custom-checkbox custom-control-inline">
+                                        <input type="checkbox" id="check-type-business" value="business" checked="checked"
+                                               class="custom-control-input">
+                                        <label class="custom-control-label" for="check-type-business">Business</label>
+                                    </div>
+                                    <div class="custom-control custom-checkbox custom-control-inline">
+                                        <input type="checkbox" id="check-type-http" value="http" checked="checked"
+                                               class="custom-control-input">
+                                        <label class="custom-control-label" for="check-type-http">Http</label>
+                                    </div>
+                                    <div class="custom-control custom-checkbox custom-control-inline">
+                                        <input type="checkbox" id="check-type-log" value="log" checked="checked"
+                                               class="custom-control-input">
+                                        <label class="custom-control-label" for="check-type-log">Log</label>
+                                    </div>
+                                    <div class="custom-control custom-checkbox custom-control-inline">
+                                        <input type="checkbox" id="check-type-messaging" value="messaging" checked="checked"
+                                               class="custom-control-input">
+                                        <label class="custom-control-label" for="check-type-messaging">Messaging</label>
+                                    </div>
+                                    <div class="custom-control custom-checkbox custom-control-inline">
+                                        <input type="checkbox" id="check-type-sql" value="sql" checked="checked"
+                                               class="custom-control-input">
+                                        <label class="custom-control-label" for="check-type-sql">SQL</label>
+                                    </div>
+                                    <div class="row" style="margin-top: 5px;">
+                                        <label for="query-string-from" class="col-sm-3 col-form-label-sm">Start date</label>
+                                        <div class="col-sm-3">
+                                            <div class="input-group flatpickr">
+                                                <input id="query-string-from" type="text"
+                                                       class="form-control form-control-sm" data-input/>
+                                                <div class="input-group-append">
+                                                    <a class="btn btn-outline-secondary btn-sm form-control-sm" title="Toggle calendar"
+                                                       data-toggle>
+                                                        <i class="fa fa-calendar"></i>
+                                                    </a>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="row">
-                                    <label for="query-string-till" class="col-sm-3 col-form-label-sm">End date</label>
-                                    <div class="col-sm-3">
-                                        <div class="input-group flatpickr">
-                                            <input id="query-string-till" type="text"
-                                                   class="form-control form-control-sm" data-input/>
-                                            <div class="input-group-append">
-                                                <a class="btn btn-outline-secondary btn-sm" title="Toggle calendar"
-                                                   data-toggle>
-                                                    <i class="fa fa-calendar"></i>
-                                                </a>
+                                    <div class="row">
+                                        <label for="query-string-till" class="col-sm-3 col-form-label-sm">End date</label>
+                                        <div class="col-sm-3">
+                                            <div class="input-group flatpickr">
+                                                <input id="query-string-till" type="text"
+                                                       class="form-control form-control-sm" data-input/>
+                                                <div class="input-group-append">
+                                                    <a class="btn btn-outline-secondary btn-sm form-control-sm" title="Toggle calendar"
+                                                       data-toggle>
+                                                        <i class="fa fa-calendar"></i>
+                                                    </a>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="row form-group">
-                                    <label for="query-string-time-filter-field" class="col-sm-3 col-form-label-sm">Time
-                                        field</label>
-                                    <div class="col-sm-3">
-                                        <div class="input-group">
-                                            <input id="query-string-time-filter-field" type="text"
-                                                   class="form-control form-control-sm" value="timestamp"/>
+                                    <div class="row form-group">
+                                        <label for="query-string-time-filter-field" class="col-sm-3 col-form-label-sm">Time
+                                            field</label>
+                                        <div class="col-sm-3">
+                                            <div class="input-group">
+                                                <input id="query-string-time-filter-field" type="text"
+                                                       class="form-control form-control-sm" value="timestamp"/>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="row form-group">
-                                    <div class="col-sm">
-                                        <input id="query-string" type="text" class="form-control"
-                                               placeholder="Search for..."
-                                               autocomplete="off" autofocus="autofocus">
+                                    <div class="row form-group">
+                                        <div class="col-sm">
+                                            <input id="query-string" type="text" class="form-control"
+                                                   placeholder="Search for..."
+                                                   autocomplete="off" autofocus="autofocus">
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button id="btn-search" class="btn btn-primary" type="button" disabled="disabled">
+                                            Search
+                                        </button>
                                     </div>
                                 </div>
-                                <div class="modal-footer">
-                                    <button id="btn-search" class="btn btn-primary" type="button" disabled="disabled">
-                                        Search
-                                    </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row pt-3" id="result_block" style="display: none;">
+                    <div class="col-md">
+                        <div id="search-result-card" class="card card-block">
+                            <div class="card-body">
+                                <h5 class="card-title">Search results
+                                    <small id="search-stats"></small>
+                                    <small style="font-size: 100%;"><a id="link-edit-table" href="#"
+                                                                       class="fa fa-edit float-right"
+                                                                       title="Edit result table"></a>&nbsp;<a
+                                            id="link-request-download" href="#" class="mr-1 fa fa-download float-right"
+                                            title="Download results"></a></small>
+                                </h5>
+                                <div id="result_card" class="card-text">
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="row pt-3" id="result_block" style="display: none;">
-                <div class="col-md">
-                    <div id="search-result-card" class="card card-block">
-                        <div class="card-body">
-                            <h5 class="card-title">Search results
-                                <small id="search-stats"></small>
-                                <small style="font-size: 100%;"><a id="link-edit-table" href="#"
-                                                                   class="fa fa-edit float-right"
-                                                                   title="Edit result table"></a>&nbsp;<a
-                                        id="link-request-download" href="#" class="mr-1 fa fa-download float-right"
-                                        title="Download results"></a></small>
-                            </h5>
-                            <div id="result_card" class="card-text">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
-</div>
 
-<div id="event-container" class="container-fluid" style="display: none;">
-    <div class="row pt-3">
-        <div class="col-md">
-            <div class="card card-block">
-                <div class="card-body">
-                    <h5 class="card-title">
-                        <a id="link-back-to-results" href="#" class="fa fa-chevron-circle-left"
-                           title="Back to search results"></a>
-                        <span id="event-card-title">Event</span>
-                    </h5>
-                    <div class="card-text">
-                        <div class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
-
-                        <div role="tabpanel">
-                            <ul role="tablist" id="event-tabs" class="nav nav-tabs">
-                                <li class="nav-item">
-                                    <a id="event-tab-header" data-toggle="tab" href="#event-tab" role="tab"
-                                       aria-controls="event-tab" aria-selected="true" class="nav-link active">Event</a>
-                                </li>
-                            </ul>
-                            <div id="tabcontents" class="tab-content">
-                                <div id="event-tab" role="tabpanel" aria-labelledby="event-tab-header"
-                                     class="tab-pane fade show active in pt-3">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <hr/>
-                    <div class="text-center">
-                        <a id="btn-back-to-results" href="#" class="btn btn-primary">Back</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="modal-template-overwrite">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title" id="template-overwrite-modal-label">Template already exists</h4>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                A template with the name '<i id="overwrite-template-name"></i>' already exists. Do you want to overwrite
-                that template?
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
-                <button id="btn-overwrite-template" type="button" class="btn btn-primary">Yes</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="modal-template-remove">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title" id="template-remove-modal-label">Confirm removal</h4>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                Are you sure you want to remove the template '<i id="remove-template-name"></i>'?
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
-                <button id="btn-remove-template" type="button" class="btn btn-primary">Yes</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="modal-table-settings">
-    <div class="modal-dialog modal-lg" role="document" style="max-width: 60%;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title" id="table-settings-modal-label">Table settings</h4>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group row">
-                    <label for="table-settings-sort-field" class="col-sm-3 col-form-label">Sort field</label>
-                    <div class="col-sm-9">
-                        <input id="table-settings-sort-field" type="text" class="form-control"/>
-                    </div>
-                </div>
-                <div class="form-group row">
-                    <label for="table-settings-sort-order" class="col-sm-3 col-form-label">Sort order</label>
-                    <div class="col-sm-9">
-                        <select id="table-settings-sort-order" class="form-control custom-select">
-                            <option value="asc">Ascending</option>
-                            <option value="desc">Descending</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group row">
-                    <label for="table-settings-results-per-page" class="col-sm-3 col-form-label">Results per
-                        page</label>
-                    <div class="col-sm-9">
-                        <input id="table-settings-results-per-page" type="number" min="1" step="1" max="500"
-                               class="form-control"/>
-                    </div>
-                </div>
+        <div id="event-container" class="container-fluid" style="display: none;">
+            <div class="row pt-3">
+            <div class="col-md">
                 <div class="card card-block">
                     <div class="card-body">
-                        <div class="card-title"><h5>Columns</h5></div>
-                        <div id="table-settings-columns">
+                        <h5 class="card-title">
+                            <a id="link-back-to-results" href="#" class="fa fa-chevron-circle-left"
+                               title="Back to search results"></a>
+                            <span id="event-card-title">Event</span>
+                        </h5>
+                        <div class="card-text">
+                            <div class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
+
+                            <div role="tabpanel">
+                                <ul role="tablist" id="event-tabs" class="nav nav-tabs">
+                                    <li class="nav-item">
+                                        <a id="event-tab-header" data-toggle="tab" href="#event-tab" role="tab"
+                                           aria-controls="event-tab" aria-selected="true" class="nav-link active">Event</a>
+                                    </li>
+                                </ul>
+                                <div id="tabcontents" class="tab-content">
+                                    <div id="event-tab" role="tabpanel" aria-labelledby="event-tab-header"
+                                         class="tab-pane fade show active in pt-3">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <hr/>
+                        <div class="text-center">
+                            <a id="btn-back-to-results" href="#" class="btn btn-primary">Back</a>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button id="btn-apply-table-settings" type="button" class="btn btn-primary">Apply</button>
+        </div>
+        </div>
+
+        <div class="modal fade" id="modal-template-overwrite">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="template-overwrite-modal-label">Template already exists</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    A template with the name '<i id="overwrite-template-name"></i>' already exists. Do you want to overwrite
+                    that template?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+                    <button id="btn-overwrite-template" type="button" class="btn btn-primary">Yes</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<div class="modal fade" id="modal-download-results">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title" id="download-results-modal-label">Download results</h4>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+        <div class="modal fade" id="modal-template-remove">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="template-remove-modal-label">Confirm removal</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to remove the template '<i id="remove-template-name"></i>'?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+                    <button id="btn-remove-template" type="button" class="btn btn-primary">Yes</button>
+                </div>
             </div>
-            <div class="modal-body">
-                <p>Select the options you desire, and click on the link below to download the results.</p>
-                <div class="form-group row">
-                    <label for="sel-download-include-payload" class="col-sm-3 col-form-label">Include payload</label>
-                    <div class="col-sm-9">
-                        <select id="sel-download-include-payload" class="form-control custom-select">
-                            <option value="true">Yes</option>
-                            <option value="false">No</option>
-                        </select>
-                    </div>
+        </div>
+    </div>
+
+        <div class="modal fade" id="modal-table-settings">
+        <div class="modal-dialog modal-lg" role="document" style="max-width: 60%;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="table-settings-modal-label">Table settings</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
-                <div class="form-group row">
-                    <label for="input-download-start-row" class="col-sm-3 col-form-label">Start row</label>
-                    <div class="col-sm-9">
-                        <!-- disable the field, as scrolling in elasticsearch always starts at ix=0 -->
-                        <input id="input-download-start-row" type="number" min="1" class="form-control" value="1"
-                               disabled="disabled"/>
+                <div class="modal-body">
+                    <div class="form-group row">
+                        <label for="table-settings-sort-field" class="col-sm-3 col-form-label">Sort field</label>
+                        <div class="col-sm-9">
+                            <input id="table-settings-sort-field" type="text" class="form-control"/>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group row">
-                    <label for="input-download-number-of-rows" class="col-sm-3 col-form-label">Number of rows</label>
-                    <div class="col-sm-9">
-                        <input id="input-download-number-of-rows" type="number" min="1" class="form-control"
-                               value="10"/>
+                    <div class="form-group row">
+                        <label for="table-settings-sort-order" class="col-sm-3 col-form-label">Sort order</label>
+                        <div class="col-sm-9">
+                            <select id="table-settings-sort-order" class="form-control custom-select">
+                                <option value="asc">Ascending</option>
+                                <option value="desc">Descending</option>
+                            </select>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group row">
-                    <label for="sel-download-type" class="col-sm-3 col-form-label">File type</label>
-                    <div class="col-sm-9">
-                        <select id="sel-download-type" class="form-control custom-select">
-                            <option value="csv">Comma separated file (csv)</option>
-                            <option value="xlsx">Microsoft Excel (xlsx)</option>
-                        </select>
+                    <div class="form-group row">
+                        <label for="table-settings-results-per-page" class="col-sm-3 col-form-label">Results per
+                            page</label>
+                        <div class="col-sm-9">
+                            <input id="table-settings-results-per-page" type="number" min="1" step="1" max="500"
+                                   class="form-control"/>
+                        </div>
+                    </div>
+                    <div class="card card-block">
+                        <div class="card-body">
+                            <div class="card-title"><h5>Columns</h5></div>
+                            <div id="table-settings-columns">
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button id="btn-download-results" type="button" class="btn btn-primary">Download</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button id="btn-apply-table-settings" type="button" class="btn btn-primary">Apply</button>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<div class="modal fade" id="modal-download-transaction">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title" id="download-transaction-modal-label">Download transaction</h4>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p>Select the options you desire, and click on the link below to download the results.</p>
-                <div class="form-group row">
-                    <label for="input-download-transaction-id" class="col-sm-3 col-form-label">Transaction id</label>
-                    <div class="col-sm-9">
-                        <input id="input-download-transaction-id" type="text" class="form-control" disabled="disabled"/>
-                    </div>
+        <div class="modal fade" id="modal-download-results">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="download-results-modal-label">Download results</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
-                <div class="form-group row">
-                    <label for="sel-download-transaction-type" class="col-sm-3 col-form-label">File type</label>
-                    <div class="col-sm-9">
-                        <select id="sel-download-transaction-type" class="form-control custom-select">
-                            <option value="csv">Comma separated file (csv)</option>
-                            <option value="xlsx">Microsoft Excel (xlsx)</option>
-                        </select>
+                <div class="modal-body">
+                    <p>Select the options you desire, and click on the link below to download the results.</p>
+                    <div class="form-group row">
+                        <label for="sel-download-include-payload" class="col-sm-3 col-form-label">Include payload</label>
+                        <div class="col-sm-9">
+                            <select id="sel-download-include-payload" class="form-control custom-select">
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button id="btn-download-transaction" type="button" class="btn btn-primary">Download</button>
+                    <div class="form-group row">
+                        <label for="input-download-start-row" class="col-sm-3 col-form-label">Start row</label>
+                        <div class="col-sm-9">
+                            <!-- disable the field, as scrolling in elasticsearch always starts at ix=0 -->
+                            <input id="input-download-start-row" type="number" min="1" class="form-control" value="1"
+                                   disabled="disabled"/>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="input-download-number-of-rows" class="col-sm-3 col-form-label">Number of rows</label>
+                        <div class="col-sm-9">
+                            <input id="input-download-number-of-rows" type="number" min="1" class="form-control"
+                                   value="10"/>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="sel-download-type" class="col-sm-3 col-form-label">File type</label>
+                        <div class="col-sm-9">
+                            <select id="sel-download-type" class="form-control custom-select">
+                                <option value="csv">Comma separated file (csv)</option>
+                                <option value="xlsx">Microsoft Excel (xlsx)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="btn-download-results" type="button" class="btn btn-primary">Download</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+
+        <div class="modal fade" id="modal-download-transaction">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="download-transaction-modal-label">Download transaction</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Select the options you desire, and click on the link below to download the results.</p>
+                    <div class="form-group row">
+                        <label for="input-download-transaction-id" class="col-sm-3 col-form-label">Transaction id</label>
+                        <div class="col-sm-9">
+                            <input id="input-download-transaction-id" type="text" class="form-control" disabled="disabled"/>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label for="sel-download-transaction-type" class="col-sm-3 col-form-label">File type</label>
+                        <div class="col-sm-9">
+                            <select id="sel-download-transaction-type" class="form-control custom-select">
+                                <option value="csv">Comma separated file (csv)</option>
+                                <option value="xlsx">Microsoft Excel (xlsx)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button id="btn-download-transaction" type="button" class="btn btn-primary">Download</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+</main>
 
 <script src="../scripts/moment.min.js"></script>
 <script src="../scripts/moment-timezone-with-data.min.js"></script>
@@ -525,6 +556,7 @@
 <script src="../scripts/searchresults-layout.js"></script>
 <script src="../scripts/event-details.js"></script>
 <script src="../scripts/search-templates.js"></script>
+<script src="../scripts/sidebar-nav.js"></script>
 <script>
     let maxDownloads;
     $('[id^=check-type-]').on('change', function() {

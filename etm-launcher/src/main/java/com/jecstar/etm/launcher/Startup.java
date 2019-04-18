@@ -12,6 +12,7 @@ import com.jecstar.etm.processor.jms.configuration.JNDIConnectionFactory;
 import com.jecstar.etm.processor.jms.configuration.NativeConnectionFactory;
 import com.jecstar.etm.server.core.persisting.internal.BusinessEventLogger;
 import com.jecstar.etm.server.core.persisting.internal.InternalBulkProcessorWrapper;
+import com.jecstar.etm.server.core.util.BCrypt;
 import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;

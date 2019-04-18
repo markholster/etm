@@ -240,14 +240,11 @@ public class Signaler extends AbstractJsonService implements Runnable {
                     .setRetryOnConflict(0);
             this.dataRepository.update(updateRequestBuilder);
         } catch (ElasticsearchStatusException e) {
-            if (RestStatus.CONFLICT.equals(e.status())) {
-                // Another process has updated the entity. This could be another ETM instance that was running this signal
-                // at exactly the same time. The only way to detect this is to retry this entire method. If another ETM instance
-                // has fully executed this method the LAST_EXECUTED time is updated on all signals in this entity so it won't
-                // be executed again.
-                return false;
-            }
-            return true;
+            // Another process has updated the entity. This could be another ETM instance that was running this signal
+            // at exactly the same time. The only way to detect this is to retry this entire method. If another ETM instance
+            // has fully executed this method the LAST_EXECUTED time is updated on all signals in this entity so it won't
+            // be executed again.
+            return !RestStatus.CONFLICT.equals(e.status());
         }
         // Current version updated, so no other node in the cluster has came this far. We have to send the notifications now.
         for (Map.Entry<Signal, SignalTestResult> entry : notificationMap.entrySet()) {
