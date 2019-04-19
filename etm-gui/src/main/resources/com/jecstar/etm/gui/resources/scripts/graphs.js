@@ -2,7 +2,14 @@ function buildGraphsPage(groupName) {
     'use strict';
     let contextRoot = '../rest/visualization/';
     if (groupName) {
-        contextRoot += encodeURIComponent(groupName) + '/'
+        contextRoot += encodeURIComponent(groupName) + '/';
+        const $groupItem = $('#sub_visualizations > li > a > span.u-sidebar-nav-menu__item-title:contains(' + groupName + ')').closest('li').addClass('u-sidebar-nav--opened');
+        $groupItem.children('ul').show();
+        $groupItem.find('.u-sidebar-nav-menu__item-title:contains(Graphs)').parent().addClass('active');
+    } else {
+        const $userMenu = $('#sub_vis_user').show();
+        $userMenu.parent().addClass('u-sidebar-nav--opened');
+        $userMenu.find('.u-sidebar-nav-menu__item-title:contains(Graphs)').parent().addClass('active');
     }
     let timeZone;
 
@@ -144,7 +151,7 @@ function buildGraphsPage(groupName) {
 
     const graphContainerMap = {};
     let keywords = [];
-    const $page = $('body > .container-fluid');
+    const $page = $('body > main > .u-content > .container-fluid');
 
     const originalFromValue = $('#input-graph-from').val();
     const originalTillValue = $('#input-graph-till').val();

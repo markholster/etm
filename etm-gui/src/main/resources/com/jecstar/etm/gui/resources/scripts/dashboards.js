@@ -13,7 +13,18 @@ let contextRoot;
 function newDashboardPage(groupName) {
     contextRoot = pageContextRoot;
     if (groupName) {
-        contextRoot += encodeURIComponent(groupName) + '/'
+        contextRoot += encodeURIComponent(groupName) + '/';
+        const $groupItem = $('#sub_visualizations > li > a > span.u-sidebar-nav-menu__item-title:contains(' + groupName + ')').closest('li').addClass('u-sidebar-nav--opened');
+        $groupItem.children('ul').show();
+        $groupItem.find('.u-sidebar-nav-menu__item-title:contains(New dashboard)').parent().addClass('active');
+    } else {
+        const $userMenu = $('#sub_vis_user').show();
+        if ($userMenu.length) {
+            $userMenu.parent().addClass('u-sidebar-nav--opened');
+            $userMenu.find('.u-sidebar-nav-menu__item-title:contains(New dashboard)').parent().addClass('active');
+        } else {
+            $('#sub_visualizations').find('.u-sidebar-nav-menu__item-title:contains(New dashboard)').parent().addClass('active');
+        }
     }
     addListeners(false);
     initialize(showSettings, false);
@@ -25,7 +36,18 @@ function newDashboardPage(groupName) {
 function loadDashboardPage(groupName, dashboardName, readonly) {
     contextRoot = pageContextRoot;
     if (groupName) {
-        contextRoot += encodeURIComponent(groupName) + '/'
+        contextRoot += encodeURIComponent(groupName) + '/';
+        const $groupItem = $('#sub_visualizations > li > a > span.u-sidebar-nav-menu__item-title:contains(' + groupName + ')').closest('li').addClass('u-sidebar-nav--opened');
+        $groupItem.children('ul').show();
+        $groupItem.find('.u-sidebar-nav-menu__item-title:contains(' + dashboardName + ')').parent().addClass('active');
+    } else {
+        const $userMenu = $('#sub_vis_user').show();
+        if ($userMenu.length) {
+            $userMenu.parent().addClass('u-sidebar-nav--opened');
+            $userMenu.find('.u-sidebar-nav-menu__item-title:contains(' + dashboardName + ')').parent().addClass('active');
+        } else {
+            $('#sub_visualizations').find('.u-sidebar-nav-menu__item-title:contains(' + dashboardName + ')').parent().addClass('active');
+        }
     }
     addListeners(readonly);
     initialize(function () {
