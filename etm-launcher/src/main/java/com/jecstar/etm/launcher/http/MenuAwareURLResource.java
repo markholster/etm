@@ -309,7 +309,7 @@ public class MenuAwareURLResource extends URLResource {
                 if (hasGroupMenu) {
 //                  Only add a submenu when there are group menus displayed.
                     html.append(divider);
-                    html.append("<li class=\"u-sidebar-nav-menu__item\"><a class=\"u-sidebar-nav-menu__link\" href=\"#\" data-target=\"#sub_vis_user\"><i class=\"fa fa-users u-sidebar-nav-menu__item-icon\"></i><span class=\"u-sidebar-nav-menu__item-title\">" + StringUtils.escapeToHtml(principal.getName()) + "</span><i class=\"fa fa-angle-right u-sidebar-nav-menu__item-arrow\"></i><span class=\"u-sidebar-nav-menu__indicator\"></span></a>");
+                    html.append("<li class=\"u-sidebar-nav-menu__item\"><a class=\"u-sidebar-nav-menu__link\" href=\"#\" data-target=\"#sub_vis_user\"><span class=\"u-sidebar-nav-menu__item-title\">" + StringUtils.escapeToHtml(principal.getName()) + "</span><i class=\"fa fa-angle-right u-sidebar-nav-menu__item-arrow\"></i><span class=\"u-sidebar-nav-menu__indicator\"></span></a>");
                     html.append("<ul id=\"sub_vis_user\" class=\"u-sidebar-nav-menu u-sidebar-nav-menu--third-level\" style=\"display: none;\">");
                 }
                 for (String dashboard : principal.getDashboards()) {

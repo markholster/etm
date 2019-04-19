@@ -643,7 +643,7 @@ function buildGraphsPage(groupName) {
         if (momentValue.isValid() && timeZone) {
             $('#input-graph-till').val(momentValue.tz(timeZone).format('YYYY-MM-DDTHH:mm:ss'));
         } else {
-            $('#input-graph-till').val(graphContainer.data.from);
+            $('#input-graph-till').val(graphContainer.data.till);
         }
         $('#input-graph-time-filter-field').val(graphContainer.data.time_filter_field);
         $('#input-graph-query').val(graphContainer.data.query);

@@ -252,7 +252,7 @@ function buildSignalsPage(groupName) {
         if (momentValue.isValid() && timeZone) {
             $('#input-signal-till').val(momentValue.tz(timeZone).format('YYYY-MM-DDTHH:mm:ss'));
         } else {
-            $('#input-signal-till').val(signalData.data.from);
+            $('#input-signal-till').val(signalData.data.till);
         }
         $('#input-signal-time-filter-field').val(signalData.data.time_filter_field);
         $('#input-signal-query').val(signalData.data.query);

@@ -77,8 +77,6 @@
             $(menuItem).slideUp(400).parent().removeClass('u-sidebar-nav--opened');
           }
         });
-        // $('.u-sidebar-nav-menu--top-level, .u-sidebar-nav-menu--second-level').not($(itemTarget), $(itemTarget).parents('.u-sidebar-nav-menu--top-level, .u-sidebar-nav-menu--second-level')).slideUp(400).parent().removeClass('u-sidebar-nav--opened');
-        // $('.u-sidebar-nav-menu--top-level ul:not("' + itemTarget + '")').slideUp(400).parent().removeClass('u-sidebar-nav--opened');
         $(itemTarget).slideToggle(400).parent().toggleClass('u-sidebar-nav--opened');
         if ($(this).parent().hasClass('u-sidebar-nav--opened')) {
           closedItems.push(itemTarget);
