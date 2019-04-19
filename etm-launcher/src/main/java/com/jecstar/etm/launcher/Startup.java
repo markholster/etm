@@ -114,7 +114,7 @@ class Startup {
                     } else if (field.getType().equals(Boolean.class) || field.getType().equals(boolean.class)) {
                         field.set(configurationInstance, Boolean.valueOf(value));
                     } else if (field.getType().equals(Integer.class) || field.getType().equals(int.class)) {
-                        field.set(configurationInstance, new Integer(value));
+                        field.set(configurationInstance, Integer.valueOf(value));
                     } else if (field.getType().equals(File.class)) {
                         field.set(configurationInstance, new File(value));
                     } else if (field.getType().equals(List.class)) {

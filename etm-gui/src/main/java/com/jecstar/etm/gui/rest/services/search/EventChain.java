@@ -12,6 +12,7 @@ import com.jecstar.etm.server.core.util.LegacyEndpointHandler;
 import org.elasticsearch.search.SearchHit;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Duration;
@@ -297,7 +298,7 @@ public class EventChain {
 
         private void setAbsoluteTransactionPercentage(float percentage) {
             this.absoluteTransactionPercentage = new BigDecimal(Float.toString(percentage));
-            this.absoluteTransactionPercentage = this.absoluteTransactionPercentage.setScale(4, BigDecimal.ROUND_HALF_UP);
+            this.absoluteTransactionPercentage = this.absoluteTransactionPercentage.setScale(4, RoundingMode.HALF_UP);
         }
     }
 }

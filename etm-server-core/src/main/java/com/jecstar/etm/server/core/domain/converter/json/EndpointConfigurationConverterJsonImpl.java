@@ -16,6 +16,7 @@ import com.jecstar.etm.server.core.enhancers.TelemetryEventEnhancer;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -50,9 +51,9 @@ public class EndpointConfigurationConverterJsonImpl implements EndpointConfigura
             if (!DEFAULT_ENHANCER_TYPE.equals(enhancerType)) {
                 try {
                     Class<?> clazz = Class.forName(enhancerType);
-                    Object newInstance = clazz.newInstance();
+                    Object newInstance = clazz.getDeclaredConstructor().newInstance();
                     endpointConfiguration.eventEnhancer = (TelemetryEventEnhancer) newInstance;
-                } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | ClassCastException e) {
+                } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | ClassCastException | NoSuchMethodException | InvocationTargetException e) {
                     if (log.isErrorLevelEnabled()) {
                         log.logErrorMessage("Failed to load custom enhancer '" + enhancerType + "'. Make sure the class is spelled correct and available on all processor nodes.", e);
                     }

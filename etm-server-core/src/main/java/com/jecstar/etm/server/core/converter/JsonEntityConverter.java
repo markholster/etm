@@ -148,18 +148,14 @@ public class JsonEntityConverter<T> implements EntityConverter<T, String> {
         while (clazz != null) {
             for (Field field : clazz.getDeclaredFields()) {
                 if (field.isAnnotationPresent(JsonField.class)) {
-                    if (!field.isAccessible()) {
-                        field.setAccessible(true);
-                    }
+                    field.setAccessible(true);
                     JsonField jsonField = field.getAnnotation(JsonField.class);
                     String jsonKey = jsonField.value();
                     if (classMetadata.getFields().stream().map(f -> f.getAnnotation(JsonField.class).value()).noneMatch(jsonKey::equals)) {
                         classMetadata.getFields().add(field);
                         try {
                             Constructor<? extends CustomFieldConverter> constructor = jsonField.converterClass().getDeclaredConstructor();
-                            if (!constructor.isAccessible()) {
-                                constructor.setAccessible(true);
-                            }
+                            constructor.setAccessible(true);
                             classMetadata.getFieldConverters().put(field, constructor.newInstance());
                         } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException | InstantiationException e) {
                             throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);

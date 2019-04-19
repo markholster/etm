@@ -6,23 +6,15 @@ import com.jecstar.etm.processor.jms.configuration.Destination;
 import com.jecstar.etm.processor.jms.configuration.JNDIConnectionFactory;
 import com.jecstar.etm.processor.jms.configuration.Jms;
 import com.jecstar.etm.processor.jms.configuration.NativeConnectionFactory;
-import org.apache.activemq.artemis.core.config.Configuration;
 import org.apache.activemq.artemis.core.config.impl.ConfigurationImpl;
-import org.apache.activemq.artemis.core.registry.MapBindingRegistry;
+import org.apache.activemq.artemis.core.server.ActiveMQServer;
+import org.apache.activemq.artemis.core.server.ActiveMQServers;
 import org.apache.activemq.artemis.jms.client.ActiveMQJMSConnectionFactory;
-import org.apache.activemq.artemis.jms.server.config.ConnectionFactoryConfiguration;
-import org.apache.activemq.artemis.jms.server.config.JMSConfiguration;
-import org.apache.activemq.artemis.jms.server.config.JMSQueueConfiguration;
-import org.apache.activemq.artemis.jms.server.config.impl.ConnectionFactoryConfigurationImpl;
-import org.apache.activemq.artemis.jms.server.config.impl.JMSConfigurationImpl;
-import org.apache.activemq.artemis.jms.server.config.impl.JMSQueueConfigurationImpl;
-import org.apache.activemq.artemis.jms.server.embedded.EmbeddedJMS;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import javax.jms.*;
-import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -32,32 +24,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 public class JmsProcessorImplTest {
 
-    private EmbeddedJMS server;
+    private ActiveMQServer server;
 
     @BeforeEach
     public void setup() throws Exception {
-        Configuration configuration = new ConfigurationImpl()
+        this.server = ActiveMQServers.newActiveMQServer(new ConfigurationImpl()
                 .setPersistenceEnabled(false)
                 .setJournalDirectory("target/data/journal")
                 .setSecurityEnabled(false)
                 .addAcceptorConfiguration("tcp", "tcp://localhost:61616")
-                .addConnectorConfiguration("connector", "tcp://localhost:61616");
-
-        JMSConfiguration jmsConfig = new JMSConfigurationImpl();
-
-        // Step 3. Configure the JMS ConnectionFactory
-        ConnectionFactoryConfiguration cfConfig = new ConnectionFactoryConfigurationImpl()
-                .setName("cf")
-                .setConnectorNames(Arrays.asList("connector"))
-                .setBindings("cf");
-        jmsConfig.getConnectionFactoryConfigurations().add(cfConfig);
-
-        // Step 4. Configure the JMS Queue
-        JMSQueueConfiguration queueConfig = new JMSQueueConfigurationImpl().setName("etm.queue.1").setDurable(false).setBindings("queue/etm_queue_1");
-        jmsConfig.getQueueConfigurations().add(queueConfig);
-
-        this.server = new EmbeddedJMS();
-        this.server.setConfiguration(configuration).setJmsConfiguration(jmsConfig).setRegistry(new MapBindingRegistry());
+                .addConnectorConfiguration("connector", "tcp://localhost:61616"));
         this.server.start();
     }
 

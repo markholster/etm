@@ -19,6 +19,8 @@ import org.apache.kafka.common.config.types.Password;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -60,7 +62,7 @@ public class KafkaDestinationReader implements DestinationReader {
             this.consumer.subscribe(topics);
             if (this.topic.getStartFrom() != null) {
                 // Make sure the consumer has an assignment.
-                this.consumer.poll(0);
+                this.consumer.poll(Duration.ZERO);
                 if (this.topic.startFromBeginning()) {
                     this.consumer.seekToBeginning(this.consumer.assignment());
                 }
@@ -69,7 +71,7 @@ public class KafkaDestinationReader implements DestinationReader {
                 ConsumerRecords<String, String> records;
                 final Timer.Context kafkaPollContext = this.kafkaPollTimer.time();
                 try {
-                    records = this.consumer.poll(100);
+                    records = this.consumer.poll(Duration.of(100, ChronoUnit.MILLIS));
                 } finally {
                     kafkaPollContext.stop();
                 }

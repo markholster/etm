@@ -107,7 +107,7 @@ public class LruCacheTest {
     public void testCacheExpiryWithGetMethod() {
         final int maxSize = 1;
         final int expiry = 1000;
-        final Integer key = new Integer(200);
+        final Integer key = 200;
         LruCache<Integer, Integer> cache = new LruCache<>(maxSize, expiry);
         cache.put(key, 1);
         assertNotNull(cache.get(key));

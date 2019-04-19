@@ -14,7 +14,7 @@ public class EtmLoggerFactory implements ILoggerFactory {
         try {
             @SuppressWarnings("unchecked")
             Class<Configuration> clazz = (Class<Configuration>) Class.forName("com.jecstar.etm.slf4j.ConfigurationImpl");
-            configuration = clazz.newInstance();
+            configuration = clazz.getDeclaredConstructor().newInstance();
         } catch (Throwable t) {
         }
         if (configuration == null) {
@@ -23,7 +23,7 @@ public class EtmLoggerFactory implements ILoggerFactory {
                 try {
                     @SuppressWarnings("unchecked")
                     Class<Configuration> clazz = (Class<Configuration>) Class.forName(className);
-                    configuration = clazz.newInstance();
+                    configuration = clazz.getDeclaredConstructor().newInstance();
                 } catch (Throwable t) {
                 }
             }
@@ -52,7 +52,7 @@ public class EtmLoggerFactory implements ILoggerFactory {
         try {
             @SuppressWarnings("unchecked")
             Class<EtmLogForwarder> clazz = (Class<EtmLogForwarder>) Class.forName("com.jecstar.etm.slf4j.InternalEtmLogForwarder");
-            this.logForwarder = clazz.newInstance();
+            this.logForwarder = clazz.getDeclaredConstructor().newInstance();
         } catch (Throwable t) {
             RemoteEtmLogForwarder.configuration = configuration;
             this.logForwarder = RemoteEtmLogForwarder.getInstance();

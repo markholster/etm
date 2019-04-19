@@ -110,7 +110,7 @@ public class HttpServer {
 
         if (configuration.http.restProcessorEnabled) {
             DeploymentInfo di = createProcessorDeploymentInfo(configuration.http.getContextRoot(), processor, identityManager);
-            di.setDefaultSessionTimeout(new Long(etmConfiguration.getSessionTimeout() / 1000).intValue());
+            di.setDefaultSessionTimeout(Long.valueOf(etmConfiguration.getSessionTimeout() / 1000).intValue());
             di.setServletSessionConfig(servletSessionConfig);
             DeploymentManager manager = container.addDeployment(di);
             manager.deploy();
@@ -139,7 +139,7 @@ public class HttpServer {
         }
         if (configuration.http.guiEnabled) {
             DeploymentInfo di = createGuiDeploymentInfo(configuration.http.getContextRoot(), dataRepository, identityManager, etmConfiguration);
-            di.setDefaultSessionTimeout(new Long(etmConfiguration.getSessionTimeout() / 1000).intValue());
+            di.setDefaultSessionTimeout(Long.valueOf(etmConfiguration.getSessionTimeout() / 1000).intValue());
             di.setServletSessionConfig(servletSessionConfig);
             DeploymentManager manager = container.addDeployment(di);
             manager.deploy();

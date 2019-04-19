@@ -94,8 +94,8 @@ public class DateHistogramBucketAggregator extends BucketAggregator {
                 .addAggregation(AggregationBuilders.min(getId() + "-min").field(getField()))
                 .addAggregation(AggregationBuilders.max(getId() + "-max").field(getField()));
         SearchResponse searchResponse = dataRepository.search(searchRequestBuilder);
-        long min = new Double(((Min) searchResponse.getAggregations().get(getId() + "-min")).getValue()).longValue();
-        long max = new Double(((Max) searchResponse.getAggregations().get(getId() + "-max")).getValue()).longValue();
+        long min = Double.valueOf(((Min) searchResponse.getAggregations().get(getId() + "-min")).getValue()).longValue();
+        long max = Double.valueOf(((Max) searchResponse.getAggregations().get(getId() + "-max")).getValue()).longValue();
         long diffInSeconds = (max - min) / 1000;
         long partsInSeconds = diffInSeconds / 50;
         if (partsInSeconds == 0) {

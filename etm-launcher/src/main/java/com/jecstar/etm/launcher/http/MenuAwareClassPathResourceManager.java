@@ -7,6 +7,8 @@ import io.undertow.server.handlers.resource.Resource;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Collections;
+import java.util.Deque;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 class MenuAwareClassPathResourceManager extends ClassPathResourceManager {
@@ -21,7 +23,6 @@ class MenuAwareClassPathResourceManager extends ClassPathResourceManager {
         this.prefix = prefix;
         this.classLoader = classLoader;
     }
-
 
     @Override
     public Resource getResource(String path) throws IOException {
@@ -39,8 +40,8 @@ class MenuAwareClassPathResourceManager extends ClassPathResourceManager {
                 final String pathPrefixToContextRoot = pathLevels <= 1 ? "./" : Collections.nCopies(pathLevels - 1, "../").stream().collect(Collectors.joining());
                 return new MenuAwareURLResource(this.etmConfiguration, pathPrefixToContextRoot, resource, path);
             }
-
         }
         return super.getResource(path);
     }
+
 }

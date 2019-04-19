@@ -75,7 +75,7 @@ class SnmpSignal {
             transport.listen();
 
             // Create Target
-            CommunityTarget comtarget = new CommunityTarget();
+            CommunityTarget<UdpAddress> comtarget = new CommunityTarget<>();
             comtarget.setCommunity(new OctetString(notifier.getSnmpCommunity()));
             comtarget.setVersion(SnmpConstants.version1);
             comtarget.setAddress(new UdpAddress(notifier.getHost() + "/" + notifier.getPort()));
@@ -116,7 +116,7 @@ class SnmpSignal {
             transport.listen();
 
             // Create Target
-            CommunityTarget comtarget = new CommunityTarget();
+            CommunityTarget<UdpAddress> comtarget = new CommunityTarget<>();
             comtarget.setCommunity(new OctetString(notifier.getSnmpCommunity()));
             comtarget.setVersion(SnmpConstants.version2c);
             comtarget.setAddress(new UdpAddress(notifier.getHost() + "/" + notifier.getPort()));
@@ -156,7 +156,7 @@ class SnmpSignal {
         int securityLevel = SecurityLevel.NOAUTH_NOPRIV;
         Snmp snmp = null;
         try {
-            Address targetAddress = GenericAddress.parse("udp:" + notifier.getHost()
+            UdpAddress targetAddress = (UdpAddress) GenericAddress.parse("udp:" + notifier.getHost()
                     + "/" + notifier.getPort());
             TransportMapping<?> transport = new DefaultUdpTransportMapping();
             snmp = new Snmp();
@@ -191,7 +191,7 @@ class SnmpSignal {
             }
 
             // Create Target
-            UserTarget target = new UserTarget();
+            UserTarget<UdpAddress> target = new UserTarget<>();
             target.setAddress(targetAddress);
             target.setRetries(RETRIES);
             target.setTimeout(TIMEOUT);
@@ -271,7 +271,7 @@ class SnmpSignal {
     private void addSignalVariables(PDU pdu, String clusterName, Signal signal, Map<DateTime, Double> thresholdExceedances) {
         pdu.add(new VariableBinding(new OID(getVariableOid(EtmSnmpConstants.ETM_SIGNAL_NOTIFICATION_CLUSTER_NAME_SUFFIX)), new OctetString(clusterName)));
         pdu.add(new VariableBinding(new OID(getVariableOid(EtmSnmpConstants.ETM_SIGNAL_NOTIFICATION_NAME_SUFFIX)), new OctetString(signal.getName())));
-        pdu.add(new VariableBinding(new OID(getVariableOid(EtmSnmpConstants.ETM_SIGNAL_NOTIFICATION_THRESHOLD_SUFFIX)), new Integer32(new Double(signal.getThreshold().getValue()).intValue())));
+        pdu.add(new VariableBinding(new OID(getVariableOid(EtmSnmpConstants.ETM_SIGNAL_NOTIFICATION_THRESHOLD_SUFFIX)), new Integer32(Double.valueOf(signal.getThreshold().getValue()).intValue())));
         pdu.add(new VariableBinding(new OID(getVariableOid(EtmSnmpConstants.ETM_SIGNAL_NOTIFICATION_MAX_FREQUENCY_OF_EXCEEDANCE_SUFFIX)), new Integer32(signal.getNotifications().getMaxFrequencyOfExceedance())));
         pdu.add(new VariableBinding(new OID(getVariableOid(EtmSnmpConstants.ETM_SIGNAL_NOTIFICATION_FREQUENCY_OF_EXCEEDANCE_SUFFIX)), new Integer32(thresholdExceedances.size())));
     }

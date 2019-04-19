@@ -20,7 +20,9 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -30,9 +32,39 @@ import java.util.stream.Collectors;
  */
 public class MenuAwareURLResource extends URLResource {
 
+    public enum MenuContext {
+        SEARCH("/search/"),
+        DASHBOARD("/dashboard/"),
+        PREFERENCES("/preferences/"),
+        SETTINGS("/settings/", "/iib/"),
+        SIGNAL("/signal/");
 
 
-    public enum MenuContext {SEARCH, DASHBOARD, PREFERENCES, SETTINGS, SIGNAL;}
+        private final String[] pathPrefixes;
+        MenuContext(String... pathPrefixes) {
+            this.pathPrefixes = pathPrefixes;
+        }
+
+        boolean isInContext(String path) {
+            final String lowercasePath = path.toLowerCase();
+            for (String pathPrefix: this.pathPrefixes) {
+               if (lowercasePath.startsWith(pathPrefix)) {
+                   return true;
+               }
+            }
+            return false;
+        }
+
+        public static MenuContext parseFromPath(String path) {
+            for (MenuContext menuContext : values()) {
+                if (menuContext.isInContext(path)) {
+                    return menuContext;
+                }
+            }
+            return null;
+        }
+
+    }
 
     private static final String MENU_PLACEHOLDER = "<li id=\"placeholder-for-MenuAwareURLResource\"></li>";
     private static final String USER_PLACEHOLDER = "placeholder-for-contextUser";
@@ -48,20 +80,7 @@ public class MenuAwareURLResource extends URLResource {
         super(url, path);
         this.etmConfiguration = etmConfiguration;
         this.pathPrefixToContextRoot = pathPrefixToContextRoot;
-        final String lowercasePath = getPath().toLowerCase();
-        if (lowercasePath.startsWith("/search/")) {
-            this.menuContext = MenuContext.SEARCH;
-        } else if (lowercasePath.startsWith("/dashboard/")) {
-            this.menuContext = MenuContext.DASHBOARD;
-        } else if (lowercasePath.startsWith("/signal/")) {
-            this.menuContext = MenuContext.SIGNAL;
-        } else if (lowercasePath.startsWith("/preferences/")) {
-            this.menuContext = MenuContext.PREFERENCES;
-        } else if (lowercasePath.startsWith("/settings/") || lowercasePath.startsWith("/iib/")) {
-            this.menuContext = MenuContext.SETTINGS;
-        } else {
-            this.menuContext = null;
-        }
+        this.menuContext = MenuContext.parseFromPath(path);
         this.url = url;
     }
 
@@ -229,7 +248,7 @@ public class MenuAwareURLResource extends URLResource {
             url += (page.contains("?") ? "&" : "?") + "readonly=true";
         }
         String classes = "u-sidebar-nav-menu__link";
-        if (("/" + page).startsWith(this.getPath().toLowerCase())) {
+        if (("/" + page).equals(this.getPath())) {
             classes += " active";
         }
         html.append("<li class=\"u-sidebar-nav-menu__item\"><a class=\"" + classes + "\" href=\"")
@@ -347,7 +366,7 @@ public class MenuAwareURLResource extends URLResource {
                 html.append("<li class=\"u-sidebar-nav-menu__item\">");
             }
             html.append("<a class=\"u-sidebar-nav-menu__link\" data-target=\"#sub_signals\" href=\"#\"><i class=\"fa fa-bell u-sidebar-nav-menu__item-icon\"></i><span class=\"u-sidebar-nav-menu__item-title\">Signals</span><i class=\"fa fa-angle-right u-sidebar-nav-menu__item-arrow\"></i><span class=\"u-sidebar-nav-menu__indicator\"></span></a>");
-            html.append("<ul id=\"sub_signals\" class=\"u-sidebar-nav-menu u-sidebar-nav-menu--second-level\" style=\"display: none;\">");
+            html.append("<ul id=\"sub_signals\" class=\"u-sidebar-nav-menu u-sidebar-nav-menu--second-level\" style=\"display: " + (MenuContext.SIGNAL.equals(menuContext) ? "block" : "none") + ";\">");
             List<EtmGroup> groups = principal.getGroups().stream().sorted(Comparator.comparing(EtmGroup::getMostSpecificName)).collect(Collectors.toList());
             for (EtmGroup group : groups) {
                 appendMenuOption(html, group.getMostSpecificName(), "signal/signals.html?group=" + StringUtils.urlEncode(group.getName()), "fa-users", !principal.isInRole(SecurityRoles.GROUP_SIGNAL_READ_WRITE));

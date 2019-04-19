@@ -109,7 +109,7 @@ public class JmsProcessorImpl implements JmsProcessor {
             CustomConnectionFactory customConnectionFactory = (CustomConnectionFactory) abstractConnectionFactory;
             try {
                 Class<?> clazz = Class.forName(customConnectionFactory.factoryClassName);
-                Object object = clazz.newInstance();
+                Object object = clazz.getDeclaredConstructor().newInstance();
                 if (!(object instanceof ConnectionFactoryFactory)) {
                     if (log.isErrorLevelEnabled()) {
                         log.logErrorMessage("'" + customConnectionFactory.factoryClassName + "' is not of type '" +
@@ -119,7 +119,7 @@ public class JmsProcessorImpl implements JmsProcessor {
                     return null;
                 }
                 return ((ConnectionFactoryFactory) object).createConnectionFactory();
-            } catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
+            } catch (ClassNotFoundException | IllegalAccessException | InstantiationException | NoSuchMethodException | InvocationTargetException e) {
                 if (log.isErrorLevelEnabled()) {
                     log.logErrorMessage("Unable to instantiate '" + customConnectionFactory.factoryClassName + "'.", e);
                 }
@@ -131,7 +131,7 @@ public class JmsProcessorImpl implements JmsProcessor {
                 Class<?> clazz = Class.forName(nativeConnectionFactory.className);
                 Object object = null;
                 if (nativeConnectionFactory.constructorParameters.isEmpty()) {
-                    object = clazz.newInstance();
+                    object = clazz.getDeclaredConstructor().newInstance();
                 } else {
                     Constructor<?> constructor = clazz.getConstructor(nativeConnectionFactory.constructorParameters.stream().map(Object::getClass).toArray(Class[]::new));
                     object = constructor.newInstance(nativeConnectionFactory.constructorParameters.toArray());
@@ -187,7 +187,7 @@ public class JmsProcessorImpl implements JmsProcessor {
     private void addParameters(Object object, Map<String, String> parameters) throws NoSuchFieldException, IllegalAccessException {
         for (Map.Entry<String, String> entry : parameters.entrySet()) {
             final Field field = object.getClass().getField(entry.getKey());
-            if (!field.isAccessible()) {
+            if (!field.canAccess(object)) {
                 field.setAccessible(true);
             }
             if (Boolean.class.equals(field.getType()) || boolean.class.equals(field.getType())) {
