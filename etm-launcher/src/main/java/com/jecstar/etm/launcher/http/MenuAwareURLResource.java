@@ -289,8 +289,8 @@ public class MenuAwareURLResource extends URLResource {
                         // Skip a group when it has no dashboards and the user has read only access.
                         continue;
                     }
-                    html.append("<li><a class=\"dropdown-item dropdown-toggle\" href=\"#\"><i class=\"fa fa-users u-sidebar-nav-menu__item-icon\">&nbsp;</i>" + StringUtils.escapeToHtml(group.getMostSpecificName()) + "</a>");
-                    html.append("<ul class=\"dropdown-menu\">");
+                    html.append("<li class=\"u-sidebar-nav-menu__item\"><a class=\"u-sidebar-nav-menu__link\" href=\"#\" data-target=\"#sub_vis_grp_" + group.hashCode() + "\"><i class=\"fa fa-users u-sidebar-nav-menu__item-icon\"></i><span class=\"u-sidebar-nav-menu__item-title\">" + StringUtils.escapeToHtml(group.getMostSpecificName()) + "</span><i class=\"fa fa-angle-right u-sidebar-nav-menu__item-arrow\"></i><span class=\"u-sidebar-nav-menu__indicator\"></span></a>");
+                    html.append("<ul id=\"sub_vis_grp_" + group.hashCode() + "\" class=\"u-sidebar-nav-menu u-sidebar-nav-menu--third-level\" style=\"display: none;\">");
                     for (String dashboard : group.getDashboards()) {
                         appendMenuOption(html, dashboard, "dashboard/dashboards.html?name=" + StringUtils.urlEncode(dashboard) + "&group=" + StringUtils.urlEncode(group.getName()), !principal.isInRole(SecurityRoles.GROUP_DASHBOARD_READ_WRITE));
                     }
@@ -307,10 +307,10 @@ public class MenuAwareURLResource extends URLResource {
             }
             if (principal.isInRole(SecurityRoles.USER_DASHBOARD_READ_WRITE)) {
                 if (hasGroupMenu) {
+//                  Only add a submenu when there are group menus displayed.
                     html.append(divider);
-                    // Only add a submenu when there are group menus displayed.
-                    html.append("<li><a class=\"dropdown-item dropdown-toggle\" href=\"#\">" + StringUtils.escapeToHtml(principal.getName()) + "</a>");
-                    html.append("<ul class=\"dropdown-menu\">");
+                    html.append("<li class=\"u-sidebar-nav-menu__item\"><a class=\"u-sidebar-nav-menu__link\" href=\"#\" data-target=\"#sub_vis_user\"><i class=\"fa fa-users u-sidebar-nav-menu__item-icon\"></i><span class=\"u-sidebar-nav-menu__item-title\">" + StringUtils.escapeToHtml(principal.getName()) + "</span><i class=\"fa fa-angle-right u-sidebar-nav-menu__item-arrow\"></i><span class=\"u-sidebar-nav-menu__indicator\"></span></a>");
+                    html.append("<ul id=\"sub_vis_user\" class=\"u-sidebar-nav-menu u-sidebar-nav-menu--third-level\" style=\"display: none;\">");
                 }
                 for (String dashboard : principal.getDashboards()) {
                     appendMenuOption(html, dashboard, "dashboard/dashboards.html?name=" + StringUtils.urlEncode(dashboard), false);
@@ -342,7 +342,7 @@ public class MenuAwareURLResource extends URLResource {
         }
         if (hasGroupMenu) {
             if (MenuContext.SIGNAL.equals(menuContext)) {
-                html.append("<li class=\"u-sidebar-nav-menu__item active\">");
+                html.append("<li class=\"u-sidebar-nav-menu__item u-sidebar-nav--opened\">");
             } else {
                 html.append("<li class=\"u-sidebar-nav-menu__item\">");
             }
@@ -361,7 +361,7 @@ public class MenuAwareURLResource extends URLResource {
             html.append("</ul></li>");
         } else if (principal.isInRole(SecurityRoles.USER_SIGNAL_READ_WRITE)) {
             if (MenuContext.SIGNAL.equals(menuContext)) {
-                html.append("<li class=\"u-sidebar-nav-menu__item active\">");
+                html.append("<li class=\"u-sidebar-nav-menu__item u-sidebar-nav--opened\">");
             } else {
                 html.append("<li class=\"u-sidebar-nav-menu__item\">");
             }
@@ -381,7 +381,7 @@ public class MenuAwareURLResource extends URLResource {
             return;
         }
         if (MenuContext.PREFERENCES.equals(menuContext)) {
-            html.append("<li class=\"u-sidebar-nav-menu__item active\">");
+            html.append("<li class=\"u-sidebar-nav-menu__item u-sidebar-nav--opened\">");
         } else {
             html.append("<li class=\"u-sidebar-nav-menu__item\">");
         }
