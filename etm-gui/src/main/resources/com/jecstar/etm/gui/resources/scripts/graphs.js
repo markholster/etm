@@ -332,6 +332,18 @@ function buildGraphsPage(groupName) {
         removeGraph($('#input-graph-name').val());
     });
 
+    $('#link-export-graph').on('click', function (event) {
+        event.preventDefault();
+        const anchor = document.createElement('a');
+        const graphData = createGraphData();
+        const blob = new Blob([JSON.stringify(graphData)], {'type':'application/json'});
+        anchor.href = window.URL.createObjectURL(blob);
+        anchor.download = graphData.name + '.json';
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+    });
+
     $('#sel-graph').on('change', function (event) {
         event.preventDefault();
         const graphData = graphContainerMap[$(this).val()];
@@ -371,8 +383,10 @@ function buildGraphsPage(groupName) {
         valid = valid && $graphName[0].checkValidity();
         if (valid) {
             $('#btn-confirm-save-graph').removeAttr('disabled');
+            $('#link-export-graph').show();
         } else {
             $('#btn-confirm-save-graph').attr('disabled', 'disabled');
+            $('#link-export-graph').hide();
         }
 
         const graphName = $graphName.val();
