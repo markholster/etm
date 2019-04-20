@@ -40,7 +40,7 @@ In short a simple setup could be something like the image below; Application 1 a
 image::images/etm-v3/etm-overview.png["{etm} overview",link="./images/etm-v3/etm-overview.png"]
 
 === Installation
-{etm} is written in Java and needs a Java 8 or higher runtime installed on your machine. The installation of the Java runtime is not covered in this manual and may differ from platform to platform.
+{etm} is written in Java and needs a Java 11 or higher runtime installed on your machine. The installation of the Java runtime is not covered in this manual and may differ from platform to platform.
 Before you proceed, please check if a correct version of the Java runtime is installed by running:
 
 [source,bash,subs=attributes+]
