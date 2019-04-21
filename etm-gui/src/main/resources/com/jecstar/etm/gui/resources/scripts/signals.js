@@ -13,7 +13,8 @@ function buildSignalsPage(groupName) {
     const signalMap = {};
     let keywords = [];
     let timeZone;
-    const $page = $('body > .container-fluid');
+    let currentSelectedFile;
+    const $page = $('body > main > .u-content > .container-fluid');
 
 
     const originalFromValue = $('#input-signal-from').val();
@@ -226,6 +227,51 @@ function buildSignalsPage(groupName) {
         visualize();
     });
 
+    $('#btn-select-import-file').on('click', function (event) {
+        event.preventDefault();
+        $('#modal-signal-import').modal();
+    });
+
+    $('#signal-import-file').on('change', function (event) {
+        const files = event.target.files;
+        if (files.length > 0) {
+            currentSelectedFile = files[0];
+        } else {
+            currentSelectedFile = null;
+        }
+    });
+
+    $('#btn-import-signal').on('click', function (event) {
+        event.preventDefault();
+        if (currentSelectedFile) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const contents = e.target.result;
+                const signalData = JSON.parse(contents);
+                resetValues();
+                if ('undefined' == typeof signalData) {
+                    return;
+                }
+                setValuesFromData(signalData);
+                enableOrDisableButtons();
+            };
+            reader.readAsText(currentSelectedFile);
+        }
+        commons.hideModals($('#modal-signal-import'));
+    });
+
+    $('#link-export-signal').on('click', function (event) {
+        event.preventDefault();
+        const anchor = document.createElement('a');
+        const signalData = createSignalData();
+        const blob = new Blob([JSON.stringify(signalData)], {'type':'application/json'});
+        anchor.href = window.URL.createObjectURL(blob);
+        anchor.download = signalData.name + '.json';
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+    });
+
     function resetValues() {
         $('#input-signal-name').val('');
         $('#sel-signal-enabled').val('true');
@@ -330,8 +376,10 @@ function buildSignalsPage(groupName) {
 
         if (notifierCount >= 1 && valid) {
             $('#btn-confirm-save-signal').removeAttr('disabled');
+            $('#link-export-signal').show();
         } else {
             $('#btn-confirm-save-signal').attr('disabled', 'disabled');
+            $('#link-export-signal').hide();
         }
         if ($signalName.val() && isSignalExistent($signalName.val())) {
             $('#btn-confirm-remove-signal').removeAttr('disabled');

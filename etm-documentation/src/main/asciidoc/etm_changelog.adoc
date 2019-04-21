@@ -4,6 +4,7 @@
 * [ETM-101] Calendar buttons in signals & graphs not working in IE.
 * [ETM-102] Memory leak in LruCache.
 * [ETM-103] Change gui to htmlstreams.com template.
+* [ETM-105] Option to export and import graphs + signals.
 
 === Version 3.5.0
 * [ETM-95] Add api key to user for for authorisation on rest processor.
