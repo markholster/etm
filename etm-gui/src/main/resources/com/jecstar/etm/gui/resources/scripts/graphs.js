@@ -12,6 +12,7 @@ function buildGraphsPage(groupName) {
         $userMenu.find('.u-sidebar-nav-menu__item-title:contains(Graphs)').parent().addClass('active');
     }
     let timeZone;
+    let currentSelectedFile;
 
     const graphConfig = {
         area: {
@@ -330,6 +331,39 @@ function buildGraphsPage(groupName) {
     $('#btn-remove-graph').on('click', function (event) {
         event.preventDefault();
         removeGraph($('#input-graph-name').val());
+    });
+
+    $('#btn-select-import-file').on('click', function (event) {
+        event.preventDefault();
+        $('#modal-graph-import').modal();
+    });
+
+    $('#graph-import-file').on('change', function (event) {
+        const files = event.target.files;
+        if (files.length > 0) {
+            currentSelectedFile = files[0];
+        } else {
+            currentSelectedFile = null;
+        }
+    });
+
+    $('#btn-import-graph').on('click', function (event) {
+        event.preventDefault();
+        if (currentSelectedFile) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const contents = e.target.result;
+                const graphData = JSON.parse(contents);
+                resetValues();
+                if ('undefined' == typeof graphData) {
+                    return;
+                }
+                setValuesFromData(graphData);
+                enableOrDisableButtons();
+            };
+            reader.readAsText(currentSelectedFile);
+        }
+        commons.hideModals($('#modal-graph-import'));
     });
 
     $('#link-export-graph').on('click', function (event) {

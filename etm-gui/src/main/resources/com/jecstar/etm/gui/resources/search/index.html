@@ -20,31 +20,35 @@
     <link rel="stylesheet" href="../styles/highlightjs-googlecode.css">
     <link rel="stylesheet" href="../styles/flatpickr.min.css">
     <style type="text/css">
-.headerSortAsc, .headerSortDesc {
-    border-bottom-color: #777 !important;
-    font-weight: 700 !important;
-    white-space: nowrap;
-}
-.headerSortAsc::after, .headerSortDesc::after {
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    content: "";
-    display: inline-block;
-    height: 0;
-    margin-bottom: 2px;
-    margin-left: 5px;
-    margin-right: -10px;
-    width: 0;
-}
-.headerSortDesc::after {
-    border-top: 4px solid;
-}
-.headerSortAsc::after {
-    border-bottom: 4px solid;
-}
-.event-selected {
-	font-weight: bold;
-}
+        .headerSortAsc, .headerSortDesc {
+            border-bottom-color: #777 !important;
+            font-weight: 700 !important;
+            white-space: nowrap;
+        }
+
+        .headerSortAsc::after, .headerSortDesc::after {
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            content: "";
+            display: inline-block;
+            height: 0;
+            margin-bottom: 2px;
+            margin-left: 5px;
+            margin-right: -10px;
+            width: 0;
+        }
+
+        .headerSortDesc::after {
+            border-top: 4px solid;
+        }
+
+        .headerSortAsc::after {
+            border-bottom: 4px solid;
+        }
+
+        .event-selected {
+            font-weight: bold;
+        }
     </style>
     <!-- jQuery first, then Bootstrap JS. -->
     <script src="../scripts/tether.min.js"></script>
@@ -66,8 +70,10 @@
 <header class="u-header">
     <div class="u-header-left">
         <a class="u-header-logo" href="https://www.jecstar.com" target="_blank">
-            <img class="u-logo-desktop" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website" />
-            <img class="img-fluid u-logo-mobile" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website" />
+            <img class="u-logo-desktop" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;"
+                 alt="Jecstar website"/>
+            <img class="img-fluid u-logo-mobile" src="../images/jecstar.svg"
+                 style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website"/>
         </a>
         <div class="ml-2 mt-1 d-none d-lg-block u-header-brand">
             <h2 class="text-white">Jecstar</h2>
@@ -94,7 +100,8 @@
         <div class="u-sidebar-inner">
             <header class="u-sidebar-header">
                 <a class="u-sidebar-logo" href="https://www.jecstar.com">
-                    <img class="img-fluid" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website">
+                    <img class="img-fluid" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;"
+                         alt="Jecstar website">
                 </a>
             </header>
 
@@ -107,163 +114,177 @@
     </aside>
     <div class="u-content">
         <div id="search-container" class="container-fluid">
-        <div class="row">
-            <div class="col-md-3 order-md-2 pt-3">
-                <div class="row">
-                    <div class="col-md">
-                        <div class="card col-md">
-                            <div class="card-body">
-                                <h3 class="card-title">Search templates</h3>
-                                <div class="card-text">
-                                    <ul id="list-template-links" class="pl-1" style="word-wrap: break-word;"></ul>
-                                </div>
-                                <p id="no-more-tenplates-allowed" style="display: none;">Maximum number of templates
-                                    reached!</p>
-                                <div id="template-save-group" class="input-group input-group-sm">
-                                    <input id="template-name" type="text" class="form-control form-control-sm"
-                                           placeholder="Template name..."
-                                           disabled="disabled"/>
-                                    <span class="input-group-btn btn-group-sm">
+            <div class="row">
+                <div class="col-md-3 order-md-2 pt-3">
+                    <div class="row">
+                        <div class="col-md">
+                            <div class="card col-md">
+                                <div class="card-body">
+                                    <h3 class="card-title">Search templates</h3>
+                                    <div class="card-text">
+                                        <ul id="list-template-links" class="pl-1" style="word-wrap: break-word;"></ul>
+                                    </div>
+                                    <p id="no-more-tenplates-allowed" style="display: none;">Maximum number of templates
+                                        reached!</p>
+                                    <div id="template-save-group" class="input-group input-group-sm">
+                                        <input id="template-name" type="text" class="form-control form-control-sm"
+                                               placeholder="Template name..."
+                                               disabled="disabled"/>
+                                        <span class="input-group-btn btn-group-sm">
                                         <button id="btn-save-template" class="btn btn-primary btn-sm" type="button"
                                                 disabled="disabled">Save</button>
                                     </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row pt-3">
+                        <div class="col-md">
+                            <div class="card card-block">
+                                <div class="card-body">
+                                    <h3 class="card-title">Search history</h3>
+                                    <div class="card-text">
+                                        <ol id="list-search-history-links"
+                                            style="padding-left: 1em; word-wrap: break-word;"></ol>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="row pt-3">
-                    <div class="col-md">
-                        <div class="card card-block">
-                            <div class="card-body">
-                                <h3 class="card-title">Search history</h3>
-                                <div class="card-text">
-                                    <ol id="list-search-history-links"
-                                        style="padding-left: 1em; word-wrap: break-word;"></ol>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-9 order-md-1">
-                <div class="row pt-3">
-                    <div class="col-md">
-                        <div id="search-card" class="card card-block">
-                            <div class="card-body">
-                                <h3 class="card-title">Search</h3>
-                                <div class="card-text">
-                                    <p>
-                                        Please enter your search string in the field below and press the
-                                        'Search' button. Specific fields can be searched in the format
-                                        <mark>fieldname:&lt;value&gt;</mark>
-                                        . For example, if you want to search for all event generated from
-                                        application "My Application" the search string will be
-                                        <mark>endpoints.writing_endpoint_handler.application.name:"My application"</mark>
-                                        . Multiple field can be combined by using the
-                                        <mark>AND</mark>
-                                        or
-                                        <mark>OR</mark>
-                                        operator. Range values can be used by applying the format
-                                        <mark>[&lt;start&gt; TO &lt;end&gt;]</mark>
-                                        to the field value.
-                                    </p>
-                                    <div class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
-                                    <div class="custom-control custom-checkbox custom-control-inline">
-                                        <input type="checkbox" id="check-type-business" value="business" checked="checked"
-                                               class="custom-control-input">
-                                        <label class="custom-control-label" for="check-type-business">Business</label>
-                                    </div>
-                                    <div class="custom-control custom-checkbox custom-control-inline">
-                                        <input type="checkbox" id="check-type-http" value="http" checked="checked"
-                                               class="custom-control-input">
-                                        <label class="custom-control-label" for="check-type-http">Http</label>
-                                    </div>
-                                    <div class="custom-control custom-checkbox custom-control-inline">
-                                        <input type="checkbox" id="check-type-log" value="log" checked="checked"
-                                               class="custom-control-input">
-                                        <label class="custom-control-label" for="check-type-log">Log</label>
-                                    </div>
-                                    <div class="custom-control custom-checkbox custom-control-inline">
-                                        <input type="checkbox" id="check-type-messaging" value="messaging" checked="checked"
-                                               class="custom-control-input">
-                                        <label class="custom-control-label" for="check-type-messaging">Messaging</label>
-                                    </div>
-                                    <div class="custom-control custom-checkbox custom-control-inline">
-                                        <input type="checkbox" id="check-type-sql" value="sql" checked="checked"
-                                               class="custom-control-input">
-                                        <label class="custom-control-label" for="check-type-sql">SQL</label>
-                                    </div>
-                                    <div class="row" style="margin-top: 5px;">
-                                        <label for="query-string-from" class="col-sm-3 col-form-label-sm">Start date</label>
-                                        <div class="col-sm-3">
-                                            <div class="input-group flatpickr">
-                                                <input id="query-string-from" type="text"
-                                                       class="form-control form-control-sm" data-input/>
-                                                <div class="input-group-append">
-                                                    <a class="btn btn-outline-secondary btn-sm form-control-sm" title="Toggle calendar"
-                                                       data-toggle>
-                                                        <i class="fa fa-calendar"></i>
-                                                    </a>
+                <div class="col-md-9 order-md-1">
+                    <div class="row pt-3">
+                        <div class="col-md">
+                            <div id="search-card" class="card card-block">
+                                <div class="card-body">
+                                    <h3 class="card-title">Search</h3>
+                                    <div class="card-text">
+                                        <p>
+                                            Please enter your search string in the field below and press the
+                                            'Search' button. Specific fields can be searched in the format
+                                            <mark>fieldname:&lt;value&gt;</mark>
+                                            . For example, if you want to search for all event generated from
+                                            application "My Application" the search string will be
+                                            <mark>endpoints.writing_endpoint_handler.application.name:"My application"
+                                            </mark>
+                                            . Multiple field can be combined by using the
+                                            <mark>AND</mark>
+                                            or
+                                            <mark>OR</mark>
+                                            operator. Range values can be used by applying the format
+                                            <mark>[&lt;start&gt; TO &lt;end&gt;]</mark>
+                                            to the field value.
+                                        </p>
+                                        <div class="alert alert-danger errorBox" style="display: none;"
+                                             role="alert"></div>
+                                        <div class="custom-control custom-checkbox custom-control-inline">
+                                            <input type="checkbox" id="check-type-business" value="business"
+                                                   checked="checked"
+                                                   class="custom-control-input">
+                                            <label class="custom-control-label"
+                                                   for="check-type-business">Business</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox custom-control-inline">
+                                            <input type="checkbox" id="check-type-http" value="http" checked="checked"
+                                                   class="custom-control-input">
+                                            <label class="custom-control-label" for="check-type-http">Http</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox custom-control-inline">
+                                            <input type="checkbox" id="check-type-log" value="log" checked="checked"
+                                                   class="custom-control-input">
+                                            <label class="custom-control-label" for="check-type-log">Log</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox custom-control-inline">
+                                            <input type="checkbox" id="check-type-messaging" value="messaging"
+                                                   checked="checked"
+                                                   class="custom-control-input">
+                                            <label class="custom-control-label"
+                                                   for="check-type-messaging">Messaging</label>
+                                        </div>
+                                        <div class="custom-control custom-checkbox custom-control-inline">
+                                            <input type="checkbox" id="check-type-sql" value="sql" checked="checked"
+                                                   class="custom-control-input">
+                                            <label class="custom-control-label" for="check-type-sql">SQL</label>
+                                        </div>
+                                        <div class="row" style="margin-top: 5px;">
+                                            <label for="query-string-from" class="col-sm-3 col-form-label-sm">Start
+                                                date</label>
+                                            <div class="col-sm-3">
+                                                <div class="input-group flatpickr">
+                                                    <input id="query-string-from" type="text"
+                                                           class="form-control form-control-sm" data-input/>
+                                                    <div class="input-group-append">
+                                                        <a class="btn btn-outline-secondary btn-sm form-control-sm"
+                                                           title="Toggle calendar"
+                                                           data-toggle>
+                                                            <i class="fa fa-calendar"></i>
+                                                        </a>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="row">
-                                        <label for="query-string-till" class="col-sm-3 col-form-label-sm">End date</label>
-                                        <div class="col-sm-3">
-                                            <div class="input-group flatpickr">
-                                                <input id="query-string-till" type="text"
-                                                       class="form-control form-control-sm" data-input/>
-                                                <div class="input-group-append">
-                                                    <a class="btn btn-outline-secondary btn-sm form-control-sm" title="Toggle calendar"
-                                                       data-toggle>
-                                                        <i class="fa fa-calendar"></i>
-                                                    </a>
+                                        <div class="row">
+                                            <label for="query-string-till" class="col-sm-3 col-form-label-sm">End
+                                                date</label>
+                                            <div class="col-sm-3">
+                                                <div class="input-group flatpickr">
+                                                    <input id="query-string-till" type="text"
+                                                           class="form-control form-control-sm" data-input/>
+                                                    <div class="input-group-append">
+                                                        <a class="btn btn-outline-secondary btn-sm form-control-sm"
+                                                           title="Toggle calendar"
+                                                           data-toggle>
+                                                            <i class="fa fa-calendar"></i>
+                                                        </a>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="row form-group">
-                                        <label for="query-string-time-filter-field" class="col-sm-3 col-form-label-sm">Time
-                                            field</label>
-                                        <div class="col-sm-3">
-                                            <div class="input-group">
-                                                <input id="query-string-time-filter-field" type="text"
-                                                       class="form-control form-control-sm" value="timestamp"/>
+                                        <div class="row form-group">
+                                            <label for="query-string-time-filter-field"
+                                                   class="col-sm-3 col-form-label-sm">Time
+                                                field</label>
+                                            <div class="col-sm-3">
+                                                <div class="input-group">
+                                                    <input id="query-string-time-filter-field" type="text"
+                                                           class="form-control form-control-sm" value="timestamp"/>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="row form-group">
-                                        <div class="col-sm">
-                                            <input id="query-string" type="text" class="form-control"
-                                                   placeholder="Search for..."
-                                                   autocomplete="off" autofocus="autofocus">
+                                        <div class="row form-group">
+                                            <div class="col-sm">
+                                                <input id="query-string" type="text" class="form-control"
+                                                       placeholder="Search for..."
+                                                       autocomplete="off" autofocus="autofocus">
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button id="btn-search" class="btn btn-primary" type="button" disabled="disabled">
-                                            Search
-                                        </button>
+                                        <div class="modal-footer">
+                                            <button id="btn-search" class="btn btn-primary" type="button"
+                                                    disabled="disabled">
+                                                Search
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="row pt-3" id="result_block" style="display: none;">
-                    <div class="col-md">
-                        <div id="search-result-card" class="card card-block">
-                            <div class="card-body">
-                                <h3 class="card-title">Search results
-                                    <small id="search-stats"></small>
-                                    <small style="font-size: 100%;"><a id="link-edit-table" href="#"
-                                                                       class="fa fa-edit float-right"
-                                                                       title="Edit result table"></a>&nbsp;<a
-                                            id="link-request-download" href="#" class="mr-1 fa fa-download float-right"
-                                            title="Download results"></a></small>
-                                </h3>
-                                <div id="result_card" class="card-text">
+                    <div class="row pt-3" id="result_block" style="display: none;">
+                        <div class="col-md">
+                            <div id="search-result-card" class="card card-block">
+                                <div class="card-body">
+                                    <h3 class="card-title">Search results
+                                        <small id="search-stats"></small>
+                                        <small style="font-size: 100%;"><a id="link-edit-table" href="#"
+                                                                           class="fa fa-edit float-right"
+                                                                           title="Edit result table"></a>&nbsp;<a
+                                                id="link-request-download" href="#"
+                                                class="mr-1 fa fa-download float-right"
+                                                title="Download results"></a></small>
+                                    </h3>
+                                    <div id="result_card" class="card-text">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -271,43 +292,42 @@
                 </div>
             </div>
         </div>
-    </div>
 
         <div id="event-container" class="container-fluid" style="display: none;">
             <div class="row pt-3">
-            <div class="col-md">
-                <div class="card card-block">
-                    <div class="card-body">
-                        <h3 class="card-title">
-                            <a id="link-back-to-results" href="#" class="fa fa-chevron-circle-left"
-                               title="Back to search results"></a>
-                            <span id="event-card-title">Event</span>
-                        </h3>
-                        <div class="card-text">
-                            <div class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
+                <div class="col-md">
+                    <div class="card card-block">
+                        <div class="card-body">
+                            <h3 class="card-title">
+                                <a id="link-back-to-results" href="#" class="fa fa-chevron-circle-left"
+                                   title="Back to search results"></a>
+                                <span id="event-card-title">Event</span>
+                            </h3>
+                            <div class="card-text">
+                                <div class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
 
-                            <div role="tabpanel">
-                                <ul role="tablist" id="event-tabs" class="nav nav-tabs">
-                                    <li class="nav-item">
-                                        <a id="event-tab-header" data-toggle="tab" href="#event-tab" role="tab"
-                                           aria-controls="event-tab" aria-selected="true" class="nav-link active">Event</a>
-                                    </li>
-                                </ul>
-                                <div id="tabcontents" class="tab-content">
-                                    <div id="event-tab" role="tabpanel" aria-labelledby="event-tab-header"
-                                         class="tab-pane fade show active in pt-3">
+                                <div role="tabpanel">
+                                    <ul role="tablist" id="event-tabs" class="nav nav-tabs">
+                                        <li class="nav-item">
+                                            <a id="event-tab-header" data-toggle="tab" href="#event-tab" role="tab"
+                                               aria-controls="event-tab" aria-selected="true" class="nav-link active">Event</a>
+                                        </li>
+                                    </ul>
+                                    <div id="tabcontents" class="tab-content">
+                                        <div id="event-tab" role="tabpanel" aria-labelledby="event-tab-header"
+                                             class="tab-pane fade show active in pt-3">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <hr/>
-                        <div class="text-center">
-                            <a id="btn-back-to-results" href="#" class="btn btn-primary">Back</a>
+                            <hr/>
+                            <div class="text-center">
+                                <a id="btn-back-to-results" href="#" class="btn btn-primary">Back</a>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
         </div>
     </div>
 </main>
@@ -495,13 +515,13 @@
     commons.addAjaxHandlers(
         null,
         null,
-        function(event, jqXHR, settings, thrownError) {
+        function (event, jqXHR, settings, thrownError) {
             if ("undefined" != typeof jqXHR.responseJSON) {
-                $('.errorBox').text('Error executing query: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
+                $('.errorBox').text('Error executing query: ' + jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
             } else {
-                $('.errorBox').text('Error executing query: ' +  thrownError).show('fast');
+                $('.errorBox').text('Error executing query: ' + thrownError).show('fast');
             }
-            $('html,body').animate({scrollTop: 0},'fast');
+            $('html,body').animate({scrollTop: 0}, 'fast');
         },
         null
     );
@@ -512,7 +532,7 @@
         contentType: 'application/json',
         url: '../rest/search/keywords/etm_event_all',
         cache: false,
-        success: function(data) {
+        success: function (data) {
             if (!data || !data.keywords) {
                 return;
             }
@@ -552,7 +572,7 @@
 <script src="../scripts/sidebar-nav.js"></script>
 <script>
     let maxDownloads;
-    $('[id^=check-type-]').on('change', function() {
+    $('[id^=check-type-]').on('change', function () {
         enableOrDisableSearchButton();
         if ($('[id^=check-type-]:checked').length == 0) {
             $('#query-string').attr('disabled', 'disabled');
@@ -562,20 +582,20 @@
     });
     // Disable or enable the search button, template name inputfield and save button if the query field contains data.
     $('#query-string').on('input', enableOrDisableSearchButton)
-    .bind('keydown', function( event ) {
-        if ( event.keyCode === $.ui.keyCode.TAB && $(this).autocomplete('instance').menu.active ) {
-            event.preventDefault();
-        } else if ( event.keyCode === $.ui.keyCode.DOWN && !$(this).autocomplete('instance').menu.active) {
-            if ($(this).val() === '') {
-                $(this).autocomplete( "search", "" );
+        .bind('keydown', function (event) {
+            if (event.keyCode === $.ui.keyCode.TAB && $(this).autocomplete('instance').menu.active) {
+                event.preventDefault();
+            } else if (event.keyCode === $.ui.keyCode.DOWN && !$(this).autocomplete('instance').menu.active) {
+                if ($(this).val() === '') {
+                    $(this).autocomplete("search", "");
+                }
+            } else if (event.keyCode === $.ui.keyCode.ENTER && !$(this).autocomplete('instance').menu.active && $(this).val()) {
+                startNewQuery();
             }
-        } else if ( event.keyCode === $.ui.keyCode.ENTER && !$(this).autocomplete('instance').menu.active && $(this).val()) {
-			startNewQuery();
+        }).autocompleteFieldQuery(
+        {
+            queryKeywords: queryKeywords
         }
-    }).autocompleteFieldQuery(
-    		{
-    			queryKeywords: queryKeywords
-    		}
     );
 
     $('#query-string-time-filter-field').bind('keydown', function (event) {
@@ -594,28 +614,28 @@
         );
 
 
-    $('#btn-search').click(function() {
-    	startNewQuery();
+    $('#btn-search').click(function () {
+        startNewQuery();
     });
 
     $('#link-request-download').on('click', function (event) {
-    	event.preventDefault();
-    	$('#modal-download-results').modal();
+        event.preventDefault();
+        $('#modal-download-results').modal();
     });
 
     $('#btn-download-results').on('click', function (event) {
-    	event.preventDefault();
-    	$('#modal-download-results').modal('hide');
-    	var q = createQuery(true);
-    	q.start_ix = Number($('#input-download-start-row').val()) - 1;
-    	q.max_results = Number($('#input-download-number-of-rows').val());
-    	q.fileType = $('#sel-download-type').val();
-    	q.includePayload = $('#sel-download-include-payload').val() == 'true' ? true : false;
-	    window.location.href = '../rest/search/download?q=' + encodeURIComponent(JSON.stringify(q));
-	});
+        event.preventDefault();
+        $('#modal-download-results').modal('hide');
+        var q = createQuery(true);
+        q.start_ix = Number($('#input-download-start-row').val()) - 1;
+        q.max_results = Number($('#input-download-number-of-rows').val());
+        q.fileType = $('#sel-download-type').val();
+        q.includePayload = $('#sel-download-include-payload').val() == 'true' ? true : false;
+        window.location.href = '../rest/search/download?q=' + encodeURIComponent(JSON.stringify(q));
+    });
 
-    $('#result_card').on('click', '#search_result_table tbody a', function(event) {
-    	event.preventDefault();
+    $('#result_card').on('click', '#search_result_table tbody a', function (event) {
+        event.preventDefault();
         if ('show-event' == $(this).attr('data-link-type')) {
             showEvent($(window).scrollTop(), $(this).attr('data-event-type'), $(this).attr('id'));
             $('#search_result_table > tbody > tr.event-selected').removeClass('event-selected');
@@ -633,39 +653,39 @@
         $(this).children("[data-link-type='set-as-start-for-query'], [data-link-type='set-as-end-for-query']").toggleClass('invisible');
     });
 
-    $('#result_card').on('click', '#search_result_table thead th', function(event) {
-    	event.preventDefault();
+    $('#result_card').on('click', '#search_result_table thead th', function (event) {
+        event.preventDefault();
         sortResultTable($(this).attr('data-event-field'));
     });
 
-    $('#result_card').on('click', '#search_result_table tfoot a', function(event) {
+    $('#result_card').on('click', '#search_result_table tfoot a', function (event) {
         event.preventDefault();
         var query = createQuery(true);
         query.start_ix = tableLayout.current_ix + tableLayout.results_per_page;
         executeQuery(query, true);
     });
 
-    $('#event-container').on('click', '#btn-back-to-results, #link-back-to-results', function(event) {
-		event.preventDefault();
-		$('#event-container').hide();
-		$('#search-container').show();
-		$('html,body').animate({scrollTop: Number($(this).attr('data-scroll-to'))},'fast');
-    });
-
-    $('#event-container').on('click', "a[data-link-type='show-event']", function(event) {
+    $('#event-container').on('click', '#btn-back-to-results, #link-back-to-results', function (event) {
         event.preventDefault();
-    	showEvent(Number($(this).attr('data-scroll-to')), $(this).attr('data-event-type'), $(this).attr('data-event-id'))
+        $('#event-container').hide();
+        $('#search-container').show();
+        $('html,body').animate({scrollTop: Number($(this).attr('data-scroll-to'))}, 'fast');
     });
 
-    $('#event-container').on('click', "a[data-link-type='toggle-detail-map']", function(event) {
-    	event.preventDefault();
-    	$('#' + $(this).attr('data-panel-id')).collapse('toggle');
+    $('#event-container').on('click', "a[data-link-type='show-event']", function (event) {
+        event.preventDefault();
+        showEvent(Number($(this).attr('data-scroll-to')), $(this).attr('data-event-type'), $(this).attr('data-event-id'))
+    });
+
+    $('#event-container').on('click', "a[data-link-type='toggle-detail-map']", function (event) {
+        event.preventDefault();
+        $('#' + $(this).attr('data-panel-id')).collapse('toggle');
     });
 
     function startNewQuery() {
         tableLayout.timestamp = new Date().getTime();
         const queryParams = createQuery(false);
-    	queryParams.start_ix = 0;
+        queryParams.start_ix = 0;
         executeQuery(queryParams);
     }
 
@@ -677,7 +697,7 @@
             $('#btn-search, #template-name').removeAttr("disabled");
             $('#link-edit-table').show();
             if (maxDownloads && maxDownloads > 0) {
-            	$('#link-request-download').show();
+                $('#link-request-download').show();
             }
             if ($('#template-name').val()) {
                 $('#btn-save-template').removeAttr("disabled");
@@ -686,13 +706,13 @@
     }
 
     function createQuery(reusePreviousQueryString) {
-    	if (!reusePreviousQueryString) {
-    		if (!$('#query-string').val() || $('[id^=check-type-]:checked').length == 0) {
-            	return null;
+        if (!reusePreviousQueryString) {
+            if (!$('#query-string').val() || $('[id^=check-type-]:checked').length == 0) {
+                return null;
             }
-        	tableLayout.current_query = $('#query-string').val();
+            tableLayout.current_query = $('#query-string').val();
         } else if (!tableLayout.current_query) {
-        	return null;
+            return null;
         }
         let dateValue = $('#query-string-from').val();
         if (dateValue) {
@@ -709,7 +729,9 @@
         tableLayout.time_filter_field = $('#query-string-time-filter-field').val() ? $('#query-string-time-filter-field').val() : 'timestamp';
         return {
             query: tableLayout.current_query,
-            types: $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get(),
+            types: $('[id^=check-type-]:checked').map(function () {
+                return $(this).val();
+            }).get(),
             fields: tableLayout.getInternalFieldNames(),
             start_ix: tableLayout.current_ix,
             max_results: tableLayout.results_per_page,
@@ -724,6 +746,7 @@
     }
 
     let queryInProgress = false;
+
     function executeQuery(queryParameters, appendToCurrent) {
         if (!queryParameters || queryInProgress) {
             return;
@@ -736,14 +759,14 @@
             url: '../rest/search/query',
             cache: false,
             data: JSON.stringify(queryParameters),
-            success: function(data) {
+            success: function (data) {
                 if (!data) {
                     return;
                 }
                 maxDownloads = data.max_downloads;
                 if (maxDownloads > 0) {
-                	$('#link-request-download').show();
-                	$('#input-download-number-of-rows').attr('max', maxDownloads);
+                    $('#link-request-download').show();
+                    $('#input-download-number-of-rows').attr('max', maxDownloads);
                 }
                 if (data.may_see_payload) {
                     $('#sel-download-include-payload').removeAttr('disabled').val('true');
@@ -800,7 +823,7 @@
                                         )
                                 }
                             })
-                            .append(function() {
+                            .append(function () {
                                 const $body = $('<tbody>')
                                 $(data.results).each(function (index, searchResult) {
                                     $body.append(function () {
@@ -811,7 +834,7 @@
                             });
                         $('#result_card').append($('<div>').addClass('table-responsive').append($(resultTable)));
                         if (!commons.isInViewport($('#result_card'))) {
-                            $('html,body').animate({scrollTop: $('#query-string').offset().top},'slow');
+                            $('html,body').animate({scrollTop: $('#query-string').offset().top}, 'slow');
                         }
                     }
                     // Update recent queries
@@ -830,7 +853,7 @@
                 }
             },
             complete: function () {
-            	queryInProgress = false;
+                queryInProgress = false;
             }
         });
     }
@@ -871,9 +894,9 @@
     }
 
     function sortResultTable(fieldName) {
-    	if (queryInProgress) {
-    		return false;
-    	}
+        if (queryInProgress) {
+            return false;
+        }
         if (tableLayout.sort_field === fieldName) {
             if (tableLayout.sort_order === 'asc') {
                 tableLayout.sort_order = 'desc';
@@ -888,12 +911,12 @@
         <!-- End User Profile -->
     }
 
-	$(window).scroll(function(event) {
-		var $showMoreLink = $('#lnk_show_more');
+    $(window).scroll(function (event) {
+        var $showMoreLink = $('#lnk_show_more');
         if (commons.isInViewport($showMoreLink)) {
-			$showMoreLink.click();
-		}
-	});
+            $showMoreLink.click();
+        }
+    });
 
     if (commons.queryString['id'] && commons.queryString['type']) {
         showEvent(null, commons.queryString['type'], commons.queryString['id']);

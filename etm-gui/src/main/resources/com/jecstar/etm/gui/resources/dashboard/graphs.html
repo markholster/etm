@@ -464,6 +464,9 @@
                                                        data-element-type="acl-aware"
                                                        class="btn btn-danger" value="Remove" formnovalidate="formnovalidate"
                                                        disabled="disabled"/>
+                                                <input type="submit" id="btn-select-import-file" class="btn btn-secondary"
+                                                       data-element-type="acl-aware"
+                                                       value="Import" formnovalidate="formnovalidate" />
                                                 <input type="submit" id="btn-preview-graph" class="btn btn-secondary"
                                                        value="Preview" formnovalidate="formnovalidate" disabled="disabled"/>
                                                 <input type="submit" id="btn-confirm-save-graph"
@@ -527,6 +530,30 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
                 <button id="btn-remove-graph" type="button" class="btn btn-primary">Yes</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modal-graph-import">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="graph-import-modal-label">Select file</h2>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Please select a file to import. Note that the file to be imported should have been exported from an ETM instance of exactly the same version as this ETM version.</p>
+                <div class="form-group row">
+                    <div class="col">
+                        <input type="file" id="graph-import-file" name="files" required="required" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button id="btn-import-graph" type="button" class="btn btn-primary">Import</button>
             </div>
         </div>
     </div>
