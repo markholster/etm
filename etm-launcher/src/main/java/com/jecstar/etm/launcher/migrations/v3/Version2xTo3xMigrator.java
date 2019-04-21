@@ -66,7 +66,7 @@ public class Version2xTo3xMigrator extends AbstractEtmMigrator {
                 .setQuery(QueryBuilders.boolQuery().must(QueryBuilders.matchAllQuery())
                         .mustNot(QueryBuilders.termQuery("_type", ElasticsearchLayout.ETM_DEFAULT_TYPE)));
         SearchHits searchHits = dataRepository.search(searchRequestBuilder).getHits();
-        return searchHits.totalHits != 0;
+        return searchHits.getTotalHits().value != 0;
     }
 
     @Override

@@ -32,7 +32,6 @@ import org.elasticsearch.search.aggregations.HasAggregations;
 import org.elasticsearch.search.aggregations.ParsedMultiBucketAggregation;
 import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
 import org.elasticsearch.search.aggregations.bucket.ParsedSingleBucketAggregation;
-import org.elasticsearch.search.aggregations.metrics.valuecount.InternalValueCount;
 
 import javax.annotation.security.DeclareRoles;
 import javax.annotation.security.RolesAllowed;
@@ -440,9 +439,7 @@ public class SignalService extends AbstractUserAttributeService {
             final BucketKey bucketKey = new BucketKey(bucket);
             if (bucket.getAggregations().asList().size() == 0) {
                 String bucketName = multiBucketsAggregation.getMetaData().get(Aggregator.NAME) + "(" + bucket.getKey() + ")";
-                Map<String, Object> metaData = new HashMap<>();
-                metaData.put(Aggregator.NAME, bucketName);
-                final MetricValue metricValue = new MetricValue(new InternalValueCount(bucketName, bucket.getDocCount(), Collections.emptyList(), metaData));
+                final MetricValue metricValue = new MetricValue(bucketName, bucket.getDocCount());
                 addToSeries(seriesData, bucketKey, metricValue, bucketName);
                 if (metricValue.hasValidValue() && signal.getThreshold().getComparison().isExceeded(signal.getThreshold().getValue(), metricValue.getValue())) {
                     exceededCount++;
@@ -507,9 +504,7 @@ public class SignalService extends AbstractUserAttributeService {
                 for (MultiBucketsAggregation.Bucket subBucket : multiBucketsAggregation.getBuckets()) {
                     final String subBucketName = name + "(" + subBucket.getKeyAsString() + ")";
                     if (subBucket.getAggregations().asList().size() == 0) {
-                        Map<String, Object> metaData = new HashMap<>();
-                        metaData.put(Aggregator.NAME, subBucketName);
-                        final MetricValue metricValue = new MetricValue(new InternalValueCount(subBucketName, subBucket.getDocCount(), Collections.emptyList(), metaData));
+                        final MetricValue metricValue = new MetricValue(subBucketName, subBucket.getDocCount());
                         addToSeries(seriesData, root, metricValue, subBucketName);
                         if (metricValue.hasValidValue() && threshold.getComparison().isExceeded(threshold.getValue(), metricValue.getValue())) {
                             exceededCount++;

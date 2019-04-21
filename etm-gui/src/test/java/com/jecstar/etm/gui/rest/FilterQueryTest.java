@@ -3,8 +3,9 @@ package com.jecstar.etm.gui.rest;
 import com.jecstar.etm.server.core.domain.QueryOccurrence;
 import com.jecstar.etm.server.core.domain.principal.FilterQuery;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
-import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.Test;
+
+import java.time.ZoneId;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -52,18 +53,18 @@ public class FilterQueryTest {
         assertFalse(fq1.equals(fq2));
 
         // Test with qb1 and a null timezone
-        qb1.timeZone((DateTimeZone) null);
+        qb1.timeZone((ZoneId) null);
         qb2.timeZone("Europe/Amsterdam");
         assertFalse(fq1.equals(fq2));
 
         // Test with qb2 and a null timezone
         qb1.timeZone("Europe/Amsterdam");
-        qb2.timeZone((DateTimeZone) null);
+        qb2.timeZone((ZoneId) null);
         assertFalse(fq1.equals(fq2));
 
         // Test with both zero
-        qb1.timeZone((DateTimeZone) null);
-        qb2.timeZone((DateTimeZone) null);
+        qb1.timeZone((ZoneId) null);
+        qb2.timeZone((ZoneId) null);
         assertFalse(fq1.equals(fq2));
 
         // Now test for equality
@@ -81,18 +82,18 @@ public class FilterQueryTest {
         assertTrue(fq1.equals(fq2));
 
         // Test with qb1 and a null timezone
-        qb1.timeZone((DateTimeZone) null);
+        qb1.timeZone((ZoneId) null);
         qb2.timeZone("Europe/Amsterdam");
         assertFalse(fq1.equals(fq2));
 
         // Test with qb2 and a null timezone
         qb1.timeZone("Europe/Amsterdam");
-        qb2.timeZone((DateTimeZone) null);
+        qb2.timeZone((ZoneId) null);
         assertFalse(fq1.equals(fq2));
 
         // Test with both zero
-        qb1.timeZone((DateTimeZone) null);
-        qb2.timeZone((DateTimeZone) null);
+        qb1.timeZone((ZoneId) null);
+        qb2.timeZone((ZoneId) null);
         assertTrue(fq1.equals(fq2));
     }
 }

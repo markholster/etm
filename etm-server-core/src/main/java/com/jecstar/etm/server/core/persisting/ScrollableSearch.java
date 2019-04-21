@@ -81,7 +81,7 @@ public class ScrollableSearch implements Iterable<SearchHit>, Iterator<SearchHit
         if (this.response == null) {
             executeSearch();
         }
-        return this.response.getHits().getTotalHits();
+        return this.response.getHits().getTotalHits().value;
     }
 
     private void executeSearch() {

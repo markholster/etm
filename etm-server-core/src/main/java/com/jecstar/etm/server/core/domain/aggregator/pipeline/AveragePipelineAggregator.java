@@ -1,7 +1,7 @@
 package com.jecstar.etm.server.core.domain.aggregator.pipeline;
 
-import org.elasticsearch.search.aggregations.pipeline.PipelineAggregatorBuilders;
-import org.elasticsearch.search.aggregations.pipeline.bucketmetrics.avg.AvgBucketPipelineAggregationBuilder;
+import org.elasticsearch.search.aggregations.PipelineAggregatorBuilders;
+import org.elasticsearch.search.aggregations.pipeline.AvgBucketPipelineAggregationBuilder;
 
 public class AveragePipelineAggregator extends PathBasedPipelineAggregator {
 

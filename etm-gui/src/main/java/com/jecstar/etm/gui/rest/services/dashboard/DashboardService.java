@@ -35,8 +35,6 @@ import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
 import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation.Bucket;
 import org.elasticsearch.search.aggregations.bucket.ParsedSingleBucketAggregation;
 import org.elasticsearch.search.aggregations.bucket.SingleBucketAggregation;
-import org.elasticsearch.search.aggregations.metrics.valuecount.InternalValueCount;
-import org.joda.time.DateTimeZone;
 
 import javax.annotation.security.DeclareRoles;
 import javax.annotation.security.RolesAllowed;
@@ -751,9 +749,7 @@ public class DashboardService extends AbstractUserAttributeService {
             final BucketKey bucketKey = new BucketKey(bucket);
             if (bucket.getAggregations().asList().size() == 0) {
                 String bucketName = multiBucketsAggregation.getMetaData().get(Aggregator.NAME) + "(" + bucket.getKey() + ")";
-                Map<String, Object> metaData = new HashMap<>();
-                metaData.put(Aggregator.NAME, bucketName);
-                final MetricValue metricValue = new MetricValue(new InternalValueCount(bucketName, bucket.getDocCount(), Collections.emptyList(), metaData));
+                final MetricValue metricValue = new MetricValue(bucketName, bucket.getDocCount());
                 addToSeries(seriesData, bucketKey, metricValue, bucketName);
             } else {
                 processAggregations(bucketKey, bucket, seriesData, "");
@@ -809,9 +805,7 @@ public class DashboardService extends AbstractUserAttributeService {
                 for (Bucket subBucket : multiBucketsAggregation.getBuckets()) {
                     final String subBucketName = name + "(" + subBucket.getKeyAsString() + ")";
                     if (subBucket.getAggregations().asList().size() == 0) {
-                        Map<String, Object> metaData = new HashMap<>();
-                        metaData.put(Aggregator.NAME, subBucketName);
-                        final MetricValue metricValue = new MetricValue(new InternalValueCount(subBucketName, subBucket.getDocCount(), Collections.emptyList(), metaData));
+                        final MetricValue metricValue = new MetricValue(subBucketName, subBucket.getDocCount());
                         addToSeries(seriesData, root, metricValue, subBucketName);
                     } else {
                         processAggregations(root, subBucket, seriesData, subBucketName);
@@ -863,7 +857,7 @@ public class DashboardService extends AbstractUserAttributeService {
         QueryStringQueryBuilder queryStringBuilder = new QueryStringQueryBuilder(data.getQuery())
                 .allowLeadingWildcard(true)
                 .analyzeWildcard(true)
-                .timeZone(DateTimeZone.forTimeZone(etmPrincipal.getTimeZone()));
+                .timeZone(etmPrincipal.getTimeZone().getID());
         queryStringBuilder.defaultField(ElasticsearchLayout.ETM_ALL_FIELDS_ATTRIBUTE_NAME);
 
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();

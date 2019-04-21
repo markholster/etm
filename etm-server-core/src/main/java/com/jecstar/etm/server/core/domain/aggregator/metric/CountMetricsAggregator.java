@@ -1,7 +1,7 @@
 package com.jecstar.etm.server.core.domain.aggregator.metric;
 
 import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.metrics.valuecount.ValueCountAggregationBuilder;
+import org.elasticsearch.search.aggregations.metrics.ValueCountAggregationBuilder;
 
 public class CountMetricsAggregator extends MetricsAggregator {
 

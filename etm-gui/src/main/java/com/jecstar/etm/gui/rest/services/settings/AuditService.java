@@ -18,7 +18,6 @@ import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.sort.SortOrder;
-import org.joda.time.DateTimeZone;
 
 import javax.annotation.security.DeclareRoles;
 import javax.annotation.security.RolesAllowed;
@@ -113,7 +112,7 @@ public class AuditService extends AbstractIndexMetadataService {
         result.append(",\"time_zone\": \"").append(etmPrincipal.getTimeZone().getID()).append("\"");
         result.append(",\"start_ix\": ").append(parameters.getStartIndex());
         result.append(",\"end_ix\": ").append(parameters.getStartIndex() + response.getHits().getHits().length - 1);
-        result.append(",\"has_more_results\": ").append(parameters.getStartIndex() + response.getHits().getHits().length < response.getHits().getTotalHits() - 1);
+        result.append(",\"has_more_results\": ").append(parameters.getStartIndex() + response.getHits().getHits().length < response.getHits().getTotalHits().value - 1);
         result.append(",\"time_zone\": \"").append(etmPrincipal.getTimeZone().getID()).append("\"");
         result.append(",\"results\": [");
         addSearchHits(result, response.getHits());
@@ -129,7 +128,7 @@ public class AuditService extends AbstractIndexMetadataService {
         QueryStringQueryBuilder queryStringBuilder = new QueryStringQueryBuilder(parameters.getQueryString()).allowLeadingWildcard(true)
                 .analyzeWildcard(true)
                 .defaultField(ElasticsearchLayout.ETM_ALL_FIELDS_ATTRIBUTE_NAME)
-                .timeZone(DateTimeZone.forTimeZone(etmPrincipal.getTimeZone()));
+                .timeZone(etmPrincipal.getTimeZone().getID());
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
         boolQueryBuilder.must(queryStringBuilder);
         boolQueryBuilder.filter(new RangeQueryBuilder("timestamp").lte(parameters.getNotAfterTimestamp()));

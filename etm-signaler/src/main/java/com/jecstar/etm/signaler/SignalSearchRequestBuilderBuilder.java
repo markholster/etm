@@ -20,7 +20,6 @@ import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramAggregationBuilder;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
-import org.joda.time.DateTimeZone;
 
 import java.time.Instant;
 import java.util.function.Function;
@@ -60,7 +59,7 @@ public class SignalSearchRequestBuilderBuilder {
                 .allowLeadingWildcard(true)
                 .analyzeWildcard(true);
         if (etmPrincipal != null) {
-            queryStringBuilder.timeZone(DateTimeZone.forTimeZone(etmPrincipal.getTimeZone()));
+            queryStringBuilder.timeZone(etmPrincipal.getTimeZone().getID());
         }
         queryStringBuilder.defaultField(ElasticsearchLayout.ETM_ALL_FIELDS_ATTRIBUTE_NAME);
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder().must(queryStringBuilder);

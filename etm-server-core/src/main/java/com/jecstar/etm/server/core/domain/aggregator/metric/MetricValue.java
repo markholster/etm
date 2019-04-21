@@ -2,8 +2,8 @@ package com.jecstar.etm.server.core.domain.aggregator.metric;
 
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.metrics.NumericMetricsAggregation;
-import org.elasticsearch.search.aggregations.metrics.percentiles.ParsedPercentileRanks;
-import org.elasticsearch.search.aggregations.metrics.percentiles.ParsedPercentiles;
+import org.elasticsearch.search.aggregations.metrics.ParsedPercentiles;
+import org.elasticsearch.search.aggregations.metrics.ParsedTDigestPercentileRanks;
 
 public class MetricValue {
 
@@ -12,8 +12,8 @@ public class MetricValue {
     private final double value;
 
     public MetricValue(Aggregation aggregation) {
-        if (aggregation instanceof ParsedPercentileRanks) {
-            ParsedPercentileRanks percentileRanks = (ParsedPercentileRanks) aggregation;
+        if (aggregation instanceof ParsedTDigestPercentileRanks) {
+            ParsedTDigestPercentileRanks percentileRanks = (ParsedTDigestPercentileRanks) aggregation;
             this.value = percentileRanks.iterator().next().getPercent();
         } else if (aggregation instanceof ParsedPercentiles) {
             ParsedPercentiles percentiles = (ParsedPercentiles) aggregation;
@@ -25,6 +25,12 @@ public class MetricValue {
             throw new IllegalArgumentException("'" + aggregation.getClass().getName() + "' is an invalid metric aggregator.");
         }
         this.name = (String) aggregation.getMetaData().get("name");
+        this.jsonValue = formatToDoubleValue(this.value);
+    }
+
+    public MetricValue(String name, double value) {
+        this.name = name;
+        this.value = value;
         this.jsonValue = formatToDoubleValue(this.value);
     }
 

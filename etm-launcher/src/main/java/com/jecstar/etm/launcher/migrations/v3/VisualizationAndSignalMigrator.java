@@ -62,7 +62,7 @@ public class VisualizationAndSignalMigrator extends AbstractEtmMigrator {
                         .minimumShouldMatch(1)
                 );
         SearchHits searchHits = dataRepository.search(builder).getHits();
-        return searchHits.totalHits != 0;
+        return searchHits.getTotalHits().value != 0;
     }
 
     @Override

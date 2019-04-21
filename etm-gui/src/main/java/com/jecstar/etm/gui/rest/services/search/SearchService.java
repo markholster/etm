@@ -46,7 +46,6 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
-import org.joda.time.DateTimeZone;
 
 import javax.annotation.security.DeclareRoles;
 import javax.annotation.security.RolesAllowed;
@@ -217,7 +216,7 @@ public class SearchService extends AbstractIndexMetadataService {
         result.append(",\"time_zone\": \"").append(etmPrincipal.getTimeZone().getID()).append("\"");
         result.append(",\"start_ix\": ").append(parameters.getStartIndex());
         result.append(",\"end_ix\": ").append(parameters.getStartIndex() + response.getHits().getHits().length - 1);
-        result.append(",\"has_more_results\": ").append(parameters.getStartIndex() + response.getHits().getHits().length < response.getHits().getTotalHits() - 1);
+        result.append(",\"has_more_results\": ").append(parameters.getStartIndex() + response.getHits().getHits().length < response.getHits().getTotalHits().value - 1);
         result.append(",\"time_zone\": \"").append(etmPrincipal.getTimeZone().getID()).append("\"");
         result.append(",\"max_downloads\": ").append(etmConfiguration.getMaxSearchResultDownloadRows());
         result.append(",\"may_see_payload\": ").append(payloadVisible);
@@ -248,7 +247,7 @@ public class SearchService extends AbstractIndexMetadataService {
             auditLogBuilder
                     .setUserQuery(parameters.getQueryString())
                     .setExectuedQuery(executedQuery)
-                    .setNumberOfResults(response.getHits().getTotalHits())
+                    .setNumberOfResults(response.getHits().getTotalHits().value)
                     .setQueryTime(queryTime);
             IndexRequestBuilder builder = enhanceRequest(
                     new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now), ElasticsearchLayout.ETM_DEFAULT_TYPE),
@@ -269,7 +268,7 @@ public class SearchService extends AbstractIndexMetadataService {
                 .allowLeadingWildcard(true)
                 .analyzeWildcard(true)
                 .defaultField(ElasticsearchLayout.ETM_ALL_FIELDS_ATTRIBUTE_NAME)
-                .timeZone(DateTimeZone.forTimeZone(etmPrincipal.getTimeZone()));
+                .timeZone(etmPrincipal.getTimeZone().getID());
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
         boolQueryBuilder.must(queryStringBuilder);
 

@@ -2,7 +2,7 @@ package com.jecstar.etm.server.core.domain.aggregator.metric;
 
 import com.jecstar.etm.server.core.converter.JsonField;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.metrics.percentiles.PercentileRanksAggregationBuilder;
+import org.elasticsearch.search.aggregations.metrics.PercentileRanksAggregationBuilder;
 
 public class PercentileRankMetricsAggregator extends FieldBasedMetricsAggregator {
 

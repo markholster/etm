@@ -277,7 +277,7 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
                 new ActionListener<SearchResponse>() {
                     @Override
                     public void onResponse(SearchResponse response) {
-                        eventsPersistedToday = response.getHits().getTotalHits();
+                        eventsPersistedToday = response.getHits().getTotalHits().value;
                     }
 
                     @Override

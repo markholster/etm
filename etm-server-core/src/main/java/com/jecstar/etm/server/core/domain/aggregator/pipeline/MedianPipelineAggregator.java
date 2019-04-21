@@ -1,7 +1,7 @@
 package com.jecstar.etm.server.core.domain.aggregator.pipeline;
 
-import org.elasticsearch.search.aggregations.pipeline.PipelineAggregatorBuilders;
-import org.elasticsearch.search.aggregations.pipeline.bucketmetrics.percentile.PercentilesBucketPipelineAggregationBuilder;
+import org.elasticsearch.search.aggregations.PipelineAggregatorBuilders;
+import org.elasticsearch.search.aggregations.pipeline.PercentilesBucketPipelineAggregationBuilder;
 
 public class MedianPipelineAggregator extends PathBasedPipelineAggregator {
 
@@ -21,6 +21,6 @@ public class MedianPipelineAggregator extends PathBasedPipelineAggregator {
 
     @Override
     public PercentilesBucketPipelineAggregationBuilder toAggregationBuilder() {
-        return PipelineAggregatorBuilders.percentilesBucket(getId(), getPath()).setMetaData(getMetadata()).percents(new double[]{50});
+        return PipelineAggregatorBuilders.percentilesBucket(getId(), getPath()).setMetaData(getMetadata()).setPercents(new double[]{50});
     }
 }

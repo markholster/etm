@@ -1,6 +1,6 @@
 ext {
-    version_elasticsearch = "6.6.0"
-    dep_junit = "junit:junit:4.12"
+    version_elasticsearch = "7.0.0"
+    version_junit = "5.4.0"
     dep_jsonPath = "com.jayway.jsonpath:json-path:2.4.0"
 }
 
@@ -12,5 +12,44 @@ allprojects {
 
     repositories {
         mavenCentral()
+    }
+
+    plugins.withType(JavaPlugin).whenPluginAdded {
+        compileJava {
+            sourceCompatibility = '11'
+            targetCompatibility = '11'
+            options.encoding = 'UTF-8'
+            options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+        }
+
+        compileTestJava {
+            sourceCompatibility = '11'
+            targetCompatibility = '11'
+            options.encoding = 'UTF-8'
+            options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+        }
+
+
+        dependencies {
+            testCompile 'org.junit.jupiter:junit-jupiter-api:' + version_junit
+            testImplementation 'org.junit.jupiter:junit-jupiter-api:' + version_junit
+            testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:' + version_junit
+            testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:' + version_junit
+        }
+
+        sourceSets.whenObjectAdded {
+            if ('integrationTest'.equals(it.name)) {
+                dependencies {
+                    integrationTestCompile 'org.junit.jupiter:junit-jupiter-api:' + version_junit
+                    integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api:' + version_junit
+                    integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:' + version_junit
+                    integrationTestRuntimeOnly 'org.junit.vintage:junit-vintage-engine:' + version_junit
+                }
+            }
+        }
+
+        test {
+            useJUnitPlatform()
+        }
     }
 }

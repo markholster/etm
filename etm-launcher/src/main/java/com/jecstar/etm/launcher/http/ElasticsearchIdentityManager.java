@@ -179,7 +179,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
                     .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getApiKeyTag(), apiKeyCredentials.getApiKey()))
                     .setSize(1)
             );
-            if (searchResponse.getHits().totalHits == 0) {
+            if (searchResponse.getHits().getTotalHits().value == 0) {
                 return null;
             }
             String docId = searchResponse.getHits().getAt(0).getId();

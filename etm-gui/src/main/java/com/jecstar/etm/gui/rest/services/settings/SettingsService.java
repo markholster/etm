@@ -1326,6 +1326,6 @@ public class SettingsService extends AbstractGuiService {
                 .setSize(0)
                 .setQuery(query);
         SearchResponse response = dataRepository.search(builder);
-        return response.getHits().getTotalHits();
+        return response.getHits().getTotalHits().value;
     }
 }

@@ -1,7 +1,7 @@
 package com.jecstar.etm.server.core.domain.aggregator.metric;
 
 import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.metrics.max.MaxAggregationBuilder;
+import org.elasticsearch.search.aggregations.metrics.MaxAggregationBuilder;
 
 public class MaxMetricsAggregator extends FieldBasedMetricsAggregator {
 

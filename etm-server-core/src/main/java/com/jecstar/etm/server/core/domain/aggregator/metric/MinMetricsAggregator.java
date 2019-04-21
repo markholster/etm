@@ -1,7 +1,7 @@
 package com.jecstar.etm.server.core.domain.aggregator.metric;
 
 import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.metrics.min.MinAggregationBuilder;
+import org.elasticsearch.search.aggregations.metrics.MinAggregationBuilder;
 
 public class MinMetricsAggregator extends FieldBasedMetricsAggregator {
 

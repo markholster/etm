@@ -1,7 +1,7 @@
 package com.jecstar.etm.server.core.domain.aggregator.metric;
 
 import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.metrics.mad.MedianAbsoluteDeviationAggregationBuilder;
+import org.elasticsearch.search.aggregations.metrics.MedianAbsoluteDeviationAggregationBuilder;
 
 public class MedianAbsoluteDeviationMetricsAggregator extends FieldBasedMetricsAggregator {
 

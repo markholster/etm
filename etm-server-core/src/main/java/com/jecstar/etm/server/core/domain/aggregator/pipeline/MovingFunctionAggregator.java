@@ -1,11 +1,10 @@
 package com.jecstar.etm.server.core.domain.aggregator.pipeline;
 
-
 import com.jecstar.etm.server.core.converter.JsonField;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
-import org.elasticsearch.search.aggregations.pipeline.PipelineAggregatorBuilders;
-import org.elasticsearch.search.aggregations.pipeline.movfn.MovFnPipelineAggregationBuilder;
+import org.elasticsearch.search.aggregations.PipelineAggregatorBuilders;
+import org.elasticsearch.search.aggregations.pipeline.MovFnPipelineAggregationBuilder;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -1,8 +1,7 @@
 package com.jecstar.etm.server.core.domain.aggregator.pipeline;
 
-
-import org.elasticsearch.search.aggregations.pipeline.PipelineAggregatorBuilders;
-import org.elasticsearch.search.aggregations.pipeline.cumulativesum.CumulativeSumPipelineAggregationBuilder;
+import org.elasticsearch.search.aggregations.PipelineAggregatorBuilders;
+import org.elasticsearch.search.aggregations.pipeline.CumulativeSumPipelineAggregationBuilder;
 
 public class CumulativeSumPipelineAggregator extends PathBasedPipelineAggregator {
 

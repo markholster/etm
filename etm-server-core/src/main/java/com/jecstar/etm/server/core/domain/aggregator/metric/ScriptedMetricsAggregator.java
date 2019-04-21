@@ -3,7 +3,7 @@ package com.jecstar.etm.server.core.domain.aggregator.metric;
 import com.jecstar.etm.server.core.converter.JsonField;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.metrics.scripted.ScriptedMetricAggregationBuilder;
+import org.elasticsearch.search.aggregations.metrics.ScriptedMetricAggregationBuilder;
 
 public class ScriptedMetricsAggregator extends MetricsAggregator {
 

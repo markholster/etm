@@ -1,7 +1,7 @@
 package com.jecstar.etm.server.core.domain.aggregator.metric;
 
 import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.metrics.sum.SumAggregationBuilder;
+import org.elasticsearch.search.aggregations.metrics.SumAggregationBuilder;
 
 public class SumMetricsAggregator extends FieldBasedMetricsAggregator {
 

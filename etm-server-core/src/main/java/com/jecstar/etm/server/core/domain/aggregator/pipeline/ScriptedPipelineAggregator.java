@@ -4,8 +4,8 @@ import com.jecstar.etm.server.core.converter.JsonField;
 import com.jecstar.etm.server.core.domain.aggregator.converter.ScriptParameterListConverter;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
-import org.elasticsearch.search.aggregations.pipeline.PipelineAggregatorBuilders;
-import org.elasticsearch.search.aggregations.pipeline.bucketscript.BucketScriptPipelineAggregationBuilder;
+import org.elasticsearch.search.aggregations.PipelineAggregatorBuilders;
+import org.elasticsearch.search.aggregations.pipeline.BucketScriptPipelineAggregationBuilder;
 
 import java.util.HashMap;
 import java.util.List;
