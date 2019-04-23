@@ -52,7 +52,7 @@ public class UserService extends AbstractGuiService {
     @Path("/settings")
     @Produces(MediaType.APPLICATION_JSON)
     public String getUserSettings() {
-        GetResponse getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId())
+        GetResponse getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId())
                 .setFetchSource(null, new String[]{
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + ".searchtemplates",
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + ".password_hash"}
@@ -93,7 +93,7 @@ public class UserService extends AbstractGuiService {
 
         updateMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, userObject);
         UpdateRequestBuilder builder = enhanceRequest(
-                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + etmPrincipal.getId()),
+                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + etmPrincipal.getId()),
                 etmConfiguration
         )
                 .setDoc(updateMap)
@@ -105,7 +105,7 @@ public class UserService extends AbstractGuiService {
             Map<String, Object> scriptParams = new HashMap<>();
             scriptParams.put("history_size", newHistorySize);
             dataRepository.updateAsync(enhanceRequest(
-                    new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId()),
+                    new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId()),
                     etmConfiguration
                     )
                             .setScript(new Script(ScriptType.STORED, null, "etm_update-search-history", scriptParams)),
@@ -151,7 +151,7 @@ public class UserService extends AbstractGuiService {
 
         updateMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, userObject);
         UpdateRequestBuilder builder = enhanceRequest(
-                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId()),
+                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId()),
                 etmConfiguration
         )
                 .setDoc(updateMap)

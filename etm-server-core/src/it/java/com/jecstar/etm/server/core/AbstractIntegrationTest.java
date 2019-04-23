@@ -53,14 +53,14 @@ public abstract class AbstractIntegrationTest {
         }
     }
 
-    protected GetResponse waitFor(String index, String type, String id) throws InterruptedException {
-        return waitFor(index, type, id, null);
+    protected GetResponse waitFor(String index, String id) throws InterruptedException {
+        return waitFor(index, id, null);
     }
 
-    protected GetResponse waitFor(String index, String type, String id, Long version) throws InterruptedException {
+    protected GetResponse waitFor(String index, String id, Long version) throws InterruptedException {
         long startTime = System.currentTimeMillis();
         do {
-            GetResponse getResponse = this.dataRepository.get(new GetRequestBuilder(index, type, id));
+            GetResponse getResponse = this.dataRepository.get(new GetRequestBuilder(index, id));
             if (getResponse.isExists()) {
                 if (version == null || getResponse.getVersion() == version) {
                     return getResponse;
@@ -73,7 +73,7 @@ public abstract class AbstractIntegrationTest {
                 throw new InterruptedException();
             }
         } while (System.currentTimeMillis() - startTime < 10_000);
-        throw new NoSuchEventException(index, type, id, version);
+        throw new NoSuchEventException(index, id, version);
     }
 
 }

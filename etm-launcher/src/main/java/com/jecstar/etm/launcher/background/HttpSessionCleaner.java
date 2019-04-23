@@ -40,7 +40,7 @@ public class HttpSessionCleaner extends AbstractJsonService implements Runnable 
         try {
             // Not using a delete by query because it isn't able to delete in a certain type (by the Java api) and cannot delete documents with version equals to zero.
             SearchRequestBuilder searchRequestBuilder = enhanceRequest(
-                    new SearchRequestBuilder().setIndices(ElasticsearchLayout.STATE_INDEX_NAME).setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE),
+                    new SearchRequestBuilder().setIndices(ElasticsearchLayout.STATE_INDEX_NAME),
                     etmConfiguration
             )
                     .setFetchSource(false)
@@ -63,7 +63,7 @@ public class HttpSessionCleaner extends AbstractJsonService implements Runnable 
                 }
                 bulkRequestBuilder.add(
                         enhanceRequest(
-                                new DeleteRequestBuilder(searchHit.getIndex(), searchHit.getType(), searchHit.getId()),
+                                new DeleteRequestBuilder(searchHit.getIndex(), searchHit.getId()),
                                 etmConfiguration
                         ).build()
                 );

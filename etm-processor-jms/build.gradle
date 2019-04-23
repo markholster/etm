@@ -1,5 +1,6 @@
-apply plugin: 'java'
-
+plugins {
+    id 'java'
+}
 dependencies {
     compile project(":etm-processor"), dep_jms
     testCompile dep_artemisJmsClient,

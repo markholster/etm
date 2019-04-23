@@ -105,28 +105,24 @@ public class DashboardService extends AbstractUserAttributeService {
         result.append("{ \"keywords\":[");
         boolean first = true;
         for (String indexName : datasources) {
-            Map<String, List<Keyword>> names = getIndexFields(dataRepository, indexName);
-            Set<Entry<String, List<Keyword>>> entries = names.entrySet();
-            for (Entry<String, List<Keyword>> entry : entries) {
-                if (!first) {
-                    result.append(", ");
-                }
-                first = false;
-                result.append("{");
-                result.append("\"index\": ").append(escapeToJson(indexName, true)).append(",");
-                result.append("\"type\": ").append(escapeToJson(entry.getKey(), true)).append(",");
-                result.append("\"keywords\": [").append(entry.getValue().stream().map(n -> {
-                    StringBuilder kw = new StringBuilder();
-                    kw.append("{");
-                    addStringElementToJsonBuffer("name", n.getName(), kw, true);
-                    addStringElementToJsonBuffer("type", n.getType(), kw, false);
-                    addBooleanElementToJsonBuffer("date", n.isDate(), kw, false);
-                    addBooleanElementToJsonBuffer("number", n.isNumber(), kw, false);
-                    kw.append("}");
-                    return kw.toString();
-                }).collect(Collectors.joining(", "))).append("]");
-                result.append("}");
+            List<Keyword> keywords = getIndexFields(dataRepository, indexName);
+            if (!first) {
+                result.append(", ");
             }
+            first = false;
+            result.append("{");
+            result.append("\"index\": ").append(escapeToJson(indexName, true)).append(",");
+            result.append("\"keywords\": [").append(keywords.stream().map(n -> {
+                StringBuilder kw = new StringBuilder();
+                kw.append("{");
+                addStringElementToJsonBuffer("name", n.getName(), kw, true);
+                addStringElementToJsonBuffer("type", n.getType(), kw, false);
+                addBooleanElementToJsonBuffer("date", n.isDate(), kw, false);
+                addBooleanElementToJsonBuffer("number", n.isNumber(), kw, false);
+                kw.append("}");
+                return kw.toString();
+            }).collect(Collectors.joining(", "))).append("]");
+            result.append("}");
         }
         result.append("]}");
         return result.toString();

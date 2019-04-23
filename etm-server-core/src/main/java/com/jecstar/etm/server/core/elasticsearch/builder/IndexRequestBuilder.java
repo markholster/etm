@@ -7,7 +7,7 @@ import org.elasticsearch.common.xcontent.XContentType;
 
 import java.util.Map;
 
-public class IndexRequestBuilder extends AbstractBuilder<IndexRequest> {
+public class IndexRequestBuilder extends AbstractActionRequestBuilder<IndexRequest> {
 
     private final IndexRequest request;
 
@@ -19,21 +19,13 @@ public class IndexRequestBuilder extends AbstractBuilder<IndexRequest> {
         this.request = new IndexRequest(index);
     }
 
-    public IndexRequestBuilder(String index, String type) {
-        this.request = new IndexRequest(index, type);
-    }
 
-    public IndexRequestBuilder(String index, String type, String id) {
-        this.request = new IndexRequest(index, type, id);
+    public IndexRequestBuilder(String index, String id) {
+        this.request = new IndexRequest(index).id(id);
     }
 
     public IndexRequestBuilder setIndex(String index) {
         this.request.index(index);
-        return this;
-    }
-
-    public IndexRequestBuilder setType(String type) {
-        this.request.type(type);
         return this;
     }
 

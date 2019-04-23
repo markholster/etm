@@ -11,12 +11,7 @@ import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.cluster.storedscripts.GetStoredScriptResponse;
-import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.flush.FlushResponse;
-import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
-import org.elasticsearch.action.admin.indices.mapping.get.GetFieldMappingsResponse;
-import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
-import org.elasticsearch.action.admin.indices.template.get.GetIndexTemplatesResponse;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetResponse;
@@ -27,6 +22,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.*;
+import org.elasticsearch.client.indices.*;
 import org.elasticsearch.client.sniff.Sniffer;
 import org.elasticsearch.rest.RestStatus;
 
@@ -43,7 +39,7 @@ public class DataRepository {
 
     private final IndicesStatsResponseConverter indicesStatsResponseConverter = new IndicesStatsResponseConverter();
 
-    private static final ActionListener<Object> NOOP_ACTION_LISTENER = new ActionListener<Object>() {
+    private static final ActionListener<Object> NOOP_ACTION_LISTENER = new ActionListener<>() {
 
         @Override
         public void onResponse(Object response) {
@@ -215,7 +211,7 @@ public class DataRepository {
 
     public GetIndexTemplatesResponse indicesGetTemplate(GetIndexTemplateRequestBuilder builder) {
         try {
-            return this.client.indices().getTemplate(builder.build(), RequestOptions.DEFAULT);
+            return this.client.indices().getIndexTemplate(builder.build(), RequestOptions.DEFAULT);
         } catch (IOException e) {
             throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
         }

@@ -58,7 +58,7 @@ class ElasticsearchSessionManager implements SessionManager {
         int count = 0;
         while (sessionId == null) {
             sessionId = createSessionId();
-            GetResponse getResponse = this.dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.STATE_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE,
+            GetResponse getResponse = this.dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.STATE_INDEX_NAME,
                     ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION_ID_PREFIX + hashSessionId(sessionId))
                     .setFetchSource(false));
             if (getResponse.isExists()) {
@@ -97,7 +97,7 @@ class ElasticsearchSessionManager implements SessionManager {
         if (sessionId == null) {
             return null;
         }
-        GetResponse getResponse = this.dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.STATE_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE,
+        GetResponse getResponse = this.dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.STATE_INDEX_NAME,
                 ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION_ID_PREFIX + hashSessionId(sessionId))
                 .setFetchSource(true));
         if (!getResponse.isExists()) {
@@ -152,7 +152,7 @@ class ElasticsearchSessionManager implements SessionManager {
     }
 
     void persistSession(ElasticsearchSession session) {
-        IndexRequestBuilder builder = new IndexRequestBuilder(ElasticsearchLayout.STATE_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE,
+        IndexRequestBuilder builder = new IndexRequestBuilder(ElasticsearchLayout.STATE_INDEX_NAME,
                 ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION_ID_PREFIX + hashSessionId(session.getId()))
                 .setSource(this.converter.write(session), XContentType.JSON)
                 .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
@@ -161,7 +161,7 @@ class ElasticsearchSessionManager implements SessionManager {
     }
 
     void removeSession(ElasticsearchSession session) {
-        DeleteRequestBuilder builder = new DeleteRequestBuilder(ElasticsearchLayout.STATE_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE,
+        DeleteRequestBuilder builder = new DeleteRequestBuilder(ElasticsearchLayout.STATE_INDEX_NAME,
                 ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION_ID_PREFIX + hashSessionId(session.getId()))
                 .setTimeout(TimeValue.timeValueMillis(this.etmConfiguration.getQueryTimeout()))
                 .setWaitForActiveShards(getActiveShardCount(this.etmConfiguration));
@@ -173,18 +173,18 @@ class ElasticsearchSessionManager implements SessionManager {
     }
 
     void changeSessionId(String oldId, String newId) {
-        GetResponse getResponse = this.dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.STATE_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE,
+        GetResponse getResponse = this.dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.STATE_INDEX_NAME,
                 ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION_ID_PREFIX + hashSessionId(oldId))
                 .setFetchSource(true));
         if (getResponse.isExists()) {
-            IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(ElasticsearchLayout.STATE_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE,
+            IndexRequestBuilder indexRequestBuilder = new IndexRequestBuilder(ElasticsearchLayout.STATE_INDEX_NAME,
                     ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION_ID_PREFIX + hashSessionId(newId))
                     .setSource(getResponse.getSource())
                     .setTimeout(TimeValue.timeValueMillis(this.etmConfiguration.getQueryTimeout()))
                     .setWaitForActiveShards(getActiveShardCount(this.etmConfiguration));
             this.dataRepository.index(indexRequestBuilder);
 
-            DeleteRequestBuilder deleteRequestBuilder = new DeleteRequestBuilder(ElasticsearchLayout.STATE_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE,
+            DeleteRequestBuilder deleteRequestBuilder = new DeleteRequestBuilder(ElasticsearchLayout.STATE_INDEX_NAME,
                     ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION_ID_PREFIX + hashSessionId(oldId))
                     .setTimeout(TimeValue.timeValueMillis(this.etmConfiguration.getQueryTimeout()))
                     .setWaitForActiveShards(getActiveShardCount(this.etmConfiguration));

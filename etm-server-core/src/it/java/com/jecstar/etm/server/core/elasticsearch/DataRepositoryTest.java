@@ -31,10 +31,10 @@ public class DataRepositoryTest extends AbstractIntegrationTest {
         DataRepository dataRepository = new DataRepository(rc);
 
 
-        rc.index(new IndexRequest("test", "_doc", "id").source("{\"hello\": \"mark\"}", XContentType.JSON), RequestOptions.DEFAULT);
-        waitFor("test", "_doc", "id");
+        rc.index(new IndexRequest("test").id("id").source("{\"hello\": \"mark\"}", XContentType.JSON), RequestOptions.DEFAULT);
+        waitFor("test", "id");
         try {
-            rc.update(new UpdateRequest("test", "_doc", "id").version(100).doc("{\"doc\": {\"hello\": \"mark2\"}}", XContentType.JSON), RequestOptions.DEFAULT);
+            rc.update(new UpdateRequest("test", "id").version(100).doc("{\"doc\": {\"hello\": \"mark2\"}}", XContentType.JSON), RequestOptions.DEFAULT);
             fail("ElasticsearchStatusException not thrown. com.jecstar.etm.signaler.Signaler needs to be adjusted to this new exception.");
         } catch (ElasticsearchStatusException e) {
             assertEquals(RestStatus.CONFLICT, e.status());

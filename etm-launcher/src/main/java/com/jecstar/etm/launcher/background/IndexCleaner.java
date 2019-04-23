@@ -1,6 +1,5 @@
 package com.jecstar.etm.launcher.background;
 
-import com.jecstar.etm.launcher.migrations.MultiTypeDetector;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
@@ -42,7 +41,6 @@ public class IndexCleaner implements Runnable {
                 return;
             }
             cleanupIndex(ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL, this.etmConfiguration.getMaxAuditLogIndexCount());
-            new MultiTypeDetector().detect(this.dataRepository);
         } catch (Exception e) {
             if (log.isErrorLevelEnabled()) {
                 log.logErrorMessage("Failed to clean indices", e);

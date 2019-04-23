@@ -4,12 +4,12 @@ import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.common.unit.TimeValue;
 
-public class DeleteRequestBuilder extends AbstractBuilder<DeleteRequest> {
+public class DeleteRequestBuilder extends AbstractActionRequestBuilder<DeleteRequest> {
 
     private final DeleteRequest request;
 
-    public DeleteRequestBuilder(String index, String type, String id) {
-        this.request = new DeleteRequest(index, type, id);
+    public DeleteRequestBuilder(String index, String id) {
+        this.request = new DeleteRequest(index, id);
     }
 
     public DeleteRequestBuilder setWaitForActiveShards(ActiveShardCount activeShardCount) {

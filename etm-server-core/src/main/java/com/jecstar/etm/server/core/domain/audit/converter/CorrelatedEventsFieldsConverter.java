@@ -6,24 +6,22 @@ import com.jecstar.etm.server.core.domain.audit.GetEventAuditLog;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 
 import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
-public class CorrelatedEventsFieldsConverter implements CustomFieldConverter<Map<String, Object>> {
+public class CorrelatedEventsFieldsConverter implements CustomFieldConverter<Set<String>> {
 
     private final JsonConverter jsonConverter = new JsonConverter();
 
     @Override
-    public boolean addToJsonBuffer(String jsonKey, Map<String, Object> value, StringBuilder buffer, boolean firstElement) {
+    public boolean addToJsonBuffer(String jsonKey, Set<String> value, StringBuilder buffer, boolean firstElement) {
         if (value != null && value.size() > 0) {
             if (!firstElement) {
                 buffer.append(",");
             }
             buffer.append(this.jsonConverter.escapeToJson(jsonKey, true)).append(": [");
-            buffer.append(value.entrySet().stream()
-                    .map(c -> "{" + this.jsonConverter.escapeObjectToJsonNameValuePair(GetEventAuditLog.EVENT_ID, c.getKey()) + "," + this.jsonConverter.escapeObjectToJsonNameValuePair(GetEventAuditLog.EVENT_TYPE, c.getValue()) + "}")
+            buffer.append(value.stream()
+                    .map(c -> this.jsonConverter.escapeToJson(c, true))
                     .collect(Collectors.joining(","))
             );
             buffer.append("]");
@@ -38,16 +36,15 @@ public class CorrelatedEventsFieldsConverter implements CustomFieldConverter<Map
         if (jsonValue == null) {
             return;
         }
-        Map<String, Object> result = new HashMap<>();
-        List<Map<String, Object>> valueList = (List<Map<String, Object>>) jsonValue;
-        for (Map<String, Object> value : valueList) {
-            String key = value.keySet().iterator().next();
-            result.put(key, value.get(key));
+        Set<String> result = new HashSet<>();
+        List<String> valueList = (List<String>) jsonValue;
+        if (valueList != null) {
+            result.addAll(valueList);
         }
         if (result.size() > 0) {
             try {
-                Map<String, Object> currentValue = (Map<String, Object>) field.get(entity);
-                currentValue.putAll(result);
+                Set<String> currentValue = (Set<String>) field.get(entity);
+                currentValue.addAll(result);
             } catch (IllegalAccessException e) {
                 throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
             }

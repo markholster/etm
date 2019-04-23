@@ -5,7 +5,7 @@ import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.action.update.UpdateRequest;
 
-public class BulkRequestBuilder extends AbstractBuilder<BulkRequest> {
+public class BulkRequestBuilder extends AbstractActionRequestBuilder<BulkRequest> {
 
     private final BulkRequest request = new BulkRequest();
 

@@ -2,7 +2,7 @@ package com.jecstar.etm.server.core.elasticsearch.builder;
 
 import org.elasticsearch.action.search.ClearScrollRequest;
 
-public class ClearScrollRequestBuilder extends AbstractBuilder<ClearScrollRequest> {
+public class ClearScrollRequestBuilder extends AbstractActionRequestBuilder<ClearScrollRequest> {
 
     private final ClearScrollRequest request = new ClearScrollRequest();
 

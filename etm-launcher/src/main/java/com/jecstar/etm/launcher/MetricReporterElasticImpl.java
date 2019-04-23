@@ -79,7 +79,7 @@ class MetricReporterElasticImpl extends ScheduledReporter {
 
         try (StringWriter sw = new StringWriter()) {
             objectMapper.writeValue(sw, root);
-            this.dataRepository.index(new IndexRequestBuilder(getElasticIndexName(now), ElasticsearchLayout.ETM_DEFAULT_TYPE)
+            this.dataRepository.index(new IndexRequestBuilder(getElasticIndexName(now))
                     .setWaitForActiveShards(ActiveShardCount.ONE)
                     .setSource(sw.toString(), XContentType.JSON));
         } catch (IOException e) {

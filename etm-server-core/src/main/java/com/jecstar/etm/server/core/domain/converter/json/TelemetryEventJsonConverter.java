@@ -4,7 +4,8 @@ import com.jecstar.etm.domain.*;
 import com.jecstar.etm.domain.writer.TelemetryEventTags;
 import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
 import com.jecstar.etm.server.core.domain.converter.PayloadDecoder;
-import com.jecstar.etm.server.core.util.LegacyEndpointHandler;
+import com.jecstar.etm.server.core.logging.LogFactory;
+import com.jecstar.etm.server.core.logging.LogWrapper;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -17,6 +18,11 @@ import java.util.Map;
  * @param <Event>
  */
 class TelemetryEventJsonConverter<Event extends TelemetryEvent<Event>> extends JsonConverter {
+
+    /**
+     * The <code>LogWrapper</code> for this class.
+     */
+    private static final LogWrapper log = LogFactory.getLogger(TelemetryEventJsonConverter.class);
 
     private final TelemetryEventTags tags = new TelemetryEventTagsJsonImpl();
     private final PayloadDecoder payloadDecoder = new PayloadDecoder();
@@ -48,10 +54,10 @@ class TelemetryEventJsonConverter<Event extends TelemetryEvent<Event>> extends J
                 if (endpointHandlers != null) {
                     for (Map<String, Object> eh : endpointHandlers) {
                         EndpointHandler endpointHandler = createEndpointFormValueMapHandler(eh);
-                        endpoint.addEndpointHandler(endpointHandler);
+                        if (endpointHandler != null) {
+                            endpoint.addEndpointHandler(endpointHandler);
+                        }
                     }
-                } else {
-                    addLegacyHandlers(endpoint, endpointMap);
                 }
                 telemetryEvent.endpoints.add(endpoint);
             }
@@ -69,24 +75,6 @@ class TelemetryEventJsonConverter<Event extends TelemetryEvent<Event>> extends J
         telemetryEvent.payloadFormat = PayloadFormat.safeValueOf(getString(this.tags.getPayloadFormatTag(), valueMap));
     }
 
-    @LegacyEndpointHandler("Method must be removed")
-    private void addLegacyHandlers(Endpoint endpoint, Map<String, Object> endpointMap) {
-        List<Map<String, Object>> endpointHandlers = getArray("reading_endpoint_handlers", endpointMap);
-        if (endpointHandlers != null) {
-            for (Map<String, Object> eh : endpointHandlers) {
-                EndpointHandler endpointHandler = createEndpointFormValueMapHandler(eh);
-                endpointHandler.type = EndpointHandler.EndpointHandlerType.READER;
-                endpoint.addEndpointHandler(endpointHandler);
-            }
-        }
-        Map<String, Object> eh = getObject("writing_endpoint_handler", endpointMap);
-        if (eh != null) {
-            EndpointHandler endpointHandler = createEndpointFormValueMapHandler(eh);
-            endpointHandler.type = EndpointHandler.EndpointHandlerType.WRITER;
-            endpoint.addEndpointHandler(endpointHandler);
-        }
-    }
-
     private EndpointHandler createEndpointFormValueMapHandler(Map<String, Object> valueMap) {
         if (valueMap.isEmpty()) {
             return null;
@@ -101,17 +89,26 @@ class TelemetryEventJsonConverter<Event extends TelemetryEvent<Event>> extends J
                 try {
                     address = InetAddress.getByName(stringHostAddress).getAddress();
                 } catch (UnknownHostException e) {
+                    if (log.isDebugLevelEnabled()) {
+                        log.logDebugMessage(e.getMessage(), e);
+                    }
                 }
                 if (address != null) {
                     if (hostName != null) {
                         try {
                             endpointHandler.application.hostAddress = InetAddress.getByAddress(hostName, address);
                         } catch (UnknownHostException e) {
+                            if (log.isDebugLevelEnabled()) {
+                                log.logDebugMessage(e.getMessage(), e);
+                            }
                         }
                     } else {
                         try {
                             endpointHandler.application.hostAddress = InetAddress.getByAddress(address);
                         } catch (UnknownHostException e) {
+                            if (log.isDebugLevelEnabled()) {
+                                log.logDebugMessage(e.getMessage(), e);
+                            }
                         }
                     }
                 }
@@ -119,6 +116,9 @@ class TelemetryEventJsonConverter<Event extends TelemetryEvent<Event>> extends J
                 try {
                     endpointHandler.application.hostAddress = InetAddress.getByName(hostName);
                 } catch (UnknownHostException e) {
+                    if (log.isDebugLevelEnabled()) {
+                        log.logDebugMessage(e.getMessage(), e);
+                    }
                 }
             }
             endpointHandler.application.instance = getString(this.tags.getApplicationInstanceTag(), applicationValueMap);

@@ -57,7 +57,6 @@ public class LdapSynchronizer extends AbstractJsonService implements Runnable {
         }
         try {
             SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
-                    .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                     .setFetchSource(new String[]{
                             ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.tags.getIdTag(),
                             ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.tags.getNameTag(),
@@ -87,7 +86,7 @@ public class LdapSynchronizer extends AbstractJsonService implements Runnable {
                         log.logInfoMessage("User with id '" + userId + "' no longer found in LDAP directory. Removing user.");
                     }
                     this.dataRepository.delete(enhanceRequest(
-                            new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId),
+                            new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId),
                             etmConfiguration
                     ));
                 } else {
@@ -125,7 +124,7 @@ public class LdapSynchronizer extends AbstractJsonService implements Runnable {
             userObject.put(this.tags.getEmailTag(), ldapPrincipal.getEmailAddress());
             updateMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, userObject);
             this.dataRepository.update(enhanceRequest(
-                    new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + ldapPrincipal.getId()),
+                    new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + ldapPrincipal.getId()),
                     etmConfiguration
                     )
                     .setDoc(updateMap)

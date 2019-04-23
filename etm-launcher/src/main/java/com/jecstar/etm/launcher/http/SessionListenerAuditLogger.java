@@ -37,8 +37,7 @@ class SessionListenerAuditLogger implements SessionListener {
         Instant now = Instant.now();
         LogoutAuditLogBuilder auditLogBuilder = new LogoutAuditLogBuilder().setTimestamp(now).setHandlingTime(now)
                 .setPrincipalId(id).setExpired(expired);
-        dataRepository.indexAsync(new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now),
-                ElasticsearchLayout.ETM_DEFAULT_TYPE)
+        dataRepository.indexAsync(new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now))
                         .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
                         .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
                         .setSource(this.auditLogConverter.write(auditLogBuilder.build()), XContentType.JSON)
@@ -75,13 +74,11 @@ class SessionListenerAuditLogger implements SessionListener {
         }
         switch (reason) {
             case INVALIDATED:
+            case UNDEPLOY:
                 logLogout(id, false);
                 break;
             case TIMEOUT:
                 logLogout(id, true);
-                break;
-            case UNDEPLOY:
-                logLogout(id, false);
                 break;
         }
     }

@@ -5,10 +5,8 @@ import com.jecstar.etm.domain.HttpTelemetryEvent;
 import com.jecstar.etm.domain.MessagingTelemetryEvent;
 import com.jecstar.etm.domain.writer.TelemetryEventTags;
 import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
-import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
-import com.jecstar.etm.server.core.util.LegacyEndpointHandler;
 import org.elasticsearch.search.SearchHit;
 
 import java.math.BigDecimal;
@@ -57,7 +55,6 @@ public class EventChain {
                                 + ",\"dataLabels\": {\"enabled\": " + (this.events.get(i).absoluteTransactionPercentage != null ? "true" : "false") + "}"
                                 + ",\"event_time\": " + this.jsonConverter.escapeToJson(this.events.get(i).getTotalEventTime() != null ? etmPrincipal.getNumberFormat().format(this.events.get(i).getTotalEventTime().toMillis()) : null, true)
                                 + ",\"event_id\": " + this.jsonConverter.escapeToJson(this.events.get(i).id, true)
-                                + ",\"event_type\": " + this.jsonConverter.escapeToJson(this.events.get(i).type, true)
                                 + ",\"endpoint\": " + this.jsonConverter.escapeToJson(this.events.get(i).endpoint, true)
                                 + ",\"application\": " + this.jsonConverter.escapeToJson(this.events.get(i).applicationName, true)
                                 + ",\"transaction_id\": " + this.jsonConverter.escapeToJson(this.events.get(i).transactionId, true) + "}")
@@ -129,7 +126,6 @@ public class EventChain {
         this.transactionIds.add(transactionId);
     }
 
-    @LegacyEndpointHandler("Remove extraction of reading- and writing endpoint handlers")
     public Set<String> addSearchHit(SearchHit searchHit) {
         if (this.eventIds.contains(searchHit.getId())) {
             return Collections.emptySet();
@@ -178,56 +174,7 @@ public class EventChain {
                         if (appMap != null) {
                             appName = this.jsonConverter.getString(this.eventTags.getApplicationNameTag(), appMap);
                         }
-                        this.events.add(new Event(searchHit.getId(), searchHit.getType(), transactionId, endpointName, eventName, appName, writer, startTime, endTime, async));
-                    }
-                }
-            } else {
-                Map<String, Object> weh = this.jsonConverter.getObject("writing_endpoint_handler", endpoint);
-                if (weh != null) {
-                    String transactionId = this.jsonConverter.getString(this.eventTags.getEndpointHandlerTransactionIdTag(), weh);
-                    if (transactionId != null) {
-                        transactionIds.add(transactionId);
-                    }
-                    if (!response) {
-                        Long responseTime = this.jsonConverter.getLong(this.eventTags.getEndpointHandlerResponseTimeTag(), weh);
-                        Instant startTime = this.jsonConverter.getInstant(this.eventTags.getEndpointHandlerHandlingTimeTag(), weh);
-                        Instant endTime = null;
-                        if (responseTime != null) {
-                            endTime = startTime.plusMillis(responseTime);
-                        } else if (expiry != null) {
-                            endTime = expiry;
-                        }
-                        String appName = null;
-                        Map<String, Object> appMap = this.jsonConverter.getObject(this.eventTags.getEndpointHandlerApplicationTag(), weh);
-                        if (appMap != null) {
-                            appName = this.jsonConverter.getString(this.eventTags.getApplicationNameTag(), appMap);
-                        }
-                        this.events.add(new Event(searchHit.getId(), searchHit.getType(), transactionId, endpointName, eventName, appName, true, startTime, endTime, async));
-                    }
-                }
-                List<Map<String, Object>> readingEndpointHandlers = this.jsonConverter.getArray("reading_endpoint_handlers", endpoint);
-                if (readingEndpointHandlers != null) {
-                    for (Map<String, Object> reh : readingEndpointHandlers) {
-                        String transactionId = this.jsonConverter.getString(this.eventTags.getEndpointHandlerTransactionIdTag(), reh);
-                        if (!response) {
-                            Long responseTime = this.jsonConverter.getLong(this.eventTags.getEndpointHandlerResponseTimeTag(), reh);
-                            Instant startTime = this.jsonConverter.getInstant(this.eventTags.getEndpointHandlerHandlingTimeTag(), reh);
-                            Instant endTime = null;
-                            if (responseTime != null) {
-                                endTime = startTime.plusMillis(responseTime);
-                            } else if (expiry != null) {
-                                endTime = expiry;
-                            }
-                            String appName = null;
-                            Map<String, Object> appMap = this.jsonConverter.getObject(this.eventTags.getEndpointHandlerApplicationTag(), reh);
-                            if (appMap != null) {
-                                appName = this.jsonConverter.getString(this.eventTags.getApplicationNameTag(), appMap);
-                            }
-                            this.events.add(new Event(searchHit.getId(), searchHit.getType(), transactionId, endpointName, eventName, appName, false, startTime, endTime, async));
-                        }
-                        if (transactionId != null) {
-                            transactionIds.add(transactionId);
-                        }
+                        this.events.add(new Event(searchHit.getId(), transactionId, endpointName, eventName, appName, writer, startTime, endTime, async));
                     }
                 }
             }
@@ -253,17 +200,12 @@ public class EventChain {
         if (searchHit == null) {
             return null;
         }
-        if (ElasticsearchLayout.ETM_DEFAULT_TYPE.equals(searchHit.getType())) {
-            return this.jsonConverter.getString(this.eventTags.getObjectTypeTag(), searchHit.getSourceAsMap());
-        } else {
-            return searchHit.getType();
-        }
+        return this.jsonConverter.getString(this.eventTags.getObjectTypeTag(), searchHit.getSourceAsMap());
     }
 
     private class Event {
 
         private final String id;
-        private final String type;
         private final String transactionId;
         private final String endpoint;
         private final String name;
@@ -275,9 +217,8 @@ public class EventChain {
         private final boolean writer;
         private BigDecimal absoluteTransactionPercentage;
 
-        private Event(String id, String type, String transactionId, String endpoint, String name, String applicationName, boolean writer, Instant startTime, Instant endTime, boolean async) {
+        private Event(String id, String transactionId, String endpoint, String name, String applicationName, boolean writer, Instant startTime, Instant endTime, boolean async) {
             this.id = id;
-            this.type = type;
             this.transactionId = transactionId;
             this.endpoint = endpoint;
             this.name = name + (writer ? " (sent)" : " (received)");

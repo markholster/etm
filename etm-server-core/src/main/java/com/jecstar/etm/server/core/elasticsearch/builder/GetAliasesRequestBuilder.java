@@ -2,7 +2,7 @@ package com.jecstar.etm.server.core.elasticsearch.builder;
 
 import org.elasticsearch.action.admin.indices.alias.get.GetAliasesRequest;
 
-public class GetAliasesRequestBuilder extends AbstractBuilder<GetAliasesRequest> {
+public class GetAliasesRequestBuilder extends AbstractActionRequestBuilder<GetAliasesRequest> {
 
     private final GetAliasesRequest request = new GetAliasesRequest();
 

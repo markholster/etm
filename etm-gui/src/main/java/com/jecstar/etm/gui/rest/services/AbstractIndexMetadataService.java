@@ -1,15 +1,12 @@
 package com.jecstar.etm.gui.rest.services;
 
-import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 import com.jecstar.etm.gui.rest.AbstractGuiService;
-import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.elasticsearch.builder.GetFieldMappingsRequestBuilder;
 import com.jecstar.etm.server.core.elasticsearch.builder.GetMappingsRequestBuilder;
-import org.elasticsearch.action.admin.indices.mapping.get.GetFieldMappingsResponse;
-import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
+import org.elasticsearch.client.indices.GetFieldMappingsResponse;
+import org.elasticsearch.client.indices.GetMappingsResponse;
 import org.elasticsearch.cluster.metadata.MappingMetaData;
-import org.elasticsearch.common.collect.ImmutableOpenMap;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -25,41 +22,24 @@ public abstract class AbstractIndexMetadataService extends AbstractGuiService {
     };
 
     /**
-     * Gives a list of fields of an index per index type.
+     * Gives a list of fields of an index.
      *
      * @param dataRepository    The <code>DataRepository</code>.
      * @param indexName         The name of the index to find the keywords for.
      * @return
      */
-    protected Map<String, List<Keyword>> getIndexFields(DataRepository dataRepository, String indexName) {
-        Map<String, List<Keyword>> names = new HashMap<>();
+    protected List<Keyword> getIndexFields(DataRepository dataRepository, String indexName) {
+        List<Keyword> keywords = new ArrayList<>();
         GetMappingsResponse mappingsResponse = dataRepository.indicesGetMappings(new GetMappingsRequestBuilder().setIndices(indexName));
-        ImmutableOpenMap<String, ImmutableOpenMap<String, MappingMetaData>> mappings = mappingsResponse.getMappings();
-        for (ObjectObjectCursor<String, ImmutableOpenMap<String, MappingMetaData>> mappingsCursor : mappings) {
-            for (ObjectObjectCursor<String, MappingMetaData> mappingMetadataCursor : mappingsCursor.value) {
-                if ("_default_".equals(mappingMetadataCursor.key)) {
-                    continue;
-                }
-                MappingMetaData mappingMetaData = mappingMetadataCursor.value;
-                List<Keyword> foundKeywords = new ArrayList<>();
-                foundKeywords.add(Keyword.EXISTS);
-                foundKeywords.add(Keyword.ID);
-                foundKeywords.add(Keyword.TYPE);
-                Map<String, Object> valueMap = mappingMetaData.getSourceAsMap();
-                addFieldProperties(foundKeywords, "", valueMap);
-                if (names.containsKey(mappingMetadataCursor.key)) {
-                    List<Keyword> currentKeywords = names.get(mappingMetadataCursor.key);
-                    for (Keyword value : foundKeywords) {
-                        if (!currentKeywords.contains(value)) {
-                            currentKeywords.add(value);
-                        }
-                    }
-                } else {
-                    names.put(mappingMetadataCursor.key, foundKeywords);
-                }
-            }
+        Map<String, MappingMetaData> mappings = mappingsResponse.mappings();
+        if (mappings.containsKey(indexName)) {
+            MappingMetaData mappingMetaData = mappings.get(indexName);
+            keywords.add(Keyword.EXISTS);
+            keywords.add(Keyword.ID);
+            Map<String, Object> valueMap = mappingMetaData.getSourceAsMap();
+            addFieldProperties(keywords, "", valueMap);
         }
-        return names;
+        return keywords;
     }
 
     protected String getSortProperty(DataRepository dataRepository, String indexName, String propertyName) {
@@ -69,16 +49,10 @@ public abstract class AbstractIndexMetadataService extends AbstractGuiService {
             return null;
         }
         // Iterate over all mappings trying to find a field definition.
-        for (Map<String, Map<String, GetFieldMappingsResponse.FieldMappingMetaData>> indexMap : response.mappings().values()) {
-            for (Map<String, GetFieldMappingsResponse.FieldMappingMetaData> sourceMap : indexMap.values()) {
-                for (GetFieldMappingsResponse.FieldMappingMetaData fieldMappingMetaData : sourceMap.values()) {
-                    String type = getString("type", getObject("name", fieldMappingMetaData.sourceAsMap(), Collections.emptyMap()));
-                    if (ElasticsearchLayout.OLD_EVENT_TYPES_PRESENT) {
-                        return ("text".equals(type) || "keyword".equals(type)) ? propertyName + KEYWORD_SUFFIX : propertyName;
-                    } else {
-                        return "text".equals(type) ? propertyName + KEYWORD_SUFFIX : propertyName;
-                    }
-                }
+        for (Map<String, GetFieldMappingsResponse.FieldMappingMetaData> indexMap : response.mappings().values()) {
+            for (GetFieldMappingsResponse.FieldMappingMetaData fieldMappingMetaData : indexMap.values()) {
+                String type = getString("type", getObject("name", fieldMappingMetaData.sourceAsMap(), Collections.emptyMap()));
+                return "text".equals(type) ? propertyName + KEYWORD_SUFFIX : propertyName;
             }
         }
         return null;

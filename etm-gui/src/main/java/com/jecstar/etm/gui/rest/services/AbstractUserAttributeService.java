@@ -35,7 +35,6 @@ public class AbstractUserAttributeService extends AbstractIndexMetadataService {
             }
             builder = new GetRequestBuilder(
                     ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
-                    ElasticsearchLayout.ETM_DEFAULT_TYPE,
                     ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName
             );
             for (int i = 0; i < attributes.length; i++) {
@@ -44,7 +43,6 @@ public class AbstractUserAttributeService extends AbstractIndexMetadataService {
         } else {
             builder = new GetRequestBuilder(
                     ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
-                    ElasticsearchLayout.ETM_DEFAULT_TYPE,
                     ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId()
             );
             for (int i = 0; i < attributes.length; i++) {
@@ -76,18 +74,14 @@ public class AbstractUserAttributeService extends AbstractIndexMetadataService {
             if (!getEtmPrincipal().isInGroup(groupName)) {
                 throw new EtmException(EtmException.UNAUTHORIZED);
             }
-            builder = new UpdateRequestBuilder(
-                    ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
-                    ElasticsearchLayout.ETM_DEFAULT_TYPE,
-                    ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName
-            );
+            builder = new UpdateRequestBuilder()
+                    .setIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+                    .setId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName);
             objectMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP, source);
         } else {
-            builder = new UpdateRequestBuilder(
-                    ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
-                    ElasticsearchLayout.ETM_DEFAULT_TYPE,
-                    ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId()
-            );
+            builder = new UpdateRequestBuilder()
+                    .setIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+                    .setId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId());
             objectMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, source);
         }
         enhanceRequest(builder, etmConfiguration)

@@ -35,7 +35,6 @@ public abstract class AbstractGuiService extends AbstractJsonService {
         }
         GetResponse getResponse = dataRepository.get(new GetRequestBuilder(
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
-                ElasticsearchLayout.ETM_DEFAULT_TYPE,
                 ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName));
         if (!getResponse.isExists()) {
             return null;

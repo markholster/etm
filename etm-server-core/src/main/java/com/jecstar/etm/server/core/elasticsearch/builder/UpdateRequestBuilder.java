@@ -8,7 +8,7 @@ import org.elasticsearch.script.Script;
 
 import java.util.Map;
 
-public class UpdateRequestBuilder extends AbstractBuilder<UpdateRequest> {
+public class UpdateRequestBuilder extends AbstractActionRequestBuilder<UpdateRequest> {
 
     private final UpdateRequest request;
 
@@ -16,17 +16,12 @@ public class UpdateRequestBuilder extends AbstractBuilder<UpdateRequest> {
         this.request = new UpdateRequest();
     }
 
-    public UpdateRequestBuilder(String index, String type, String id) {
-        this.request = new UpdateRequest(index, type, id);
+    public UpdateRequestBuilder(String index, String id) {
+        this.request = new UpdateRequest(index, id);
     }
 
     public UpdateRequestBuilder setIndex(String index) {
         this.request.index(index);
-        return this;
-    }
-
-    public UpdateRequestBuilder setType(String type) {
-        this.request.type(type);
         return this;
     }
 
@@ -40,7 +35,7 @@ public class UpdateRequestBuilder extends AbstractBuilder<UpdateRequest> {
         return this;
     }
 
-    public UpdateRequestBuilder setDoc(Map source) {
+    public UpdateRequestBuilder setDoc(Map<String, Object> source) {
         this.request.doc(source);
         return this;
     }

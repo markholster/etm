@@ -1,8 +1,9 @@
 package com.jecstar.etm.server.core.elasticsearch.builder;
 
-import org.elasticsearch.action.admin.indices.mapping.get.GetFieldMappingsRequest;
 
-public class GetFieldMappingsRequestBuilder extends AbstractBuilder<GetFieldMappingsRequest> {
+import org.elasticsearch.client.indices.GetFieldMappingsRequest;
+
+public class GetFieldMappingsRequestBuilder extends AbstractTimedRequestBuilder<GetFieldMappingsRequest> {
 
     private final GetFieldMappingsRequest request = new GetFieldMappingsRequest();
 

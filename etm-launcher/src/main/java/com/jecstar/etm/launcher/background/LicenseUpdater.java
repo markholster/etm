@@ -60,7 +60,7 @@ public class LicenseUpdater extends AbstractJsonService implements Runnable {
                     licenseObject.put(this.etmConfigurationConverter.getTags().getLicenseTag(), licenseKey);
                     values.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LICENSE, licenseObject);
                     UpdateRequestBuilder builder = enhanceRequest(
-                            new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LICENSE_DEFAULT),
+                            new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LICENSE_DEFAULT),
                             etmConfiguration
                     )
                             .setDoc(values)

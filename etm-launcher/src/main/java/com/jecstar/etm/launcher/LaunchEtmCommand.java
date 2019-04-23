@@ -10,8 +10,7 @@ import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.launcher.http.ElasticsearchIdentityManager;
 import com.jecstar.etm.launcher.http.HttpServer;
 import com.jecstar.etm.launcher.migrations.EtmMigrator;
-import com.jecstar.etm.launcher.migrations.MultiTypeDetector;
-import com.jecstar.etm.launcher.migrations.v3.*;
+import com.jecstar.etm.launcher.migrations.v4.SearchHistoryTimestampMigrator;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessorImpl;
 import com.jecstar.etm.processor.elastic.PersistenceEnvironmentElasticImpl;
@@ -62,7 +61,6 @@ class LaunchEtmCommand extends AbstractCommand {
             }
             this.bulkProcessorWrapper.setClient(this.dataRepository.getClient());
             boolean reinitializeTemplates = executeDatabaseMigrations(this.dataRepository);
-            new MultiTypeDetector().detect(this.dataRepository);
             this.indexTemplateCreator = new ElasticsearchIndexTemplateCreator(this.dataRepository);
             this.indexTemplateCreator.createTemplates();
             EtmConfiguration etmConfiguration = new ElasticBackedEtmConfiguration(configuration.instanceName, this.dataRepository);
@@ -228,37 +226,10 @@ class LaunchEtmCommand extends AbstractCommand {
      */
     private boolean executeDatabaseMigrations(DataRepository dataRepository) {
         boolean reinitialze = false;
-        EtmMigrator etmMigrator = new Version2xTo3xMigrator(dataRepository);
+        EtmMigrator etmMigrator = new SearchHistoryTimestampMigrator(dataRepository);
         if (etmMigrator.shouldBeExecuted()) {
             etmMigrator.migrate();
             reinitialze = true;
-        }
-        etmMigrator = new Version300To301Migrator(dataRepository);
-        if (etmMigrator.shouldBeExecuted()) {
-            etmMigrator.migrate();
-            reinitialze = true;
-        }
-        etmMigrator = new EndpointHandlerToSingleListMigrator(dataRepository);
-        if (etmMigrator.shouldBeExecuted()) {
-            etmMigrator.migrate();
-            reinitialze = true;
-        }
-        etmMigrator = new SearchTemplateHandlingTimeMigrator(dataRepository);
-        if (etmMigrator.shouldBeExecuted()) {
-            etmMigrator.migrate();
-        }
-        etmMigrator = new Elasticsearch65PainlessSupport(dataRepository);
-        if (etmMigrator.shouldBeExecuted()) {
-            etmMigrator.migrate();
-            reinitialze = true;
-        }
-        etmMigrator = new VisualizationAndSignalMigrator(dataRepository);
-        if (etmMigrator.shouldBeExecuted()) {
-            etmMigrator.migrate();
-        }
-        etmMigrator = new SearchHistoryTimestampMigrator(dataRepository);
-        if (etmMigrator.shouldBeExecuted()) {
-            etmMigrator.migrate();
         }
         return reinitialze;
     }

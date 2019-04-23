@@ -1,15 +1,14 @@
 package com.jecstar.etm.server.core.elasticsearch.builder;
 
-import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
+import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.common.settings.Settings;
 
-public class CreateIndexRequestBuilder extends AbstractBuilder<CreateIndexRequest> {
+public class CreateIndexRequestBuilder extends AbstractTimedRequestBuilder<CreateIndexRequest> {
 
-    private final CreateIndexRequest request = new CreateIndexRequest();
+    private final CreateIndexRequest request;
 
-    public CreateIndexRequestBuilder setIndex(String index) {
-        this.request.index(index);
-        return this;
+    public CreateIndexRequestBuilder(String index) {
+        this.request = new CreateIndexRequest(index);
     }
 
     public CreateIndexRequestBuilder setSettings(Settings.Builder settingsBuilder) {

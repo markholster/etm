@@ -51,7 +51,6 @@ public class QueryExporter {
         fields.add(new FieldLayout("Id", Keyword.ID.getName(), FieldType.PLAIN, MultiSelect.FIRST));
         fields.add(new FieldLayout("Name", eventTags.getNameTag(), FieldType.PLAIN, MultiSelect.FIRST));
         fields.add(new FieldLayout("Date", eventTags.getEndpointHandlerHandlingTimeTag(), FieldType.ISO_TIMESTAMP, MultiSelect.FIRST));
-        fields.add(new FieldLayout("Type", Keyword.TYPE.getName(), FieldType.PLAIN, MultiSelect.FIRST));
         fields.add(new FieldLayout("Direction", "direction", FieldType.PLAIN, MultiSelect.FIRST));
         fields.add(new FieldLayout("Subtype", "subtype", FieldType.PLAIN, MultiSelect.FIRST));
         fields.add(new FieldLayout("Endpoint", "endpoint", FieldType.PLAIN, MultiSelect.FIRST));
@@ -136,7 +135,6 @@ public class QueryExporter {
                 }
                 if (auditLogPersistingConsumer != null) {
                     auditLogBuilder.setEventId(sourceValues.get(Keyword.ID.getName()).toString());
-                    auditLogBuilder.setEventType(sourceValues.get(Keyword.TYPE.getName()).toString());
                     auditLogPersistingConsumer.accept(auditLogBuilder);
                 }
             }
@@ -214,7 +212,6 @@ public class QueryExporter {
                 }
                 if (auditLogPersistingConsumer != null) {
                     auditLogBuilder.setEventId(sourceValues.get(Keyword.ID.getName()).toString());
-                    auditLogBuilder.setEventType(sourceValues.get(Keyword.TYPE.getName()).toString());
                     auditLogPersistingConsumer.accept(auditLogBuilder);
                 }
             }
@@ -274,7 +271,6 @@ public class QueryExporter {
             if (next != null) {
                 Map<String, Object> sourceAsMap = next.getSourceAsMap();
                 sourceAsMap.put(Keyword.ID.getName(), next.getId());
-                sourceAsMap.put(Keyword.TYPE.getName(), next.getType());
                 return sourceAsMap;
             }
             return null;
@@ -304,7 +300,7 @@ public class QueryExporter {
             TransactionEvent event = this.iterator.next();
             Map<String, Object> values = new HashMap<>();
             values.put("index", event.index);
-            values.put(Keyword.TYPE.getName(), event.objectType != null ? event.objectType : event.type);
+            values.put("type", event.objectType);
             values.put(Keyword.ID.getName(), event.id);
             values.put(eventTags.getNameTag(), event.name);
             values.put(eventTags.getEndpointHandlerHandlingTimeTag(), event.handlingTime);

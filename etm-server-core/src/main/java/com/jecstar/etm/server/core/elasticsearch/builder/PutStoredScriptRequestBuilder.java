@@ -4,7 +4,7 @@ import org.elasticsearch.action.admin.cluster.storedscripts.PutStoredScriptReque
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.xcontent.XContentType;
 
-public class PutStoredScriptRequestBuilder extends AbstractBuilder<PutStoredScriptRequest> {
+public class PutStoredScriptRequestBuilder extends AbstractActionRequestBuilder<PutStoredScriptRequest> {
 
     private final PutStoredScriptRequest request = new PutStoredScriptRequest();
 

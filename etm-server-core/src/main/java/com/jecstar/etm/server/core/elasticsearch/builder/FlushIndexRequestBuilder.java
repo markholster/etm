@@ -2,7 +2,7 @@ package com.jecstar.etm.server.core.elasticsearch.builder;
 
 import org.elasticsearch.action.admin.indices.flush.FlushRequest;
 
-public class FlushIndexRequestBuilder extends AbstractBuilder<FlushRequest> {
+public class FlushIndexRequestBuilder extends AbstractActionRequestBuilder<FlushRequest> {
 
     private final FlushRequest request = new FlushRequest();
 

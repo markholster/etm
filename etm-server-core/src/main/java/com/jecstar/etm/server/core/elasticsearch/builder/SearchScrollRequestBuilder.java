@@ -3,7 +3,7 @@ package com.jecstar.etm.server.core.elasticsearch.builder;
 import org.elasticsearch.action.search.SearchScrollRequest;
 import org.elasticsearch.common.unit.TimeValue;
 
-public class SearchScrollRequestBuilder extends AbstractBuilder<SearchScrollRequest> {
+public class SearchScrollRequestBuilder extends AbstractActionRequestBuilder<SearchScrollRequest> {
 
     private final SearchScrollRequest request;
 

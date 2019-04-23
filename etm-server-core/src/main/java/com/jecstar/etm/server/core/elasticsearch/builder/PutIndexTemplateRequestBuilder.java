@@ -1,19 +1,18 @@
 package com.jecstar.etm.server.core.elasticsearch.builder;
 
 import org.elasticsearch.action.admin.indices.alias.Alias;
-import org.elasticsearch.action.admin.indices.template.put.PutIndexTemplateRequest;
+import org.elasticsearch.client.indices.PutIndexTemplateRequest;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
 
 import java.util.List;
 
-public class PutIndexTemplateRequestBuilder extends AbstractBuilder<PutIndexTemplateRequest> {
+public class PutIndexTemplateRequestBuilder extends AbstractActionRequestBuilder<PutIndexTemplateRequest> {
 
-    private final PutIndexTemplateRequest request = new PutIndexTemplateRequest();
+    private final PutIndexTemplateRequest request;
 
-    public PutIndexTemplateRequestBuilder setName(String name) {
-        this.request.name(name);
-        return this;
+    public PutIndexTemplateRequestBuilder(String name) {
+        this.request = new PutIndexTemplateRequest(name);
     }
 
     public PutIndexTemplateRequestBuilder setCreate(boolean create) {
@@ -31,8 +30,8 @@ public class PutIndexTemplateRequestBuilder extends AbstractBuilder<PutIndexTemp
         return this;
     }
 
-    public PutIndexTemplateRequestBuilder setMapping(String type, String source, XContentType contentType) {
-        this.request.mapping(type, source, contentType);
+    public PutIndexTemplateRequestBuilder setMapping(String source, XContentType contentType) {
+        this.request.mapping(source, contentType);
         return this;
     }
 

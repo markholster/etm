@@ -18,11 +18,6 @@ public final class ElasticsearchLayout {
     public static final String ETM_TYPE_ATTRIBUTE_NAME = "object_type";
 
     /**
-     * The name of the default elasticsearch index type. From Elasticsearch 6.0 and later only a single index type is allowed.
-     */
-    public static final String ETM_DEFAULT_TYPE = "doc";
-
-    /**
      * The name of the attribute that is used to set to all attributes. Can be used to set the default search field to all attributes.
      */
     public static final String ETM_ALL_FIELDS_ATTRIBUTE_NAME = "*";
@@ -80,9 +75,6 @@ public final class ElasticsearchLayout {
     public static final String STATE_INDEX_NAME = ETM_INDEX_PREFIX + "state";
     public static final String STATE_OBJECT_TYPE_SESSION = "session";
     public static final String STATE_OBJECT_TYPE_SESSION_ID_PREFIX = STATE_OBJECT_TYPE_SESSION + "_";
-
-
-    public static boolean OLD_EVENT_TYPES_PRESENT = true;
 
     public static String[] ALL_DATASOURCES = new String[]{AUDIT_LOG_INDEX_ALIAS_ALL, EVENT_INDEX_ALIAS_ALL, METRICS_INDEX_ALIAS_ALL};
 

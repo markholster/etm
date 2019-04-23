@@ -4,7 +4,6 @@ public class Keyword {
 
     public final static Keyword EXISTS = new Keyword("_exists_", null);
     public final static Keyword ID = new Keyword("_id", null);
-    public final static Keyword TYPE = new Keyword("_type", null);
 
     private final String name;
     private final String type;

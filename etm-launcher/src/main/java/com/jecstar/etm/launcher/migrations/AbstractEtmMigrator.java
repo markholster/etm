@@ -5,12 +5,12 @@ import com.jecstar.etm.server.core.elasticsearch.builder.*;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.DocWriteRequest;
-import org.elasticsearch.action.admin.indices.get.GetIndexResponse;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.indices.GetIndexResponse;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -64,7 +64,7 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
 
     protected void deleteIndices(DataRepository dataRepository, String description, String... indices) {
         System.out.println("Start removing " + description + ".");
-        GetIndexRequestBuilder requestBuilder = new GetIndexRequestBuilder().setIndices(indices);
+        GetIndexRequestBuilder requestBuilder = new GetIndexRequestBuilder(indices);
         GetIndexResponse indexResponse = dataRepository.indicesGet(requestBuilder);
         long lastPrint = 0, current = 0;
         long total = indexResponse.getIndices().length;
@@ -80,7 +80,7 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
 
     protected void reindexTemporaryIndicesToNew(DataRepository dataRepository, FailureDetectingBulkProcessorListener listener, String migrationIndexPrefix) {
         System.out.println("Start moving temporary indices to permanent indices.");
-        GetIndexResponse indexResponse = dataRepository.indicesGet(new GetIndexRequestBuilder().setIndices(migrationIndexPrefix + "*"));
+        GetIndexResponse indexResponse = dataRepository.indicesGet(new GetIndexRequestBuilder(migrationIndexPrefix + "*"));
         if (indexResponse != null && indexResponse.getIndices() != null && indexResponse.getIndices().length > 0) {
             for (String index : indexResponse.getIndices()) {
                 System.out.println("Migrating index '" + index + "'.");
@@ -96,7 +96,6 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
                 for (SearchHit searchHit : searchHits) {
                     bulkProcessor.add(new IndexRequest()
                             .index(searchHit.getIndex().substring(migrationIndexPrefix.length()))
-                            .type(searchHit.getType())
                             .id(searchHit.getId())
                             .source(searchHit.getSourceAsMap()));
                     lastPrint = printPercentageWhenChanged(lastPrint, ++current, total);
@@ -109,7 +108,7 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
                 }
                 printPercentageWhenChanged(lastPrint, current, total);
                 long startTime = System.currentTimeMillis();
-                boolean indexExist = dataRepository.indicesExist(new GetIndexRequestBuilder().setIndices(index.substring(migrationIndexPrefix.length())));
+                boolean indexExist = dataRepository.indicesExist(new GetIndexRequestBuilder(index.substring(migrationIndexPrefix.length())));
                 if (!indexExist) {
                     if (System.currentTimeMillis() - startTime > 30_000L) {
                         // Wait for 15 seconds for the index to become available.
@@ -120,7 +119,7 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
                         Thread.currentThread().interrupt();
                         break;
                     }
-                    indexExist = dataRepository.indicesExist(new GetIndexRequestBuilder().setIndices(index.substring(migrationIndexPrefix.length())));
+                    indexExist = dataRepository.indicesExist(new GetIndexRequestBuilder(index.substring(migrationIndexPrefix.length())));
                 }
                 if (indexExist) {
                     flushIndices(dataRepository, index.substring(migrationIndexPrefix.length()));
@@ -132,8 +131,7 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
 
     protected void createTemporaryIndexTemplate(DataRepository dataRepository, String indexPrefix, int shardsPerIndex) {
         deleteTemporaryIndexTemplate(dataRepository, indexPrefix);
-        PutIndexTemplateRequestBuilder requestBuilder = new PutIndexTemplateRequestBuilder()
-                .setName(indexPrefix)
+        PutIndexTemplateRequestBuilder requestBuilder = new PutIndexTemplateRequestBuilder(indexPrefix)
                 .setCreate(true)
                 .setPatterns(Collections.singletonList(indexPrefix + "*"))
                 .setSettings(Settings.builder()
@@ -151,7 +149,7 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
     }
 
     protected void checkAndCleanupPreviousRun(DataRepository dataRepository, String migrationIndexPrefix) {
-        GetIndexResponse indexResponse = dataRepository.indicesGet(new GetIndexRequestBuilder().setIndices(migrationIndexPrefix + "*"));
+        GetIndexResponse indexResponse = dataRepository.indicesGet(new GetIndexRequestBuilder(migrationIndexPrefix + "*"));
         if (indexResponse != null && indexResponse.getIndices() != null && indexResponse.getIndices().length > 0) {
             System.out.println("Found migration indices from a previous run. Deleting those indices.");
             for (String index : indexResponse.getIndices()) {
@@ -222,9 +220,9 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
 
     protected void checkAndCreateIndexExistence(DataRepository dataRepository, String... indices) {
         for (String index : indices) {
-            GetIndexRequestBuilder indexRequestBuilder = new GetIndexRequestBuilder().setIndices(index);
+            GetIndexRequestBuilder indexRequestBuilder = new GetIndexRequestBuilder(index);
             if (!dataRepository.indicesExist(indexRequestBuilder)) {
-                dataRepository.indicesCreate(new CreateIndexRequestBuilder().setIndex(index));
+                dataRepository.indicesCreate(new CreateIndexRequestBuilder(index));
             }
         }
     }

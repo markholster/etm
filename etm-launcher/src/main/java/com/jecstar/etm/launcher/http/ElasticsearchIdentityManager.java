@@ -142,7 +142,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
             userObject.put(this.etmPrincipalTags.getNameTag(), storedPrincipal.getName());
             userObject.put(this.etmPrincipalTags.getEmailTag(), storedPrincipal.getEmailAddress());
             updateMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, userObject);
-            this.dataRepository.update(new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + storedPrincipal.getId())
+            this.dataRepository.update(new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + storedPrincipal.getId())
                     .setDoc(updateMap)
                     .setDetectNoop(true)
                     .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
@@ -152,12 +152,12 @@ public class ElasticsearchIdentityManager implements IdentityManager {
     }
 
     private void createLdapUser(EtmPrincipal principal) {
-        this.dataRepository.index(new IndexRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + principal.getId())
+        this.dataRepository.index(new IndexRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + principal.getId())
                 .setSource(this.etmPrincipalConverter.writePrincipal(principal), XContentType.JSON)
                 .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
                 .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout())));
         if (this.etmConfiguration.getMaxSearchTemplateCount() >= 3) {
-            this.dataRepository.update(new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + principal.getId())
+            this.dataRepository.update(new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + principal.getId())
                     .setDoc(new DefaultSearchTemplates().toJson(), XContentType.JSON)
                     .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
                     .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
@@ -174,7 +174,6 @@ public class ElasticsearchIdentityManager implements IdentityManager {
                 return etmAccount;
             }
             SearchResponse searchResponse = this.dataRepository.search(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
-                    .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                     .setFetchSource(false)
                     .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getApiKeyTag(), apiKeyCredentials.getApiKey()))
                     .setSize(1)
@@ -211,7 +210,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 
     @SuppressWarnings("unchecked")
     private EtmPrincipal loadPrincipal(String userId) {
-        GetResponse getResponse = this.dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId));
+        GetResponse getResponse = this.dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId));
         if (!getResponse.isExists()) {
             return null;
         }
@@ -222,7 +221,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
         if (groups != null && !groups.isEmpty()) {
             MultiGetRequestBuilder multiGetBuilder = new MultiGetRequestBuilder();
             for (String group : groups) {
-                multiGetBuilder.add(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + group);
+                multiGetBuilder.add(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + group);
             }
             MultiGetResponse multiGetResponse = this.dataRepository.get(multiGetBuilder);
             for (MultiGetItemResponse item : multiGetResponse) {
@@ -237,7 +236,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
         if (set != null && !set.isEmpty()) {
             MultiGetRequestBuilder multiGetBuilder = new MultiGetRequestBuilder();
             for (EtmGroup group : set) {
-                multiGetBuilder.add(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + group.getName());
+                multiGetBuilder.add(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + group.getName());
             }
             MultiGetResponse multiGetResponse = this.dataRepository.get(multiGetBuilder);
             for (MultiGetItemResponse item : multiGetResponse) {
@@ -253,7 +252,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 
     @SuppressWarnings("unchecked")
     private String getPasswordHash(String userId) {
-        GetResponse getResponse = this.dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId)
+        GetResponse getResponse = this.dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId)
                 .setFetchSource(new String[]{
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getPasswordHashTag(),
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getLdapBaseTag()}, null));
@@ -282,7 +281,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
     private void logLoginAttempt(String id, boolean success) {
         Instant now = Instant.now();
         LoginAuditLogBuilder auditLogBuilder = new LoginAuditLogBuilder().setTimestamp(now).setHandlingTime(now).setPrincipalId(id).setSuccess(success);
-        this.dataRepository.indexAsync(new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now), ElasticsearchLayout.ETM_DEFAULT_TYPE)
+        this.dataRepository.indexAsync(new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now))
                 .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
                 .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
                 .setSource(this.auditLogConverter.write(auditLogBuilder.build()), XContentType.JSON), DataRepository.noopActionListener());

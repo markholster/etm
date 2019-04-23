@@ -288,10 +288,10 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 
         SyncActionListener<GetResponse> licenseExecute = DataRepository.syncActionListener(30_000L);
         SyncActionListener<GetResponse> ldapExecute = DataRepository.syncActionListener(30_000L);
-        this.dataRepository.getAsync(new GetRequestBuilder(this.elasticsearchIndexName, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LICENSE_DEFAULT), licenseExecute);
-        this.dataRepository.getAsync(new GetRequestBuilder(this.elasticsearchIndexName, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LDAP_DEFAULT), ldapExecute);
-        GetResponse defaultResponse = this.dataRepository.get(new GetRequestBuilder(this.elasticsearchIndexName, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_NODE_DEFAULT));
-        GetResponse nodeResponse = this.dataRepository.get(new GetRequestBuilder(this.elasticsearchIndexName, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getNodeName()));
+        this.dataRepository.getAsync(new GetRequestBuilder(this.elasticsearchIndexName, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LICENSE_DEFAULT), licenseExecute);
+        this.dataRepository.getAsync(new GetRequestBuilder(this.elasticsearchIndexName, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LDAP_DEFAULT), ldapExecute);
+        GetResponse defaultResponse = this.dataRepository.get(new GetRequestBuilder(this.elasticsearchIndexName, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_NODE_DEFAULT));
+        GetResponse nodeResponse = this.dataRepository.get(new GetRequestBuilder(this.elasticsearchIndexName, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getNodeName()));
 
         String defaultContent = defaultResponse.getSourceAsString();
         String nodeContent = null;

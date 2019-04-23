@@ -3,7 +3,7 @@ package com.jecstar.etm.server.core.elasticsearch.builder;
 
 import org.elasticsearch.action.admin.indices.template.delete.DeleteIndexTemplateRequest;
 
-public class DeleteIndexTemplateRequestBuilder extends AbstractBuilder<DeleteIndexTemplateRequest> {
+public class DeleteIndexTemplateRequestBuilder extends AbstractActionRequestBuilder<DeleteIndexTemplateRequest> {
 
     private final DeleteIndexTemplateRequest request = new DeleteIndexTemplateRequest();
 

@@ -3,7 +3,7 @@ package com.jecstar.etm.server.core.elasticsearch.builder;
 import org.elasticsearch.action.admin.indices.settings.put.UpdateSettingsRequest;
 import org.elasticsearch.common.settings.Settings;
 
-public class UpdateIndexSettingsRequestBuilder extends AbstractBuilder<UpdateSettingsRequest> {
+public class UpdateIndexSettingsRequestBuilder extends AbstractActionRequestBuilder<UpdateSettingsRequest> {
 
     private final UpdateSettingsRequest request = new UpdateSettingsRequest();
 

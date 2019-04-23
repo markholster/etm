@@ -9,18 +9,13 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 
-public class SearchRequestBuilder extends AbstractBuilder<SearchRequest> {
+public class SearchRequestBuilder extends AbstractActionRequestBuilder<SearchRequest> {
 
     private final SearchRequest request = new SearchRequest();
     private final SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
 
     public SearchRequestBuilder setIndices(String... indices) {
         this.request.indices(indices);
-        return this;
-    }
-
-    public SearchRequestBuilder setTypes(String... types) {
-        this.request.types(types);
         return this;
     }
 

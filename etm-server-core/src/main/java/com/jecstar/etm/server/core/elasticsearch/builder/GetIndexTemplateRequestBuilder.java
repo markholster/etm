@@ -1,5 +1,6 @@
 package com.jecstar.etm.server.core.elasticsearch.builder;
 
+
 import org.elasticsearch.client.indices.GetIndexTemplatesRequest;
 
 public class GetIndexTemplateRequestBuilder {

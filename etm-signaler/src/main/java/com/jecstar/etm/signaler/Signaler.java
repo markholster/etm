@@ -133,7 +133,7 @@ public class Signaler extends AbstractJsonService implements Runnable {
                         }
                         return;
                     }
-                    if (handleEntity(batchStart, thresholdExceededNotifier, searchHit.getIndex(), searchHit.getType(), searchHit.getId())) {
+                    if (handleEntity(batchStart, thresholdExceededNotifier, searchHit.getIndex(), searchHit.getId())) {
                         break;
                     }
                 }
@@ -150,12 +150,11 @@ public class Signaler extends AbstractJsonService implements Runnable {
      * @param batchStart           The moment the signal check batch started.
      * @param notificationExecutor The <code>NotificationExecutor</code> to be used to notify users.
      * @param index                The index of the entity.
-     * @param type                 The type of the entity.
      * @param id                   The id of the entity.
      * @return <code>true</code> when the entity is handled, otherwise <code>false</code> will be returned.
      */
-    private boolean handleEntity(Instant batchStart, NotificationExecutor notificationExecutor, String index, String type, String id) {
-        GetResponse getResponse = this.dataRepository.get(new GetRequestBuilder(index, type, id)
+    private boolean handleEntity(Instant batchStart, NotificationExecutor notificationExecutor, String index, String id) {
+        GetResponse getResponse = this.dataRepository.get(new GetRequestBuilder(index, id)
                 .setFetchSource(
                         new String[]{
                                 ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP + "." + this.etmPrincipalTags.getSignalsTag(),
@@ -230,7 +229,7 @@ public class Signaler extends AbstractJsonService implements Runnable {
         }
         try {
             UpdateRequestBuilder updateRequestBuilder = enhanceRequest(
-                    new UpdateRequestBuilder(index, type, id),
+                    new UpdateRequestBuilder().setIndex(index).setId(id),
                     this.etmConfiguration
             )
                     .setVersion(getResponse.getVersion())
@@ -408,7 +407,6 @@ public class Signaler extends AbstractJsonService implements Runnable {
         }
         GetRequestBuilder requestBuilder = new GetRequestBuilder(
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
-                ElasticsearchLayout.ETM_DEFAULT_TYPE,
                 ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + username);
         GetResponse getResponse = this.dataRepository.get(requestBuilder);
         if (!getResponse.isExists()) {
@@ -429,7 +427,6 @@ public class Signaler extends AbstractJsonService implements Runnable {
         }
         GetRequestBuilder requestBuilder = new GetRequestBuilder(
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
-                ElasticsearchLayout.ETM_DEFAULT_TYPE,
                 ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName
         );
         GetResponse getResponse = this.dataRepository.get(requestBuilder);
@@ -448,7 +445,6 @@ public class Signaler extends AbstractJsonService implements Runnable {
     private Notifier getNotifier(String notifierName) {
         GetRequestBuilder requestBuilder = new GetRequestBuilder(
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
-                ElasticsearchLayout.ETM_DEFAULT_TYPE,
                 ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER_ID_PREFIX + notifierName
         );
         GetResponse getResponse = this.dataRepository.get(requestBuilder);

@@ -49,30 +49,21 @@ public class AuditService extends AbstractIndexMetadataService {
     @RolesAllowed(SecurityRoles.AUDIT_LOG_READ)
     public String getKeywords(@PathParam("indexName") String indexName) {
         StringBuilder result = new StringBuilder();
-        Map<String, List<Keyword>> names = getIndexFields(AuditService.dataRepository, indexName);
+        List<Keyword> keywords = getIndexFields(AuditService.dataRepository, indexName);
         result.append("{ \"keywords\":[");
-        Set<Entry<String, List<Keyword>>> entries = names.entrySet();
-        boolean first = true;
-        for (Entry<String, List<Keyword>> entry : entries) {
-            if (!first) {
-                result.append(", ");
-            }
-            first = false;
-            result.append("{");
-            result.append("\"index\": ").append(escapeToJson(indexName, true)).append(",");
-            result.append("\"type\": ").append(escapeToJson(entry.getKey(), true)).append(",");
-            result.append("\"keywords\": [").append(entry.getValue().stream().map(n -> {
-                StringBuilder kw = new StringBuilder();
-                kw.append("{");
-                addStringElementToJsonBuffer("name", n.getName(), kw, true);
-                addStringElementToJsonBuffer("type", n.getType(), kw, false);
-                addBooleanElementToJsonBuffer("date", n.isDate(), kw, false);
-                addBooleanElementToJsonBuffer("number", n.isNumber(), kw, false);
-                kw.append("}");
-                return kw.toString();
-            }).collect(Collectors.joining(", "))).append("]");
-            result.append("}");
-        }
+        result.append("{");
+        result.append("\"index\": ").append(escapeToJson(indexName, true)).append(",");
+        result.append("\"keywords\": [").append(keywords.stream().map(n -> {
+            StringBuilder kw = new StringBuilder();
+            kw.append("{");
+            addStringElementToJsonBuffer("name", n.getName(), kw, true);
+            addStringElementToJsonBuffer("type", n.getType(), kw, false);
+            addBooleanElementToJsonBuffer("date", n.isDate(), kw, false);
+            addBooleanElementToJsonBuffer("number", n.isNumber(), kw, false);
+            kw.append("}");
+            return kw.toString();
+        }).collect(Collectors.joining(", "))).append("]");
+        result.append("}");
         result.append("]}");
         return result.toString();
     }
@@ -85,7 +76,7 @@ public class AuditService extends AbstractIndexMetadataService {
         if (!index.startsWith(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX)) {
             return null;
         }
-        GetResponse getResponse = dataRepository.get(new GetRequestBuilder(index, ElasticsearchLayout.ETM_DEFAULT_TYPE, id)
+        GetResponse getResponse = dataRepository.get(new GetRequestBuilder(index, id)
                 .setFetchSource(true));
         return getResponse.getSourceAsString();
     }
@@ -133,7 +124,6 @@ public class AuditService extends AbstractIndexMetadataService {
         boolQueryBuilder.must(queryStringBuilder);
         boolQueryBuilder.filter(new RangeQueryBuilder("timestamp").lte(parameters.getNotAfterTimestamp()));
         SearchRequestBuilder requestBuilder = new SearchRequestBuilder().setIndices(ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL).setQuery(boolQueryBuilder)
-                .setTypes(ElasticsearchLayout.ETM_DEFAULT_TYPE)
                 .setFetchSource(true)
                 .setFrom(parameters.getStartIndex())
                 .setSize(parameters.getMaxResults() > 500 ? 500 : parameters.getMaxResults())

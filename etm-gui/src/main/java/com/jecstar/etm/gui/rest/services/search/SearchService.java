@@ -30,7 +30,6 @@ import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import com.jecstar.etm.server.core.util.DateUtils;
-import com.jecstar.etm.server.core.util.LegacyEndpointHandler;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchResponse;
@@ -59,7 +58,6 @@ import java.text.NumberFormat;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 @Path("/search")
@@ -91,7 +89,7 @@ public class SearchService extends AbstractIndexMetadataService {
     @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
     public String getSearchTemplates() {
         EtmPrincipal etmPrincipal = getEtmPrincipal();
-        GetResponse getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + etmPrincipal.getId())
+        GetResponse getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + etmPrincipal.getId())
                 .setFetchSource(new String[]{
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + ".search_templates",
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.configurationTags.getSearchHistoryTag(),
@@ -132,7 +130,7 @@ public class SearchService extends AbstractIndexMetadataService {
         scriptParams.put("template", template);
         scriptParams.put("max_templates", etmConfiguration.getMaxSearchTemplateCount());
         UpdateRequestBuilder builder = enhanceRequest(
-                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId()),
+                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId()),
                 etmConfiguration
         )
                 .setScript(new Script(ScriptType.STORED, null, "etm_update-search-template", scriptParams));
@@ -148,7 +146,7 @@ public class SearchService extends AbstractIndexMetadataService {
         Map<String, Object> scriptParams = new HashMap<>();
         scriptParams.put("name", templateName);
         UpdateRequestBuilder builder = enhanceRequest(
-                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId()),
+                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId()),
                 etmConfiguration
         )
                 .setScript(new Script(ScriptType.STORED, null, "etm_remove-search-template", scriptParams));
@@ -162,30 +160,22 @@ public class SearchService extends AbstractIndexMetadataService {
     @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
     public String getKeywords(@PathParam("indexName") String indexName) {
         StringBuilder result = new StringBuilder();
-        Map<String, List<Keyword>> names = getIndexFields(SearchService.dataRepository, indexName);
+        List<Keyword> keywords = getIndexFields(SearchService.dataRepository, indexName);
         result.append("{ \"keywords\":[");
-        Set<Entry<String, List<Keyword>>> entries = names.entrySet();
-        boolean first = true;
-        for (Entry<String, List<Keyword>> entry : entries) {
-            if (!first) {
-                result.append(", ");
-            }
-            first = false;
-            result.append("{");
-            result.append("\"index\": ").append(escapeToJson(indexName, true)).append(",");
-            result.append("\"keywords\": [").append(entry.getValue().stream().map(n ->
-            {
-                StringBuilder kw = new StringBuilder();
-                kw.append("{");
-                addStringElementToJsonBuffer("name", n.getName(), kw, true);
-                addStringElementToJsonBuffer("type", n.getType(), kw, false);
-                addBooleanElementToJsonBuffer("date", n.isDate(), kw, false);
-                addBooleanElementToJsonBuffer("number", n.isNumber(), kw, false);
-                kw.append("}");
-                return kw.toString();
-            }).collect(Collectors.joining(", "))).append("]");
-            result.append("}");
-        }
+        result.append("{");
+        result.append("\"index\": ").append(escapeToJson(indexName, true)).append(",");
+        result.append("\"keywords\": [").append(keywords.stream().map(n ->
+        {
+            StringBuilder kw = new StringBuilder();
+            kw.append("{");
+            addStringElementToJsonBuffer("name", n.getName(), kw, true);
+            addStringElementToJsonBuffer("type", n.getType(), kw, false);
+            addBooleanElementToJsonBuffer("date", n.isDate(), kw, false);
+            addBooleanElementToJsonBuffer("number", n.isNumber(), kw, false);
+            kw.append("}");
+            return kw.toString();
+        }).collect(Collectors.joining(", "))).append("]");
+        result.append("}");
         result.append("]}");
         return result.toString();
     }
@@ -250,7 +240,7 @@ public class SearchService extends AbstractIndexMetadataService {
                     .setNumberOfResults(response.getHits().getTotalHits().value)
                     .setQueryTime(queryTime);
             IndexRequestBuilder builder = enhanceRequest(
-                    new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now), ElasticsearchLayout.ETM_DEFAULT_TYPE),
+                    new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now)),
                     etmConfiguration
             )
                     .setSource(this.queryAuditLogConverter.write(auditLogBuilder.build()), XContentType.JSON);
@@ -319,24 +309,15 @@ public class SearchService extends AbstractIndexMetadataService {
             boolQueryBuilder.filter(new RangeQueryBuilder("timestamp").lte(parameters.getNotAfterTimestamp()));
         }
         if (parameters.getTypes().size() != 5) {
-            if (ElasticsearchLayout.OLD_EVENT_TYPES_PRESENT) {
-                boolQueryBuilder.filter(QueryBuilders.boolQuery()
-                        .should(QueryBuilders.termsQuery("_type", parameters.getTypes().toArray()))
-                        .should(QueryBuilders.boolQuery()
-                                .must(QueryBuilders.termQuery("_type", ElasticsearchLayout.ETM_DEFAULT_TYPE))
-                                .must(QueryBuilders.termsQuery(this.eventTags.getObjectTypeTag(), parameters.getTypes().toArray())))
-                        .minimumShouldMatch(1));
-            } else {
-                boolQueryBuilder.filter(QueryBuilders.termsQuery(this.eventTags.getObjectTypeTag(), parameters.getTypes().toArray()));
-            }
+            boolQueryBuilder.filter(QueryBuilders.termsQuery(this.eventTags.getObjectTypeTag(), parameters.getTypes().toArray()));
         }
         SearchRequestBuilder requestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL), etmConfiguration)
                 .setQuery(addFilterQuery(getEtmPrincipal(), boolQueryBuilder))
-                .setFetchSource(parameters.getFields().toArray(new String[parameters.getFields().size()]), null)
+                .setFetchSource(parameters.getFields().toArray(new String[0]), null)
                 .setFrom(parameters.getStartIndex())
                 .setSize(parameters.getMaxResults() > 500 ? 500 : parameters.getMaxResults());
         if (parameters.getSortField() != null && parameters.getSortField().trim().length() > 0) {
-            String sortProperty = getSortProperty(this.dataRepository, ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL, parameters.getSortField());
+            String sortProperty = getSortProperty(dataRepository, ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL, parameters.getSortField());
             if (sortProperty != null) {
                 requestBuilder.setSort(sortProperty, "desc".equals(parameters.getSortOrder()) ? SortOrder.DESC : SortOrder.ASC);
             }
@@ -362,7 +343,7 @@ public class SearchService extends AbstractIndexMetadataService {
         scriptParams.put("query", query);
         scriptParams.put("history_size", history_size);
         UpdateRequestBuilder builder = enhanceRequest(
-                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.ETM_DEFAULT_TYPE, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + etmPrincipal.getId()),
+                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + etmPrincipal.getId()),
                 etmConfiguration
         )
                 .setScript(new Script(ScriptType.STORED, null, "etm_update-search-history", scriptParams));
@@ -402,7 +383,7 @@ public class SearchService extends AbstractIndexMetadataService {
                 parameters.toFieldLayouts(),
                 c -> dataRepository.indexAsync(
                         enhanceRequest(
-                                new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(c.getTimestamp()), ElasticsearchLayout.ETM_DEFAULT_TYPE),
+                                new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(c.getTimestamp())),
                                 etmConfiguration
                         )
                                 .setSource(this.getEventAuditLogConverter.write(c.build()), XContentType.JSON),
@@ -417,10 +398,10 @@ public class SearchService extends AbstractIndexMetadataService {
     }
 
     @GET
-    @Path("/event/{type}/{id}")
+    @Path("/event/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
-    public String getEvent(@PathParam("type") String eventType, @PathParam("id") String eventId) {
+    public String getEvent(@PathParam("id") String eventId) {
         Instant now = Instant.now();
         boolean payloadVisible = getEtmPrincipal().maySeeEventPayload();
         GetEventAuditLogBuilder auditLogBuilder = new GetEventAuditLogBuilder()
@@ -428,7 +409,6 @@ public class SearchService extends AbstractIndexMetadataService {
                 .setHandlingTime(now)
                 .setPrincipalId(getEtmPrincipal().getId())
                 .setEventId(eventId)
-                .setEventType(eventType)
                 .setPayloadVisible(payloadVisible)
                 .setDownloaded(false)
                 .setFound(false);
@@ -436,19 +416,17 @@ public class SearchService extends AbstractIndexMetadataService {
         if (getEtmPrincipal().isInRole(SecurityRoles.AUDIT_LOG_READ)) {
             auditLogListener = DataRepository.syncActionListener(etmConfiguration.getQueryTimeout());
             // We've got an principal with audit logs roles requesting the event. Also add the audit logs of this event to the response.
-            findAuditLogsForEvent(eventType, eventId, auditLogListener);
+            findAuditLogsForEvent(eventId, auditLogListener);
         }
         StringBuilder result = new StringBuilder();
         result.append("{");
         addStringElementToJsonBuffer("time_zone", getEtmPrincipal().getTimeZone().getID(), result, true);
-        SearchHit searchHit = getEvent(eventType, eventId, new String[]{"*"}, !payloadVisible ? new String[]{this.eventTags.getPayloadTag()} : null);
+        SearchHit searchHit = getEvent(eventId, new String[]{"*"}, !payloadVisible ? new String[]{this.eventTags.getPayloadTag()} : null);
         if (searchHit != null) {
             auditLogBuilder.setFound(true);
             Map<String, Object> valueMap = searchHit.getSourceAsMap();
-            replaceLegacyEndpointHandlerLocations(valueMap);
             result.append(", \"event\": {");
             addStringElementToJsonBuffer("index", searchHit.getIndex(), result, true);
-            addStringElementToJsonBuffer("type", searchHit.getType(), result, false);
             addStringElementToJsonBuffer("id", searchHit.getId(), result, false);
             result.append(", \"source\": ").append(toString(valueMap));
             result.append("}");
@@ -458,20 +436,16 @@ public class SearchService extends AbstractIndexMetadataService {
             String correlatedToId = getString(this.eventTags.getCorrelationIdTag(), valueMap);
             boolean correlationAdded = false;
             if (correlatedToId != null && !correlatedToId.equals(eventId)) {
-                SearchHit correlatedEvent = conditionallyGetEvent(eventType, correlatedToId, payloadVisible);
+                SearchHit correlatedEvent = conditionallyGetEvent(correlatedToId, payloadVisible);
                 if (correlatedEvent != null) {
-                    Map<String, Object> sourceAsMap = correlatedEvent.getSourceAsMap();
-                    // TODO meteen sourceAsString op het moment dat onderstaande methode wordt verwijderd.
-                    replaceLegacyEndpointHandlerLocations(sourceAsMap);
                     result.append(", \"correlated_events\": [");
                     result.append("{");
                     addStringElementToJsonBuffer("index", correlatedEvent.getIndex(), result, true);
-                    addStringElementToJsonBuffer("type", correlatedEvent.getType(), result, false);
                     addStringElementToJsonBuffer("id", correlatedEvent.getId(), result, false);
-                    result.append(", \"source\": ").append(toString(sourceAsMap));
+                    result.append(", \"source\": ").append(correlatedEvent.getSourceAsString());
                     result.append("}");
                     correlationAdded = true;
-                    auditLogBuilder.addCorrelatedEvent(correlatedEvent.getId(), correlatedEvent.getType());
+                    auditLogBuilder.addCorrelatedEvent(correlatedEvent.getId());
                 }
             }
             // Try to find event that correlate to this event.
@@ -487,11 +461,8 @@ public class SearchService extends AbstractIndexMetadataService {
                         // An event correlates to itself.
                         continue;
                     }
-                    SearchHit correlatedEvent = conditionallyGetEvent(eventType, correlationId, payloadVisible);
+                    SearchHit correlatedEvent = conditionallyGetEvent(correlationId, payloadVisible);
                     if (correlatedEvent != null) {
-                        Map<String, Object> sourceAsMap = correlatedEvent.getSourceAsMap();
-                        // TODO meteen sourceAsString op het moment dat onderstaande methode wordt verwijderd.
-                        replaceLegacyEndpointHandlerLocations(sourceAsMap);
                         added++;
                         if (!correlationAdded) {
                             result.append(", \"correlated_events\": [");
@@ -500,12 +471,11 @@ public class SearchService extends AbstractIndexMetadataService {
                         }
                         result.append("{");
                         addStringElementToJsonBuffer("index", correlatedEvent.getIndex(), result, true);
-                        addStringElementToJsonBuffer("type", correlatedEvent.getType(), result, false);
                         addStringElementToJsonBuffer("id", correlatedEvent.getId(), result, false);
-                        result.append(", \"source\": ").append(toString(sourceAsMap));
+                        result.append(", \"source\": ").append(correlatedEvent.getSourceAsString());
                         result.append("}");
                         correlationAdded = true;
-                        auditLogBuilder.addCorrelatedEvent(correlatedEvent.getId(), correlatedEvent.getType());
+                        auditLogBuilder.addCorrelatedEvent(correlatedEvent.getId());
                     }
                 }
             }
@@ -541,7 +511,7 @@ public class SearchService extends AbstractIndexMetadataService {
         result.append("}");
         // Log the retrieval request to the audit logs.
         IndexRequestBuilder builder = enhanceRequest(
-                new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now), ElasticsearchLayout.ETM_DEFAULT_TYPE),
+                new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now)),
                 etmConfiguration
         )
                 .setSource(this.getEventAuditLogConverter.write(auditLogBuilder.build()), XContentType.JSON);
@@ -549,38 +519,9 @@ public class SearchService extends AbstractIndexMetadataService {
         return result.toString();
     }
 
-    @LegacyEndpointHandler("Remove method")
-    private void replaceLegacyEndpointHandlerLocations(Map<String, Object> sourceMap) {
-        List<Map<String, Object>> endpointsMap = getArray(this.eventTags.getEndpointsTag(), sourceMap);
-        if (endpointsMap == null) {
-            return;
-        }
-        for (Map<String, Object> endpointMap : endpointsMap) {
-            List<Map<String, Object>> endpointHandlers = new ArrayList<>();
-            Map<String, Object> writingEndpointHandler = getObject("writing_endpoint_handler", endpointMap, null);
-            if (writingEndpointHandler != null) {
-                writingEndpointHandler.put(this.eventTags.getEndpointHandlerTypeTag(), EndpointHandler.EndpointHandlerType.WRITER.name());
-                endpointHandlers.add(writingEndpointHandler);
-                endpointMap.remove("writing_endpoint_handler");
-            }
-            List<Map<String, Object>> readingEndpointHandlers = getArray("reading_endpoint_handlers", endpointMap);
-            if (readingEndpointHandlers != null) {
-                for (Map<String, Object> readingEndpointHandler : readingEndpointHandlers) {
-                    readingEndpointHandler.put(this.eventTags.getEndpointHandlerTypeTag(), EndpointHandler.EndpointHandlerType.READER.name());
-                    endpointHandlers.add(readingEndpointHandler);
-                }
-                endpointMap.remove("reading_endpoint_handlers");
-            }
-            if (endpointHandlers.size() > 0) {
-                endpointMap.put(this.eventTags.getEndpointHandlersTag(), endpointHandlers);
-            }
-        }
-    }
-
-    private void findAuditLogsForEvent(String eventType, String eventId, ActionListener<SearchResponse> actionListener) {
+    private void findAuditLogsForEvent(String eventId, ActionListener<SearchResponse> actionListener) {
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
         boolQueryBuilder.must(new TermQueryBuilder(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.AUDIT_LOG_OBJECT_TYPE_GET_EVENT));
-        boolQueryBuilder.must(new TermQueryBuilder(GetEventAuditLog.EVENT_TYPE + KEYWORD_SUFFIX, eventType));
         boolQueryBuilder.should(new TermQueryBuilder(GetEventAuditLog.EVENT_ID + KEYWORD_SUFFIX, eventId));
         boolQueryBuilder.should(new TermQueryBuilder(GetEventAuditLog.CORRELATED_EVENTS + "." + GetEventAuditLog.EVENT_ID + KEYWORD_SUFFIX, eventId));
         boolQueryBuilder.minimumShouldMatch(1);
@@ -601,11 +542,10 @@ public class SearchService extends AbstractIndexMetadataService {
         StringBuilder result = new StringBuilder();
         result.append("{");
         addStringElementToJsonBuffer("time_zone", getEtmPrincipal().getTimeZone().getID(), result, true);
-        SearchHit searchHit = getEvent(null, eventId, new String[]{this.eventTags.getEndpointsTag() + ".*"}, null);
+        SearchHit searchHit = getEvent(eventId, new String[]{this.eventTags.getEndpointsTag() + ".*"}, null);
         if (searchHit != null) {
             result.append(", \"event\": {");
             addStringElementToJsonBuffer("index", searchHit.getIndex(), result, true);
-            addStringElementToJsonBuffer("type", searchHit.getType(), result, false);
             addStringElementToJsonBuffer("id", searchHit.getId(), result, false);
             result.append(", \"source\": ").append(searchHit.getSourceAsString());
             result.append("}");
@@ -614,12 +554,9 @@ public class SearchService extends AbstractIndexMetadataService {
         return result.toString();
     }
 
-    private SearchHit getEvent(String eventType, String eventId, String[] includes, String[] excludes) {
+    private SearchHit getEvent(String eventId, String[] includes, String[] excludes) {
         IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder()
                 .addIds(eventId);
-        if (eventType != null) {
-            idsQueryBuilder.types(eventType);
-        }
         BoolQueryBuilder query = new BoolQueryBuilder();
         query.must(idsQueryBuilder);
         SearchRequestBuilder builder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL), etmConfiguration)
@@ -634,9 +571,8 @@ public class SearchService extends AbstractIndexMetadataService {
         return response.getHits().getAt(0);
     }
 
-    private SearchHit conditionallyGetEvent(String eventType, String eventId, boolean payloadVisible) {
+    private SearchHit conditionallyGetEvent(String eventId, boolean payloadVisible) {
         IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder()
-                .types(eventType)
                 .addIds(eventId);
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder().must(idsQueryBuilder);
         SearchRequestBuilder builder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL), etmConfiguration)
@@ -686,7 +622,6 @@ public class SearchService extends AbstractIndexMetadataService {
                 result.append(", {");
             }
             addStringElementToJsonBuffer("index", event.index, result, true);
-            addStringElementToJsonBuffer("type", event.type, result, false);
             addStringElementToJsonBuffer("object_type", event.objectType, result, false);
             addStringElementToJsonBuffer("sub_type", event.subtype, result, false);
             addStringElementToJsonBuffer("id", event.id, result, false);
@@ -701,18 +636,10 @@ public class SearchService extends AbstractIndexMetadataService {
         return result.toString();
     }
 
-    @LegacyEndpointHandler("findEventsQuery must be changed to work with a single must instead of 3 shoulds.")
     private List<TransactionEvent> getTransactionEvents(String transactionId) {
         BoolQueryBuilder findEventsQuery = new BoolQueryBuilder()
-                .minimumShouldMatch(1)
-                .should(new TermQueryBuilder(this.eventTags.getEndpointsTag() +
+                .must(new TermQueryBuilder(this.eventTags.getEndpointsTag() +
                         "." + this.eventTags.getEndpointHandlersTag() +
-                        "." + this.eventTags.getEndpointHandlerTransactionIdTag() + KEYWORD_SUFFIX, transactionId)
-                ).should(new TermQueryBuilder(this.eventTags.getEndpointsTag() +
-                        ".reading_endpoint_handlers" +
-                        "." + this.eventTags.getEndpointHandlerTransactionIdTag() + KEYWORD_SUFFIX, transactionId)
-                ).should(new TermQueryBuilder(this.eventTags.getEndpointsTag() +
-                        ".writing_endpoint_handler" +
                         "." + this.eventTags.getEndpointHandlerTransactionIdTag() + KEYWORD_SUFFIX, transactionId)
                 );
         SearchRequestBuilder searchRequest = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL), etmConfiguration)
@@ -736,7 +663,6 @@ public class SearchService extends AbstractIndexMetadataService {
         for (SearchHit searchHit : scrollableSearch) {
             TransactionEvent event = new TransactionEvent();
             event.index = searchHit.getIndex();
-            event.type = searchHit.getType();
             event.objectType = getEventType(searchHit);
             event.id = searchHit.getId();
             Map<String, Object> source = searchHit.getSourceAsMap();
@@ -755,8 +681,6 @@ public class SearchService extends AbstractIndexMetadataService {
                                 event.sequenceNumber = getInteger(this.eventTags.getEndpointHandlerSequenceNumberTag(), eh);
                             }
                         }
-                    } else {
-                        addLegacyHandlersToTransaction(event, transactionId, endpoint);
                     }
                 }
             }
@@ -778,32 +702,6 @@ public class SearchService extends AbstractIndexMetadataService {
         return events;
     }
 
-    @LegacyEndpointHandler("Method must be removed")
-    private void addLegacyHandlersToTransaction(TransactionEvent event, String transactionId, Map<String, Object> endpoint) {
-        Map<String, Object> writingEndpointHandler = getObject("writing_endpoint_handler", endpoint);
-        if (isWithinTransaction(writingEndpointHandler, transactionId)) {
-            event.handlingTime = getLong(this.eventTags.getEndpointHandlerHandlingTimeTag(), writingEndpointHandler);
-            event.direction = "outgoing";
-            event.endpoint = getString(this.eventTags.getEndpointNameTag(), endpoint);
-            Integer sequenceNumber = getInteger(this.eventTags.getEndpointHandlerSequenceNumberTag(), writingEndpointHandler);
-            if (sequenceNumber != null && sequenceNumber.longValue() < event.sequenceNumber.longValue()) {
-                event.sequenceNumber = sequenceNumber;
-            }
-        } else {
-            List<Map<String, Object>> readingEndpointHandlers = getArray("reading_endpoint_handlers", endpoint);
-            if (readingEndpointHandlers != null) {
-                for (Map<String, Object> readingEndpointHandler : readingEndpointHandlers) {
-                    if (isWithinTransaction(readingEndpointHandler, transactionId)) {
-                        event.handlingTime = getLong(this.eventTags.getEndpointHandlerHandlingTimeTag(), readingEndpointHandler);
-                        event.direction = "incoming";
-                        event.endpoint = getString(this.eventTags.getEndpointNameTag(), endpoint);
-                        event.sequenceNumber = getInteger(this.eventTags.getEndpointHandlerSequenceNumberTag(), writingEndpointHandler);
-                    }
-                }
-            }
-        }
-    }
-
     @GET
     @Path("/download/transaction/{id}")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
@@ -823,7 +721,7 @@ public class SearchService extends AbstractIndexMetadataService {
                 fileType,
                 etmPrincipal,
                 c -> dataRepository.indexAsync(enhanceRequest(
-                        new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(c.getTimestamp()), ElasticsearchLayout.ETM_DEFAULT_TYPE),
+                        new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(c.getTimestamp())),
                         etmConfiguration
                 )
                         .setSource(this.getEventAuditLogConverter.write(c.build()), XContentType.JSON), DataRepository.noopActionListener())
@@ -841,10 +739,8 @@ public class SearchService extends AbstractIndexMetadataService {
     @Path("/event/{type}/{id}/chain")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
-    @LegacyEndpointHandler("Remove old structure in finding transaction id's")
     public String getEventChain(@PathParam("type") String eventType, @PathParam("id") String eventId) {
         IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder()
-                .types(eventType)
                 .addIds(eventId);
         // No principal filtered query. We would like to show the entire event chain, but the user should not be able to retrieve all information.
         SearchRequestBuilder builder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL), etmConfiguration)
@@ -871,21 +767,6 @@ public class SearchService extends AbstractIndexMetadataService {
                             addTransactionToEventChain(transactionId, eventChain);
                         }
                     }
-                } else {
-                    Map<String, Object> writingEndpointHandler = (Map<String, Object>) endpoint.get("writing_endpoint_handler");
-                    if (writingEndpointHandler != null && writingEndpointHandler.containsKey(this.eventTags.getEndpointHandlerTransactionIdTag())) {
-                        String transactionId = (String) writingEndpointHandler.get(this.eventTags.getEndpointHandlerTransactionIdTag());
-                        addTransactionToEventChain(transactionId, eventChain);
-                    }
-                    List<Map<String, Object>> readingEndpointHandlers = (List<Map<String, Object>>) endpoint.get("reading_endpoint_handlers");
-                    if (readingEndpointHandlers != null) {
-                        for (Map<String, Object> readingEndpointHandler : readingEndpointHandlers) {
-                            if (readingEndpointHandler.containsKey(this.eventTags.getEndpointHandlerTransactionIdTag())) {
-                                String transactionId = (String) readingEndpointHandler.get(this.eventTags.getEndpointHandlerTransactionIdTag());
-                                addTransactionToEventChain(transactionId, eventChain);
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -898,33 +779,16 @@ public class SearchService extends AbstractIndexMetadataService {
         return result.toString();
     }
 
-    @LegacyEndpointHandler("findEventsQuery must contain a single must instead of 3 shoulds")
     private void addTransactionToEventChain(String transactionId, EventChain eventChain) {
         if (eventChain.containsTransaction(transactionId)) {
             return;
         }
         eventChain.addTransactionId(transactionId);
         BoolQueryBuilder findEventsQuery = new BoolQueryBuilder()
-                .minimumShouldMatch(1)
-                .should(new TermQueryBuilder(this.eventTags.getEndpointsTag() +
+                .must(new TermQueryBuilder(this.eventTags.getEndpointsTag() +
                         "." + this.eventTags.getEndpointHandlersTag() +
-                        "." + this.eventTags.getEndpointHandlerTransactionIdTag() + KEYWORD_SUFFIX, transactionId))
-                .should(new TermQueryBuilder(this.eventTags.getEndpointsTag() +
-                        ".reading_endpoint_handlers" +
-                        "." + this.eventTags.getEndpointHandlerTransactionIdTag() + KEYWORD_SUFFIX, transactionId))
-                .should(new TermQueryBuilder(this.eventTags.getEndpointsTag() +
-                        ".writing_endpoint_handler" +
-                        "." + this.eventTags.getEndpointHandlerTransactionIdTag() + KEYWORD_SUFFIX, transactionId));
-        if (ElasticsearchLayout.OLD_EVENT_TYPES_PRESENT) {
-            findEventsQuery.filter(QueryBuilders.boolQuery()
-                    .should(QueryBuilders.termsQuery("_type", "http", "messaging"))
-                    .should(QueryBuilders.boolQuery()
-                            .must(QueryBuilders.termQuery("_type", ElasticsearchLayout.ETM_DEFAULT_TYPE))
-                            .must(QueryBuilders.termsQuery(this.eventTags.getObjectTypeTag(), "http", "messaging")))
-                    .minimumShouldMatch(1));
-        } else {
-            findEventsQuery.filter(QueryBuilders.termsQuery(this.eventTags.getObjectTypeTag(), "http", "messaging"));
-        }
+                        "." + this.eventTags.getEndpointHandlerTransactionIdTag() + KEYWORD_SUFFIX, transactionId)
+                ).filter(QueryBuilders.termsQuery(this.eventTags.getObjectTypeTag(), "http", "messaging"));
         // No principal filtered query. We would like to show the entire event chain, but the user should not be able to retrieve all information.
         SearchRequestBuilder searchRequest = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL), etmConfiguration)
                 .setQuery(findEventsQuery)
@@ -940,8 +804,6 @@ public class SearchService extends AbstractIndexMetadataService {
         }
         transactionIds.forEach(c -> addTransactionToEventChain(c, eventChain));
     }
-
-
 
     @SuppressWarnings("unchecked")
     private boolean isWithinTransaction(Map<String, Object> endpointHandler, String id) {
@@ -969,7 +831,6 @@ public class SearchService extends AbstractIndexMetadataService {
                 result.append(", {");
             }
             addStringElementToJsonBuffer("index", searchHit.getIndex(), result, true);
-            addStringElementToJsonBuffer("type", searchHit.getType(), result, false);
             addStringElementToJsonBuffer("id", searchHit.getId(), result, false);
             result.append(", \"source\": ").append(searchHit.getSourceAsString());
             result.append("}");
@@ -986,10 +847,6 @@ public class SearchService extends AbstractIndexMetadataService {
         if (searchHit == null) {
             return null;
         }
-        if (ElasticsearchLayout.ETM_DEFAULT_TYPE.equals(searchHit.getType())) {
-            return getString(this.eventTags.getObjectTypeTag(), searchHit.getSourceAsMap());
-        } else {
-            return searchHit.getType();
-        }
+        return getString(this.eventTags.getObjectTypeTag(), searchHit.getSourceAsMap());
     }
 }

@@ -53,12 +53,12 @@ public abstract class AbstractElasticTelemetryEventPersister {
     }
 
     IndexRequest createIndexRequest(String id) {
-        return new IndexRequest(getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, id)
+        return new IndexRequest(getElasticIndexName()).id(id)
                 .waitForActiveShards(getActiveShardCount(this.etmConfiguration));
     }
 
     UpdateRequest createUpdateRequest(String id) {
-        return new UpdateRequest(getElasticIndexName(), ElasticsearchLayout.ETM_DEFAULT_TYPE, id)
+        return new UpdateRequest(getElasticIndexName(), id)
                 .waitForActiveShards(getActiveShardCount(this.etmConfiguration))
                 .retryOnConflict(this.etmConfiguration.getRetryOnConflictCount());
 

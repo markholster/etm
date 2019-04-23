@@ -13,11 +13,6 @@ public class GetEventAuditLogBuilder extends AbstractAuditLogBuilder<GetEventAud
         return this;
     }
 
-    public GetEventAuditLogBuilder setEventType(String eventType) {
-        this.audit.eventType = eventType;
-        return this;
-    }
-
     public GetEventAuditLogBuilder setFound(boolean found) {
         this.audit.found = found;
         return this;
@@ -28,8 +23,8 @@ public class GetEventAuditLogBuilder extends AbstractAuditLogBuilder<GetEventAud
         return this;
     }
 
-    public GetEventAuditLogBuilder addCorrelatedEvent(String correlatedEventId, String correlatedEventType) {
-        this.audit.correlatedEvents.put(correlatedEventId, correlatedEventType);
+    public GetEventAuditLogBuilder addCorrelatedEvent(String correlatedEventId) {
+        this.audit.correlatedEvents.add(correlatedEventId);
         return this;
     }
 
