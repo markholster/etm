@@ -189,7 +189,7 @@ public class UserService extends AbstractGuiService {
         SearchResponse searchResponse = dataRepository.search(searchRequestBuilder);
         result.append("{");
         addLongElementToJsonBuffer("event_count", searchResponse.getHits().getTotalHits().value, result, true);
-        addStringElementToJsonBuffer("event_count_as_string", numberFormat.format(searchResponse.getHits().getTotalHits()), result, false);
+        addStringElementToJsonBuffer("event_count_as_string", numberFormat.format(searchResponse.getHits().getTotalHits().value), result, false);
         addStringElementToJsonBuffer("etm_version", System.getProperty("app.version"), result, false);
         result.append("}");
         return result.toString();
