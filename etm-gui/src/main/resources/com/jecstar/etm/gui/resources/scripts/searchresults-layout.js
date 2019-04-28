@@ -95,27 +95,10 @@ var tableLayout = {
     },
     isArray: function(fieldToTest) {
         return Object.prototype.toString.call(fieldToTest) === '[object Array]';
-    },
-}
-
-$('#table-settings-sort-field').bind('keydown', function( event ) {
-    if (event.keyCode === $.ui.keyCode.TAB && $(this).autocomplete('instance').menu.active) {
-        event.preventDefault();
-    } else if ( event.keyCode === $.ui.keyCode.DOWN && !$(this).autocomplete('instance').menu.active) {
-        if ($(this).val() === '') {
-            $(this).autocomplete( "search", "" );
-        }
-    } else if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
-        event.stopPropagation();
     }
-}).autocompleteFieldQuery(
-{
-	queryKeywords: queryKeywords, 
-	mode: 'field'
-});
-		
+};
 
-$('#link-edit-table').click(function (event) {
+$('#link-edit-table').on('click', function (event) {
     event.preventDefault();
     $('#table-settings-sort-field').val(tableLayout.sort_field);
     $('#table-settings-sort-order').val(tableLayout.sort_order);

@@ -525,19 +525,67 @@
         },
         null
     );
-    var queryKeywords = null;
-    $.ajax({
-        type: 'GET',
-        async: false,
-        contentType: 'application/json',
-        url: '../rest/search/keywords/etm_event_all',
-        cache: false,
-        success: function (data) {
-            if (!data || !data.keywords) {
-                return;
+    let queryKeywords = null;
+    $.when(
+        $.ajax({
+            type: 'GET',
+            contentType: 'application/json',
+            url: '../rest/search/keywords/etm_event_all',
+            cache: false,
+            success: function (data) {
+                if (!data || !data.keywords) {
+                    return;
+                }
+                queryKeywords = data.keywords;
             }
-            queryKeywords = data.keywords;
-        }
+        })
+    ).done(function () {
+        // Disable or enable the search button, template name inputfield and save button if the query field contains data.
+        $('#query-string').on('input', enableOrDisableSearchButton)
+            .bind('keydown', function (event) {
+                if (event.keyCode === $.ui.keyCode.TAB && $(this).autocomplete('instance').menu.active) {
+                    event.preventDefault();
+                } else if (event.keyCode === $.ui.keyCode.DOWN && !$(this).autocomplete('instance').menu.active) {
+                    if ($(this).val() === '') {
+                        $(this).autocomplete("search", "");
+                    }
+                } else if (event.keyCode === $.ui.keyCode.ENTER && !$(this).autocomplete('instance').menu.active && $(this).val()) {
+                    startNewQuery();
+                }
+            }).autocompleteFieldQuery(
+            {
+                queryKeywords: queryKeywords
+            }
+        );
+        $('#query-string-time-filter-field')
+            .bind('keydown', function (event) {
+                if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
+                    event.stopPropagation();
+                }
+            }).autocompleteFieldQuery(
+            {
+                queryKeywords: queryKeywords,
+                mode: 'field',
+                keywordFilter: function (index, group, keyword) {
+                    return !keyword.date;
+                }
+            }
+        );
+        $('#table-settings-sort-field').bind('keydown', function (event) {
+            if (event.keyCode === $.ui.keyCode.TAB && $(this).autocomplete('instance').menu.active) {
+                event.preventDefault();
+            } else if (event.keyCode === $.ui.keyCode.DOWN && !$(this).autocomplete('instance').menu.active) {
+                if ($(this).val() === '') {
+                    $(this).autocomplete("search", "");
+                }
+            } else if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
+                event.stopPropagation();
+            }
+        }).autocompleteFieldQuery(
+            {
+                queryKeywords: queryKeywords,
+                mode: 'field'
+            });
     });
     const flatPickrStartDate = $('#query-string-from').parent()
         .flatpickr({
@@ -580,39 +628,6 @@
             $('#query-string').removeAttr('disabled');
         }
     });
-    // Disable or enable the search button, template name inputfield and save button if the query field contains data.
-    $('#query-string').on('input', enableOrDisableSearchButton)
-        .bind('keydown', function (event) {
-            if (event.keyCode === $.ui.keyCode.TAB && $(this).autocomplete('instance').menu.active) {
-                event.preventDefault();
-            } else if (event.keyCode === $.ui.keyCode.DOWN && !$(this).autocomplete('instance').menu.active) {
-                if ($(this).val() === '') {
-                    $(this).autocomplete("search", "");
-                }
-            } else if (event.keyCode === $.ui.keyCode.ENTER && !$(this).autocomplete('instance').menu.active && $(this).val()) {
-                startNewQuery();
-            }
-        }).autocompleteFieldQuery(
-        {
-            queryKeywords: queryKeywords
-        }
-    );
-
-    $('#query-string-time-filter-field').bind('keydown', function (event) {
-        if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
-            event.stopPropagation();
-        }
-    })
-        .autocompleteFieldQuery(
-            {
-                queryKeywords: queryKeywords,
-                mode: 'field',
-                keywordFilter: function (index, group, keyword) {
-                    return !keyword.date;
-                }
-            }
-        );
-
 
     $('#btn-search').click(function () {
         startNewQuery();
