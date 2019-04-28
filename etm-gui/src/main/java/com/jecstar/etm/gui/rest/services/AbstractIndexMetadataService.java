@@ -30,12 +30,11 @@ public abstract class AbstractIndexMetadataService extends AbstractGuiService {
      */
     protected List<Keyword> getIndexFields(DataRepository dataRepository, String indexName) {
         List<Keyword> keywords = new ArrayList<>();
+        keywords.add(Keyword.EXISTS);
+        keywords.add(Keyword.ID);
         GetMappingsResponse mappingsResponse = dataRepository.indicesGetMappings(new GetMappingsRequestBuilder().setIndices(indexName));
         Map<String, MappingMetaData> mappings = mappingsResponse.mappings();
-        if (mappings.containsKey(indexName)) {
-            MappingMetaData mappingMetaData = mappings.get(indexName);
-            keywords.add(Keyword.EXISTS);
-            keywords.add(Keyword.ID);
+        for (MappingMetaData mappingMetaData : mappings.values()) {
             Map<String, Object> valueMap = mappingMetaData.getSourceAsMap();
             addFieldProperties(keywords, "", valueMap);
         }

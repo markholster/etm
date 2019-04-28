@@ -10,7 +10,7 @@ import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.launcher.http.ElasticsearchIdentityManager;
 import com.jecstar.etm.launcher.http.HttpServer;
 import com.jecstar.etm.launcher.migrations.EtmMigrator;
-import com.jecstar.etm.launcher.migrations.v4.SearchHistoryTimestampMigrator;
+import com.jecstar.etm.launcher.migrations.v4.Version4Migrator;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessorImpl;
 import com.jecstar.etm.processor.elastic.PersistenceEnvironmentElasticImpl;
@@ -226,10 +226,9 @@ class LaunchEtmCommand extends AbstractCommand {
      */
     private boolean executeDatabaseMigrations(DataRepository dataRepository) {
         boolean reinitialze = false;
-        EtmMigrator etmMigrator = new SearchHistoryTimestampMigrator(dataRepository);
+        EtmMigrator etmMigrator = new Version4Migrator(dataRepository);
         if (etmMigrator.shouldBeExecuted()) {
             etmMigrator.migrate();
-            reinitialze = true;
         }
         return reinitialze;
     }

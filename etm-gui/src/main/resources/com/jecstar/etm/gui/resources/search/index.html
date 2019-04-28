@@ -626,7 +626,7 @@
     $('#btn-download-results').on('click', function (event) {
         event.preventDefault();
         $('#modal-download-results').modal('hide');
-        var q = createQuery(true);
+        const q = createQuery(true);
         q.start_ix = Number($('#input-download-start-row').val()) - 1;
         q.max_results = Number($('#input-download-number-of-rows').val());
         q.fileType = $('#sel-download-type').val();
@@ -636,15 +636,15 @@
 
     $('#result_card').on('click', '#search_result_table tbody a', function (event) {
         event.preventDefault();
-        if ('show-event' == $(this).attr('data-link-type')) {
-            showEvent($(window).scrollTop(), $(this).attr('data-event-type'), $(this).attr('id'));
+        if ('show-event' === $(this).attr('data-link-type')) {
+            showEvent($(window).scrollTop(), $(this).attr('id'));
             $('#search_result_table > tbody > tr.event-selected').removeClass('event-selected');
             $(event.target).parent().parent().addClass('event-selected');
-        } else if ('set-as-start-for-query' == $(this).attr('data-link-type')) {
-            var value = $(this).parent().children(":first").text();
+        } else if ('set-as-start-for-query' === $(this).attr('data-link-type')) {
+            const value = $(this).parent().children(":first").text();
             $('#query-string-from').val(value);
-        } else if ('set-as-end-for-query' == $(this).attr('data-link-type')) {
-            var value = $(this).parent().children(":first").text();
+        } else if ('set-as-end-for-query' === $(this).attr('data-link-type')) {
+            const value = $(this).parent().children(":first").text();
             $('#query-string-till').val(value);
         }
     });
@@ -674,7 +674,7 @@
 
     $('#event-container').on('click', "a[data-link-type='show-event']", function (event) {
         event.preventDefault();
-        showEvent(Number($(this).attr('data-scroll-to')), $(this).attr('data-event-type'), $(this).attr('data-event-id'))
+        showEvent(Number($(this).attr('data-scroll-to')), $(this).attr('data-event-id'))
     });
 
     $('#event-container').on('click', "a[data-link-type='toggle-detail-map']", function (event) {
@@ -690,7 +690,7 @@
     }
 
     function enableOrDisableSearchButton() {
-        if (!$('#query-string').val() || $('[id^=check-type-]:checked').length == 0) {
+        if (!$('#query-string').val() || $('[id^=check-type-]:checked').length === 0) {
             $('#btn-search, #template-name, #btn-save-template').attr('disabled', 'disabled');
             $('#link-edit-table, #link-request-download').hide();
         } else {
@@ -707,7 +707,7 @@
 
     function createQuery(reusePreviousQueryString) {
         if (!reusePreviousQueryString) {
-            if (!$('#query-string').val() || $('[id^=check-type-]:checked').length == 0) {
+            if (!$('#query-string').val() || $('[id^=check-type-]:checked').length === 0) {
                 return null;
             }
             tableLayout.current_query = $('#query-string').val();
@@ -865,16 +865,15 @@
             if (field.link) {
                 $td.append(
                     $('<a>')
-                        .attr('href', '?id=' + encodeURIComponent(searchResult.id) + '&type=' + encodeURIComponent(searchResult.type))
+                        .attr('href', '?id=' + encodeURIComponent(searchResult.id))
                         .attr('id', searchResult.id)
                         .attr('data-link-type', 'show-event')
-                        .attr('data-event-type', searchResult.type)
                         .text(tableLayout.getValueFromSearchResult(searchResult, field, timeZone))
                 );
             } else {
                 $td.append($('<span>').text(tableLayout.getValueFromSearchResult(searchResult, field, timeZone)));
             }
-            if ('isotimestamp' == field.format || 'isoutctimestamp' == field.format) {
+            if ('isotimestamp' === field.format || 'isoutctimestamp' === field.format) {
                 $td.append(
                     $('<a style="padding-top: 0.2rem">')
                         .addClass('fa fa-hourglass-end float-right invisible')
@@ -918,8 +917,8 @@
         }
     });
 
-    if (commons.queryString['id'] && commons.queryString['type']) {
-        showEvent(null, commons.queryString['type'], commons.queryString['id']);
+    if (commons.queryString['id']) {
+        showEvent(null, commons.queryString['id']);
     }
 
 </script>

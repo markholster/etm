@@ -24,19 +24,17 @@ var tableLayout = {
         })
     },
     getValueFromSearchResult: function(searchResult, tableColumn, timeZone) {
-        var fieldParts = tableColumn.field.split("\.");
-        var values = [];
-        var result = '';
-        if ('_type' == tableColumn.field) {
-        	values.push(searchResult.type);
-        } else if ('_id' == tableColumn.field) {
+        const fieldParts = tableColumn.field.split("\.");
+        let values = [];
+        let result = '';
+        if ('_id' === tableColumn.field) {
             values.push(searchResult.id);
         } else {
         	tableLayout.retrieveValuesFromSource(searchResult.source, fieldParts, values);
         }
-        if (values.length == 0) {
+        if (values.length === 0) {
             result = ''
-        } else if (values.length == 1) {
+        } else if (values.length === 1) {
             result = tableLayout.formatValue(values[0], tableColumn, timeZone);
         }
         // When changed also change the QueryExporter.java with the same functionality.
@@ -166,8 +164,8 @@ $('#link-edit-table').click(function (event) {
     }
     
     function createRow(columnData) {
-        var checkboxId = commons.generateUUID();
-        var row = $('<div>').addClass('row fieldConfigurationRow').attr('style', 'margin-top: 5px;');
+        const checkboxId = commons.generateUUID();
+        const row = $('<div>').addClass('row fieldConfigurationRow').attr('style', 'margin-top: 5px;');
         $(row).append(
             $('<div>').addClass('col-sm-2').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<input>').attr('type', 'text').addClass('form-control form-control-sm').attr('placeholder', 'Name')),
             $('<div>').addClass('col-sm-3').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<input>').attr('type', 'text').addClass('form-control form-control-sm').attr('placeholder', 'Field')
@@ -198,7 +196,7 @@ $('#link-edit-table').click(function (event) {
                 )
             )
         );
-        var actionDiv = $('<div>').addClass('col-sm-2').append(
+        const actionDiv = $('<div>').addClass('col-sm-2').append(
             $('<div>').addClass('row actionRow').append(
                 $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-arrow-up').click(function (event) {event.preventDefault(); moveRowUp(row)})),
                 $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-arrow-down').click(function (event) {event.preventDefault(); moveRowDown(row)})),
@@ -246,7 +244,7 @@ $('#link-edit-table').click(function (event) {
 });
 
 $('#btn-apply-table-settings').click(function () {
-    var changed = false;
+    let changed = false;
     if (tableLayout.sort_field !== $('#table-settings-sort-field').val()) {
         changed = true;
         tableLayout.sort_field = $('#table-settings-sort-field').val();
@@ -259,9 +257,9 @@ $('#btn-apply-table-settings').click(function () {
         changed = true;
         tableLayout.results_per_page = parseInt($('#table-settings-results-per-page').val());
     }
-    var fields = [];
+    const fields = [];
     $('#table-settings-columns .fieldConfigurationRow').each(function (rowIndex, row) {
-        var rowData = {name: '', field: '', format: 'plain', array: 'first', link: false};
+        const rowData = {name: '', field: '', format: 'plain', array: 'first', link: false};
         $(row).children().each(function (columnIndex, column) {
             if (0 === columnIndex) {
                 rowData.name = $(column).find('input').val();
@@ -279,8 +277,8 @@ $('#btn-apply-table-settings').click(function () {
             fields.push(rowData);
         }            
     });
-    
-    if (JSON.stringify(fields) != JSON.stringify(tableLayout.fields)) {
+
+    if (JSON.stringify(fields) !== JSON.stringify(tableLayout.fields)) {
         changed = true;
     }
     tableLayout.fields = fields;

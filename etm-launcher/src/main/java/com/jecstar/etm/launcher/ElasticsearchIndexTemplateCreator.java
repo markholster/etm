@@ -3,7 +3,6 @@ package com.jecstar.etm.launcher;
 import com.jecstar.etm.domain.writer.TelemetryEventTags;
 import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
 import com.jecstar.etm.gui.rest.services.dashboard.domain.Data;
-import com.jecstar.etm.gui.rest.services.dashboard.domain.GraphContainer;
 import com.jecstar.etm.launcher.http.session.ElasticsearchSessionTags;
 import com.jecstar.etm.launcher.http.session.ElasticsearchSessionTagsJsonImpl;
 import com.jecstar.etm.server.core.domain.audit.AuditLog;
@@ -275,7 +274,7 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
                 + ", { \"" + Signal.LAST_FAILED + "\": { \"match\": \"" + Signal.LAST_FAILED + "\", \"mapping\": {\"type\": \"date\"}}}"
                 + ", { \"" + Signal.LAST_PASSED + "\": { \"match\": \"" + Signal.LAST_PASSED + "\", \"mapping\": {\"type\": \"date\"}}}"
                 + ", { \"" + Data.FROM + "\": { \"match\": \"" + Data.FROM + "\", \"mapping\": {\"type\": \"keyword\"}}}"
-                + ", { \"" + Data.TILL + "\": { \"match\": \"" + Data.FROM + "\", \"mapping\": {\"type\": \"keyword\"}}}"
+                + ", { \"" + Data.TILL + "\": { \"match\": \"" + Data.TILL + "\", \"mapping\": {\"type\": \"keyword\"}}}"
                 + ", { \"" + this.configurationTags.getStartTimeTag() + "\": { \"match\": \"" + this.configurationTags.getStartTimeTag() + "\", \"mapping\": {\"type\": \"keyword\"}}}"
                 + ", { \"" + this.configurationTags.getEndTimeTag() + "\": { \"match\": \"" + this.configurationTags.getEndTimeTag() + "\", \"mapping\": {\"type\": \"keyword\"}}}"
                 + ", { \"string_as_keyword\": { \"match_mapping_type\": \"string\", \"mapping\": {\"type\": \"keyword\"}}}"

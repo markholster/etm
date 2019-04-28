@@ -12,6 +12,7 @@ import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.cluster.storedscripts.GetStoredScriptResponse;
 import org.elasticsearch.action.admin.indices.flush.FlushResponse;
+import org.elasticsearch.action.admin.indices.settings.get.GetSettingsResponse;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetResponse;
@@ -164,6 +165,11 @@ public class DataRepository {
     public GetIndexResponse indicesGet(GetIndexRequestBuilder builder) {
         try {
             return this.client.indices().get(builder.build(), RequestOptions.DEFAULT);
+        } catch (ElasticsearchStatusException e) {
+            if (RestStatus.NOT_FOUND.equals(e.status())) {
+                return null;
+            }
+            throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
         } catch (IOException e) {
             throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
         }
@@ -244,6 +250,14 @@ public class DataRepository {
     public GetFieldMappingsResponse indicesGetFieldMappings(GetFieldMappingsRequestBuilder builder) {
         try {
             return this.client.indices().getFieldMapping(builder.build(), RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
+        }
+    }
+
+    public GetSettingsResponse indicesGetSettings(GetSettingsRequestBuilder builder) {
+        try {
+            return this.client.indices().getSettings(builder.build(), RequestOptions.DEFAULT);
         } catch (IOException e) {
             throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
         }

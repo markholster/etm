@@ -150,7 +150,7 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
 
     protected void checkAndCleanupPreviousRun(DataRepository dataRepository, String migrationIndexPrefix) {
         GetIndexResponse indexResponse = dataRepository.indicesGet(new GetIndexRequestBuilder(migrationIndexPrefix + "*"));
-        if (indexResponse != null && indexResponse.getIndices() != null && indexResponse.getIndices().length > 0) {
+        if (indexResponse != null) {
             System.out.println("Found migration indices from a previous run. Deleting those indices.");
             for (String index : indexResponse.getIndices()) {
                 dataRepository.indicesDelete(new DeleteIndexRequestBuilder().setIndices(index));

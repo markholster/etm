@@ -25,9 +25,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.text.NumberFormat;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Path("/audit")
@@ -98,8 +95,8 @@ public class AuditService extends AbstractIndexMetadataService {
         StringBuilder result = new StringBuilder();
         result.append("{");
         result.append("\"status\": \"success\"");
-        result.append(",\"hits\": ").append(response.getHits().getTotalHits());
-        result.append(",\"hits_as_string\": \"").append(numberFormat.format(response.getHits().getTotalHits())).append("\"");
+        result.append(",\"hits\": ").append(response.getHits().getTotalHits().value);
+        result.append(",\"hits_as_string\": \"").append(numberFormat.format(response.getHits().getTotalHits().value)).append("\"");
         result.append(",\"time_zone\": \"").append(etmPrincipal.getTimeZone().getID()).append("\"");
         result.append(",\"start_ix\": ").append(parameters.getStartIndex());
         result.append(",\"end_ix\": ").append(parameters.getStartIndex() + response.getHits().getHits().length - 1);

@@ -201,8 +201,8 @@ public class SearchService extends AbstractIndexMetadataService {
         result.append("{");
         result.append("\"status\": \"success\"");
         result.append(",\"history_size\": ").append(etmPrincipal.getHistorySize());
-        result.append(",\"hits\": ").append(response.getHits().getTotalHits());
-        result.append(",\"hits_as_string\": \"").append(numberFormat.format(response.getHits().getTotalHits())).append("\"");
+        result.append(",\"hits\": ").append(response.getHits().getTotalHits().value);
+        result.append(",\"hits_as_string\": \"").append(numberFormat.format(response.getHits().getTotalHits().value)).append("\"");
         result.append(",\"time_zone\": \"").append(etmPrincipal.getTimeZone().getID()).append("\"");
         result.append(",\"start_ix\": ").append(parameters.getStartIndex());
         result.append(",\"end_ix\": ").append(parameters.getStartIndex() + response.getHits().getHits().length - 1);

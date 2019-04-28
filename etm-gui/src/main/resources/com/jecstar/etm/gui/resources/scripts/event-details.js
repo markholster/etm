@@ -5,7 +5,7 @@ let transactionMap = {};
 let eventMap = {};
 let clipboards = [];
 
-function showEvent(scrollTo, type, id) {
+function showEvent(scrollTo, id) {
 	$('#search-container').hide();
 	$('#event-tabs').children().slice(1).remove();
 	$('#tabcontents').children().slice(1).remove();
@@ -16,7 +16,7 @@ function showEvent(scrollTo, type, id) {
 	$.ajax({
 	    type: 'GET',
 	    contentType: 'application/json',
-	    url: '../rest/search/event/' + encodeURIComponent(type) + '/' + encodeURIComponent(id),
+        url: '../rest/search/event/' + encodeURIComponent(id),
 	    cache: false,
 	    success: function(data) {
 	        if (!data || !data.event) {
@@ -61,7 +61,7 @@ function showEvent(scrollTo, type, id) {
 
 	function addContent(data) {
         const $cardTitle = $('#event-card-title').text('Event ' + data.event.id);
-        const $eventTabHeader = $('#event-tab-header').text(capitalize(data.event.type === 'doc' ? data.event.source.type : data.event.type));
+        const $eventTabHeader = $('#event-tab-header').text(capitalize(data.event.source.type));
         const $eventTab = $('#event-tab');
 		if (data.event.source) {
 			if (data.event.source.name) {
@@ -117,7 +117,7 @@ function showEvent(scrollTo, type, id) {
 					}
 				});
 				if (hasTransactionId) {
-                    createEventChainTab(data.event.id, data.event.type);
+                    createEventChainTab(data.event.id);
 				}
 			}
 			if (data.audit_logs) {
@@ -132,11 +132,10 @@ function showEvent(scrollTo, type, id) {
         const dataLink = $('<a>')
 			.text(data.id)
 			.addClass('form-control-static')
-			.attr('href', '?id=' + encodeURIComponent(data.id) + '&type=' + encodeURIComponent(data.type))
+            .attr('href', '?id=' + encodeURIComponent(data.id))
 			.attr('style', 'display: inline-block;')
 			.attr('data-link-type', 'show-event')
 			.attr('data-scroll-to', scrollTo)
-			.attr('data-event-type', data.type)
 			.attr('data-event-id', data.id);
 		appendElementToContainerInRow($eventTab, 'Id', dataLink);
 		appendToContainerInRow($eventTab, 'Name', data.source.name);
@@ -144,11 +143,10 @@ function showEvent(scrollTo, type, id) {
             const correlationDataLink = $('<a>')
 				.text(data.source.correlation_id)
 				.addClass('form-control-static')
-			    .attr('href', '?id=' + encodeURIComponent(data.source.correlation_id) + '&type=' + encodeURIComponent(data.type))
+                .attr('href', '?id=' + encodeURIComponent(data.source.correlation_id))
 				.attr('style', 'display: inline-block;')
 				.attr('data-link-type', 'show-event')
 				.attr('data-scroll-to', scrollTo)
-				.attr('data-event-type', data.type)
 				.attr('data-event-id', data.source.correlation_id);
             appendElementToContainerInRow($eventTab, 'Correlation id', correlationDataLink);
 		}
@@ -178,10 +176,10 @@ function showEvent(scrollTo, type, id) {
                 appendToContainerInRow($eventTab, 'First read time', moment.tz(Math.min.apply(Math, readingTimes), timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
             }
 		}
-		if ('log' === data.type || 'log' === data.source.object_type) {
+        if ('log' === data.source.object_type) {
 		    $tabHeader.text('Log');
 			appendToContainerInRow($eventTab, 'Log level', data.source.log_level);
-		} else if ('http' === data.type || 'http' === data.source.object_type) {
+        } else if ('http' === data.source.object_type) {
 			appendToContainerInRow($eventTab, 'Http type', data.source.http_type);
 			if (data.source.expiry) {
 				appendToContainerInRow($eventTab, 'Expiry time', moment.tz(data.source.expiry, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
@@ -217,7 +215,7 @@ function showEvent(scrollTo, type, id) {
 					}					
 				}
 			}
-		} else if ('messaging' === data.type || 'messaging' === data.source.object_type) {
+        } else if ('messaging' === data.source.object_type) {
 			appendToContainerInRow($eventTab, 'Messaging type', data.source.messaging_type);
 			if (data.source.expiry) {
 				appendToContainerInRow($eventTab, 'Expiry time', moment.tz(data.source.expiry, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
@@ -254,7 +252,7 @@ function showEvent(scrollTo, type, id) {
 					$tabHeader.text('Messaging fire-forget');
 				}
 			}
-		} else if ('sql' === data.type || 'sql' === data.source.object_type) {
+        } else if ('sql' === data.source.object_type) {
 			appendToContainerInRow($eventTab, 'Sql type', data.source.sql_type);
 			if (data.source.expiry) {
 				appendToContainerInRow($eventTab, 'Expiry time', moment.tz(data.source.expiry, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
@@ -288,8 +286,8 @@ function showEvent(scrollTo, type, id) {
 						}
 					}										
 				}
-			}		
-		} else if ('business' === data.type || 'business' === data.source.object_type) {
+            }
+        } else if ('business' === data.source.object_type) {
 		    $tabHeader.text('Business');
 		}
         let metadataDetailMap;
@@ -370,7 +368,7 @@ function showEvent(scrollTo, type, id) {
                 worker.postMessage([payloadCode.text(), data.source.payload_format]);
             }
 	    }
-	    if (('log' === data.type || 'log' === data.source.object_type) && "undefined" != typeof data.source.stack_trace) {
+        if (('log' === data.source.object_type) && "undefined" != typeof data.source.stack_trace) {
 	    	$eventTab.append(
 	    	    $('<br />'),
 	    		$('<div>').addClass('row').append(
@@ -771,11 +769,10 @@ function showEvent(scrollTo, type, id) {
                         const $tbody = $('<tbody>');
 			        	$.each(transaction_data.events, function(index, event) {
                             const $link = $('<a>')
-			        		    .attr('href', '?id=' + encodeURIComponent(event.id) + '&type=' + encodeURIComponent(event.type))
+                                .attr('href', '?id=' + encodeURIComponent(event.id))
 								.text(event.id)
 								.attr('data-link-type', 'show-event')
 								.attr('data-scroll-to', scrollTo)
-								.attr('data-event-type', event.type)
 								.attr('data-event-id', event.id);
 			        		$tbody.append(
 			        			$('<tr>').append(
@@ -796,13 +793,13 @@ function showEvent(scrollTo, type, id) {
 	}
 	
 	function formatTransactionLine(event) {
-        if ('business' === event.type || 'business' === event.object_type) {
+        if ('business' === event.object_type) {
 			return event.name ? event.name : '?';
-        } else if ('http' === event.type || 'http' === event.object_type) {
+        } else if ('http' === event.object_type) {
             return ('incoming' === event.direction ? 'Received ' : 'Sent ') + ("RESPONSE" === event.sub_type ? 'http response ' : 'http ') + (event.name ? event.name : '?')
-        } else if ('log' === event.type || 'log' === event.object_type) {
+        } else if ('log' === event.object_type) {
 			return event.payload;
-        } else if ('messaging' === event.type || 'messaging' === event.object_type) {
+        } else if ('messaging' === event.object_type) {
             if ('REQUEST' === event.sub_type) {
                 if ('incoming' === event.direction) {
 					return 'Received request message ' + (event.name ? event.name : '?') + ' from ' + event.endpoint;
@@ -822,7 +819,7 @@ function showEvent(scrollTo, type, id) {
 					return 'Sent fire-forget message ' + (event.name ? event.name : '?') + ' to ' + event.endpoint;
 				}
 			}
-        } else if ('sql' === event.type || 'sql' === event.object_type) {
+        } else if ('sql' === event.object_type) {
             if ('incoming' === event.direction) {
                 return 'Received ' + ("RESULTSET" === event.sub_type ? 'sql resultset' : event.payload);
 			} else {
@@ -928,7 +925,7 @@ function showEvent(scrollTo, type, id) {
 
 	}
 
-    function createEventChainTab(id, type) {
+    function createEventChainTab(id) {
 		$('#event-tabs').append(
 			$('<li>').addClass('nav-item').append(
 					$('<a>').attr('id', 'event-chain-tab-header')
@@ -968,7 +965,7 @@ function showEvent(scrollTo, type, id) {
 				$.ajax({
 				    type: 'GET',
 				    contentType: 'application/json',
-				    url: '../rest/search/event/' + encodeURIComponent(type) + '/' + encodeURIComponent(id) + '/chain',
+                    url: '../rest/search/event/' + encodeURIComponent(id) + '/chain',
 				    cache: false,
                     success: function (response) {
                         if (!response) {
