@@ -45,6 +45,50 @@
   }
 
   $(window).on('load', function () {
+      // Search header
+      $('.u-header-search').each(function () {
+          //Variables
+          const $this = $(this),
+              searchTarget = $this.data('search-target'),
+              searchMobileInvoker = $this.data('search-mobile-invoker'),
+              windowWidth = window.innerWidth;
+
+          $(searchMobileInvoker).on('click', function (e) {
+              e.stopPropagation();
+              $(searchTarget).fadeToggle(400);
+          });
+
+          $(searchTarget).on('click', function (e) {
+              e.stopPropagation();
+          });
+
+          $(window).on('click', function (e) {
+              $(searchTarget).fadeOut(200);
+          });
+
+          if (windowWidth <= 768) {
+              $(window).on('click', function (e) {
+                  $(searchTarget).fadeOut(400);
+              });
+          } else {
+              $(window).off('click');
+          }
+
+          $(window).on('resize', function () {
+              var windowWidth = window.innerWidth;
+
+              if (windowWidth >= 768) {
+                  $(searchTarget).attr('style', '');
+
+                  $(window).off('click');
+              } else {
+                  $(window).on('click', function (e) {
+                      $(searchTarget).fadeOut(400);
+                  });
+              }
+          });
+      });
+
     // Sidebar
     if ($('.u-sidebar-nav--opened').length) {
       $('.u-sidebar-nav--opened > .u-sidebar-nav-menu__link[data-target]').each(function() {
