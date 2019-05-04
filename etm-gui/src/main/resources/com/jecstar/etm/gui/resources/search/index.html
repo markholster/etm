@@ -94,13 +94,7 @@
                 <i class="fa fa-search"></i>
             </a>
 
-            <div id="headerSearch" class="u-header-search-form">
-                <form onsubmit="alert('lala');">
-                    <div class="input-group">
-                        <input class="form-control form-control-sm" type="search" placeholder="Quicksearch"/>
-                    </div>
-                </form>
-            </div>
+            <div id="placeholder-for-headerSearch"></div>
         </div>
 
     </div>
@@ -943,7 +937,7 @@
     }
 
     $(window).scroll(function (event) {
-        var $showMoreLink = $('#lnk_show_more');
+        const $showMoreLink = $('#lnk_show_more');
         if (commons.isInViewport($showMoreLink)) {
             $showMoreLink.click();
         }
@@ -951,6 +945,9 @@
 
     if (commons.queryString['id']) {
         showEvent(null, commons.queryString['id']);
+    } else if (commons.queryString['q']) {
+        $('#query-string').val(commons.queryString['q']);
+        executeQuery(createQuery(false));
     }
 
 </script>

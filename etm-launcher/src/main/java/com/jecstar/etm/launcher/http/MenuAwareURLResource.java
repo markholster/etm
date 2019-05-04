@@ -20,9 +20,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Comparator;
-import java.util.Deque;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -68,6 +66,7 @@ public class MenuAwareURLResource extends URLResource {
 
     private static final String MENU_PLACEHOLDER = "<li id=\"placeholder-for-MenuAwareURLResource\"></li>";
     private static final String USER_PLACEHOLDER = "placeholder-for-contextUser";
+    private static final String SEARCH_HEADER_PLACEHOLDER = "<div id=\"placeholder-for-headerSearch\"></div>";
 
     private final EtmConfiguration etmConfiguration;
     private final String pathPrefixToContextRoot;
@@ -144,6 +143,19 @@ public class MenuAwareURLResource extends URLResource {
                     try (BufferedReader buffer = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
                         String htmlContent = buffer.lines().collect(Collectors.joining("\n"));
                         int ix = htmlContent.indexOf(USER_PLACEHOLDER);
+                        if (ix != -1) {
+                            htmlContent = htmlContent.replace(USER_PLACEHOLDER, etmAccount.getPrincipal().getDisplayName());
+                        }
+                        ix = htmlContent.indexOf(SEARCH_HEADER_PLACEHOLDER);
+                        if (ix != -1 && etmAccount.getPrincipal().isInAnyRole(SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE)) {
+                            htmlContent = htmlContent.replace(SEARCH_HEADER_PLACEHOLDER, "    <div id=\"headerSearch\" class=\"u-header-search-form\">\n" +
+                                    "        <form action=\"" + pathPrefixToContextRoot + "search/index.html\">\n" +
+                                    "            <div class=\"input-group\">\n" +
+                                    "                <input class=\"form-control form-control-sm\" type=\"search\" name=\"q\" placeholder=\"Quicksearch\"/>\n" +
+                                    "            </div>\n" +
+                                    "        </form>\n" +
+                                    "    </div>");
+                        }
                         if (ix != -1) {
                             htmlContent = htmlContent.replace(USER_PLACEHOLDER, etmAccount.getPrincipal().getDisplayName());
                         }
