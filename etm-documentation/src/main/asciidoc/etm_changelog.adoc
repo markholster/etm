@@ -1,12 +1,13 @@
 == Changelog
 === Version 4.0.0
+* [ETM-23] Remove all api references to event type.
 * [ETM-100] Log to console when quiet = false.
 * [ETM-101] Calendar buttons in signals & graphs not working in IE.
 * [ETM-102] Memory leak in LruCache.
 * [ETM-103] Change gui to htmlstreams.com template.
 * [ETM-105] Option to export and import graphs + signals.
-* [ETM-TODO] Added quicksearch bar.
-* [ETM-TODO] Migrated to elasticsearch 7.
+* [ETM-106] Upgrade to elasticsearch 7.x
+* [ETM-107] Add a quicksearch bar.
 
 === Version 3.5.0
 * [ETM-95] Add api key to user for for authorisation on rest processor.
