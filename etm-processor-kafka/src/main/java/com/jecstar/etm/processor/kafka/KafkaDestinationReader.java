@@ -42,7 +42,7 @@ public class KafkaDestinationReader implements DestinationReader {
                            final MetricRegistry metricRegistry,
                            final Topic topic,
                            final DestinationReaderInstantiationContext<KafkaDestinationReader> instantiationContext) {
-        this.etmEventHandler = new EtmEventHandler(processor);
+        this.etmEventHandler = new EtmEventHandler(processor, topic.getDefaultImportProfile());
         this.kafkaPollTimer = metricRegistry.timer("kafka-processor.poll." + topic.getName().replaceAll("\\.", "_"));
         this.topic = topic;
     }

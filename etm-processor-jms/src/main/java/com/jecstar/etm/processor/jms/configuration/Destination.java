@@ -6,8 +6,8 @@ public class Destination {
     private String type = "queue";
     private int minNrOfListeners = 1;
     private int maxNrOfListeners = 5;
-
     private String messagesType = "auto"; // etmevent, clone
+    private String defaultImportProfile;
 
     public void setName(String name) {
         this.name = name;
@@ -67,5 +67,13 @@ public class Destination {
             throw new IllegalArgumentException("'" + messagesType + "' is an invalid messages type.");
         }
         this.messagesType = messagesType;
+    }
+
+    public String getDefaultImportProfile() {
+        return this.defaultImportProfile;
+    }
+
+    public void setDefaultImportProfile(String defaultImportProfile) {
+        this.defaultImportProfile = defaultImportProfile;
     }
 }

@@ -40,6 +40,7 @@ public class TelemetryCommand {
     }
 
     public CommandType commandType;
+    public String importProfile;
 
     public final BusinessTelemetryEvent businessTelemetryEvent = new BusinessTelemetryEvent();
     public final HttpTelemetryEvent httpTelemetryEvent = new HttpTelemetryEvent();
@@ -47,8 +48,9 @@ public class TelemetryCommand {
     public final MessagingTelemetryEvent messagingTelemetryEvent = new MessagingTelemetryEvent();
     public final SqlTelemetryEvent sqlTelemetryEvent = new SqlTelemetryEvent();
 
-    public void initialize(BusinessTelemetryEvent businessTelemetryEvent) {
+    public void initialize(BusinessTelemetryEvent businessTelemetryEvent, String importProfile) {
         this.commandType = CommandType.BUSINESS_EVENT;
+        this.importProfile = importProfile;
         this.businessTelemetryEvent.initialize(businessTelemetryEvent);
         this.httpTelemetryEvent.initialize();
         this.logTelemetryEvent.initialize();
@@ -56,17 +58,19 @@ public class TelemetryCommand {
         this.sqlTelemetryEvent.initialize();
     }
 
-    public void initialize(HttpTelemetryEvent httpTelemetryEvent) {
+    public void initialize(HttpTelemetryEvent httpTelemetryEvent, String importProfile) {
         this.commandType = CommandType.HTTP_EVENT;
         this.businessTelemetryEvent.initialize();
         this.httpTelemetryEvent.initialize(httpTelemetryEvent);
         this.logTelemetryEvent.initialize();
         this.messagingTelemetryEvent.initialize();
         this.sqlTelemetryEvent.initialize();
+        this.importProfile = importProfile;
     }
 
-    public void initialize(LogTelemetryEvent logTelemetryEvent) {
+    public void initialize(LogTelemetryEvent logTelemetryEvent, String importProfile) {
         this.commandType = CommandType.LOG_EVENT;
+        this.importProfile = importProfile;
         this.businessTelemetryEvent.initialize();
         this.httpTelemetryEvent.initialize();
         this.logTelemetryEvent.initialize(logTelemetryEvent);
@@ -74,8 +78,9 @@ public class TelemetryCommand {
         this.sqlTelemetryEvent.initialize();
     }
 
-    public void initialize(MessagingTelemetryEvent messagingTelemetryEvent) {
+    public void initialize(MessagingTelemetryEvent messagingTelemetryEvent, String importProfile) {
         this.commandType = CommandType.MESSAGING_EVENT;
+        this.importProfile = importProfile;
         this.businessTelemetryEvent.initialize();
         this.httpTelemetryEvent.initialize();
         this.logTelemetryEvent.initialize();
@@ -83,8 +88,9 @@ public class TelemetryCommand {
         this.sqlTelemetryEvent.initialize();
     }
 
-    public void initialize(SqlTelemetryEvent sqlTelemetryEvent) {
+    public void initialize(SqlTelemetryEvent sqlTelemetryEvent, String importProfile) {
         this.commandType = CommandType.SQL_EVENT;
+        this.importProfile = importProfile;
         this.businessTelemetryEvent.initialize();
         this.httpTelemetryEvent.initialize();
         this.logTelemetryEvent.initialize();
@@ -94,6 +100,7 @@ public class TelemetryCommand {
 
     public void initializeToNoop() {
         this.commandType = CommandType.NOOP;
+        this.importProfile = null;
         this.businessTelemetryEvent.initialize();
         this.httpTelemetryEvent.initialize();
         this.logTelemetryEvent.initialize();

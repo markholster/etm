@@ -50,7 +50,8 @@ public class IIBEventHandler extends AbstractMQEventHandler {
     private final HttpTelemetryEventBuilder httpTelemetryEventBuilder = new HttpTelemetryEventBuilder();
     private final MessagingTelemetryEventBuilder messagingTelemetryEventBuilder = new MessagingTelemetryEventBuilder();
 
-    public IIBEventHandler(TelemetryCommandProcessor telemetryCommandProcessor) {
+    public IIBEventHandler(TelemetryCommandProcessor telemetryCommandProcessor, String defaultImportProfile) {
+        super(defaultImportProfile);
         this.telemetryCommandProcessor = telemetryCommandProcessor;
         this.dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
         try {
@@ -188,7 +189,7 @@ public class IIBEventHandler extends AbstractMQEventHandler {
             }
             return HandlerResult.failed(message);
         }
-        this.telemetryCommandProcessor.processTelemetryEvent(this.messagingTelemetryEventBuilder);
+        this.telemetryCommandProcessor.processTelemetryEvent(this.messagingTelemetryEventBuilder, getDefaultImportProfile());
         return HandlerResult.processed();
     }
 
@@ -266,7 +267,7 @@ public class IIBEventHandler extends AbstractMQEventHandler {
             return HandlerResult.failed(message);
         }
         this.httpTelemetryEventBuilder.addOrMergeEndpoint(endpointBuilder);
-        this.telemetryCommandProcessor.processTelemetryEvent(this.httpTelemetryEventBuilder);
+        this.telemetryCommandProcessor.processTelemetryEvent(this.httpTelemetryEventBuilder, getDefaultImportProfile());
         return HandlerResult.processed();
     }
 

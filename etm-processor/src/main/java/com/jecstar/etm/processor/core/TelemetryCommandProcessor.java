@@ -17,25 +17,25 @@ public interface TelemetryCommandProcessor extends ConfigurationChangeListener {
 
     void stopAll();
 
-    void processTelemetryEvent(SqlTelemetryEventBuilder builder);
+    void processTelemetryEvent(SqlTelemetryEventBuilder builder, String importProfile);
 
-    void processTelemetryEvent(SqlTelemetryEvent event);
+    void processTelemetryEvent(SqlTelemetryEvent event, String importProfile);
 
-    void processTelemetryEvent(HttpTelemetryEventBuilder builder);
+    void processTelemetryEvent(HttpTelemetryEventBuilder builder, String importProfile);
 
-    void processTelemetryEvent(HttpTelemetryEvent event);
+    void processTelemetryEvent(HttpTelemetryEvent event, String importProfile);
 
-    void processTelemetryEvent(LogTelemetryEventBuilder builder);
+    void processTelemetryEvent(LogTelemetryEventBuilder builder, String importProfile);
 
-    void processTelemetryEvent(LogTelemetryEvent event);
+    void processTelemetryEvent(LogTelemetryEvent event, String importProfile);
 
-    void processTelemetryEvent(MessagingTelemetryEventBuilder builder);
+    void processTelemetryEvent(MessagingTelemetryEventBuilder builder, String importProfile);
 
-    void processTelemetryEvent(MessagingTelemetryEvent event);
+    void processTelemetryEvent(MessagingTelemetryEvent event, String importProfile);
 
-    void processTelemetryEvent(BusinessTelemetryEventBuilder builder);
+    void processTelemetryEvent(BusinessTelemetryEventBuilder builder, String importProfile);
 
-    void processTelemetryEvent(BusinessTelemetryEvent event);
+    void processTelemetryEvent(BusinessTelemetryEvent event, String importProfile);
 
     MetricRegistry getMetricRegistry();
 

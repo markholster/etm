@@ -22,8 +22,8 @@ public abstract class AbstractJsonHandler {
      */
     protected final LogWrapper log = LogFactory.getLogger(getClass());
 
-    protected final ObjectMapper objectMapper = new ObjectMapper();
-    protected final TelemetryEventTags tags = new TelemetryEventTagsJsonImpl();
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final TelemetryEventTags tags = new TelemetryEventTagsJsonImpl();
 
     private final BusinessTelemetryEventConverterJsonImpl businessConverter = new BusinessTelemetryEventConverterJsonImpl();
     private final HttpTelemetryEventConverterJsonImpl httpConverter = new HttpTelemetryEventConverterJsonImpl();
@@ -36,8 +36,13 @@ public abstract class AbstractJsonHandler {
     private final LogTelemetryEvent logTelemetryEvent = new LogTelemetryEvent();
     private final MessagingTelemetryEvent messagingTelemetryEvent = new MessagingTelemetryEvent();
     private final SqlTelemetryEvent sqlTelemetryEvent = new SqlTelemetryEvent();
+    private final String defaultImportProfile;
 
     protected abstract TelemetryCommandProcessor getProcessor();
+
+    protected AbstractJsonHandler(String defaultImportProfile) {
+        this.defaultImportProfile = defaultImportProfile;
+    }
 
     @SuppressWarnings("unchecked")
     protected HandlerResults handleData(String jsonData) {
@@ -99,7 +104,11 @@ public abstract class AbstractJsonHandler {
             results.addHandlerResult(HandlerResult.failed("Unable to determine command type"));
         } else {
             Map<String, Object> eventData = (Map<String, Object>) event.get("data");
-            process(commandType, eventData);
+            String importProfile = (String) event.get("importProfile");
+            if (importProfile == null) {
+                importProfile = this.defaultImportProfile;
+            }
+            process(commandType, eventData, importProfile);
             results.addHandlerResult(HandlerResult.processed());
         }
     }
@@ -109,7 +118,7 @@ public abstract class AbstractJsonHandler {
         return TelemetryCommand.CommandType.valueOfStringType(eventType);
     }
 
-    private void process(TelemetryCommand.CommandType commandType, Map<String, Object> eventData) {
+    private void process(TelemetryCommand.CommandType commandType, Map<String, Object> eventData, String importProfile) {
         String id = null;
         if (eventData.containsKey(this.tags.getIdTag())) {
             id = eventData.get(this.tags.getIdTag()).toString();
@@ -118,26 +127,30 @@ public abstract class AbstractJsonHandler {
             // Initializing is done in the converters.
             case BUSINESS_EVENT:
                 this.businessConverter.read(eventData, this.businessTelemetryEvent, id);
-                getProcessor().processTelemetryEvent(this.businessTelemetryEvent);
+                getProcessor().processTelemetryEvent(this.businessTelemetryEvent, importProfile);
                 break;
             case HTTP_EVENT:
                 this.httpConverter.read(eventData, this.httpTelemetryEvent, id);
-                getProcessor().processTelemetryEvent(this.httpTelemetryEvent);
+                getProcessor().processTelemetryEvent(this.httpTelemetryEvent, importProfile);
                 break;
             case LOG_EVENT:
                 this.logConverter.read(eventData, this.logTelemetryEvent, id);
-                getProcessor().processTelemetryEvent(this.logTelemetryEvent);
+                getProcessor().processTelemetryEvent(this.logTelemetryEvent, importProfile);
                 break;
             case MESSAGING_EVENT:
                 this.messagingConverter.read(eventData, this.messagingTelemetryEvent, id);
-                getProcessor().processTelemetryEvent(this.messagingTelemetryEvent);
+                getProcessor().processTelemetryEvent(this.messagingTelemetryEvent, importProfile);
                 break;
             case SQL_EVENT:
                 this.sqlConverter.read(eventData, this.sqlTelemetryEvent, id);
-                getProcessor().processTelemetryEvent(this.sqlTelemetryEvent);
+                getProcessor().processTelemetryEvent(this.sqlTelemetryEvent, importProfile);
                 break;
             case NOOP:
                 break;
         }
+    }
+
+    protected String getDefaultImportProfile() {
+        return this.defaultImportProfile;
     }
 }

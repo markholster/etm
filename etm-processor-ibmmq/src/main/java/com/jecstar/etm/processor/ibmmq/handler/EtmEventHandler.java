@@ -19,7 +19,8 @@ public class EtmEventHandler extends AbstractMQEventHandler {
     private final TelemetryCommandProcessor telemetryCommandProcessor;
     private final StringBuilder byteArrayBuilder = new StringBuilder();
 
-    public EtmEventHandler(TelemetryCommandProcessor telemetryCommandProcessor) {
+    public EtmEventHandler(TelemetryCommandProcessor telemetryCommandProcessor, String defaultImportProfile) {
+        super(defaultImportProfile);
         this.telemetryCommandProcessor = telemetryCommandProcessor;
     }
 

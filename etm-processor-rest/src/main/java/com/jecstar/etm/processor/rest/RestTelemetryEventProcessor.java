@@ -14,6 +14,10 @@ import java.util.stream.Collectors;
 @Path("/event")
 public class RestTelemetryEventProcessor extends AbstractJsonHandler {
 
+    public RestTelemetryEventProcessor() {
+        super(null);
+    }
+
     private static TelemetryCommandProcessor telemetryCommandProcessor;
 //    private static final String APM_PREFIX = "/apm";
 

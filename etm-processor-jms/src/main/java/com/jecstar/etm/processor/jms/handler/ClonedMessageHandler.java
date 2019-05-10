@@ -28,7 +28,8 @@ public class ClonedMessageHandler extends AbstractJMSEventHandler {
     private final MessagingTelemetryEventBuilder messagingTelemetryEventBuilder = new MessagingTelemetryEventBuilder();
 
 
-    public ClonedMessageHandler(TelemetryCommandProcessor telemetryCommandProcessor) {
+    public ClonedMessageHandler(TelemetryCommandProcessor telemetryCommandProcessor, String defaultImportProfile) {
+        super(defaultImportProfile);
         this.telemetryCommandProcessor = telemetryCommandProcessor;
     }
 
@@ -42,7 +43,7 @@ public class ClonedMessageHandler extends AbstractJMSEventHandler {
         this.messagingTelemetryEventBuilder.initialize();
         try {
             parseMessage(message);
-            this.telemetryCommandProcessor.processTelemetryEvent(this.messagingTelemetryEventBuilder);
+            this.telemetryCommandProcessor.processTelemetryEvent(this.messagingTelemetryEventBuilder, getDefaultImportProfile());
             results.addHandlerResult(HandlerResult.processed());
         } catch (JMSException e) {
             if (log.isDebugLevelEnabled()) {

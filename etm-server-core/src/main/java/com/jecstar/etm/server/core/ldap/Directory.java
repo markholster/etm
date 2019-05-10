@@ -8,7 +8,6 @@ import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.ssl.TrustAllTrustManager;
-import com.jecstar.etm.server.core.util.ObjectUtils;
 import org.ldaptive.*;
 import org.ldaptive.auth.*;
 import org.ldaptive.auth.ext.PasswordPolicyAuthenticationResponseHandler;
@@ -96,7 +95,6 @@ public class Directory implements AutoCloseable {
 
         Authenticator auth = new Authenticator(dnResolver, authHandler);
         auth.setEntryResolver(searchEntryResolver);
-        // TODO hier is ook een ActiveDirectoryResponseHandler mogelijk
         auth.setAuthenticationResponseHandlers(new PasswordPolicyAuthenticationResponseHandler());
 
         AuthenticationResponse response;
@@ -266,7 +264,7 @@ public class Directory implements AutoCloseable {
     private void hotReconnect(LdapConfiguration ldapConfiguration) {
         if (this.connectionPool == null) {
             this.ldapConfiguration = ldapConfiguration;
-            this.connect();
+            connect();
         } else {
             ConnectionPool oldPool = this.connectionPool;
             ConnectionConfig connectionConfig = createConnectionConfig(ldapConfiguration);
@@ -311,9 +309,9 @@ public class Directory implements AutoCloseable {
     private boolean checkConnected() {
         // TODO doe dit 1 keer per minuut o.i.d.
         if (this.connectionPool == null) {
-            connect();
+            return connect();
         }
-        return this.connectionPool != null;
+        return true;
     }
 
     private ConnectionConfig createConnectionConfig(LdapConfiguration ldapConfiguration) {
@@ -419,11 +417,11 @@ public class Directory implements AutoCloseable {
     }
 
     private String getGroupFilter(LdapConfiguration ldapConfiguration, String groupName) {
-        return this.ldapConfiguration.getGroupSearchFilter().replaceAll("\\{group}", groupName);
+        return ldapConfiguration.getGroupSearchFilter().replaceAll("\\{group}", groupName);
     }
 
     private String getSearchFilter(LdapConfiguration ldapConfiguration, String userName) {
-        return this.ldapConfiguration.getUserSearchFilter().replaceAll("\\{user}", userName);
+        return ldapConfiguration.getUserSearchFilter().replaceAll("\\{user}", userName);
     }
 
     public synchronized void merge(LdapConfiguration ldapConfiguration) {
@@ -431,23 +429,23 @@ public class Directory implements AutoCloseable {
             return;
         }
         boolean reconnectNecessary = false;
-        if (!ObjectUtils.equalsNullProof(this.ldapConfiguration.getHost(), ldapConfiguration.getHost())) {
+        if (!Objects.equals(this.ldapConfiguration.getHost(), ldapConfiguration.getHost())) {
             reconnectNecessary = true;
         } else if (this.ldapConfiguration.getPort() != ldapConfiguration.getPort()) {
             reconnectNecessary = true;
-        } else if (!ObjectUtils.equalsNullProof(this.ldapConfiguration.getConnectionSecurity(), ldapConfiguration.getConnectionSecurity())) {
+        } else if (!Objects.equals(this.ldapConfiguration.getConnectionSecurity(), ldapConfiguration.getConnectionSecurity())) {
             reconnectNecessary = true;
-        } else if (!ObjectUtils.equalsNullProof(this.ldapConfiguration.getBindDn(), ldapConfiguration.getBindDn())) {
+        } else if (!Objects.equals(this.ldapConfiguration.getBindDn(), ldapConfiguration.getBindDn())) {
             reconnectNecessary = true;
-        } else if (!ObjectUtils.equalsNullProof(this.ldapConfiguration.getBindPassword(), ldapConfiguration.getBindPassword())) {
+        } else if (!Objects.equals(this.ldapConfiguration.getBindPassword(), ldapConfiguration.getBindPassword())) {
             reconnectNecessary = true;
         } else if (this.ldapConfiguration.getMinPoolSize() != ldapConfiguration.getMinPoolSize()) {
             reconnectNecessary = true;
         } else if (this.ldapConfiguration.getMaxPoolSize() != ldapConfiguration.getMaxPoolSize()) {
             reconnectNecessary = true;
-        } else if (!ObjectUtils.equalsNullProof(this.ldapConfiguration.getConnectionTestBaseDn(), ldapConfiguration.getConnectionTestBaseDn())) {
+        } else if (!Objects.equals(this.ldapConfiguration.getConnectionTestBaseDn(), ldapConfiguration.getConnectionTestBaseDn())) {
             reconnectNecessary = true;
-        } else if (!ObjectUtils.equalsNullProof(this.ldapConfiguration.getConnectionTestSearchFilter(), ldapConfiguration.getConnectionTestSearchFilter())) {
+        } else if (!Objects.equals(this.ldapConfiguration.getConnectionTestSearchFilter(), ldapConfiguration.getConnectionTestSearchFilter())) {
             reconnectNecessary = true;
         }
         this.ldapConfiguration = ldapConfiguration;

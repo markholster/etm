@@ -30,7 +30,8 @@ public class ClonedMessageHandler extends AbstractMQEventHandler {
     private final MessagingTelemetryEventBuilder messagingTelemetryEventBuilder = new MessagingTelemetryEventBuilder();
 
 
-    public ClonedMessageHandler(TelemetryCommandProcessor telemetryCommandProcessor) {
+    public ClonedMessageHandler(TelemetryCommandProcessor telemetryCommandProcessor, String defaultImportProfile) {
+        super(defaultImportProfile);
         this.telemetryCommandProcessor = telemetryCommandProcessor;
     }
 
@@ -44,7 +45,7 @@ public class ClonedMessageHandler extends AbstractMQEventHandler {
         this.messagingTelemetryEventBuilder.initialize();
         try {
             parseMessage(message);
-            this.telemetryCommandProcessor.processTelemetryEvent(this.messagingTelemetryEventBuilder);
+            this.telemetryCommandProcessor.processTelemetryEvent(this.messagingTelemetryEventBuilder, getDefaultImportProfile());
             results.addHandlerResult(HandlerResult.processed());
         } catch (IOException e) {
             if (log.isDebugLevelEnabled()) {

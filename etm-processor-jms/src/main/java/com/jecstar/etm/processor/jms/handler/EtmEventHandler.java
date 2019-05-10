@@ -17,7 +17,8 @@ public class EtmEventHandler extends AbstractJMSEventHandler {
 
     private final TelemetryCommandProcessor telemetryCommandProcessor;
 
-    public EtmEventHandler(TelemetryCommandProcessor telemetryCommandProcessor) {
+    public EtmEventHandler(TelemetryCommandProcessor telemetryCommandProcessor, String defaultImportProfile) {
+        super(defaultImportProfile);
         this.telemetryCommandProcessor = telemetryCommandProcessor;
     }
 

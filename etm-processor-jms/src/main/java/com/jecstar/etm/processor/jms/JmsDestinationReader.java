@@ -62,8 +62,8 @@ class JmsDestinationReader implements DestinationReader {
         this.userId = userId;
         this.password = password;
         this.connectionFactory = connectionFactory;
-        this.etmEventHandler = new EtmEventHandler(processor);
-        this.clonedMessageEventHandler = new ClonedMessageHandler(processor);
+        this.etmEventHandler = new EtmEventHandler(processor, destination.getDefaultImportProfile());
+        this.clonedMessageEventHandler = new ClonedMessageHandler(processor, destination.getDefaultImportProfile());
         this.jmsGetTimer = metricRegistry.timer("jms-processor.mqget." + destination.getName().replaceAll("\\.", "_"));
         this.instantiationContext = instantiationContext;
         this.counter = new Counter();

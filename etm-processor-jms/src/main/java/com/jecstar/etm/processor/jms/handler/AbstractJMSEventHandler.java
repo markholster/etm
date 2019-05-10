@@ -9,6 +9,10 @@ import javax.jms.TextMessage;
 
 abstract class AbstractJMSEventHandler extends AbstractJsonHandler {
 
+    protected AbstractJMSEventHandler(String defaultImportProfile) {
+        super(defaultImportProfile);
+    }
+
     String getContent(Message message) throws JMSException {
         if (message instanceof TextMessage) {
             return ((TextMessage) message).getText();

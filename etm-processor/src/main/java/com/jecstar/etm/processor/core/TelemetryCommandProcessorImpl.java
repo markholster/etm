@@ -110,19 +110,19 @@ public class TelemetryCommandProcessorImpl implements TelemetryCommandProcessor 
     }
 
     @Override
-    public void processTelemetryEvent(final SqlTelemetryEventBuilder builder) {
-        processTelemetryEvent(builder.build());
+    public void processTelemetryEvent(final SqlTelemetryEventBuilder builder, String importProfile) {
+        processTelemetryEvent(builder.build(), importProfile);
     }
 
     @Override
-    public void processTelemetryEvent(final SqlTelemetryEvent event) {
+    public void processTelemetryEvent(final SqlTelemetryEvent event, String importProfile) {
         preProcess();
         final Context timerContext = this.offerTimer.time();
         TelemetryCommand target = null;
         long sequence = this.ringBuffer.next();
         try {
             target = this.ringBuffer.get(sequence);
-            target.initialize(event);
+            target.initialize(event, importProfile);
             if (log.isDebugLevelEnabled()) {
                 log.logDebugMessage("Processing sql event with id '" + event.id + "'.");
             }
@@ -140,19 +140,19 @@ public class TelemetryCommandProcessorImpl implements TelemetryCommandProcessor 
     }
 
     @Override
-    public void processTelemetryEvent(final HttpTelemetryEventBuilder builder) {
-        processTelemetryEvent(builder.build());
+    public void processTelemetryEvent(final HttpTelemetryEventBuilder builder, String importProfile) {
+        processTelemetryEvent(builder.build(), importProfile);
     }
 
     @Override
-    public void processTelemetryEvent(final HttpTelemetryEvent event) {
+    public void processTelemetryEvent(final HttpTelemetryEvent event, String importProfile) {
         preProcess();
         final Context timerContext = this.offerTimer.time();
         TelemetryCommand target = null;
         long sequence = this.ringBuffer.next();
         try {
             target = this.ringBuffer.get(sequence);
-            target.initialize(event);
+            target.initialize(event, importProfile);
             if (log.isDebugLevelEnabled()) {
                 log.logDebugMessage("Processing http event with id '" + event.id + "'.");
             }
@@ -170,19 +170,19 @@ public class TelemetryCommandProcessorImpl implements TelemetryCommandProcessor 
     }
 
     @Override
-    public void processTelemetryEvent(final LogTelemetryEventBuilder builder) {
-        processTelemetryEvent(builder.build());
+    public void processTelemetryEvent(final LogTelemetryEventBuilder builder, String importProfile) {
+        processTelemetryEvent(builder.build(), importProfile);
     }
 
     @Override
-    public void processTelemetryEvent(final LogTelemetryEvent event) {
+    public void processTelemetryEvent(final LogTelemetryEvent event, String importProfile) {
         preProcess();
         final Context timerContext = this.offerTimer.time();
         TelemetryCommand target = null;
         long sequence = this.ringBuffer.next();
         try {
             target = this.ringBuffer.get(sequence);
-            target.initialize(event);
+            target.initialize(event, importProfile);
         } catch (Exception e) {
             if (log.isErrorLevelEnabled()) {
                 log.logErrorMessage("Failed to initialize log event with id '" + event.id + "'.", e);
@@ -197,19 +197,19 @@ public class TelemetryCommandProcessorImpl implements TelemetryCommandProcessor 
     }
 
     @Override
-    public void processTelemetryEvent(final MessagingTelemetryEventBuilder builder) {
-        processTelemetryEvent(builder.build());
+    public void processTelemetryEvent(final MessagingTelemetryEventBuilder builder, String importProfile) {
+        processTelemetryEvent(builder.build(), importProfile);
     }
 
     @Override
-    public void processTelemetryEvent(final MessagingTelemetryEvent event) {
+    public void processTelemetryEvent(final MessagingTelemetryEvent event, String importProfile) {
         preProcess();
         final Context timerContext = this.offerTimer.time();
         TelemetryCommand target = null;
         long sequence = this.ringBuffer.next();
         try {
             target = this.ringBuffer.get(sequence);
-            target.initialize(event);
+            target.initialize(event, importProfile);
             if (log.isDebugLevelEnabled()) {
                 log.logDebugMessage("Processing messaging event with id '" + event.id + "'.");
             }
@@ -227,19 +227,19 @@ public class TelemetryCommandProcessorImpl implements TelemetryCommandProcessor 
     }
 
     @Override
-    public void processTelemetryEvent(final BusinessTelemetryEventBuilder builder) {
-        processTelemetryEvent(builder.build());
+    public void processTelemetryEvent(final BusinessTelemetryEventBuilder builder, String importProfile) {
+        processTelemetryEvent(builder.build(), importProfile);
     }
 
     @Override
-    public void processTelemetryEvent(final BusinessTelemetryEvent event) {
+    public void processTelemetryEvent(final BusinessTelemetryEvent event, String importProfile) {
         preProcess();
         final Context timerContext = this.offerTimer.time();
         TelemetryCommand target = null;
         long sequence = this.ringBuffer.next();
         try {
             target = this.ringBuffer.get(sequence);
-            target.initialize(event);
+            target.initialize(event, importProfile);
             if (log.isDebugLevelEnabled()) {
                 log.logDebugMessage("Processing business event with id '" + event.id + "'.");
             }

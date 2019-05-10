@@ -8,6 +8,10 @@ import java.io.IOException;
 
 abstract class AbstractMQEventHandler extends AbstractJsonHandler {
 
+    AbstractMQEventHandler(String defaultImportProfile) {
+        super(defaultImportProfile);
+    }
+
     String getContent(MQMessage message) throws IOException {
         byte[] byteContent = new byte[message.getMessageLength()];
         message.setDataOffset(0);

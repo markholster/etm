@@ -11,6 +11,7 @@ public class Destination {
     private int minNrOfListeners = 1;
     private int maxNrOfListeners = 5;
     private String messagesType = "auto"; // iibevent, etmevent, clone
+    private String defaultImportProfile;
 
     private int maxMessageSize = 1024 * 1024 * 4;
     private int commitSize = 500;
@@ -90,6 +91,13 @@ public class Destination {
         this.maxMessageSize = maxMessageSize;
     }
 
+    public String getDefaultImportProfile() {
+        return this.defaultImportProfile;
+    }
+
+    public void setDefaultImportProfile(String defaultImportProfile) {
+        this.defaultImportProfile = defaultImportProfile;
+    }
 
     public int getCommitSize() {
         return this.commitSize;

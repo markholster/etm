@@ -11,6 +11,7 @@ public class Topic {
     private int nrOfListeners = 1;
     private String groupId = "Enterprise Telemetry Monitor";
     private String startFrom;
+    private String defaultImportProfile;
 
     private int maxPollRecords = 0;
     private long maxPollInterval = 0;
@@ -63,6 +64,14 @@ public class Topic {
 
     public void setStartFrom(String startFrom) {
         this.startFrom = startFrom;
+    }
+
+    public String getDefaultImportProfile() {
+        return this.defaultImportProfile;
+    }
+
+    public void setDefaultImportProfile(String defaultImportProfile) {
+        this.defaultImportProfile = defaultImportProfile;
     }
 
     public boolean startFromBeginning() {

@@ -129,7 +129,7 @@ public class JmsProcessorImpl implements JmsProcessor {
             NativeConnectionFactory nativeConnectionFactory = (NativeConnectionFactory) abstractConnectionFactory;
             try {
                 Class<?> clazz = Class.forName(nativeConnectionFactory.className);
-                Object object = null;
+                Object object;
                 if (nativeConnectionFactory.constructorParameters.isEmpty()) {
                     object = clazz.getDeclaredConstructor().newInstance();
                 } else {

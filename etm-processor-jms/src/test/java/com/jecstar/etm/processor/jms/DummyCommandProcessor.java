@@ -38,52 +38,52 @@ public class DummyCommandProcessor implements TelemetryCommandProcessor {
     }
 
     @Override
-    public void processTelemetryEvent(SqlTelemetryEventBuilder builder) {
+    public void processTelemetryEvent(SqlTelemetryEventBuilder builder, String defaultImportProfile) {
         this.sqlCount++;
     }
 
     @Override
-    public void processTelemetryEvent(SqlTelemetryEvent event) {
+    public void processTelemetryEvent(SqlTelemetryEvent event, String defaultImportProfile) {
         this.sqlCount++;
     }
 
     @Override
-    public void processTelemetryEvent(HttpTelemetryEventBuilder builder) {
+    public void processTelemetryEvent(HttpTelemetryEventBuilder builder, String defaultImportProfile) {
         this.httpCount++;
     }
 
     @Override
-    public void processTelemetryEvent(HttpTelemetryEvent event) {
+    public void processTelemetryEvent(HttpTelemetryEvent event, String defaultImportProfile) {
         this.httpCount++;
     }
 
     @Override
-    public void processTelemetryEvent(LogTelemetryEventBuilder builder) {
+    public void processTelemetryEvent(LogTelemetryEventBuilder builder, String defaultImportProfile) {
         this.logCount++;
     }
 
     @Override
-    public void processTelemetryEvent(LogTelemetryEvent event) {
+    public void processTelemetryEvent(LogTelemetryEvent event, String defaultImportProfile) {
         this.logCount++;
     }
 
     @Override
-    public void processTelemetryEvent(MessagingTelemetryEventBuilder builder) {
+    public void processTelemetryEvent(MessagingTelemetryEventBuilder builder, String defaultImportProfile) {
         this.messagingCount++;
     }
 
     @Override
-    public void processTelemetryEvent(MessagingTelemetryEvent event) {
+    public void processTelemetryEvent(MessagingTelemetryEvent event, String defaultImportProfile) {
         this.messagingCount++;
     }
 
     @Override
-    public void processTelemetryEvent(BusinessTelemetryEventBuilder builder) {
+    public void processTelemetryEvent(BusinessTelemetryEventBuilder builder, String defaultImportProfile) {
         this.businessCount++;
     }
 
     @Override
-    public void processTelemetryEvent(BusinessTelemetryEvent event) {
+    public void processTelemetryEvent(BusinessTelemetryEvent event, String defaultImportProfile) {
         this.businessCount++;
     }
 
