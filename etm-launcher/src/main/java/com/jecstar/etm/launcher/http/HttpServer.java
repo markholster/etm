@@ -278,8 +278,8 @@ public class HttpServer {
                 .addRolesAllowed(SecurityRoles.CLUSTER_SETTINGS_READ, SecurityRoles.CLUSTER_SETTINGS_READ_WRITE)
                 .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/settings/cluster.html").addUrlPattern("/rest/settings/*")));
         di.addSecurityConstraint(new SecurityConstraint()
-                .addRolesAllowed(SecurityRoles.ENDPOINT_SETTINGS_READ, SecurityRoles.ENDPOINT_SETTINGS_READ_WRITE)
-                .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/settings/endpoints.html").addUrlPattern("/rest/settings/*")));
+                .addRolesAllowed(SecurityRoles.IMPORT_PROFILES_READ, SecurityRoles.IMPORT_PROFILES_READ_WRITE)
+                .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/settings/import_profiles.html").addUrlPattern("/rest/settings/*")));
         di.addSecurityConstraint(new SecurityConstraint()
                 .addRolesAllowed(SecurityRoles.GROUP_SETTINGS_READ, SecurityRoles.GROUP_SETTINGS_READ_WRITE)
                 .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/settings/groups.html").addUrlPattern("/rest/settings/*")));

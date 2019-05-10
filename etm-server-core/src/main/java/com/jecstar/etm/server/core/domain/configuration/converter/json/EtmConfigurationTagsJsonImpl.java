@@ -20,8 +20,8 @@ public class EtmConfigurationTagsJsonImpl implements EtmConfigurationTags {
     }
 
     @Override
-    public String getEndpointConfigurationCacheSizeTag() {
-        return "endpoint_configuration_cache_size";
+    public String getImportProfileCacheSizeTag() {
+        return "import_profile_cache_size";
     }
 
     @Override

@@ -2,10 +2,10 @@ package com.jecstar.etm.server.core.domain.converter.json;
 
 import com.jecstar.etm.domain.writer.TelemetryEventTags;
 import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
-import com.jecstar.etm.server.core.domain.EndpointConfiguration;
+import com.jecstar.etm.server.core.domain.ImportProfile;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.domain.converter.EndpointConfigurationConverter;
-import com.jecstar.etm.server.core.domain.converter.EndpointConfigurationTags;
+import com.jecstar.etm.server.core.domain.converter.ImportProfileConverter;
+import com.jecstar.etm.server.core.domain.converter.ImportProfileTags;
 import com.jecstar.etm.server.core.domain.parser.ExpressionParser;
 import com.jecstar.etm.server.core.domain.parser.converter.json.ExpressionParserConverterJsonImpl;
 import com.jecstar.etm.server.core.enhancers.DefaultField;
@@ -22,29 +22,29 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class EndpointConfigurationConverterJsonImpl implements EndpointConfigurationConverter<String> {
+public class ImportProfileConverterJsonImpl implements ImportProfileConverter<String> {
 
     /**
      * The <code>LogWrapper</code> for this class.
      */
-    private static final LogWrapper log = LogFactory.getLogger(EndpointConfigurationConverterJsonImpl.class);
+    private static final LogWrapper log = LogFactory.getLogger(ImportProfileConverterJsonImpl.class);
     private static final String DEFAULT_ENHANCER_TYPE = "DEFAULT";
 
-    private final EndpointConfigurationTags tags = new EndpointConfigurationTagsJsonImpl();
+    private final ImportProfileTags tags = new ImportProfileTagsJsonImpl();
     private final TelemetryEventTags eventTags = new TelemetryEventTagsJsonImpl();
     private final JsonConverter converter = new JsonConverter();
 
     private final ExpressionParserConverterJsonImpl expressionParserConverter = new ExpressionParserConverterJsonImpl();
 
     @Override
-    public EndpointConfiguration read(String content) {
+    public ImportProfile read(String content) {
         return read(this.converter.toMap(content));
     }
 
-    public EndpointConfiguration read(Map<String, Object> valueMap) {
-        valueMap = this.converter.getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT, valueMap);
-        EndpointConfiguration endpointConfiguration = new EndpointConfiguration();
-        endpointConfiguration.name = this.converter.getString(this.tags.getNameTag(), valueMap);
+    public ImportProfile read(Map<String, Object> valueMap) {
+        valueMap = this.converter.getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE, valueMap);
+        ImportProfile importProfile = new ImportProfile();
+        importProfile.name = this.converter.getString(this.tags.getNameTag(), valueMap);
         Map<String, Object> enhancerValues = this.converter.getObject(this.tags.getEnhancerTag(), valueMap);
         if (enhancerValues != null && !enhancerValues.isEmpty()) {
             String enhancerType = this.converter.getString(this.tags.getEnhancerTypeTag(), enhancerValues);
@@ -52,17 +52,17 @@ public class EndpointConfigurationConverterJsonImpl implements EndpointConfigura
                 try {
                     Class<?> clazz = Class.forName(enhancerType);
                     Object newInstance = clazz.getDeclaredConstructor().newInstance();
-                    endpointConfiguration.eventEnhancer = (TelemetryEventEnhancer) newInstance;
+                    importProfile.eventEnhancer = (TelemetryEventEnhancer) newInstance;
                 } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | ClassCastException | NoSuchMethodException | InvocationTargetException e) {
                     if (log.isErrorLevelEnabled()) {
                         log.logErrorMessage("Failed to load custom enhancer '" + enhancerType + "'. Make sure the class is spelled correct and available on all processor nodes.", e);
                     }
                 }
             } else {
-                endpointConfiguration.eventEnhancer = readDefaultEnhancer(enhancerValues);
+                importProfile.eventEnhancer = readDefaultEnhancer(enhancerValues);
             }
         }
-        return endpointConfiguration;
+        return importProfile;
     }
 
     private DefaultTelemetryEventEnhancer readDefaultEnhancer(Map<String, Object> enhancerValues) {
@@ -108,16 +108,16 @@ public class EndpointConfigurationConverterJsonImpl implements EndpointConfigura
 
     @SuppressWarnings("unchecked")
     @Override
-    public String write(EndpointConfiguration endpointConfiguration) {
+    public String write(ImportProfile importProfile) {
         StringBuilder result = new StringBuilder();
         result.append("{");
-        this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT, result, true);
-        result.append(", " + this.converter.escapeToJson(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT, true) + ": {");
-        this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), endpointConfiguration.name, result, true);
-        if (endpointConfiguration.eventEnhancer != null) {
+        this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE, result, true);
+        result.append(", " + this.converter.escapeToJson(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE, true) + ": {");
+        this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), importProfile.name, result, true);
+        if (importProfile.eventEnhancer != null) {
             result.append(",\"").append(this.tags.getEnhancerTag()).append("\": {");
-            if (endpointConfiguration.eventEnhancer instanceof DefaultTelemetryEventEnhancer) {
-                DefaultTelemetryEventEnhancer enhancer = (DefaultTelemetryEventEnhancer) endpointConfiguration.eventEnhancer;
+            if (importProfile.eventEnhancer instanceof DefaultTelemetryEventEnhancer) {
+                DefaultTelemetryEventEnhancer enhancer = (DefaultTelemetryEventEnhancer) importProfile.eventEnhancer;
                 this.converter.addStringElementToJsonBuffer(this.tags.getEnhancerTypeTag(), DEFAULT_ENHANCER_TYPE, result, true);
                 this.converter.addBooleanElementToJsonBuffer(this.tags.getEnhancePayloadFormatTag(), enhancer.isEnhancePayloadFormat(), result, false);
                 result.append(",");
@@ -162,7 +162,7 @@ public class EndpointConfigurationConverterJsonImpl implements EndpointConfigura
                 }
                 result.append("]");
             } else {
-                this.converter.addStringElementToJsonBuffer(this.tags.getEnhancerTypeTag(), endpointConfiguration.getClass().getName(), result, true);
+                this.converter.addStringElementToJsonBuffer(this.tags.getEnhancerTypeTag(), importProfile.getClass().getName(), result, true);
             }
             result.append("}");
         }
@@ -171,7 +171,7 @@ public class EndpointConfigurationConverterJsonImpl implements EndpointConfigura
     }
 
     @Override
-    public EndpointConfigurationTags getTags() {
+    public ImportProfileTags getTags() {
         return this.tags;
     }
 

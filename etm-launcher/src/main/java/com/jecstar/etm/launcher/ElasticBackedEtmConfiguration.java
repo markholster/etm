@@ -206,9 +206,9 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
     }
 
     @Override
-    public int getEndpointConfigurationCacheSize() {
+    public int getImportProfileCacheSize() {
         reloadConfigurationWhenNecessary();
-        return super.getEndpointConfigurationCacheSize();
+        return super.getImportProfileCacheSize();
     }
 
     @Override

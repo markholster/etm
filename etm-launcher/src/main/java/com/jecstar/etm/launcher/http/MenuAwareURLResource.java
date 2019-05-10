@@ -429,10 +429,10 @@ public class MenuAwareURLResource extends URLResource {
                 SecurityRoles.AUDIT_LOG_READ,
                 SecurityRoles.CLUSTER_SETTINGS_READ,
                 SecurityRoles.CLUSTER_SETTINGS_READ_WRITE,
-                SecurityRoles.ENDPOINT_SETTINGS_READ,
-                SecurityRoles.ENDPOINT_SETTINGS_READ_WRITE,
                 SecurityRoles.GROUP_SETTINGS_READ,
                 SecurityRoles.GROUP_SETTINGS_READ_WRITE,
+                SecurityRoles.IMPORT_PROFILES_READ,
+                SecurityRoles.IMPORT_PROFILES_READ_WRITE,
                 SecurityRoles.INDEX_STATISTICS_READ,
                 SecurityRoles.LICENSE_READ,
                 SecurityRoles.LICENSE_READ_WRITE,
@@ -481,9 +481,9 @@ public class MenuAwareURLResource extends URLResource {
             addedBeforeDivider = true;
             appendMenuOption(html, "Parsers", "settings/parsers.html", !principal.isInRole(SecurityRoles.PARSER_SETTINGS_READ_WRITE));
         }
-        if (principal.isInAnyRole(SecurityRoles.ENDPOINT_SETTINGS_READ, SecurityRoles.ENDPOINT_SETTINGS_READ_WRITE)) {
+        if (principal.isInAnyRole(SecurityRoles.IMPORT_PROFILES_READ, SecurityRoles.IMPORT_PROFILES_READ_WRITE)) {
             addedBeforeDivider = true;
-            appendMenuOption(html, "Endpoints", "settings/endpoints.html", !principal.isInRole(SecurityRoles.ENDPOINT_SETTINGS_READ_WRITE));
+            appendMenuOption(html, "Import profiles", "settings/import_profiles.html", !principal.isInRole(SecurityRoles.IMPORT_PROFILES_READ_WRITE));
         }
         if (principal.isInAnyRole(SecurityRoles.NOTIFIERS_READ, SecurityRoles.NOTIFIERS_READ_WRITE)) {
             addedBeforeDivider = true;

@@ -130,7 +130,7 @@ function buildClusterPage() {
 	
 	function setClusterData(data) {
 		$("#input-session-timeout").val(data.session_timeout);
-        $("#input-endpoint-configuration-cache-size").val(data.endpoint_configuration_cache_size);
+		$("#input-import-profile-cache-size").val(data.import_profile_cache_size);
 		$("#input-shards-per-index").val(data.shards_per_index);
 		$("#input-replicas-per-index").val(data.replicas_per_index);
 		$("#input-max-event-indices").val(data.max_event_index_count);

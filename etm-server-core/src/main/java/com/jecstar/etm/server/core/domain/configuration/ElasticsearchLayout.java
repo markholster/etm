@@ -3,7 +3,7 @@ package com.jecstar.etm.server.core.domain.configuration;
 import com.jecstar.etm.domain.writer.TelemetryEventTags;
 
 /**
- * Class with constants used in the Elasticsearch mappgins.
+ * Class with constants used in the Elasticsearch mappings.
  */
 public final class ElasticsearchLayout {
 
@@ -46,9 +46,9 @@ public final class ElasticsearchLayout {
     public static final String CONFIGURATION_OBJECT_ID_LICENSE_DEFAULT = CONFIGURATION_OBJECT_TYPE_LICENSE + "_" + ETM_OBJECT_NAME_DEFAULT;
     public static final String CONFIGURATION_OBJECT_TYPE_PARSER = "parser";
     public static final String CONFIGURATION_OBJECT_TYPE_PARSER_ID_PREFIX = CONFIGURATION_OBJECT_TYPE_PARSER + "_";
-    public static final String CONFIGURATION_OBJECT_TYPE_ENDPOINT = "endpoint";
-    public static final String CONFIGURATION_OBJECT_TYPE_ENDPOINT_ID_PREFIX = CONFIGURATION_OBJECT_TYPE_ENDPOINT + "_";
-    public static final String CONFIGURATION_OBJECT_ID_ENDPOINT_DEFAULT = CONFIGURATION_OBJECT_TYPE_ENDPOINT_ID_PREFIX + ETM_OBJECT_NAME_DEFAULT;
+    public static final String CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE = "import_profile";
+    public static final String CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE_ID_PREFIX = CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE + "_";
+    public static final String CONFIGURATION_OBJECT_ID_IMPORT_PROFILE_DEFAULT = CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE_ID_PREFIX + ETM_OBJECT_NAME_DEFAULT;
     public static final String CONFIGURATION_OBJECT_TYPE_LDAP = "ldap";
     public static final String CONFIGURATION_OBJECT_TYPE_LDAP_ID_PREFIX = CONFIGURATION_OBJECT_TYPE_LDAP + "_";
     public static final String CONFIGURATION_OBJECT_ID_LDAP_DEFAULT = CONFIGURATION_OBJECT_TYPE_LDAP_ID_PREFIX + ETM_OBJECT_NAME_DEFAULT;

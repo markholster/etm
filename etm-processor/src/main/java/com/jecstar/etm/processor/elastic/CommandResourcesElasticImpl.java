@@ -1,16 +1,14 @@
 package com.jecstar.etm.processor.elastic;
 
 import com.codahale.metrics.MetricRegistry;
-import com.jecstar.etm.domain.Endpoint;
-import com.jecstar.etm.domain.EndpointHandlingTimeComparator;
 import com.jecstar.etm.processor.TelemetryCommand.CommandType;
 import com.jecstar.etm.processor.core.CommandResources;
-import com.jecstar.etm.server.core.domain.EndpointConfiguration;
+import com.jecstar.etm.server.core.domain.ImportProfile;
 import com.jecstar.etm.server.core.domain.configuration.ConfigurationChangeListener;
 import com.jecstar.etm.server.core.domain.configuration.ConfigurationChangedEvent;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.domain.converter.json.EndpointConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.converter.json.ImportProfileConverterJsonImpl;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.elasticsearch.builder.GetRequestBuilder;
 import com.jecstar.etm.server.core.enhancers.DefaultTelemetryEventEnhancer;
@@ -28,7 +26,6 @@ import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
@@ -40,21 +37,19 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
     private final EtmConfiguration etmConfiguration;
     private final BulkProcessorListener bulkProcessorListener;
 
-    private final EndpointHandlingTimeComparator endpointComparater = new EndpointHandlingTimeComparator();
-    private final EndpointConfigurationConverterJsonImpl endpointConfigurationConverter = new EndpointConfigurationConverterJsonImpl();
-
+    private final ImportProfileConverterJsonImpl importProfileConverter = new ImportProfileConverterJsonImpl();
 
     @SuppressWarnings("rawtypes")
     private final Map<CommandType, TelemetryEventPersister> persisters = new HashMap<>();
 
     private BulkProcessor bulkProcessor;
 
-    private final LruCache<String, EndpointConfiguration> endpointCache;
+    private final LruCache<String, ImportProfile> importProfileCache;
 
     CommandResourcesElasticImpl(final DataRepository dataRepository, final EtmConfiguration etmConfiguration, final MetricRegistry metricRegistry) {
         this.dataRepository = dataRepository;
         this.etmConfiguration = etmConfiguration;
-        this.endpointCache = new LruCache<>(etmConfiguration.getEndpointConfigurationCacheSize(), ENDPOINT_CACHE_VALIDITY);
+        this.importProfileCache = new LruCache<>(etmConfiguration.getImportProfileCacheSize(), ENDPOINT_CACHE_VALIDITY);
         this.bulkProcessorListener = new BulkProcessorListener(metricRegistry);
         this.bulkProcessor = createBulkProcessor();
         this.etmConfiguration.addConfigurationChangeListener(this);
@@ -73,47 +68,49 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
     }
 
     @Override
-    public void loadEndpointConfig(List<Endpoint> endpoints, EndpointConfiguration endpointConfiguration) {
-        endpointConfiguration.initialize();
-        endpoints.sort(this.endpointComparater);
-        for (Endpoint endpoint : endpoints) {
-            if (endpoint.name != null) {
-                mergeEndpointConfigs(endpointConfiguration, retrieveEndpoint(endpoint.name));
-            }
-        }
-        mergeEndpointConfigs(endpointConfiguration, retrieveEndpoint(ElasticsearchLayout.CONFIGURATION_OBJECT_ID_ENDPOINT_DEFAULT));
+    public void loadImportProfile(String importProfileName, ImportProfile importProfile) {
+        importProfile.initialize();
+        mergeImportProfiles(importProfile, retrieveImportProfile(importProfileName));
     }
 
-    private EndpointConfiguration retrieveEndpoint(String endpointName) {
-        EndpointConfiguration cachedItem = endpointCache.get(endpointName);
+    private ImportProfile retrieveImportProfile(String importProfileName) {
+        if (importProfileName == null) {
+            importProfileName = ElasticsearchLayout.CONFIGURATION_OBJECT_ID_IMPORT_PROFILE_DEFAULT;
+        }
+        ImportProfile cachedItem = importProfileCache.get(importProfileName);
         if (cachedItem != null) {
             return cachedItem;
         }
         GetResponse getResponse = this.dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
-                ElasticsearchLayout.CONFIGURATION_OBJECT_ID_ENDPOINT_DEFAULT.equals(endpointName) ? ElasticsearchLayout.CONFIGURATION_OBJECT_ID_ENDPOINT_DEFAULT : ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT_ID_PREFIX + endpointName)
+                ElasticsearchLayout.CONFIGURATION_OBJECT_ID_IMPORT_PROFILE_DEFAULT.equals(importProfileName) ? ElasticsearchLayout.CONFIGURATION_OBJECT_ID_IMPORT_PROFILE_DEFAULT : ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE_ID_PREFIX + importProfileName)
                 .setFetchSource(true));
+        if (!getResponse.isExists()) {
+            this.dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
+                    ElasticsearchLayout.CONFIGURATION_OBJECT_ID_IMPORT_PROFILE_DEFAULT)
+                    .setFetchSource(true));
+        }
         if (getResponse.isExists() && !getResponse.isSourceEmpty()) {
-            EndpointConfiguration loadedConfig = this.endpointConfigurationConverter.read(getResponse.getSourceAsMap());
-            this.endpointCache.put(endpointName, loadedConfig);
-            return loadedConfig;
+            ImportProfile loadedProfile = this.importProfileConverter.read(getResponse.getSourceAsMap());
+            this.importProfileCache.put(importProfileName, loadedProfile);
+            return loadedProfile;
         } else {
-            NonExsistentEndpointConfiguration endpointConfig = new NonExsistentEndpointConfiguration();
-            this.endpointCache.put(endpointName, endpointConfig);
-            return endpointConfig;
+            NonExsistentImportProfile importProfile = new NonExsistentImportProfile();
+            this.importProfileCache.put(importProfileName, importProfile);
+            return importProfile;
         }
     }
 
-    private void mergeEndpointConfigs(EndpointConfiguration endpointConfiguration, EndpointConfiguration endpointToMerge) {
-        if (endpointToMerge instanceof NonExsistentEndpointConfiguration) {
+    private void mergeImportProfiles(ImportProfile importProfile, ImportProfile importProfileToMerge) {
+        if (importProfileToMerge instanceof NonExsistentImportProfile) {
             return;
         }
-        if (endpointConfiguration.eventEnhancer == null) {
-            endpointConfiguration.eventEnhancer = endpointToMerge.eventEnhancer;
+        if (importProfile.eventEnhancer == null) {
+            importProfile.eventEnhancer = importProfileToMerge.eventEnhancer;
             return;
         }
-        if (endpointConfiguration.eventEnhancer instanceof DefaultTelemetryEventEnhancer &&
-                endpointToMerge.eventEnhancer instanceof DefaultTelemetryEventEnhancer) {
-            ((DefaultTelemetryEventEnhancer) endpointConfiguration.eventEnhancer).mergeExpressionParsers((DefaultTelemetryEventEnhancer) endpointToMerge.eventEnhancer);
+        if (importProfile.eventEnhancer instanceof DefaultTelemetryEventEnhancer &&
+                importProfileToMerge.eventEnhancer instanceof DefaultTelemetryEventEnhancer) {
+            ((DefaultTelemetryEventEnhancer) importProfile.eventEnhancer).mergeExpressionParsers((DefaultTelemetryEventEnhancer) importProfileToMerge.eventEnhancer);
         }
     }
 
@@ -145,8 +142,8 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
             this.bulkProcessor = createBulkProcessor();
             this.persisters.values().forEach(c -> ((AbstractElasticTelemetryEventPersister) c).setBulkProcessor(this.bulkProcessor));
             oldBulkProcessor.close();
-        } else if (event.isChanged(EtmConfiguration.CONFIG_KEY_ENDPOINT_CONFIGURATION_CACHE_SIZED)) {
-            this.endpointCache.setMaxSize(this.etmConfiguration.getEndpointConfigurationCacheSize());
+        } else if (event.isChanged(EtmConfiguration.CONFIG_KEY_IMPORT_PROFILE_CACHE_SIZED)) {
+            this.importProfileCache.setMaxSize(this.etmConfiguration.getImportProfileCacheSize());
         }
     }
 
@@ -155,7 +152,7 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
      *
      * @author Mark Holster
      */
-    private class NonExsistentEndpointConfiguration extends EndpointConfiguration {
+    private class NonExsistentImportProfile extends ImportProfile {
     }
 
 

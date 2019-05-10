@@ -37,6 +37,19 @@ As a response you will receive the following message
 ----
 telling you the event is successfully received and will be available in {etm} from now on.
 
+Optionally you can set the <<Import profiles,import profile>> that should be used to enhance the event:
+[source,json,subs=attributes+]
+----
+curl -H 'Content-Type: application/json' -H 'apikey: <user api key>' -XPOST 'http://localhost:8080/rest/processor/event/' -d'
+{
+    "type" : "log",
+    "import_profile": "my-import-profile",
+    "data" : {
+    	"payload" : "An {etm} event enhanced by my-import-profile"
+    }
+}'
+----
+
 ==== Adding events in bulk
 Although adding a single event takes only a few milliseconds there will be some overhead of setting up a connection. When you expect a high load it might be useful to add events in bulk. This can be done by posting the to http://127.0.0.1:8080/rest/processor/event/_bulk. The data send to this endpoint needs to be a json array of objects with the same layout as the object explained in the section <<Add a single event>>. 
 
@@ -47,7 +60,7 @@ For example:
 curl -H 'Content-Type: application/json' -H 'apikey: <user api key>' -XPOST 'http://localhost:8080/rest/processor/event/_bulk' -d'
 [ 
   { "type" : "log", "data" : { "payload" : "My first bulk event!" }},
-  { "type" : "log", "data" : { "payload" : "My second bulk event!" }}
+  { "type" : "log", "import_profile": "my-profile", "data" : { "payload" : "My second bulk event!" }}
 ]'
 ----
 

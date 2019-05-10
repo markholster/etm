@@ -28,9 +28,9 @@ function buildUserPage() {
                 if (!data || !data.time_zones) {
                     return;
                 }
-                var $timezones = $('#sel-time-zone');
+                const $timezones = $('#sel-time-zone');
                 $(data.time_zones).each(function (index, timeZone) {
-                    $option = $('<option>').attr('value', timeZone).text(timeZone);
+                    const $option = $('<option>').attr('value', timeZone).text(timeZone);
                     if (timeZone === data.default_time_zone) {
                         $option.attr('selected', 'selected');
                     }
@@ -47,9 +47,9 @@ function buildUserPage() {
                 if (!data || !data.locales) {
                     return;
                 }
-                var $locales = $('#sel-locale');
+                const $locales = $('#sel-locale');
                 $(data.locales).each(function (index, locale) {
-                    $option = $('<option>').attr('value', locale.value).text(locale.name);
+                    const $option = $('<option>').attr('value', locale.value).text(locale.name);
                     if (locale.value === data.default_locale.value) {
                         $option.attr('selected', 'selected');
                     }

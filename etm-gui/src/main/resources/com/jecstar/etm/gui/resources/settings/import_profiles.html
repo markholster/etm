@@ -72,15 +72,17 @@
         <div class="container" style="margin-top: 1em;">
             <div class="card card-block">
                 <div class="card-body">
-                    <h3 class="card-title">Endpoints</h3>
+                    <h3 class="card-title">Import profiles</h3>
                     <div class="card-text">
-                        <div id="endpoints_errorBox" class="alert alert-danger errorBox" style="display: none;"
+                        <div id="import-profiles_errorBox" class="alert alert-danger errorBox" style="display: none;"
                              role="alert"></div>
-                        <div id="endpoints_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
-                        <div id="endpoints_box">
+                        <div id="import-profiles_infoBox" class="alert alert-info" style="display: none;"
+                             role="alert"></div>
+                        <div id="import-profiles_box">
                             <div class="row">
                                 <div class=col-sm-12>
-                                    <select id="sel-endpoint" class="form-control custom-select" autofocus="autofocus">
+                                    <select id="sel-import-profile" class="form-control custom-select"
+                                            autofocus="autofocus">
                                         <option selected="selected"></option>
                                     </select>
                                 </div>
@@ -88,13 +90,14 @@
                             <hr/>
                             <div class="row">
                                 <div class=col-sm-12>
-                                    <form id="endpoint_form">
+                                    <form id="import_profile_form">
                                         <div class="form-group row">
-                                            <label for="input-endpoint-name" class="col-sm-3 col-form-label">Endpoint
-                                                name</label>
+                                            <label for="input-import-profile-name" class="col-sm-3 col-form-label">Import
+                                                profile name</label>
                                             <div class="col-sm-9">
-                                                <input id="input-endpoint-name" type="text" class="form-control"
-                                                       placeholder="Unique name of the endpoint..." required="required"/>
+                                                <input id="input-import-profile-name" type="text" class="form-control"
+                                                       placeholder="Unique name of the import profile..."
+                                                       required="required"/>
                                             </div>
                                         </div>
                                         <div class="form-group row">
@@ -129,9 +132,11 @@
                                             </div>
                                         </div>
                                         <div class="modal-footer" data-element-type="acl-aware">
-                                            <input type="submit" id="btn-confirm-remove-endpoint" class="btn btn-danger"
+                                            <input type="submit" id="btn-confirm-remove-import-profile"
+                                                   class="btn btn-danger"
                                                    value="Remove" formnovalidate="formnovalidate" disabled="disabled"/>
-                                            <input type="submit" id="btn-confirm-save-endpoint" class="btn btn-primary"
+                                            <input type="submit" id="btn-confirm-save-import-profile"
+                                                   class="btn btn-primary"
                                                    value="Save" disabled="disabled"/>
                                         </div>
                                     </form>
@@ -145,49 +150,50 @@
     </div>
 </main>
 
-<div class="modal fade" id="modal-endpoint-overwrite">
+<div class="modal fade" id="modal-import-profile-overwrite">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title" id="endpoint-overwrite-modal-label">Endpoint already exists</h2>
+                <h2 class="modal-title" id="import-profile-overwrite-modal-label">Import profile already exists</h2>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
-                An endpoint with the name '<i id="overwrite-endpoint-name"></i>' already exists. Do you want to
-                overwrite that endpoint?
+                An import profile with the name '<i id="overwrite-import-profile-name"></i>' already exists. Do you want
+                to
+                overwrite that import profile?
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
-                <button id="btn-save-endpoint" type="button" class="btn btn-primary">Yes</button>
+                <button id="btn-save-import-profile" type="button" class="btn btn-primary">Yes</button>
             </div>
         </div>
     </div>
 </div>
-<div class="modal fade" id="modal-endpoint-remove" tabindex="-1" role="dialog"
-     aria-labelledby="endpoint-remove-modal-label" aria-hidden="true">
+<div class="modal fade" id="modal-import-profile-remove" tabindex="-1" role="dialog"
+     aria-labelledby="import-profile-remove-modal-label" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title" id="endpoint-remove-modal-label">Confirm removal</h2>
+                <h2 class="modal-title" id="import-profile-remove-modal-label">Confirm removal</h2>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
-                Are you sure you want to remove the endpoint '<i id="remove-endpoint-name"></i>'?
+                Are you sure you want to remove the import profile '<i id="remove-import-profile-name"></i>'?
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
-                <button id="btn-remove-endpoint" type="button" class="btn btn-primary">Yes</button>
+                <button id="btn-remove-import-profile" type="button" class="btn btn-primary">Yes</button>
             </div>
         </div>
     </div>
 </div>
 
 <script src="../scripts/autocomplete_fields.js"></script>
-<script src="../scripts/endpoints.js"></script>
+<script src="../scripts/import_profiles.js"></script>
 <script src="../scripts/etm-commons.js"></script>
 <script src="../scripts/sidebar-nav.js"></script>
 <script>
@@ -196,9 +202,9 @@
         null,
         function(event, jqXHR, settings, thrownError) {
             if ("undefined" != typeof jqXHR.responseJSON) {
-                $('#endpoints_errorBox').text('Error saving endpoint configuration: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
+                $('#import-profiles_errorBox').text('Error saving import profile: ' + jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
             } else {
-                $('#endpoints_errorBox').text('Error saving endpoint configuration: ' +  thrownError).show('fast');
+                $('#import-profiless_errorBox').text('Error saving import profile: ' + thrownError).show('fast');
             }
             $('html,body').animate({scrollTop: 0},'fast');
         },
@@ -206,7 +212,7 @@
             $('html,body').animate({scrollTop: 0},'fast');
         }
     );
-  	buildEndpointPage();
+    buildImportProfilesPage();
 
 </script>
 

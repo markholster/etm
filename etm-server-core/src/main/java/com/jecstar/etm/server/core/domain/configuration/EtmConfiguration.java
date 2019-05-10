@@ -39,7 +39,7 @@ public class EtmConfiguration {
     public static final String CONFIG_KEY_PERSISTING_BULK_TIME = "persistingBulkTime";
     public static final String CONFIG_KEY_PERSISTING_BULK_THREADS = "persistingBulkThreads";
     public static final String CONFIG_KEY_WAIT_STRATEGY = "waitStrategy";
-    public static final String CONFIG_KEY_ENDPOINT_CONFIGURATION_CACHE_SIZED = "endpointConfigurationCacheSize";
+    public static final String CONFIG_KEY_IMPORT_PROFILE_CACHE_SIZED = "importProfileCacheSize";
 
 
     // Disruptor configuration properties.
@@ -79,7 +79,7 @@ public class EtmConfiguration {
 
     // General options
     private long sessionTimeout = 30 * 60 * 1000;
-    private int endpointConfigurationCacheSize = 100;
+    private int importProfileCacheSize = 100;
 
     // Other stuff.
     private final String nodeName;
@@ -395,13 +395,13 @@ public class EtmConfiguration {
         return this;
     }
 
-    public int getEndpointConfigurationCacheSize() {
-        return this.endpointConfigurationCacheSize;
+    public int getImportProfileCacheSize() {
+        return this.importProfileCacheSize;
     }
 
-    public EtmConfiguration setEndpointEtmConfigurationCacheSize(Integer endpointConfigurationCacheSize) {
-        if (endpointConfigurationCacheSize != null && endpointConfigurationCacheSize >= 0) {
-            this.endpointConfigurationCacheSize = endpointConfigurationCacheSize;
+    public EtmConfiguration setImportProfileCacheSize(Integer importProfileCacheSize) {
+        if (importProfileCacheSize != null && importProfileCacheSize >= 0) {
+            this.importProfileCacheSize = importProfileCacheSize;
         }
         return this;
     }
@@ -551,9 +551,9 @@ public class EtmConfiguration {
             setSessionTimeout(etmConfiguration.getSessionTimeout());
             changed.add(CONFIG_KEY_SESSION_TIMEOUT);
         }
-        if (this.endpointConfigurationCacheSize != etmConfiguration.getEndpointConfigurationCacheSize()) {
-            setEndpointEtmConfigurationCacheSize(etmConfiguration.getEndpointConfigurationCacheSize());
-            changed.add(CONFIG_KEY_ENDPOINT_CONFIGURATION_CACHE_SIZED);
+        if (this.importProfileCacheSize != etmConfiguration.getImportProfileCacheSize()) {
+            setImportProfileCacheSize(etmConfiguration.getImportProfileCacheSize());
+            changed.add(CONFIG_KEY_IMPORT_PROFILE_CACHE_SIZED);
         }
         if (changed.size() > 0) {
             ConfigurationChangedEvent event = new ConfigurationChangedEvent(changed);

@@ -143,8 +143,8 @@ function buildNodePage() {
 		var nodeData = {
 			name: $('#input-node-name').val()
 		}
-        if ($("#input-endpoint-configuration-cache-size").val()) {
-            nodeData.endpoint_configuration_cache_size = Number($("#input-endpoint-configuration-cache-size").val());
+		if ($("#input-import-profile-cache-size").val()) {
+			nodeData.import_profile_cache_size = Number($("#input-import-profile-cache-size").val());
         }
 		if ($("#input-enhancing-handler-count").val()) {
 			nodeData.enhancing_handler_count =  Number($("#input-enhancing-handler-count").val());
@@ -170,7 +170,7 @@ function buildNodePage() {
 	
 	function setNodeData(nodeData) {
 		$('#input-node-name').val(nodeData.name);
-        $("#input-endpoint-configuration-cache-size").val(nodeData.endpoint_configuration_cache_size);
+		$("#input-import-profile-cache-size").val(nodeData.import_profile_cache_size);
 		$("#input-enhancing-handler-count").val(nodeData.enhancing_handler_count);
 		$("#input-persisting-handler-count").val(nodeData.persisting_handler_count);
 		$("#input-event-buffer-size").val(nodeData.event_buffer_size);
@@ -183,7 +183,7 @@ function buildNodePage() {
 	}
 	
 	function setPlaceholderData(clusterData) {
-        $("#input-endpoint-configuration-cache-size").attr('placeholder', clusterData.endpoint_configuration_cache_size);
+		$("#input-import-profile-cache-size").attr('placeholder', clusterData.import_profile_cache_size);
 		$("#input-enhancing-handler-count").attr('placeholder', clusterData.enhancing_handler_count);
 		$("#input-persisting-handler-count").attr('placeholder', clusterData.persisting_handler_count);
 		$("#input-event-buffer-size").attr('placeholder', clusterData.event_buffer_size);

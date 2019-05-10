@@ -31,8 +31,8 @@ public final class SecurityRoles {
     public static final String CLUSTER_SETTINGS_READ = "cluster_settings_read";
     public static final String CLUSTER_SETTINGS_READ_WRITE = "cluster_settings_read_write";
 
-    public static final String ENDPOINT_SETTINGS_READ = "endpoint_settings_read";
-    public static final String ENDPOINT_SETTINGS_READ_WRITE = "endpoint_settings_read_write";
+    public static final String IMPORT_PROFILES_READ = "import_profiles_read";
+    public static final String IMPORT_PROFILES_READ_WRITE = "import_profiles_read_write";
 
     public static final String GROUP_SETTINGS_READ = "group_settings_read";
     public static final String GROUP_SETTINGS_READ_WRITE = "group_settings_read_write";
@@ -61,8 +61,6 @@ public final class SecurityRoles {
             AUDIT_LOG_READ,
             CLUSTER_SETTINGS_READ,
             CLUSTER_SETTINGS_READ_WRITE,
-            ENDPOINT_SETTINGS_READ,
-            ENDPOINT_SETTINGS_READ_WRITE,
             ETM_EVENT_READ,
             ETM_EVENT_READ_WITHOUT_PAYLOAD,
             ETM_EVENT_READ_WRITE,
@@ -77,6 +75,8 @@ public final class SecurityRoles {
             IIB_EVENT_READ_WRITE,
             IIB_NODE_READ,
             IIB_NODE_READ_WRITE,
+            IMPORT_PROFILES_READ,
+            IMPORT_PROFILES_READ_WRITE,
             INDEX_STATISTICS_READ,
             LICENSE_READ,
             LICENSE_READ_WRITE,
@@ -100,8 +100,6 @@ public final class SecurityRoles {
             "\"" + AUDIT_LOG_READ + "\"" +
             ",\"" + CLUSTER_SETTINGS_READ + "\"" +
             ",\"" + CLUSTER_SETTINGS_READ_WRITE + "\"" +
-            ",\"" + ENDPOINT_SETTINGS_READ + "\"" +
-            ",\"" + ENDPOINT_SETTINGS_READ_WRITE + "\"" +
             ",\"" + ETM_EVENT_READ + "\"" +
             ",\"" + ETM_EVENT_READ_WITHOUT_PAYLOAD + "\"" +
             ",\"" + ETM_EVENT_READ_WRITE + "\"" +
@@ -116,6 +114,8 @@ public final class SecurityRoles {
             ",\"" + IIB_EVENT_READ_WRITE + "\"" +
             ",\"" + IIB_NODE_READ + "\"" +
             ",\"" + IIB_NODE_READ_WRITE + "\"" +
+            ",\"" + IMPORT_PROFILES_READ + "\"" +
+            ",\"" + IMPORT_PROFILES_READ_WRITE + "\"" +
             ",\"" + INDEX_STATISTICS_READ + "\"" +
             ",\"" + LICENSE_READ + "\"" +
             ",\"" + LICENSE_READ_WRITE + "\"" +

@@ -104,7 +104,7 @@ public abstract class AbstractJsonHandler {
             results.addHandlerResult(HandlerResult.failed("Unable to determine command type"));
         } else {
             Map<String, Object> eventData = (Map<String, Object>) event.get("data");
-            String importProfile = (String) event.get("importProfile");
+            String importProfile = (String) event.get("import_profile");
             if (importProfile == null) {
                 importProfile = this.defaultImportProfile;
             }

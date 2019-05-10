@@ -1,8 +1,8 @@
 package com.jecstar.etm.server.core.domain.converter.json;
 
-import com.jecstar.etm.server.core.domain.converter.EndpointConfigurationTags;
+import com.jecstar.etm.server.core.domain.converter.ImportProfileTags;
 
-public class EndpointConfigurationTagsJsonImpl implements EndpointConfigurationTags {
+public class ImportProfileTagsJsonImpl implements ImportProfileTags {
 
     @Override
     public String getEnhancerTag() {

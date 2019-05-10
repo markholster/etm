@@ -4,7 +4,7 @@ import com.jecstar.etm.gui.rest.AbstractGuiService;
 import com.jecstar.etm.gui.rest.export.*;
 import com.jecstar.etm.gui.rest.services.search.DefaultSearchTemplates;
 import com.jecstar.etm.server.core.EtmException;
-import com.jecstar.etm.server.core.domain.EndpointConfiguration;
+import com.jecstar.etm.server.core.domain.ImportProfile;
 import com.jecstar.etm.server.core.domain.cluster.notifier.Notifier;
 import com.jecstar.etm.server.core.domain.cluster.notifier.converter.NotifierConverter;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
@@ -13,8 +13,8 @@ import com.jecstar.etm.server.core.domain.configuration.LdapConfiguration;
 import com.jecstar.etm.server.core.domain.configuration.License;
 import com.jecstar.etm.server.core.domain.configuration.converter.LdapConfigurationConverter;
 import com.jecstar.etm.server.core.domain.configuration.converter.json.EtmConfigurationConverterJsonImpl;
-import com.jecstar.etm.server.core.domain.converter.EndpointConfigurationConverter;
-import com.jecstar.etm.server.core.domain.converter.json.EndpointConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.converter.ImportProfileConverter;
+import com.jecstar.etm.server.core.domain.converter.json.ImportProfileConverterJsonImpl;
 import com.jecstar.etm.server.core.domain.parser.ExpressionParser;
 import com.jecstar.etm.server.core.domain.parser.ExpressionParserField;
 import com.jecstar.etm.server.core.domain.parser.converter.ExpressionParserConverter;
@@ -62,7 +62,7 @@ public class SettingsService extends AbstractGuiService {
     private final LdapConfigurationConverter ldapConfigurationConverter = new LdapConfigurationConverter();
     private final NotifierConverter notifierConverter = new NotifierConverter();
     private final ExpressionParserConverter<String> expressionParserConverter = new ExpressionParserConverterJsonImpl();
-    private final EndpointConfigurationConverter<String> endpointConfigurationConverter = new EndpointConfigurationConverterJsonImpl();
+    private final ImportProfileConverter<String> importProfileConverter = new ImportProfileConverterJsonImpl();
     private final EtmPrincipalConverterJsonImpl etmPrincipalConverter = new EtmPrincipalConverterJsonImpl();
     private final EtmPrincipalTags principalTags = this.etmPrincipalConverter.getTags();
 
@@ -72,17 +72,17 @@ public class SettingsService extends AbstractGuiService {
             new FieldLayout("E-mail", ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.principalTags.getEmailTag(), FieldType.PLAIN, MultiSelect.FIRST)
     );
 
-    private final String parserInEnpointFieldsTag = ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT +
-            "." + this.endpointConfigurationConverter.getTags().getEnhancerTag() +
-            "." + this.endpointConfigurationConverter.getTags().getFieldsTag() +
-            "." + this.endpointConfigurationConverter.getTags().getParsersTag() +
-            "." + this.endpointConfigurationConverter.getTags().getNameTag();
+    private final String parserInImportProfileFieldsTag = ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE +
+            "." + this.importProfileConverter.getTags().getEnhancerTag() +
+            "." + this.importProfileConverter.getTags().getFieldsTag() +
+            "." + this.importProfileConverter.getTags().getParsersTag() +
+            "." + this.importProfileConverter.getTags().getNameTag();
 
-    private final String parserInEnpointTransformationTag = ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT +
-            "." + this.endpointConfigurationConverter.getTags().getEnhancerTag() +
-            "." + this.endpointConfigurationConverter.getTags().getTransformationsTag() +
-            "." + this.endpointConfigurationConverter.getTags().getParserTag() +
-            "." + this.endpointConfigurationConverter.getTags().getNameTag();
+    private final String parserInImportProfileTransformationTag = ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE +
+            "." + this.importProfileConverter.getTags().getEnhancerTag() +
+            "." + this.importProfileConverter.getTags().getTransformationsTag() +
+            "." + this.importProfileConverter.getTags().getParserTag() +
+            "." + this.importProfileConverter.getTags().getNameTag();
 
 
     private static DataRepository dataRepository;
@@ -394,7 +394,7 @@ public class SettingsService extends AbstractGuiService {
     @GET
     @Path("/parsers")
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({SecurityRoles.PARSER_SETTINGS_READ, SecurityRoles.PARSER_SETTINGS_READ_WRITE, SecurityRoles.ENDPOINT_SETTINGS_READ, SecurityRoles.ENDPOINT_SETTINGS_READ_WRITE})
+    @RolesAllowed({SecurityRoles.PARSER_SETTINGS_READ, SecurityRoles.PARSER_SETTINGS_READ_WRITE, SecurityRoles.IMPORT_PROFILES_READ, SecurityRoles.IMPORT_PROFILES_READ_WRITE})
     public String getParsers() {
         SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
                 .setFetchSource(true)
@@ -423,7 +423,7 @@ public class SettingsService extends AbstractGuiService {
     @GET
     @Path("/parserfields")
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({SecurityRoles.PARSER_SETTINGS_READ, SecurityRoles.PARSER_SETTINGS_READ_WRITE, SecurityRoles.ENDPOINT_SETTINGS_READ, SecurityRoles.ENDPOINT_SETTINGS_READ_WRITE})
+    @RolesAllowed({SecurityRoles.PARSER_SETTINGS_READ, SecurityRoles.PARSER_SETTINGS_READ_WRITE, SecurityRoles.IMPORT_PROFILES_READ, SecurityRoles.IMPORT_PROFILES_READ_WRITE})
     public String getParserFields() {
         StringBuilder result = new StringBuilder();
         boolean first = true;
@@ -454,24 +454,24 @@ public class SettingsService extends AbstractGuiService {
                         etmConfiguration
                 ).build()
         );
-        removeParserFromEndpoints(bulkRequestBuilder, parserName);
+        removeParserFromImportProfiles(bulkRequestBuilder, parserName);
         dataRepository.bulk(bulkRequestBuilder);
         return "{\"status\":\"success\"}";
     }
 
-    private void removeParserFromEndpoints(BulkRequestBuilder bulkRequestBuilder, String parserName) {
+    private void removeParserFromImportProfiles(BulkRequestBuilder bulkRequestBuilder, String parserName) {
         SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.boolQuery()
-                        .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT))
-                        .should(QueryBuilders.termQuery(parserInEnpointFieldsTag, parserName))
-                        .should(QueryBuilders.termQuery(parserInEnpointTransformationTag, parserName))
+                        .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE))
+                        .should(QueryBuilders.termQuery(parserInImportProfileFieldsTag, parserName))
+                        .should(QueryBuilders.termQuery(parserInImportProfileTransformationTag, parserName))
                         .minimumShouldMatch(1)
                 );
         ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
         for (SearchHit searchHit : scrollableSearch) {
             boolean updated = false;
-            EndpointConfiguration endpointConfig = this.endpointConfigurationConverter.read(searchHit.getSourceAsString());
+            ImportProfile endpointConfig = this.importProfileConverter.read(searchHit.getSourceAsString());
             if (endpointConfig.eventEnhancer instanceof DefaultTelemetryEventEnhancer) {
                 DefaultTelemetryEventEnhancer enhancer = (DefaultTelemetryEventEnhancer) endpointConfig.eventEnhancer;
                 for (DefaultField field : enhancer.getFields()) {
@@ -494,7 +494,7 @@ public class SettingsService extends AbstractGuiService {
                 }
             }
             if (updated) {
-                bulkRequestBuilder.add(createEndpointUpdateRequest(endpointConfig).build());
+                bulkRequestBuilder.add(createImportProfileUpdateRequest(endpointConfig).build());
             }
         }
     }
@@ -518,24 +518,24 @@ public class SettingsService extends AbstractGuiService {
                 .setDetectNoop(true)
                         .build()
         );
-        updateParserInEndpoints(bulkRequestBuilder, expressionParser);
+        updateParserInImportProfiles(bulkRequestBuilder, expressionParser);
         dataRepository.bulk(bulkRequestBuilder);
         return "{ \"status\": \"success\" }";
     }
 
-    private void updateParserInEndpoints(BulkRequestBuilder bulkRequestBuilder, ExpressionParser expressionParser) {
+    private void updateParserInImportProfiles(BulkRequestBuilder bulkRequestBuilder, ExpressionParser expressionParser) {
         SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.boolQuery()
-                        .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT))
-                        .must(QueryBuilders.termQuery(parserInEnpointFieldsTag, expressionParser.getName()))
-                        .should(QueryBuilders.termQuery(parserInEnpointTransformationTag, expressionParser.getName()))
+                        .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE))
+                        .must(QueryBuilders.termQuery(parserInImportProfileFieldsTag, expressionParser.getName()))
+                        .should(QueryBuilders.termQuery(parserInImportProfileTransformationTag, expressionParser.getName()))
                         .minimumShouldMatch(1)
                 );
         ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
         for (SearchHit searchHit : scrollableSearch) {
             boolean updated = false;
-            EndpointConfiguration endpointConfig = this.endpointConfigurationConverter.read(searchHit.getSourceAsString());
+            ImportProfile endpointConfig = this.importProfileConverter.read(searchHit.getSourceAsString());
             if (endpointConfig.eventEnhancer instanceof DefaultTelemetryEventEnhancer) {
                 DefaultTelemetryEventEnhancer enhancer = (DefaultTelemetryEventEnhancer) endpointConfig.eventEnhancer;
                 for (DefaultField field : enhancer.getFields()) {
@@ -556,30 +556,30 @@ public class SettingsService extends AbstractGuiService {
                 }
             }
             if (updated) {
-                bulkRequestBuilder.add(createEndpointUpdateRequest(endpointConfig).build());
+                bulkRequestBuilder.add(createImportProfileUpdateRequest(endpointConfig).build());
             }
         }
     }
 
     @GET
-    @Path("/endpoints")
+    @Path("/import_profiles")
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({SecurityRoles.ENDPOINT_SETTINGS_READ, SecurityRoles.ENDPOINT_SETTINGS_READ_WRITE})
-    public String getEndpoints() {
+    @RolesAllowed({SecurityRoles.IMPORT_PROFILES_READ, SecurityRoles.IMPORT_PROFILES_READ_WRITE})
+    public String getImportProfiles() {
         SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
                 .setFetchSource(true)
-                .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT));
+                .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE));
         ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
         StringBuilder result = new StringBuilder();
-        result.append("{\"endpoints\": [");
+        result.append("{\"import_profiles\": [");
         boolean first = true;
         boolean defaultFound = false;
         for (SearchHit searchHit : scrollableSearch) {
             if (!first) {
                 result.append(",");
             }
-            result.append(toStringWithoutNamespace(searchHit.getSourceAsMap(), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT));
-            if (ElasticsearchLayout.CONFIGURATION_OBJECT_ID_ENDPOINT_DEFAULT.equals(searchHit.getId())) {
+            result.append(toStringWithoutNamespace(searchHit.getSourceAsMap(), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE));
+            if (ElasticsearchLayout.CONFIGURATION_OBJECT_ID_IMPORT_PROFILE_DEFAULT.equals(searchHit.getId())) {
                 defaultFound = true;
             }
             first = false;
@@ -588,10 +588,10 @@ public class SettingsService extends AbstractGuiService {
             if (!first) {
                 result.append(",");
             }
-            EndpointConfiguration defaultEndpointConfiguration = new EndpointConfiguration();
-            defaultEndpointConfiguration.name = "*";
-            defaultEndpointConfiguration.eventEnhancer = new DefaultTelemetryEventEnhancer();
-            result.append(toStringWithoutNamespace(this.endpointConfigurationConverter.write(defaultEndpointConfiguration), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT));
+            ImportProfile defaultImportProfile = new ImportProfile();
+            defaultImportProfile.name = "*";
+            defaultImportProfile.eventEnhancer = new DefaultTelemetryEventEnhancer();
+            result.append(toStringWithoutNamespace(this.importProfileConverter.write(defaultImportProfile), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE));
         }
 
         result.append("]}");
@@ -600,12 +600,12 @@ public class SettingsService extends AbstractGuiService {
 
 
     @DELETE
-    @Path("/endpoint/{endpointName}")
+    @Path("/import_profile/{importProfileName}")
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed(SecurityRoles.ENDPOINT_SETTINGS_READ_WRITE)
-    public String deleteEndpoint(@PathParam("endpointName") String endpointName) {
+    @RolesAllowed(SecurityRoles.IMPORT_PROFILES_READ_WRITE)
+    public String deleteImportProfile(@PathParam("importProfileName") String importProfileName) {
         DeleteRequestBuilder builder = enhanceRequest(
-                new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT_ID_PREFIX + endpointName),
+                new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE_ID_PREFIX + importProfileName),
                 etmConfiguration
         );
         dataRepository.delete(builder);
@@ -613,21 +613,21 @@ public class SettingsService extends AbstractGuiService {
     }
 
     @PUT
-    @Path("/endpoint/{endpointName}")
+    @Path("/import_profile/{importProfileName}")
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed(SecurityRoles.ENDPOINT_SETTINGS_READ_WRITE)
-    public String addEndpoint(@PathParam("endpointName") String endpointName, String json) {
-        // Do a read and write of the endpoint to make sure it's valid.
-        EndpointConfiguration endpointConfiguration = this.endpointConfigurationConverter.read(toStringWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT));
-        dataRepository.update(createEndpointUpdateRequest(endpointConfiguration));
+    @RolesAllowed(SecurityRoles.IMPORT_PROFILES_READ_WRITE)
+    public String addImportProfile(@PathParam("importProfileName") String importProfileName, String json) {
+        // Do a read and write of the import profile to make sure it's valid.
+        ImportProfile importProfile = this.importProfileConverter.read(toStringWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE));
+        dataRepository.update(createImportProfileUpdateRequest(importProfile));
         return "{ \"status\": \"success\" }";
     }
 
-    private UpdateRequestBuilder createEndpointUpdateRequest(EndpointConfiguration endpointConfiguration) {
-        return enhanceRequest(new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_ENDPOINT_ID_PREFIX + endpointConfiguration.name),
+    private UpdateRequestBuilder createImportProfileUpdateRequest(ImportProfile importProfile) {
+        return enhanceRequest(new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE_ID_PREFIX + importProfile.name),
                 etmConfiguration
         )
-                .setDoc(this.endpointConfigurationConverter.write(endpointConfiguration), XContentType.JSON)
+                .setDoc(this.importProfileConverter.write(importProfile), XContentType.JSON)
                 .setDocAsUpsert(true)
                 .setDetectNoop(true);
     }
