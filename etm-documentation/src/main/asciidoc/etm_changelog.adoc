@@ -8,6 +8,7 @@
 * [ETM-105] Option to export and import graphs + signals.
 * [ETM-106] Upgrade to elasticsearch 7.x
 * [ETM-107] Add a quicksearch bar.
+* [ETM-110] Ldap groups never reloaded.
 
 === Version 3.5.0
 * [ETM-95] Add api key to user for for authorisation on rest processor.
@@ -170,6 +171,23 @@ Sometimes your {etm} configuration needs additional changes before it can be upg
 
 ===== Upgrade from versions before 2.3.0 to 2.3.x or higher
 . Remove the options 'maxConcurrentRequests', 'maxQueuedRequests' & 'sessionTimeout' in the http chapter in the file 'config/etm.yml'. These parameters may now be provided for the GUI and REST processor separately. See the <<Http section in etm.yml>> for more information.
+
+=== Upgrade from version 3.5.0 to 4.x
+. Your data will be converted during the upgrade so as always make sure you have a backup of all Elasticsearch data!
+. {etm} requires Java 11. Download and install Java 11 when necessary.
+. Download and uncompress Elasticsearch 7.x to a new directory.
+. Stop all {etm} nodes.
+. Stop your current Elasticsearch nodes.
+. Merge changes from the 'config/jvm.options' and 'config/log4j2.properties' files in your current Elasticsearch nodes to your new ones. Note that merging is only recommended when you have made changes to those files. When you've not changed anything in those files it is recommended to leave them untouched in your new Elasticsearch installation.
+. If your Elasticsearch data resides in the same directory as your Elasticsearch installation make sure you copy the data to the new Elasticsearch installation.
+. Start your new Elasticsearch nodes and wait for the message ''Cluster health status changed from [RED] to [GREEN]'' to appear.
+. Download and uncompress {etm} 4.x to a new directory.
+. Copy all files under 'lib/ext/' from your old {etm} installation to the new one.
+. Copy the 'config/etm.yml' & 'config/jvm.options' files from your old {etm} installation to the new one.
+.. If you want to play save, disable all processors in the etm.yml. This will prevent events to be processed in the case your migrated somehow failed.
+. Start a single {etm} node in console mode and wait for the data migration to complete. Login to {etm} and validate the migration.
+. Enable all required processors when disabled in a previous step and restart the node.
+. Start all other {etm} nodes.
 
 === Upgrade from version 2.4.0 to 3.x
 . Your data will be converted during the upgrade so as always make sure you have a backup of all Elasticsearch data!

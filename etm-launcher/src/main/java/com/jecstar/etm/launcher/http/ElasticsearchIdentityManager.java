@@ -19,23 +19,18 @@ import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.util.BCrypt;
 import com.jecstar.etm.server.core.util.DateUtils;
 import com.jecstar.etm.server.core.util.LruCache;
-import com.jecstar.etm.server.core.util.ObjectUtils;
 import io.undertow.security.idm.*;
-import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.get.MultiGetItemResponse;
-import org.elasticsearch.action.get.MultiGetResponse;
-import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
 
-import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class ElasticsearchIdentityManager implements IdentityManager {
 
@@ -61,20 +56,18 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 
     @Override
     public Account verify(Account account) {
-        EtmAccount etmAccount = (EtmAccount) account;
+        var etmAccount = (EtmAccount) account;
         if (System.currentTimeMillis() - etmAccount.getLastUpdated() > 60000 || etmAccount.getPrincipal().forceReload) {
-            EtmPrincipal principal = loadPrincipal(etmAccount.getPrincipal().getId());
+            var principal = loadPrincipal(etmAccount.getPrincipal().getId());
             if (principal == null) {
                 if (log.isDebugLevelEnabled()) {
                     log.logDebugMessage("Account with id '" + etmAccount.getPrincipal().getId() + "' not found. Account will be invalidated.");
                 }
                 return null;
             }
-            // Copy the LDAP groups. We don't refresh them over here because that would cause a lot of ldap network traffic.
-            for (EtmGroup etmGroup : etmAccount.getPrincipal().getGroups()) {
-                if (etmGroup.isLdapBase()) {
-                    principal.addGroup(etmGroup);
-                }
+            if (this.etmConfiguration.getDirectory() != null) {
+                var ldapPrincipal = this.etmConfiguration.getDirectory().getPrincipal(principal.getId(), true);
+                addLdapGroups(principal, ldapPrincipal.getGroups());
             }
             etmAccount = new EtmAccount(principal);
         }
@@ -83,7 +76,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 
     @Override
     public Account verify(String id, Credential credential) {
-        String passwordHash = getPasswordHash(id);
+        var passwordHash = getPasswordHash(id);
         if (passwordHash != null) {
             if (!BCrypt.checkpw(new String(((PasswordCredential) credential).getPassword()), passwordHash)) {
                 if (log.isDebugLevelEnabled()) {
@@ -92,15 +85,15 @@ public class ElasticsearchIdentityManager implements IdentityManager {
                 logLoginAttempt(id, false);
                 return null;
             }
-            EtmPrincipal principal = loadPrincipal(id);
+            var principal = loadPrincipal(id);
             if (principal == null) {
                 return null;
             }
-            EtmAccount etmAccount = new EtmAccount(principal);
+            var etmAccount = new EtmAccount(principal);
             logLoginAttempt(id, true);
             return etmAccount;
         } else if (this.etmConfiguration.getDirectory() != null) {
-            EtmPrincipal principal = this.etmConfiguration.getDirectory().authenticate(id, new String(((PasswordCredential) credential).getPassword()));
+            var principal = this.etmConfiguration.getDirectory().authenticate(id, new String(((PasswordCredential) credential).getPassword()));
             if (principal == null) {
                 if (log.isDebugLevelEnabled()) {
                     log.logDebugMessage("Invalid password for account with id '" + id + "'.");
@@ -108,17 +101,15 @@ public class ElasticsearchIdentityManager implements IdentityManager {
                 logLoginAttempt(id, false);
                 return null;
             }
-            EtmPrincipal storedPrincipal = loadPrincipal(principal.getId());
+            var storedPrincipal = loadPrincipal(principal.getId());
             if (storedPrincipal == null) {
                 createLdapUser(principal);
                 storedPrincipal = loadPrincipal(id);
             } else {
                 updateLdapPrincipalWhenChanged(storedPrincipal, principal);
             }
-            if (principal.getGroups() != null) {
-                addLdapGroups(storedPrincipal, principal.getGroups());
-            }
-            EtmAccount etmAccount = new EtmAccount(storedPrincipal);
+            addLdapGroups(storedPrincipal, principal.getGroups());
+            var etmAccount = new EtmAccount(storedPrincipal);
             logLoginAttempt(id, true);
             return etmAccount;
 
@@ -127,18 +118,18 @@ public class ElasticsearchIdentityManager implements IdentityManager {
     }
 
     private void updateLdapPrincipalWhenChanged(EtmPrincipal storedPrincipal, EtmPrincipal principal) {
-        boolean changed = false;
-        if (!ObjectUtils.equalsNullProof(storedPrincipal.getName(), principal.getName())) {
+        var changed = false;
+        if (!Objects.equals(storedPrincipal.getName(), principal.getName())) {
             storedPrincipal.setName(principal.getName());
             changed = true;
         }
-        if (!ObjectUtils.equalsNullProof(storedPrincipal.getEmailAddress(), principal.getEmailAddress())) {
+        if (!Objects.equals(storedPrincipal.getEmailAddress(), principal.getEmailAddress())) {
             storedPrincipal.setEmailAddress(principal.getEmailAddress());
             changed = true;
         }
         if (changed) {
-            Map<String, Object> updateMap = new HashMap<>();
-            Map<String, Object> userObject = new HashMap<>();
+            var updateMap = new HashMap<String, Object>();
+            var userObject = new HashMap<String, Object>();
             userObject.put(this.etmPrincipalTags.getNameTag(), storedPrincipal.getName());
             userObject.put(this.etmPrincipalTags.getEmailTag(), storedPrincipal.getEmailAddress());
             updateMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, userObject);
@@ -168,12 +159,12 @@ public class ElasticsearchIdentityManager implements IdentityManager {
     @Override
     public Account verify(Credential credential) {
         if (credential instanceof ApiKeyCredentials) {
-            ApiKeyCredentials apiKeyCredentials = (ApiKeyCredentials) credential;
-            EtmAccount etmAccount = this.apiKeyCache.get(apiKeyCredentials);
+            var apiKeyCredentials = (ApiKeyCredentials) credential;
+            var etmAccount = this.apiKeyCache.get(apiKeyCredentials);
             if (etmAccount != null) {
                 return etmAccount;
             }
-            SearchResponse searchResponse = this.dataRepository.search(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+            var searchResponse = this.dataRepository.search(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
                     .setFetchSource(false)
                     .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getApiKeyTag(), apiKeyCredentials.getApiKey()))
                     .setSize(1)
@@ -181,8 +172,8 @@ public class ElasticsearchIdentityManager implements IdentityManager {
             if (searchResponse.getHits().getTotalHits().value == 0) {
                 return null;
             }
-            String docId = searchResponse.getHits().getAt(0).getId();
-            EtmPrincipal principal = loadPrincipal(docId.substring(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX.length()));
+            var docId = searchResponse.getHits().getAt(0).getId();
+            var principal = loadPrincipal(docId.substring(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX.length()));
             if (principal == null) {
                 return null;
             }
@@ -190,13 +181,13 @@ public class ElasticsearchIdentityManager implements IdentityManager {
             this.apiKeyCache.put(apiKeyCredentials, etmAccount);
             return etmAccount;
         } else if (credential instanceof X509CertificateCredential) {
-            X509Certificate certificate = ((X509CertificateCredential) credential).getCertificate();
-            EtmPrincipal principal = loadPrincipal(certificate.getSerialNumber().toString());
+            var certificate = ((X509CertificateCredential) credential).getCertificate();
+            var principal = loadPrincipal(certificate.getSerialNumber().toString());
             if (principal == null) {
                 return null;
             }
             // TODO, de public key zou hier uitgelezen moeten worden, en vergeleken met hetgeen in de DB.
-            boolean valid = BCrypt.checkpw(certificate.getIssuerX500Principal().getName(), principal.getPasswordHash());
+            var valid = BCrypt.checkpw(certificate.getIssuerX500Principal().getName(), principal.getPasswordHash());
             if (!valid) {
                 if (log.isDebugLevelEnabled()) {
                     log.logDebugMessage("Invalid password (issuer name) for certificate with serial number '" + certificate.getSerialNumber().toString() + "'.");
@@ -210,21 +201,21 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 
     @SuppressWarnings("unchecked")
     private EtmPrincipal loadPrincipal(String userId) {
-        GetResponse getResponse = this.dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId));
+        var getResponse = this.dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId));
         if (!getResponse.isExists()) {
             return null;
         }
-        EtmPrincipal principal = this.etmPrincipalConverter.readPrincipal(getResponse.getSourceAsString());
-        Map<String, Object> objectMap = getResponse.getSourceAsMap();
-        Map<String, Object> userMap = (Map<String, Object>) objectMap.get(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER);
+        var principal = this.etmPrincipalConverter.readPrincipal(getResponse.getSourceAsString());
+        var objectMap = getResponse.getSourceAsMap();
+        var userMap = (Map<String, Object>) objectMap.get(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER);
         Collection<String> groups = this.jsonConverter.getArray(this.etmPrincipalTags.getGroupsTag(), userMap);
         if (groups != null && !groups.isEmpty()) {
-            MultiGetRequestBuilder multiGetBuilder = new MultiGetRequestBuilder();
-            for (String group : groups) {
+            var multiGetBuilder = new MultiGetRequestBuilder();
+            for (var group : groups) {
                 multiGetBuilder.add(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + group);
             }
-            MultiGetResponse multiGetResponse = this.dataRepository.get(multiGetBuilder);
-            for (MultiGetItemResponse item : multiGetResponse) {
+            var multiGetResponse = this.dataRepository.get(multiGetBuilder);
+            for (var item : multiGetResponse) {
                 EtmGroup etmGroup = this.etmPrincipalConverter.readGroup(item.getResponse().getSourceAsString());
                 principal.addGroup(etmGroup);
             }
@@ -234,14 +225,14 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 
     private void addLdapGroups(EtmPrincipal etmPrincipal, Collection<EtmGroup> set) {
         if (set != null && !set.isEmpty()) {
-            MultiGetRequestBuilder multiGetBuilder = new MultiGetRequestBuilder();
-            for (EtmGroup group : set) {
+            var multiGetBuilder = new MultiGetRequestBuilder();
+            for (var group : set) {
                 multiGetBuilder.add(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + group.getName());
             }
-            MultiGetResponse multiGetResponse = this.dataRepository.get(multiGetBuilder);
-            for (MultiGetItemResponse item : multiGetResponse) {
+            var multiGetResponse = this.dataRepository.get(multiGetBuilder);
+            for (var item : multiGetResponse) {
                 if (!item.isFailed() && item.getResponse().isExists() && !item.getResponse().isSourceEmpty()) {
-                    EtmGroup etmGroup = this.etmPrincipalConverter.readGroup(item.getResponse().getSourceAsString());
+                    var etmGroup = this.etmPrincipalConverter.readGroup(item.getResponse().getSourceAsString());
                     if (etmGroup.isLdapBase()) {
                         etmPrincipal.addGroup(etmGroup);
                     }
@@ -252,16 +243,16 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 
     @SuppressWarnings("unchecked")
     private String getPasswordHash(String userId) {
-        GetResponse getResponse = this.dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId)
+        var getResponse = this.dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId)
                 .setFetchSource(new String[]{
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getPasswordHashTag(),
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getLdapBaseTag()}, null));
         if (!getResponse.isExists()) {
             return null;
         }
-        Map<String, Object> source = getResponse.getSource();
-        Map<String, Object> userObject = (Map<String, Object>) source.get(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER);
-        boolean ldapBase = this.jsonConverter.getBoolean(this.etmPrincipalTags.getLdapBaseTag(), userObject, Boolean.FALSE);
+        var source = getResponse.getSource();
+        var userObject = (Map<String, Object>) source.get(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER);
+        var ldapBase = this.jsonConverter.getBoolean(this.etmPrincipalTags.getLdapBaseTag(), userObject, Boolean.FALSE);
         if (ldapBase) {
             return null;
         }
@@ -279,8 +270,8 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 
 
     private void logLoginAttempt(String id, boolean success) {
-        Instant now = Instant.now();
-        LoginAuditLogBuilder auditLogBuilder = new LoginAuditLogBuilder().setTimestamp(now).setHandlingTime(now).setPrincipalId(id).setSuccess(success);
+        var now = Instant.now();
+        var auditLogBuilder = new LoginAuditLogBuilder().setTimestamp(now).setHandlingTime(now).setPrincipalId(id).setSuccess(success);
         this.dataRepository.indexAsync(new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now))
                 .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
                 .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))

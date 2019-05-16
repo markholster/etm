@@ -110,14 +110,14 @@ Depending on your IIB version you need to copy some files to the <INSTALL_DIR>/l
 [options="header"]
 |=======================
 |Filename|IIB 9|IIB 10
-|configmanagerproxy.jar|✔|
-|ibmjsseprovider2.jar|✔|✔
-|integrationapi.jar||✔
-|jetty-io.jar||✔
-|jetty-util.jar||✔
-|websocket-api.jar||✔
-|websocket-client.jar||✔
-|websocket-common.jar||✔
+|configmanagerproxy.jar|X|
+|ibmjsseprovider2.jar|X|X
+|integrationapi.jar||X
+|jetty-io.jar||X
+|jetty-util.jar||X
+|websocket-api.jar||X
+|websocket-client.jar||X
+|websocket-common.jar||X
 |=======================
 
 === Integration with JMS
@@ -259,7 +259,7 @@ The ''ibmMq'' section contains all options that are necessary to process {etm} e
 |Name|Default value|Description
 |name||The name of the Queue or Topic to connect to.
 |type|queue|The destination type. Can be one of ''queue'' or ''topic''.
-|defaultImportProfile||The default import profile to use on this destination if no import profile is provided within the processing events.
+|defaultImportProfile||The default <<Import profiles,import profile>> to use on this destination if no import profile is provided within the processing events.
 |minNrOfListeners|1|The minimum number of listeners to connect to the destination.
 |maxNrOfListeners|5|The maximum number of listeners to connect to the destination.
 |channel||The channel to use to setup the connection to the QueueManager.
@@ -320,7 +320,7 @@ When the Connection Factory does not resides in a JNDI registry but should be in
 |minNrOfListeners|1|The minimum number of listeners to connect to the destination.
 |maxNrOfListeners|5|The maximum number of listeners to connect to the destination.
 |messagesType|auto|Can be one of ''auto'' which auto detect the message type but is the slowest, ''etmevent'' which is capable of handling events in the {etm} json format or ''clone'' which assumes the message read is a clone of the original message. See the section <<Event layout>> for a description of the {etm} json format.
-|defaultImportProfile||The default import profile to use on this destination if no import profile is provided within the processing events.
+|defaultImportProfile||The default <<Import profiles,import profile>> to use on this destination if no import profile is provided within the processing events.
 |=======================
 
 ==== Kafka section in etm.yml
@@ -344,7 +344,7 @@ The ''kafka'' section contains all options that are necessary to process {etm} e
 |nrOfListeners|1|The number of listeners to connect to read from the topic. This number should never be higher that the number of partitions in your topic.
 |groupId|Enterprise Telemetry Monitor|The name of the group id to connect to the topic. All {etm} Nodes should have the same group id.
 |startFrom||Set to ''beginning'' to start processing from the begin of the topic instead of the saved offset.
-|defaultImportProfile||The default import profile to use on this destination if no import profile is provided within the processing events.
+|defaultImportProfile||The default <<Import profiles,import profile>> to use on this destination if no import profile is provided within the processing events.
 |maxPollRecords||The maximum number of records to retrieve in a single call to the topic.
 |maxPollInterval||The maximum number of milliseconds allowed between two retrieval calls to the topic. If the processing took longer the Node will be considered failed and the topic will be rebalanced.
 |sessionTimeout||The timeout used to detect consumer failures. If this Node will not send a heartbeat within this interval the Node will be considered failed and the topic will be rebalanced.
