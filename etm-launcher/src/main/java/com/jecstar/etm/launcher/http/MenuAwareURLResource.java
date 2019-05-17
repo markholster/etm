@@ -65,8 +65,10 @@ public class MenuAwareURLResource extends URLResource {
     }
 
     private static final String MENU_PLACEHOLDER = "<li id=\"placeholder-for-MenuAwareURLResource\"></li>";
-    private static final String USER_PLACEHOLDER = "placeholder-for-contextUser";
-    private static final String SEARCH_HEADER_PLACEHOLDER = "<div id=\"placeholder-for-headerSearch\"></div>";
+    private static final String USER_PLACEHOLDER = "<div class=\"dropdown-user-scroll scrollbar-outer\"></div>";
+    private static final String SEARCH_HEADER_PLACEHOLDER = "<div id=\"search-nav\"></div>";
+    private static final String NAVBAR_COLOR_PLACEHOLDER = "etm-navbar-color";
+    private static final String SIDEBAR_COLOR_PLACEHOLDER = "etm-sidebar-color";
 
     private final EtmConfiguration etmConfiguration;
     private final String pathPrefixToContextRoot;
@@ -142,22 +144,45 @@ public class MenuAwareURLResource extends URLResource {
                 if (inputStream == null) {
                     try (BufferedReader buffer = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
                         String htmlContent = buffer.lines().collect(Collectors.joining("\n"));
-                        int ix = htmlContent.indexOf(USER_PLACEHOLDER);
+                        int ix = htmlContent.indexOf(NAVBAR_COLOR_PLACEHOLDER);
                         if (ix != -1) {
-                            htmlContent = htmlContent.replace(USER_PLACEHOLDER, etmAccount.getPrincipal().getDisplayName());
+                            htmlContent = htmlContent.replaceAll(NAVBAR_COLOR_PLACEHOLDER, "dark");
+                        }
+                        ix = htmlContent.indexOf(SIDEBAR_COLOR_PLACEHOLDER);
+                        if (ix != -1) {
+                            htmlContent = htmlContent.replaceAll(SIDEBAR_COLOR_PLACEHOLDER, "dark2");
+                        }
+                        ix = htmlContent.indexOf(USER_PLACEHOLDER);
+                        if (ix != -1) {
+                            htmlContent = htmlContent.replace(USER_PLACEHOLDER, "<div class=\"dropdown-user-scroll scrollbar-outer\">\n" +
+                                    "                                <li>\n" +
+                                    "                                    <div class=\"user-box\">\n" +
+                                    "                                        <div class=\"u-text\">\n" +
+                                    "                                            <h4>" + StringUtils.escapeToHtml(etmAccount.getPrincipal().getDisplayName()) + "</h4>\n" +
+                                    "                                            <p class=\"text-muted\">" + StringUtils.escapeToHtml(etmAccount.getPrincipal().getEmailAddress()) + "</p><a href=\"" + pathPrefixToContextRoot + "preferences/\" class=\"btn btn-xs btn-secondary btn-sm\">View Profile</a>\n" +
+                                    "                                        </div>\n" +
+                                    "                                    </div>\n" +
+                                    "                                </li>\n" +
+                                    "                                <li>\n" +
+                                    "                                    <div class=\"dropdown-divider\"></div>\n" +
+                                    "                                    <a class=\"dropdown-item\" href=\"#\">Signout</a>\n" +
+                                    "                                </li>\n" +
+                                    "                            </div>");
                         }
                         ix = htmlContent.indexOf(SEARCH_HEADER_PLACEHOLDER);
                         if (ix != -1 && etmAccount.getPrincipal().isInAnyRole(SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE)) {
-                            htmlContent = htmlContent.replace(SEARCH_HEADER_PLACEHOLDER, "    <div id=\"headerSearch\" class=\"u-header-search-form\">\n" +
-                                    "        <form action=\"" + pathPrefixToContextRoot + "search/index.html\">\n" +
-                                    "            <div class=\"input-group\">\n" +
-                                    "                <input class=\"form-control form-control-sm\" type=\"search\" name=\"q\" placeholder=\"Quicksearch\"/>\n" +
-                                    "            </div>\n" +
-                                    "        </form>\n" +
-                                    "    </div>");
-                        }
-                        if (ix != -1) {
-                            htmlContent = htmlContent.replace(USER_PLACEHOLDER, etmAccount.getPrincipal().getDisplayName());
+                            htmlContent = htmlContent.replace(SEARCH_HEADER_PLACEHOLDER, "                <div class=\"collapse\" id=\"search-nav\">\n" +
+                                    "                    <form class=\"navbar-left navbar-form nav-search mr-md-3\" action=\"" + pathPrefixToContextRoot + "search/index.html\">\n" +
+                                    "                        <div class=\"input-group\">\n" +
+                                    "                            <div class=\"input-group-prepend\">\n" +
+                                    "                                <button type=\"submit\" class=\"btn btn-search pr-1\">\n" +
+                                    "                                    <i class=\"fa fa-search search-icon\"></i>\n" +
+                                    "                                </button>\n" +
+                                    "                            </div>\n" +
+                                    "                            <input type=\"text\" name=\"q\" placeholder=\"Quick search ...\" class=\"form-control\" />\n" +
+                                    "                        </div>\n" +
+                                    "                    </form>\n" +
+                                    "                </div>\n");
                         }
                         ix = htmlContent.indexOf(MENU_PLACEHOLDER);
                         if (ix == -1) {
@@ -237,7 +262,7 @@ public class MenuAwareURLResource extends URLResource {
                 addPreferencesMenuOption(principal, html);
                 addSettingsMenuOption(principal, html);
                 // The signout menu option
-                html.append("<hr /><li class=\"u-sidebar-nav-menu__item\"><a class=\"u-sidebar-nav-menu__link\" href=\"").append(pathPrefixToContextRoot).append("logout?source=./\"><i class=\"fa fa-sign-out-alt u-sidebar-nav-menu__item-icon\"></i><span class=\"u-sidebar-nav-menu__item-title\">Sign out</span></a></li>");
+                html.append("<hr /><li class=\"nav-item submenu\"><a href=\"").append(pathPrefixToContextRoot).append("logout?source=./\"><i class=\"fa fa-sign-out-alt\"></i><p>Sign out</p></a></li>");
                 return html.toString();
             }
         }
@@ -259,17 +284,13 @@ public class MenuAwareURLResource extends URLResource {
         if (readOnly) {
             url += (page.contains("?") ? "&" : "?") + "readonly=true";
         }
-        String classes = "u-sidebar-nav-menu__link";
-        if (("/" + page).equals(this.getPath())) {
-            classes += " active";
-        }
-        html.append("<li class=\"u-sidebar-nav-menu__item\"><a class=\"" + classes + "\" href=\"")
+        html.append("<li><a href=\"")
                 .append(this.pathPrefixToContextRoot)
                 .append(url + "\">");
         if (iconClass != null) {
-            html.append("<i class=\"fa " + iconClass + " u-sidebar-nav-menu__item-icon\"></i>");
+            html.append("<i class=\"fa " + iconClass + "\"></i>");
         }
-        html.append("<span class=\"u-sidebar-nav-menu__item-title\">" + StringUtils.escapeToHtml(name) + "</span></a></li>");
+        html.append("<p>" + StringUtils.escapeToHtml(name) + "</p></a></li>");
     }
 
     /**
@@ -283,11 +304,11 @@ public class MenuAwareURLResource extends URLResource {
             return;
         }
         if (MenuContext.SEARCH.equals(menuContext)) {
-            html.append("<li class=\"u-sidebar-nav-menu__item u-sidebar-nav--opened\">");
+            html.append("<li class=\"nav-item active\">");
         } else {
-            html.append("<li class=\"u-sidebar-nav-menu__item\">");
+            html.append("<li class=\"nav-item submenu\">");
         }
-        html.append("<a class=\"u-sidebar-nav-menu__link\" href=\"").append(pathPrefixToContextRoot).append("search/\"><i class=\"fa fa-search u-sidebar-nav-menu__item-icon\"></i><span class=\"u-sidebar-nav-menu__item-title\">Search</span></a>");
+        html.append("<a href=\"").append(pathPrefixToContextRoot).append("search/\"><i class=\"fa fa-search\"></i><p>Search</p></a>");
         html.append("</li>");
     }
 
@@ -307,12 +328,12 @@ public class MenuAwareURLResource extends URLResource {
         if (principal.isInAnyRole(SecurityRoles.USER_DASHBOARD_READ_WRITE, SecurityRoles.GROUP_DASHBOARD_READ, SecurityRoles.GROUP_DASHBOARD_READ_WRITE) && hasDashboardsToShow) {
             boolean hasGroupMenu = false;
             if (MenuContext.DASHBOARD.equals(menuContext)) {
-                html.append("<li class=\"u-sidebar-nav-menu__item u-sidebar-nav--opened\">");
+                html.append("<li class=\"nav-item active\">");
             } else {
-                html.append("<li class=\"u-sidebar-nav-menu__item\">");
+                html.append("<li class=\"nav-item\">");
             }
-            html.append("<a class=\"u-sidebar-nav-menu__link\" data-target=\"#sub_visualizations\" href=\"#\"><i class=\"fa fa-tachometer-alt u-sidebar-nav-menu__item-icon\"></i><span class=\"u-sidebar-nav-menu__item-title\">Visualizations</span><i class=\"fa fa-angle-right u-sidebar-nav-menu__item-arrow\"></i><span class=\"u-sidebar-nav-menu__indicator\"></span></a>");
-            html.append("<ul id=\"sub_visualizations\" class=\"u-sidebar-nav-menu u-sidebar-nav-menu--second-level\" style=\"display: "+ (MenuContext.DASHBOARD.equals(menuContext) ? "block" : "none") + ";\">");
+            html.append("<a class=\"collapsed\" data-toggle=\"collapse\" href=\"#sub_visualizations\" area-expanded=\"false\"><i class=\"fa fa-tachometer-alt\"></i><p>Visualizations</p><span class=\"caret\"></span></a>");
+            html.append("<div id=\"sub_visualizations\" class=\"submenu collapse\"><ul class=\"nav nav-collapse\">");
             if (principal.isInAnyRole(SecurityRoles.GROUP_DASHBOARD_READ, SecurityRoles.GROUP_DASHBOARD_READ_WRITE)) {
                 // First display the group names
                 for (EtmGroup group : groups) {
@@ -320,8 +341,8 @@ public class MenuAwareURLResource extends URLResource {
                         // Skip a group when it has no dashboards and the user has read only access.
                         continue;
                     }
-                    html.append("<li class=\"u-sidebar-nav-menu__item\"><a class=\"u-sidebar-nav-menu__link\" href=\"#\" data-target=\"#sub_vis_grp_" + group.hashCode() + "\"><i class=\"fa fa-users u-sidebar-nav-menu__item-icon\"></i><span class=\"u-sidebar-nav-menu__item-title\">" + StringUtils.escapeToHtml(group.getMostSpecificName()) + "</span><i class=\"fa fa-angle-right u-sidebar-nav-menu__item-arrow\"></i><span class=\"u-sidebar-nav-menu__indicator\"></span></a>");
-                    html.append("<ul id=\"sub_vis_grp_" + group.hashCode() + "\" class=\"u-sidebar-nav-menu u-sidebar-nav-menu--third-level\" style=\"display: none;\">");
+                    html.append("<li><a class=\"collapsed\" data-toggle=\"collapse\" href=\"#sub_vis_grp_" + group.hashCode() + "\" area-expanded=\"false\"><i class=\"fa fa-users\"></i><p>" + StringUtils.escapeToHtml(group.getMostSpecificName()) + "</p><span class=\"caret\"></span></a>");
+                    html.append("<div id=\"sub_vis_grp_" + group.hashCode() + "\" class=\"collapse\"><ul class=\"nav nav-collapse subnav\">");
                     for (String dashboard : group.getDashboards()) {
                         appendMenuOption(html, dashboard, "dashboard/dashboards.html?name=" + StringUtils.urlEncode(dashboard) + "&group=" + StringUtils.urlEncode(group.getName()), !principal.isInRole(SecurityRoles.GROUP_DASHBOARD_READ_WRITE));
                     }
@@ -332,7 +353,7 @@ public class MenuAwareURLResource extends URLResource {
                         appendMenuOption(html, "Graphs", "dashboard/graphs.html?group=" + StringUtils.urlEncode(group.getName()), false);
                         appendMenuOption(html, "New dashboard", "dashboard/dashboards.html?action=new&group=" + StringUtils.urlEncode(group.getName()), false);
                     }
-                    html.append("</ul></li>");
+                    html.append("</ul></div></li>");
                     hasGroupMenu = true;
                 }
             }
@@ -340,8 +361,8 @@ public class MenuAwareURLResource extends URLResource {
                 if (hasGroupMenu) {
 //                  Only add a submenu when there are group menus displayed.
                     html.append(divider);
-                    html.append("<li class=\"u-sidebar-nav-menu__item\"><a class=\"u-sidebar-nav-menu__link\" href=\"#\" data-target=\"#sub_vis_user\"><span class=\"u-sidebar-nav-menu__item-title\">" + StringUtils.escapeToHtml(principal.getName()) + "</span><i class=\"fa fa-angle-right u-sidebar-nav-menu__item-arrow\"></i><span class=\"u-sidebar-nav-menu__indicator\"></span></a>");
-                    html.append("<ul id=\"sub_vis_user\" class=\"u-sidebar-nav-menu u-sidebar-nav-menu--third-level\" style=\"display: none;\">");
+                    html.append("<li><a class=\"collapsed\" data-toggle=\"collapse\" href=\"#sub_vis_user\" area-expanded=\"false\"><p>" + StringUtils.escapeToHtml(principal.getName()) + "</p><span class=\"caret\"></span></a>");
+                    html.append("<div id=\"sub_vis_user\" class=\"collapse\"><ul class=\"nav nav-collapse subnav\">");
                 }
                 for (String dashboard : principal.getDashboards()) {
                     appendMenuOption(html, dashboard, "dashboard/dashboards.html?name=" + StringUtils.urlEncode(dashboard), false);
@@ -352,10 +373,10 @@ public class MenuAwareURLResource extends URLResource {
                 appendMenuOption(html, "Graphs", "dashboard/graphs.html", false);
                 appendMenuOption(html, "New dashboard", "dashboard/dashboards.html?action=new", false);
                 if (hasGroupMenu) {
-                    html.append("</ul>");
+                    html.append("</ul></div><li>");
                 }
             }
-            html.append("</ul></li>");
+            html.append("</ul></div>");
         }
     }
 
@@ -373,12 +394,12 @@ public class MenuAwareURLResource extends URLResource {
         }
         if (hasGroupMenu) {
             if (MenuContext.SIGNAL.equals(menuContext)) {
-                html.append("<li class=\"u-sidebar-nav-menu__item u-sidebar-nav--opened\">");
+                html.append("<li class=\"nav-item active\">");
             } else {
-                html.append("<li class=\"u-sidebar-nav-menu__item\">");
+                html.append("<li class=\"nav-item\">");
             }
-            html.append("<a class=\"u-sidebar-nav-menu__link\" data-target=\"#sub_signals\" href=\"#\"><i class=\"fa fa-bell u-sidebar-nav-menu__item-icon\"></i><span class=\"u-sidebar-nav-menu__item-title\">Signals</span><i class=\"fa fa-angle-right u-sidebar-nav-menu__item-arrow\"></i><span class=\"u-sidebar-nav-menu__indicator\"></span></a>");
-            html.append("<ul id=\"sub_signals\" class=\"u-sidebar-nav-menu u-sidebar-nav-menu--second-level\" style=\"display: " + (MenuContext.SIGNAL.equals(menuContext) ? "block" : "none") + ";\">");
+            html.append("<a class=\"collapsed\" data-toggle=\"collapse\" href=\"#sub_signals\" area-expanded=\"false\"><i class=\"fa fa-bell\"></i><p>Signals</p><span class=\"caret\"></span></a>");
+            html.append("<div id=\"sub_signals\" class=\"submenu collapse\"><ul class=\"nav nav-collapse\">");
             List<EtmGroup> groups = principal.getGroups().stream().sorted(Comparator.comparing(EtmGroup::getMostSpecificName)).collect(Collectors.toList());
             for (EtmGroup group : groups) {
                 appendMenuOption(html, group.getMostSpecificName(), "signal/signals.html?group=" + StringUtils.urlEncode(group.getName()), "fa-users", !principal.isInRole(SecurityRoles.GROUP_SIGNAL_READ_WRITE));
@@ -389,14 +410,14 @@ public class MenuAwareURLResource extends URLResource {
                 }
                 appendMenuOption(html, principal.getName(), "signal/signals.html", false);
             }
-            html.append("</ul></li>");
+            html.append("</ul><div></li>");
         } else if (principal.isInRole(SecurityRoles.USER_SIGNAL_READ_WRITE)) {
             if (MenuContext.SIGNAL.equals(menuContext)) {
-                html.append("<li class=\"u-sidebar-nav-menu__item u-sidebar-nav--opened\">");
+                html.append("<li class=\"nav-item active\">");
             } else {
-                html.append("<li class=\"u-sidebar-nav-menu__item\">");
+                html.append("<li class=\"nav-item submenu\">");
             }
-            html.append("<a class=\"u-sidebar-nav-menu__link\" href=\"").append(pathPrefixToContextRoot).append("signal/signals.html\"><i class=\"fa fa-bell fa-lg u-sidebar-nav-menu__item-icon\"></i><span class=\"u-sidebar-nav-menu__item-title\">Signals</span></a>");
+            html.append("<a href=\"").append(pathPrefixToContextRoot).append("signal/signals.html\"><i class=\"fa fa-bell\"></i><p>Signals</p></a>");
             html.append("</li>");
         }
     }
@@ -412,11 +433,11 @@ public class MenuAwareURLResource extends URLResource {
             return;
         }
         if (MenuContext.PREFERENCES.equals(menuContext)) {
-            html.append("<li class=\"u-sidebar-nav-menu__item u-sidebar-nav--opened\">");
+            html.append("<li class=\"nav-item active\">");
         } else {
-            html.append("<li class=\"u-sidebar-nav-menu__item\">");
+            html.append("<li class=\"nav-item\">");
         }
-        html.append("<a class=\"u-sidebar-nav-menu__link\" href=\"").append(pathPrefixToContextRoot).append("preferences/\"><i class=\"fa fa-user u-sidebar-nav-menu__item-icon\"></i><span class=\"u-sidebar-nav-menu__item-title\">Preferences</span></a>");
+        html.append("<a href=\"").append(pathPrefixToContextRoot).append("preferences/\"><i class=\"fa fa-user\"></i><p>Preferences</p></a>");
         html.append("</li>");
     }
 
@@ -448,12 +469,13 @@ public class MenuAwareURLResource extends URLResource {
             return;
         }
         if (MenuContext.SETTINGS.equals(menuContext)) {
-            html.append("<li class=\"u-sidebar-nav-menu__item u-sidebar-nav--opened\">");
+            html.append("<li class=\"nav-item active\">");
         } else {
-            html.append("<li class=\"u-sidebar-nav-menu__item\">");
+            html.append("<li class=\"nav-item\">");
         }
-        html.append("<a class=\"u-sidebar-nav-menu__link\" data-target=\"#sub_settings\"href=\"#\"><i class=\"fa fa-wrench u-sidebar-nav-menu__item-icon\"></i><span class=\"u-sidebar-nav-menu__item-title\">Settings</span><i class=\"fa fa-angle-right u-sidebar-nav-menu__item-arrow\"></i><span class=\"u-sidebar-nav-menu__indicator\"></span></a>");
-        html.append("<ul id=\"sub_settings\" class=\"u-sidebar-nav-menu u-sidebar-nav-menu--second-level\" style=\"display: " + (MenuContext.SETTINGS.equals(menuContext) ? "block" : "none") + ";\">");
+
+        html.append("<a class=\"collapsed\" data-toggle=\"collapse\" href=\"#sub_settings\" area-expanded=\"false\"><i class=\"fa fa-wrench\"></i><p>Settings</p><span class=\"caret\"></span></a>");
+        html.append("<div id=\"sub_settings\" class=\"submenu collapse\"><ul class=\"nav nav-collapse\">");
         boolean addedBeforeDivider = false;
         if (principal.isInAnyRole(SecurityRoles.USER_SETTINGS_READ, SecurityRoles.USER_SETTINGS_READ_WRITE)) {
             addedBeforeDivider = true;
@@ -545,7 +567,7 @@ public class MenuAwareURLResource extends URLResource {
         if (html.lastIndexOf(divider) == html.length() - divider.length()) {
             html.delete(html.lastIndexOf(divider), html.length());
         }
-        html.append("</ul></li>");
+        html.append("</ul></div></li>");
     }
 
 }

@@ -8,7 +8,7 @@ public final class StringUtils {
 
     public static String escapeToHtml(String value) {
         if (value == null) {
-            return null;
+            return "";
         }
         StringBuilder result = new StringBuilder(value.length());
         for (int i = 0; i < value.length(); i++) {
