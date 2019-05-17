@@ -3,13 +3,17 @@ function buildGraphsPage(groupName) {
     let contextRoot = '../rest/visualization/';
     if (groupName) {
         contextRoot += encodeURIComponent(groupName) + '/';
-        const $groupItem = $('#sub_visualizations > li > a > span.u-sidebar-nav-menu__item-title:contains(' + groupName + ')').closest('li').addClass('u-sidebar-nav--opened');
-        $groupItem.children('ul').show();
-        $groupItem.find('.u-sidebar-nav-menu__item-title:contains(Graphs)').parent().addClass('active');
+        const $groupItem = $('#sub_visualizations > ul > li > a > p').filter(function () {
+            return $(this).text() === groupName;
+        });
+        ;
+        const $liItem = $groupItem.parent().removeClass('collapsed').attr('aria-expanded', 'true').parent();
+        $liItem.children('div').addClass('show');
+        $liItem.find('p:contains(Graphs)').closest('li').addClass('active');
     } else {
-        const $userMenu = $('#sub_vis_user').show();
-        $userMenu.parent().addClass('u-sidebar-nav--opened');
-        $userMenu.find('.u-sidebar-nav-menu__item-title:contains(Graphs)').parent().addClass('active');
+        const $liMenu = $('#sub_vis_user').addClass('show').parent();
+        $liMenu.children('a').removeClass('collapsed').attr('aria-expanded', 'true');
+        $liMenu.find('p:contains(Graphs)').closest('li').addClass('active');
     }
     let timeZone;
     let currentSelectedFile;

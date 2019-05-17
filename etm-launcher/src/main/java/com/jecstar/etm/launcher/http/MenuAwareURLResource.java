@@ -328,12 +328,12 @@ public class MenuAwareURLResource extends URLResource {
         if (principal.isInAnyRole(SecurityRoles.USER_DASHBOARD_READ_WRITE, SecurityRoles.GROUP_DASHBOARD_READ, SecurityRoles.GROUP_DASHBOARD_READ_WRITE) && hasDashboardsToShow) {
             boolean hasGroupMenu = false;
             if (MenuContext.DASHBOARD.equals(menuContext)) {
-                html.append("<li class=\"nav-item active\">");
+                html.append("<li class=\"nav-item active submenu\">");
             } else {
                 html.append("<li class=\"nav-item\">");
             }
-            html.append("<a class=\"collapsed\" data-toggle=\"collapse\" href=\"#sub_visualizations\" area-expanded=\"false\"><i class=\"fa fa-tachometer-alt\"></i><p>Visualizations</p><span class=\"caret\"></span></a>");
-            html.append("<div id=\"sub_visualizations\" class=\"submenu collapse\"><ul class=\"nav nav-collapse\">");
+            html.append("<a class=\"" + (MenuContext.DASHBOARD.equals(menuContext) ? "" : "collapsed") + "\" data-toggle=\"collapse\" href=\"#sub_visualizations\" aria-expanded=\"" + (MenuContext.DASHBOARD.equals(menuContext) ? "true" : "false") + "\"><i class=\"fa fa-tachometer-alt\"></i><p>Visualizations</p><span class=\"caret\"></span></a>");
+            html.append("<div id=\"sub_visualizations\" class=\"submenu " + (MenuContext.DASHBOARD.equals(menuContext) ? "collapse show" : "collapse") + "\"><ul class=\"nav nav-collapse\">");
             if (principal.isInAnyRole(SecurityRoles.GROUP_DASHBOARD_READ, SecurityRoles.GROUP_DASHBOARD_READ_WRITE)) {
                 // First display the group names
                 for (EtmGroup group : groups) {
@@ -341,7 +341,7 @@ public class MenuAwareURLResource extends URLResource {
                         // Skip a group when it has no dashboards and the user has read only access.
                         continue;
                     }
-                    html.append("<li><a class=\"collapsed\" data-toggle=\"collapse\" href=\"#sub_vis_grp_" + group.hashCode() + "\" area-expanded=\"false\"><i class=\"fa fa-users\"></i><p>" + StringUtils.escapeToHtml(group.getMostSpecificName()) + "</p><span class=\"caret\"></span></a>");
+                    html.append("<li><a class=\"collapsed\" data-toggle=\"collapse\" href=\"#sub_vis_grp_" + group.hashCode() + "\" aria-expanded=\"false\"><i class=\"fa fa-users\"></i><p>" + StringUtils.escapeToHtml(group.getMostSpecificName()) + "</p><span class=\"caret\"></span></a>");
                     html.append("<div id=\"sub_vis_grp_" + group.hashCode() + "\" class=\"collapse\"><ul class=\"nav nav-collapse subnav\">");
                     for (String dashboard : group.getDashboards()) {
                         appendMenuOption(html, dashboard, "dashboard/dashboards.html?name=" + StringUtils.urlEncode(dashboard) + "&group=" + StringUtils.urlEncode(group.getName()), !principal.isInRole(SecurityRoles.GROUP_DASHBOARD_READ_WRITE));
@@ -361,7 +361,7 @@ public class MenuAwareURLResource extends URLResource {
                 if (hasGroupMenu) {
 //                  Only add a submenu when there are group menus displayed.
                     html.append(divider);
-                    html.append("<li><a class=\"collapsed\" data-toggle=\"collapse\" href=\"#sub_vis_user\" area-expanded=\"false\"><p>" + StringUtils.escapeToHtml(principal.getName()) + "</p><span class=\"caret\"></span></a>");
+                    html.append("<li><a class=\"collapsed\" data-toggle=\"collapse\" href=\"#sub_vis_user\" aria-expanded=\"false\"><p>" + StringUtils.escapeToHtml(principal.getName()) + "</p><span class=\"caret\"></span></a>");
                     html.append("<div id=\"sub_vis_user\" class=\"collapse\"><ul class=\"nav nav-collapse subnav\">");
                 }
                 for (String dashboard : principal.getDashboards()) {
@@ -394,12 +394,12 @@ public class MenuAwareURLResource extends URLResource {
         }
         if (hasGroupMenu) {
             if (MenuContext.SIGNAL.equals(menuContext)) {
-                html.append("<li class=\"nav-item active\">");
+                html.append("<li class=\"nav-item active submenu\">");
             } else {
                 html.append("<li class=\"nav-item\">");
             }
-            html.append("<a class=\"collapsed\" data-toggle=\"collapse\" href=\"#sub_signals\" area-expanded=\"" + (MenuContext.SIGNAL.equals(menuContext) ? "true" : "false") + "\"><i class=\"fa fa-bell\"></i><p>Signals</p><span class=\"caret\"></span></a>");
-            html.append("<div id=\"sub_signals\" class=\"submenu " + (MenuContext.SIGNAL.equals(menuContext) ? "collapsed" : "collapse") + "\"><ul class=\"nav nav-collapse\">");
+            html.append("<a class=\"" + (MenuContext.SIGNAL.equals(menuContext) ? "" : "collapsed") + "\" data-toggle=\"collapse\" href=\"#sub_signals\" aria-expanded=\"" + (MenuContext.SIGNAL.equals(menuContext) ? "true" : "false") + "\"><i class=\"fa fa-bell\"></i><p>Signals</p><span class=\"caret\"></span></a>");
+            html.append("<div id=\"sub_signals\" class=\"submenu " + (MenuContext.SIGNAL.equals(menuContext) ? "collapse show" : "collapse") + "\"><ul class=\"nav nav-collapse\">");
             List<EtmGroup> groups = principal.getGroups().stream().sorted(Comparator.comparing(EtmGroup::getMostSpecificName)).collect(Collectors.toList());
             for (EtmGroup group : groups) {
                 appendMenuOption(html, group.getMostSpecificName(), "signal/signals.html?group=" + StringUtils.urlEncode(group.getName()), "fa-users", !principal.isInRole(SecurityRoles.GROUP_SIGNAL_READ_WRITE));
@@ -469,13 +469,13 @@ public class MenuAwareURLResource extends URLResource {
             return;
         }
         if (MenuContext.SETTINGS.equals(menuContext)) {
-            html.append("<li class=\"nav-item active\">");
+            html.append("<li class=\"nav-item active submenu\">");
         } else {
             html.append("<li class=\"nav-item\">");
         }
 
-        html.append("<a class=\"collapsed\" data-toggle=\"collapse\" href=\"#sub_settings\" area-expanded=\"" + (MenuContext.SETTINGS.equals(menuContext) ? "true" : "false") + "\"><i class=\"fa fa-wrench\"></i><p>Settings</p><span class=\"caret\"></span></a>");
-        html.append("<div id=\"sub_settings\" class=\"submenu " + (MenuContext.SETTINGS.equals(menuContext) ? "collapsed" : "collapse") + "\"><ul class=\"nav nav-collapse\">");
+        html.append("<a class=\"" + (MenuContext.SETTINGS.equals(menuContext) ? "" : "collapsed") + "\" data-toggle=\"collapse\" href=\"#sub_settings\" aria-expanded=\"" + (MenuContext.SETTINGS.equals(menuContext) ? "true" : "false") + "\"><i class=\"fa fa-wrench\"></i><p>Settings</p><span class=\"caret\"></span></a>");
+        html.append("<div id=\"sub_settings\" class=\"submenu " + (MenuContext.SETTINGS.equals(menuContext) ? "collapse show" : "collapse") + "\"><ul class=\"nav nav-collapse\">");
         boolean addedBeforeDivider = false;
         if (principal.isInAnyRole(SecurityRoles.USER_SETTINGS_READ, SecurityRoles.USER_SETTINGS_READ_WRITE)) {
             addedBeforeDivider = true;

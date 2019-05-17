@@ -6,7 +6,9 @@ function buildSignalsPage(groupName) {
     if (groupName) {
         contextRoot += encodeURIComponent(groupName) + '/';
         $('#block-email-all-group-members').show();
-        $('#sub_signals').find('p:contains(' + groupName + ')').parent().parent().addClass('active');
+        $('#sub_signals').find('p').filter(function () {
+            return $(this).text() === groupName;
+        }).parent().parent().addClass('active');
     } else {
         $('#sub_signals > ul > li').last().addClass('active');
     }

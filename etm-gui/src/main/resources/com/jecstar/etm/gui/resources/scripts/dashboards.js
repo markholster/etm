@@ -11,20 +11,23 @@ let contextRoot;
  *  Function that creates a new dashboard. An empty settings screen will be show.
  */
 function newDashboardPage(groupName) {
-    $('#sub_visualizations').addClass('show').find('.active').removeClass('active');
+    $('#sub_visualizations').find('.active').removeClass('active');
     contextRoot = pageContextRoot;
     if (groupName) {
         contextRoot += encodeURIComponent(groupName) + '/';
-        const $groupItem = $('#sub_visualizations > ul > li > a > p:contains(' + groupName + ')').closest('li').addClass('submenu');
-        $groupItem.children('a').addClass('collapse').attr('area-expanded', 'true');
-        $groupItem.find('p:contains(New dashboard)').parent().closest('li').addClass('active');
+        const $groupItem = $('#sub_visualizations > ul > li > a > p').filter(function () {
+            return $(this).text() === groupName;
+        });
+        const $liItem = $groupItem.parent().removeClass('collapsed').attr('aria-expanded', 'true').parent();
+        $liItem.children('div').addClass('show');
+        $liItem.find('p:contains(New dashboard)').closest('li').addClass('active');
     } else {
-        const $userMenu = $('#sub_vis_user').show();
-        if ($userMenu.length) {
-            $userMenu.parent().addClass('u-sidebar-nav--opened');
-            $userMenu.find('p:contains(New dashboard)').parent().addClass('active');
+        const $liMenu = $('#sub_vis_user').addClass('show').parent();
+        if ($liMenu.length) {
+            $liMenu.children('a').removeClass('collapsed').attr('aria-expanded', 'true');
+            $liMenu.find('p:contains(New dashboard)').closest('li').addClass('active');
         } else {
-            $('#sub_visualizations').find('.u-sidebar-nav-menu__item-title:contains(New dashboard)').parent().addClass('active');
+            $('#sub_visualizations').find('p:contains(New dashboard)').closest('li').addClass('active');
         }
     }
     addListeners(false);
@@ -35,20 +38,24 @@ function newDashboardPage(groupName) {
  *  Function that loads an existing dashboard.
  */
 function loadDashboardPage(groupName, dashboardName, readonly) {
-    $('#sub_visualizations').addClass('show').find('.active').removeClass('active');
+    $('#sub_visualizations').find('.active').removeClass('active');
     contextRoot = pageContextRoot;
     if (groupName) {
         contextRoot += encodeURIComponent(groupName) + '/';
-        const $groupItem = $('#sub_visualizations > ul > li > a > p:contains(' + groupName + ')').closest('li').addClass('submenu');
-        // $groupItem.children('a').addClass('collapse').attr('area-expanded', 'true');
-        $groupItem.find('p:contains(' + dashboardName + ')').closest('li').addClass('active');
+        const $groupItem = $('#sub_visualizations > ul > li > a > p').filter(function () {
+            return $(this).text() === groupName;
+        });
+        ;
+        const $liItem = $groupItem.parent().removeClass('collapsed').attr('aria-expanded', 'true').parent();
+        $liItem.children('div').addClass('show');
+        $liItem.find('p:contains(' + dashboardName + ')').closest('li').addClass('active');
     } else {
-        const $userMenu = $('#sub_vis_user').show();
-        if ($userMenu.length) {
-            $userMenu.parent().addClass('u-sidebar-nav--opened');
-            $userMenu.find('p:contains(' + dashboardName + ')').closest('li').addClass('active');
+        const $liMenu = $('#sub_vis_user').addClass('show').parent();
+        if ($liMenu.length) {
+            $liMenu.children('a').removeClass('collapsed').attr('aria-expanded', 'true');
+            $liMenu.find('p:contains(' + dashboardName + ')').closest('li').addClass('active');
         } else {
-            $('#sub_visualizations').find('.u-sidebar-nav-menu__item-title:contains(' + dashboardName + ')').parent().addClass('active');
+            $('#sub_visualizations').find('p:contains(' + dashboardName + ')').closest('li').addClass('active');
         }
     }
     addListeners(readonly);
