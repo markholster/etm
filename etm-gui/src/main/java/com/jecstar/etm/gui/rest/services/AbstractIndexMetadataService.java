@@ -4,12 +4,8 @@ import com.jecstar.etm.gui.rest.AbstractGuiService;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.elasticsearch.builder.GetFieldMappingsRequestBuilder;
 import com.jecstar.etm.server.core.elasticsearch.builder.GetMappingsRequestBuilder;
-import org.elasticsearch.client.indices.GetFieldMappingsResponse;
-import org.elasticsearch.client.indices.GetMappingsResponse;
-import org.elasticsearch.cluster.metadata.MappingMetaData;
 
 import java.util.*;
-import java.util.Map.Entry;
 
 public abstract class AbstractIndexMetadataService extends AbstractGuiService {
 
@@ -26,32 +22,34 @@ public abstract class AbstractIndexMetadataService extends AbstractGuiService {
      *
      * @param dataRepository    The <code>DataRepository</code>.
      * @param indexName         The name of the index to find the keywords for.
-     * @return
+     * @return A <code>List</code> with <code>Keywords</code>
      */
     protected List<Keyword> getIndexFields(DataRepository dataRepository, String indexName) {
-        List<Keyword> keywords = new ArrayList<>();
+        var keywords = new ArrayList<Keyword>();
         keywords.add(Keyword.EXISTS);
         keywords.add(Keyword.ID);
-        GetMappingsResponse mappingsResponse = dataRepository.indicesGetMappings(new GetMappingsRequestBuilder().setIndices(indexName));
-        Map<String, MappingMetaData> mappings = mappingsResponse.mappings();
-        for (MappingMetaData mappingMetaData : mappings.values()) {
-            Map<String, Object> valueMap = mappingMetaData.getSourceAsMap();
+        var mappingsResponse = dataRepository.indicesGetMappings(new GetMappingsRequestBuilder().setIndices(indexName));
+        var mappings = mappingsResponse.mappings();
+        for (var mappingMetaData : mappings.values()) {
+            var valueMap = mappingMetaData.getSourceAsMap();
             addFieldProperties(keywords, "", valueMap);
         }
         return keywords;
     }
 
     protected String getSortProperty(DataRepository dataRepository, String indexName, String propertyName) {
-        GetFieldMappingsResponse response = dataRepository.indicesGetFieldMappings(new GetFieldMappingsRequestBuilder().setIndices(indexName).setFields(propertyName));
+        var response = dataRepository.indicesGetFieldMappings(new GetFieldMappingsRequestBuilder().setIndices(indexName).setFields(propertyName));
 
         if (response.mappings().isEmpty()) {
             return null;
         }
         // Iterate over all mappings trying to find a field definition.
-        for (Map<String, GetFieldMappingsResponse.FieldMappingMetaData> indexMap : response.mappings().values()) {
-            for (GetFieldMappingsResponse.FieldMappingMetaData fieldMappingMetaData : indexMap.values()) {
-                String type = getString("type", getObject("name", fieldMappingMetaData.sourceAsMap(), Collections.emptyMap()));
-                return "text".equals(type) ? propertyName + KEYWORD_SUFFIX : propertyName;
+        for (var indexMap : response.mappings().values()) {
+            for (var fieldMappingMetaData : indexMap.values()) {
+                var type = getString("type", getObject(propertyName, fieldMappingMetaData.sourceAsMap(), Collections.emptyMap()));
+                if (type != null) {
+                    return "text".equals(type) ? propertyName + KEYWORD_SUFFIX : propertyName;
+                }
             }
         }
         return null;
@@ -63,9 +61,9 @@ public abstract class AbstractIndexMetadataService extends AbstractGuiService {
         if (valueMap == null) {
             return;
         }
-        for (Entry<String, Object> entry : valueMap.entrySet()) {
-            Map<String, Object> entryValues = (Map<String, Object>) entry.getValue();
-            String name = determinePropertyForFieldName(prefix, entry.getKey());
+        for (var entry : valueMap.entrySet()) {
+            var entryValues = (Map<String, Object>) entry.getValue();
+            var name = determinePropertyForFieldName(prefix, entry.getKey());
             if (Arrays.binarySearch(keywordsToExclude, name) >= 0) {
                 continue;
             }
@@ -73,7 +71,7 @@ public abstract class AbstractIndexMetadataService extends AbstractGuiService {
             if (entryValues.containsKey("properties")) {
                 addFieldProperties(keywords, name, entryValues);
             } else {
-                Keyword keyword = new Keyword(name, (String) entryValues.get("type"));
+                var keyword = new Keyword(name, (String) entryValues.get("type"));
                 if (!keywords.contains(keyword)) {
                     keywords.add(keyword);
                 }
