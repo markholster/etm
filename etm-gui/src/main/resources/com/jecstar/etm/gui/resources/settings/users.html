@@ -12,483 +12,555 @@
     <link rel="icon" type="image/png" sizes="16x16" href="../images/favicon/favicon-16x16.png">
     <link rel="mask-icon" href="../images/favicon/safari-pinned-tab.svg" color="#5bbad5">
 
-    <link rel="stylesheet" href="../styles/theme.min.css">
+    <link rel="stylesheet" href="../styles/bootstrap.min.css">
+    <link rel="stylesheet" href="../styles/fonts.min.css">
+    <link rel="stylesheet" href="../styles/atlantis.min.css">
     <link rel="stylesheet" href="../styles/font-awesome.min.css">
     <link rel="stylesheet" href="../styles/jquery-ui.min.css">
     <link rel="stylesheet" href="../styles/autocomplete.css">
     <link rel="stylesheet" href="../styles/etm-commons.css">
-    <!-- jQuery first, then Bootstrap JS. -->
-    <script src="../scripts/tether.min.js"></script>
-    <script src="../scripts/jquery.min.js"></script>
-    <script src="../scripts/jquery-ui.min.js"></script>
-    <script src="../scripts/popper.min.js"></script>
-    <script src="../scripts/bootstrap.min.js"></script>
 </head>
 <body>
-<header class="u-header">
-    <div class="u-header-left">
-        <a class="u-header-logo" href="https://www.jecstar.com" target="_blank">
-            <img class="u-logo-desktop" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website" />
-            <img class="img-fluid u-logo-mobile" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website" />
-        </a>
-        <div class="ml-2 mt-1 d-none d-lg-block u-header-brand">
-            <h2 class="text-white">Jecstar</h2>
+<div class="wrapper">
+    <div class="main-header">
+        <!-- Logo Header -->
+        <div class="logo-header" data-background-color="etm-navbar-color">
+            <a href="https://www.jecstar.com" target="_blank" class="logo">
+                <img src="../images/jecstar.svg" alt="navbar brand" class="navbar-brand h-75">
+            </a>
+            <button class="navbar-toggler sidenav-toggler ml-auto" type="button" data-toggle="collapse"
+                    data-target="collapse" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon">
+                    <i class="icon-menu"></i>
+                </span>
+            </button>
+            <button class="topbar-toggler more"><i class="icon-options-vertical"></i></button>
+            <div class="nav-toggle">
+                <button class="btn btn-toggle toggle-sidebar">
+                    <i class="icon-menu"></i>
+                </button>
+            </div>
         </div>
+        <!-- End Logo Header -->
+
+        <!-- Navbar Header -->
+        <nav class="navbar navbar-header navbar-expand-lg" data-background-color="etm-navbar-color">
+            <div class="container-fluid">
+                <div id="search-nav"></div>
+                <ul class="navbar-nav topbar-nav ml-md-auto align-items-center">
+                    <li class="nav-item dropdown hidden-caret">
+                        <a class="nav-link" data-toggle="dropdown" href="#" aria-expanded="false">
+                            <i class="fa fa-user-ninja"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-user animated fadeIn">
+                            <div class="dropdown-user-scroll scrollbar-outer"></div>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+        <!-- End Navbar -->
     </div>
 
-    <div class="u-header-middle">
-        <a class="js-sidebar-invoker u-sidebar-invoker" href="#"
-           data-is-close-all-except-this="true"
-           data-target="#sidebar">
-            <i class="fa fa-bars u-sidebar-invoker__icon--open"></i>
-        </a>
-
-        <div id="placeholder-for-headerSearch"></div>
-    </div>
-
-    <div class="u-header-right">
-        <div class="ml-2">
-            Logged in as: <span class="text-dark d-none d-sm-inline-block">placeholder-for-contextUser</span>
-        </div>
-    </div>
-</header>
-<main class="u-main" role="main">
-    <aside id="sidebar" class="u-sidebar">
-        <div class="u-sidebar-inner">
-            <header class="u-sidebar-header">
-                <a class="u-sidebar-logo" href="https://www.jecstar.com">
-                    <img class="img-fluid" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website">
-                </a>
-            </header>
-
-            <nav class="u-sidebar-nav">
-                <ul class="u-sidebar-nav-menu u-sidebar-nav-menu--top-level">
+    <div class="sidebar sidebar-style-2" data-background-color="etm-sidebar-color">
+        <div class="sidebar-wrapper scrollbar scrollbar-inner">
+            <div class="sidebar-content">
+                <ul class="nav nav-primary">
                     <li id="placeholder-for-MenuAwareURLResource"></li>
                 </ul>
-            </nav>
+            </div>
         </div>
-    </aside>
-    <div class="u-content">
-        <div class="container" style="margin-top: 1em;">
-            <div class="card card-block">
-                <div class="card-body">
-                    <h3 class="card-title">Users
-                        <small><a id="link-request-download" href="#" class="fa fa-download float-right"
-                                  title="Download users"></a></small>
-                    </h3>
-                    <div class="card-text">
-                        <div id="users_errorBox" class="alert alert-danger errorBox" style="display: none;" role="alert"></div>
-                        <div id="users_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
-                        <div id="users_box">
-                            <div class="row">
-                                <div class=col-sm-12>
-                                    <select id="sel-user" class="form-control custom-select" autofocus="autofocus">
-                                        <option selected="selected"></option>
-                                    </select>
+    </div>
+    <!-- End Sidebar -->
+
+    <div class="main-panel">
+        <div class="content">
+            <div class="container" style="margin-top: 1em;">
+                <div class="card card-block">
+                    <div class="card-body">
+                        <h3 class="card-title">Users
+                            <small><a id="link-request-download" href="#" class="fa fa-download float-right"
+                                      title="Download users"></a></small>
+                        </h3>
+                        <div class="card-text">
+                            <div id="users_errorBox" class="alert alert-danger errorBox" style="display: none;"
+                                 role="alert"></div>
+                            <div id="users_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
+                            <div id="users_box">
+                                <div class="row">
+                                    <div class=col-sm-12>
+                                        <select id="sel-user" class="form-control custom-select" autofocus="autofocus">
+                                            <option selected="selected"></option>
+                                        </select>
+                                    </div>
                                 </div>
-                            </div>
-                            <hr/>
-                            <div class="row">
-                                <div class=col-sm-12>
-                                    <form id="user_form">
-                                        <div class="form-group row">
-                                            <label for="input-user-id" class="col-sm-3 col-form-label">Id</label>
-                                            <div class="col-sm-9">
-                                                <input id="input-user-id" type="text" class="form-control"
-                                                       placeholder="Unique ID of the user..." required="required"/>
-                                            </div>
-                                        </div>
-                                        <div class="form-group row">
-                                            <label for="input-user-name" class="col-sm-3 col-form-label">Name</label>
-                                            <div class="col-sm-9">
-                                                <input id="input-user-name" type="text" class="form-control"/>
-                                            </div>
-                                        </div>
-                                        <div class="form-group row">
-                                            <label for="input-user-email" class="col-sm-3 col-form-label">Email address</label>
-                                            <div class="col-sm-9">
-                                                <input id="input-user-email" type="text" class="form-control"/>
-                                            </div>
-                                        </div>
-                                        <div class="form-group row">
-                                            <label for="input-user-api-key" class="col-sm-3 col-form-label">Api key</label>
-                                            <div class="col-sm-7">
-                                                <code id="input-user-api-key" class="col-sm-3 col-form-label"></code>
-                                            </div>
-                                            <div class="col-sm-2">
-                                                <a id="lnk-refresh-api-key" class="float-right" href="#">Refresh api key</a>
-                                            </div>
-                                        </div>
-                                        <div class="form-group">
-                                            <a id="lnk-add-group" class="float-right" href="#">Add group</a>
-                                            <label>Groups</label>
-                                            <ol id="list-groups">
-                                            </ol>
-                                        </div>
-                                        <div class="form-group row">
-                                            <label for="input-filter-query" class="col-sm-3 col-form-label">Filter query</label>
-                                            <div class="col-sm-9">
-                                                <input id="input-filter-query" type="text" class="form-control"/>
-                                            </div>
-                                        </div>
-                                        <div class="form-group row">
-                                            <label for="sel-filter-query-occurrence" class="col-sm-3 col-form-label">Filter
-                                                query occurrence</label>
-                                            <div class="col-sm-9">
-                                                <select id="sel-filter-query-occurrence" class="form-control custom-select">
-                                                    <option value="MUST">Must</option>
-                                                    <option value="MUST_NOT">Must not</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="form-group row">
-                                            <label for="sel-always-show-correlated-events" class="col-sm-3 col-form-label">Always
-                                                show correlated events</label>
-                                            <div class="col-sm-9">
-                                                <select id="sel-always-show-correlated-events"
-                                                        class="form-control custom-select">
-                                                    <option value="true">Yes</option>
-                                                    <option value="false" selected="selected">No</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="form-group row">
-                                            <label for="sel-locale" class="col-sm-3 col-form-label">Locale</label>
-                                            <div class="col-sm-9">
-                                                <select id="sel-locale" class="form-control custom-select"></select>
-                                            </div>
-                                        </div>
-                                        <div class="form-group row">
-                                            <label for="sel-time-zone" class="col-sm-3 col-form-label">Time zone</label>
-                                            <div class="col-sm-9">
-                                                <select id="sel-time-zone" class="form-control custom-select"></select>
-                                            </div>
-                                        </div>
-                                        <div class="form-group row">
-                                            <label for="input-search-history-size" class="col-sm-3 col-form-label">Search
-                                                history size</label>
-                                            <div class="col-sm-9">
-                                                <input id="input-search-history-size" type="number" class="form-control" min="0"
-                                                       value="5"/>
-                                            </div>
-                                        </div>
-                                        <div class="form-group row">
-                                            <label for="input-default-search-range" class="col-sm-3 col-form-label">Default
-                                                search time range</label>
-                                            <div class="col-sm-9">
-                                                <input id="input-default-search-range" type="number" class="form-control"
-                                                       min="1" value="86400"/>
-                                            </div>
-                                        </div>
-                                        <div class="form-group row" id="dashboard-datasource-block">
-                                            <label class="col-sm-3 col-form-label">Dashboards datasources</label>
-                                            <div class="col-sm-9 col-form-label">
-                                                <div class="custom-control custom-checkbox custom-control-inline">
-                                                    <input type="checkbox" id="check-dashboard-datasource-etm_audit_all"
-                                                           value="etm_audit_all"
-                                                           class="custom-control-input">
-                                                    <label class="custom-control-label"
-                                                           for="check-dashboard-datasource-etm_audit_all">Audits</label>
-                                                </div>
-                                                <div class="custom-control custom-checkbox custom-control-inline">
-                                                    <input type="checkbox" id="check-dashboard-datasource-etm_event_all"
-                                                           value="etm_event_all" checked="checked"
-                                                           class="custom-control-input">
-                                                    <label class="custom-control-label"
-                                                           for="check-dashboard-datasource-etm_event_all">Events</label>
-                                                </div>
-                                                <div class="custom-control custom-checkbox custom-control-inline">
-                                                    <input type="checkbox" id="check-dashboard-datasource-etm_metrics_all"
-                                                           value="etm_metrics_all"
-                                                           class="custom-control-input">
-                                                    <label class="custom-control-label"
-                                                           for="check-dashboard-datasource-etm_metrics_all">Metrics</label>
+                                <hr/>
+                                <div class="row">
+                                    <div class=col-sm-12>
+                                        <form id="user_form">
+                                            <div class="form-group row">
+                                                <label for="input-user-id" class="col-sm-3 col-form-label">Id</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-user-id" type="text" class="form-control"
+                                                           placeholder="Unique ID of the user..." required="required"/>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div class="form-group row" id="signal-datasource-block">
-                                            <label class="col-sm-3 col-form-label">Signal datasources</label>
-                                            <div class="col-sm-9 col-form-label">
-                                                <div class="custom-control custom-checkbox custom-control-inline">
-                                                    <input type="checkbox" id="check-signal-datasource-etm_audit_all"
-                                                           value="etm_audit_all"
-                                                           class="custom-control-input">
-                                                    <label class="custom-control-label"
-                                                           for="check-signal-datasource-etm_audit_all">Audits</label>
-                                                </div>
-                                                <div class="custom-control custom-checkbox custom-control-inline">
-                                                    <input type="checkbox" id="check-signal-datasource-etm_event_all"
-                                                           value="etm_event_all" checked="checked"
-                                                           class="custom-control-input">
-                                                    <label class="custom-control-label"
-                                                           for="check-signal-datasource-etm_event_all">Events</label>
-                                                </div>
-                                                <div class="custom-control custom-checkbox custom-control-inline">
-                                                    <input type="checkbox" id="check-signal-datasource-etm_metrics_all"
-                                                           value="etm_metrics_all"
-                                                           class="custom-control-input">
-                                                    <label class="custom-control-label"
-                                                           for="check-signal-datasource-etm_metrics_all">Metrics</label>
+                                            <div class="form-group row">
+                                                <label for="input-user-name"
+                                                       class="col-sm-3 col-form-label">Name</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-user-name" type="text" class="form-control"/>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div class="form-group">
-                                            <a id="lnk-add-notifier" class="float-right" href="#">Add notifier</a>
-                                            <label>Notifiers</label>
-                                            <ol id="list-notifiers">
-                                            </ol>
-                                        </div>
-                                        <div class="card card-block">
-                                            <div class="card-body">
-                                                <h6 class="card-title">Access control</h6>
-                                                <div class="card-text" id="card-acl">
-                                                    <div class="row">
-                                                        <label for="sel-audit-log-acl" class="col-sm-3 col-form-label">Audit
-                                                            logs</label>
-                                                        <div class="col-sm-9">
-                                                            <select id="sel-audit-log-acl"
-                                                                    class="form-control form-control-sm custom-select custom-select-sm">
-                                                                <option value="none">None</option>
-                                                                <option value="audit_log_read">Read</option>
-                                                            </select>
-                                                        </div>
+                                            <div class="form-group row">
+                                                <label for="input-user-email" class="col-sm-3 col-form-label">Email
+                                                    address</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-user-email" type="text" class="form-control"/>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="input-user-api-key" class="col-sm-3 col-form-label">Api
+                                                    key</label>
+                                                <div class="col-sm-7">
+                                                    <code id="input-user-api-key"
+                                                          class="col-sm-3 col-form-label"></code>
+                                                </div>
+                                                <div class="col-sm-2">
+                                                    <a id="lnk-refresh-api-key" class="float-right" href="#">Refresh api
+                                                        key</a>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <a id="lnk-add-group" class="float-right" href="#">Add group</a>
+                                                <label>Groups</label>
+                                                <ol id="list-groups">
+                                                </ol>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="input-filter-query" class="col-sm-3 col-form-label">Filter
+                                                    query</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-filter-query" type="text" class="form-control"/>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="sel-filter-query-occurrence"
+                                                       class="col-sm-3 col-form-label">Filter
+                                                    query occurrence</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-filter-query-occurrence"
+                                                            class="form-control custom-select">
+                                                        <option value="MUST">Must</option>
+                                                        <option value="MUST_NOT">Must not</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="sel-always-show-correlated-events"
+                                                       class="col-sm-3 col-form-label">Always
+                                                    show correlated events</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-always-show-correlated-events"
+                                                            class="form-control custom-select">
+                                                        <option value="true">Yes</option>
+                                                        <option value="false" selected="selected">No</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="sel-locale" class="col-sm-3 col-form-label">Locale</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-locale" class="form-control custom-select"></select>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="sel-time-zone" class="col-sm-3 col-form-label">Time
+                                                    zone</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-time-zone"
+                                                            class="form-control custom-select"></select>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="input-search-history-size" class="col-sm-3 col-form-label">Search
+                                                    history size</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-search-history-size" type="number"
+                                                           class="form-control" min="0"
+                                                           value="5"/>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="input-default-search-range" class="col-sm-3 col-form-label">Default
+                                                    search time range</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-default-search-range" type="number"
+                                                           class="form-control"
+                                                           min="1" value="86400"/>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row" id="dashboard-datasource-block">
+                                                <label class="col-sm-3 col-form-label">Dashboards datasources</label>
+                                                <div class="col-sm-9 col-form-label">
+                                                    <div class="custom-control custom-checkbox custom-control-inline">
+                                                        <input type="checkbox"
+                                                               id="check-dashboard-datasource-etm_audit_all"
+                                                               value="etm_audit_all"
+                                                               class="custom-control-input">
+                                                        <label class="custom-control-label"
+                                                               for="check-dashboard-datasource-etm_audit_all">Audits</label>
                                                     </div>
-                                                    <div class="row">
-                                                        <label for="sel-cluster-settings-acl" class="col-sm-3 col-form-label">Cluster
-                                                            settings</label>
-                                                        <div class="col-sm-9">
-                                                            <select id="sel-cluster-settings-acl"
-                                                                    class="form-control form-control-sm custom-select custom-select-sm">
-                                                                <option value="none">None</option>
-                                                                <option value="cluster_settings_read">Read</option>
-                                                                <option value="cluster_settings_read_write">Read & write
-                                                                </option>
-                                                            </select>
-                                                        </div>
+                                                    <div class="custom-control custom-checkbox custom-control-inline">
+                                                        <input type="checkbox"
+                                                               id="check-dashboard-datasource-etm_event_all"
+                                                               value="etm_event_all" checked="checked"
+                                                               class="custom-control-input">
+                                                        <label class="custom-control-label"
+                                                               for="check-dashboard-datasource-etm_event_all">Events</label>
                                                     </div>
-                                                    <div class="row">
-                                                        <label for="sel-event-acl"
-                                                               class="col-sm-3 col-form-label">Events</label>
-                                                        <div class="col-sm-9">
-                                                            <select id="sel-event-acl"
-                                                                    class="form-control form-control-sm custom-select custom-select-sm">
-                                                                <option value="none">None</option>
-                                                                <option value="etm_event_read_without_payload">Read without
-                                                                    payload
-                                                                </option>
-                                                                <option value="etm_event_read">Read</option>
-                                                                <option value="etm_event_write">Write</option>
-                                                                <option value="etm_event_read_write">Read & write</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                    <div class="row">
-                                                        <label for="sel-group-dashboard-acl" class="col-sm-3 col-form-label">Group
-                                                            dashboards</label>
-                                                        <div class="col-sm-9">
-                                                            <select id="sel-group-dashboard-acl"
-                                                                    class="form-control form-control-sm custom-select custom-select-sm">
-                                                                <option value="none">None</option>
-                                                                <option value="group_dashboard_read">Read</option>
-                                                                <option value="group_dashboard_read_write">Read & write</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                    <div class="row">
-                                                        <label for="sel-group-settings-acl" class="col-sm-3 col-form-label">Group
-                                                            settings</label>
-                                                        <div class="col-sm-9">
-                                                            <select id="sel-group-settings-acl"
-                                                                    class="form-control form-control-sm custom-select custom-select-sm">
-                                                                <option value="none">None</option>
-                                                                <option value="group_settings_read">Read</option>
-                                                                <option value="group_settings_read_write">Read & write</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                    <div class="row">
-                                                        <label for="sel-group-signal-acl" class="col-sm-3 col-form-label">Group
-                                                            signals</label>
-                                                        <div class="col-sm-9">
-                                                            <select id="sel-group-signal-acl"
-                                                                    class="form-control form-control-sm custom-select custom-select-sm">
-                                                                <option value="none">None</option>
-                                                                <option value="group_signal_read">Read</option>
-                                                                <option value="group_signal_read_write">Read & write</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                    <div class="row">
-                                                        <label for="sel-iib-event-acl" class="col-sm-3 col-form-label">IIB
-                                                            events</label>
-                                                        <div class="col-sm-9">
-                                                            <select id="sel-iib-event-acl"
-                                                                    class="form-control form-control-sm custom-select custom-select-sm">
-                                                                <option value="none">None</option>
-                                                                <option value="iib_event_read">Read</option>
-                                                                <option value="iib_event_read_write">Read & write</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                    <div class="row">
-                                                        <label for="sel-iib-node-acl" class="col-sm-3 col-form-label">IIB
-                                                            nodes</label>
-                                                        <div class="col-sm-9">
-                                                            <select id="sel-iib-node-acl"
-                                                                    class="form-control form-control-sm custom-select custom-select-sm">
-                                                                <option value="none">None</option>
-                                                                <option value="iib_node_read">Read</option>
-                                                                <option value="iib_node_read_write">Read & write</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                    <div class="row">
-                                                        <label for="sel-import-profiles-acl"
-                                                               class="col-sm-3 col-form-label">Import profiles</label>
-                                                        <div class="col-sm-9">
-                                                            <select id="sel-import-profiles-acl"
-                                                                    class="form-control form-control-sm custom-select custom-select-sm">
-                                                                <option value="none">None</option>
-                                                                <option value="import_profiles_read">Read</option>
-                                                                <option value="import_profiles_read_write">Read & write
-                                                                </option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                    <div class="row">
-                                                        <label for="sel-index-statistics-acl" class="col-sm-3 col-form-label">Index
-                                                            statistics</label>
-                                                        <div class="col-sm-9">
-                                                            <select id="sel-index-statistics-acl"
-                                                                    class="form-control form-control-sm custom-select custom-select-sm">
-                                                                <option value="none">None</option>
-                                                                <option value="index_statistics_read">Read</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                    <div class="row">
-                                                        <label for="sel-license-acl"
-                                                               class="col-sm-3 col-form-label">License</label>
-                                                        <div class="col-sm-9">
-                                                            <select id="sel-license-acl"
-                                                                    class="form-control form-control-sm custom-select custom-select-sm">
-                                                                <option value="none">None</option>
-                                                                <option value="license_read">Read</option>
-                                                                <option value="license_read_write">Read & write</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                    <div class="row">
-                                                        <label for="sel-node-settings-acl" class="col-sm-3 col-form-label">Node
-                                                            settings</label>
-                                                        <div class="col-sm-9">
-                                                            <select id="sel-node-settings-acl"
-                                                                    class="form-control form-control-sm custom-select custom-select-sm">
-                                                                <option value="none">None</option>
-                                                                <option value="node_settings_read">Read</option>
-                                                                <option value="node_settings_read_write">Read & write</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                    <div class="row">
-                                                        <label for="sel-notifiers-acl"
-                                                               class="col-sm-3 col-form-label">Notifiers</label>
-                                                        <div class="col-sm-9">
-                                                            <select id="sel-notifiers-acl"
-                                                                    class="form-control form-control-sm custom-select custom-select-sm">
-                                                                <option value="none">None</option>
-                                                                <option value="notifiers_read">Read</option>
-                                                                <option value="notifiers_read_write">Read & write</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                    <div class="row">
-                                                        <label for="sel-parser-settings-acl" class="col-sm-3 col-form-label">Parser
-                                                            settings</label>
-                                                        <div class="col-sm-9">
-                                                            <select id="sel-parser-settings-acl"
-                                                                    class="form-control form-control-sm custom-select custom-select-sm">
-                                                                <option value="none">None</option>
-                                                                <option value="parser_settings_read">Read</option>
-                                                                <option value="parser_settings_read_write">Read & write</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                    <div class="row">
-                                                        <label for="sel-user-dashboard-acl" class="col-sm-3 col-form-label">User
-                                                            dashboards</label>
-                                                        <div class="col-sm-9">
-                                                            <select id="sel-user-dashboard-acl"
-                                                                    class="form-control form-control-sm custom-select custom-select-sm">
-                                                                <option value="none">None</option>
-                                                                <option value="user_dashboard_read_write">Read & write</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                    <div class="row">
-                                                        <label for="sel-user-settings-acl" class="col-sm-3 col-form-label">User
-                                                            settings</label>
-                                                        <div class="col-sm-9">
-                                                            <select id="sel-user-settings-acl"
-                                                                    class="form-control form-control-sm custom-select custom-select-sm">
-                                                                <option value="none">None</option>
-                                                                <option value="user_settings_read">Read</option>
-                                                                <option value="user_settings_read_write">Read & write</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                    <div class="row">
-                                                        <label for="sel-user-signal-acl" class="col-sm-3 col-form-label">User
-                                                            signals</label>
-                                                        <div class="col-sm-9">
-                                                            <select id="sel-user-signal-acl"
-                                                                    class="form-control form-control-sm custom-select custom-select-sm">
-                                                                <option value="none">None</option>
-                                                                <option value="user_signal_read_write">Read & write</option>
-                                                            </select>
-                                                        </div>
+                                                    <div class="custom-control custom-checkbox custom-control-inline">
+                                                        <input type="checkbox"
+                                                               id="check-dashboard-datasource-etm_metrics_all"
+                                                               value="etm_metrics_all"
+                                                               class="custom-control-input">
+                                                        <label class="custom-control-label"
+                                                               for="check-dashboard-datasource-etm_metrics_all">Metrics</label>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <br/>
-                                        <div class="form-group row">
-                                            <label for="sel-change-password-on-logon" class="col-sm-3 col-form-label">Change
-                                                password on logon</label>
-                                            <div class="col-sm-9">
-                                                <select id="sel-change-password-on-logon" class="form-control custom-select">
-                                                    <option value="true">Yes</option>
-                                                    <option value="false" selected="selected">No</option>
-                                                </select>
+                                            <div class="form-group row" id="signal-datasource-block">
+                                                <label class="col-sm-3 col-form-label">Signal datasources</label>
+                                                <div class="col-sm-9 col-form-label">
+                                                    <div class="custom-control custom-checkbox custom-control-inline">
+                                                        <input type="checkbox"
+                                                               id="check-signal-datasource-etm_audit_all"
+                                                               value="etm_audit_all"
+                                                               class="custom-control-input">
+                                                        <label class="custom-control-label"
+                                                               for="check-signal-datasource-etm_audit_all">Audits</label>
+                                                    </div>
+                                                    <div class="custom-control custom-checkbox custom-control-inline">
+                                                        <input type="checkbox"
+                                                               id="check-signal-datasource-etm_event_all"
+                                                               value="etm_event_all" checked="checked"
+                                                               class="custom-control-input">
+                                                        <label class="custom-control-label"
+                                                               for="check-signal-datasource-etm_event_all">Events</label>
+                                                    </div>
+                                                    <div class="custom-control custom-checkbox custom-control-inline">
+                                                        <input type="checkbox"
+                                                               id="check-signal-datasource-etm_metrics_all"
+                                                               value="etm_metrics_all"
+                                                               class="custom-control-input">
+                                                        <label class="custom-control-label"
+                                                               for="check-signal-datasource-etm_metrics_all">Metrics</label>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div class="form-group row">
-                                            <label for="input-new-password1" class="col-sm-3 col-form-label">New
-                                                password</label>
-                                            <div class="col-sm-9">
-                                                <input id="input-new-password1" type="password" class="form-control"
-                                                       required="required" pattern=".{6,}"
-                                                       title="The password should be at least 6 characters long"/>
+                                            <div class="form-group">
+                                                <a id="lnk-add-notifier" class="float-right" href="#">Add notifier</a>
+                                                <label>Notifiers</label>
+                                                <ol id="list-notifiers">
+                                                </ol>
                                             </div>
-                                        </div>
-                                        <div class="form-group row">
-                                            <label for="input-new-password2" class="col-sm-3 col-form-label">Retype
-                                                password</label>
-                                            <div class="col-sm-9">
-                                                <input id="input-new-password2" type="password" class="form-control"
-                                                       required="required" pattern=".{6,}"
-                                                       title="The password should be at least 6 characters long"/>
+                                            <div class="card card-block">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">Access control</h6>
+                                                    <div class="card-text" id="card-acl">
+                                                        <div class="row">
+                                                            <label for="sel-audit-log-acl"
+                                                                   class="col-sm-3 col-form-label">Audit
+                                                                logs</label>
+                                                            <div class="col-sm-9">
+                                                                <select id="sel-audit-log-acl"
+                                                                        class="form-control form-control-sm custom-select custom-select-sm">
+                                                                    <option value="none">None</option>
+                                                                    <option value="audit_log_read">Read</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <label for="sel-cluster-settings-acl"
+                                                                   class="col-sm-3 col-form-label">Cluster
+                                                                settings</label>
+                                                            <div class="col-sm-9">
+                                                                <select id="sel-cluster-settings-acl"
+                                                                        class="form-control form-control-sm custom-select custom-select-sm">
+                                                                    <option value="none">None</option>
+                                                                    <option value="cluster_settings_read">Read</option>
+                                                                    <option value="cluster_settings_read_write">Read &
+                                                                        write
+                                                                    </option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <label for="sel-event-acl"
+                                                                   class="col-sm-3 col-form-label">Events</label>
+                                                            <div class="col-sm-9">
+                                                                <select id="sel-event-acl"
+                                                                        class="form-control form-control-sm custom-select custom-select-sm">
+                                                                    <option value="none">None</option>
+                                                                    <option value="etm_event_read_without_payload">Read
+                                                                        without
+                                                                        payload
+                                                                    </option>
+                                                                    <option value="etm_event_read">Read</option>
+                                                                    <option value="etm_event_write">Write</option>
+                                                                    <option value="etm_event_read_write">Read & write
+                                                                    </option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <label for="sel-group-dashboard-acl"
+                                                                   class="col-sm-3 col-form-label">Group
+                                                                dashboards</label>
+                                                            <div class="col-sm-9">
+                                                                <select id="sel-group-dashboard-acl"
+                                                                        class="form-control form-control-sm custom-select custom-select-sm">
+                                                                    <option value="none">None</option>
+                                                                    <option value="group_dashboard_read">Read</option>
+                                                                    <option value="group_dashboard_read_write">Read &
+                                                                        write
+                                                                    </option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <label for="sel-group-settings-acl"
+                                                                   class="col-sm-3 col-form-label">Group
+                                                                settings</label>
+                                                            <div class="col-sm-9">
+                                                                <select id="sel-group-settings-acl"
+                                                                        class="form-control form-control-sm custom-select custom-select-sm">
+                                                                    <option value="none">None</option>
+                                                                    <option value="group_settings_read">Read</option>
+                                                                    <option value="group_settings_read_write">Read &
+                                                                        write
+                                                                    </option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <label for="sel-group-signal-acl"
+                                                                   class="col-sm-3 col-form-label">Group
+                                                                signals</label>
+                                                            <div class="col-sm-9">
+                                                                <select id="sel-group-signal-acl"
+                                                                        class="form-control form-control-sm custom-select custom-select-sm">
+                                                                    <option value="none">None</option>
+                                                                    <option value="group_signal_read">Read</option>
+                                                                    <option value="group_signal_read_write">Read &
+                                                                        write
+                                                                    </option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <label for="sel-iib-event-acl"
+                                                                   class="col-sm-3 col-form-label">IIB
+                                                                events</label>
+                                                            <div class="col-sm-9">
+                                                                <select id="sel-iib-event-acl"
+                                                                        class="form-control form-control-sm custom-select custom-select-sm">
+                                                                    <option value="none">None</option>
+                                                                    <option value="iib_event_read">Read</option>
+                                                                    <option value="iib_event_read_write">Read & write
+                                                                    </option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <label for="sel-iib-node-acl"
+                                                                   class="col-sm-3 col-form-label">IIB
+                                                                nodes</label>
+                                                            <div class="col-sm-9">
+                                                                <select id="sel-iib-node-acl"
+                                                                        class="form-control form-control-sm custom-select custom-select-sm">
+                                                                    <option value="none">None</option>
+                                                                    <option value="iib_node_read">Read</option>
+                                                                    <option value="iib_node_read_write">Read & write
+                                                                    </option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <label for="sel-import-profiles-acl"
+                                                                   class="col-sm-3 col-form-label">Import
+                                                                profiles</label>
+                                                            <div class="col-sm-9">
+                                                                <select id="sel-import-profiles-acl"
+                                                                        class="form-control form-control-sm custom-select custom-select-sm">
+                                                                    <option value="none">None</option>
+                                                                    <option value="import_profiles_read">Read</option>
+                                                                    <option value="import_profiles_read_write">Read &
+                                                                        write
+                                                                    </option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <label for="sel-index-statistics-acl"
+                                                                   class="col-sm-3 col-form-label">Index
+                                                                statistics</label>
+                                                            <div class="col-sm-9">
+                                                                <select id="sel-index-statistics-acl"
+                                                                        class="form-control form-control-sm custom-select custom-select-sm">
+                                                                    <option value="none">None</option>
+                                                                    <option value="index_statistics_read">Read</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <label for="sel-license-acl"
+                                                                   class="col-sm-3 col-form-label">License</label>
+                                                            <div class="col-sm-9">
+                                                                <select id="sel-license-acl"
+                                                                        class="form-control form-control-sm custom-select custom-select-sm">
+                                                                    <option value="none">None</option>
+                                                                    <option value="license_read">Read</option>
+                                                                    <option value="license_read_write">Read & write
+                                                                    </option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <label for="sel-node-settings-acl"
+                                                                   class="col-sm-3 col-form-label">Node
+                                                                settings</label>
+                                                            <div class="col-sm-9">
+                                                                <select id="sel-node-settings-acl"
+                                                                        class="form-control form-control-sm custom-select custom-select-sm">
+                                                                    <option value="none">None</option>
+                                                                    <option value="node_settings_read">Read</option>
+                                                                    <option value="node_settings_read_write">Read &
+                                                                        write
+                                                                    </option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <label for="sel-notifiers-acl"
+                                                                   class="col-sm-3 col-form-label">Notifiers</label>
+                                                            <div class="col-sm-9">
+                                                                <select id="sel-notifiers-acl"
+                                                                        class="form-control form-control-sm custom-select custom-select-sm">
+                                                                    <option value="none">None</option>
+                                                                    <option value="notifiers_read">Read</option>
+                                                                    <option value="notifiers_read_write">Read & write
+                                                                    </option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <label for="sel-parser-settings-acl"
+                                                                   class="col-sm-3 col-form-label">Parser
+                                                                settings</label>
+                                                            <div class="col-sm-9">
+                                                                <select id="sel-parser-settings-acl"
+                                                                        class="form-control form-control-sm custom-select custom-select-sm">
+                                                                    <option value="none">None</option>
+                                                                    <option value="parser_settings_read">Read</option>
+                                                                    <option value="parser_settings_read_write">Read &
+                                                                        write
+                                                                    </option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <label for="sel-user-dashboard-acl"
+                                                                   class="col-sm-3 col-form-label">User
+                                                                dashboards</label>
+                                                            <div class="col-sm-9">
+                                                                <select id="sel-user-dashboard-acl"
+                                                                        class="form-control form-control-sm custom-select custom-select-sm">
+                                                                    <option value="none">None</option>
+                                                                    <option value="user_dashboard_read_write">Read &
+                                                                        write
+                                                                    </option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <label for="sel-user-settings-acl"
+                                                                   class="col-sm-3 col-form-label">User
+                                                                settings</label>
+                                                            <div class="col-sm-9">
+                                                                <select id="sel-user-settings-acl"
+                                                                        class="form-control form-control-sm custom-select custom-select-sm">
+                                                                    <option value="none">None</option>
+                                                                    <option value="user_settings_read">Read</option>
+                                                                    <option value="user_settings_read_write">Read &
+                                                                        write
+                                                                    </option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <label for="sel-user-signal-acl"
+                                                                   class="col-sm-3 col-form-label">User
+                                                                signals</label>
+                                                            <div class="col-sm-9">
+                                                                <select id="sel-user-signal-acl"
+                                                                        class="form-control form-control-sm custom-select custom-select-sm">
+                                                                    <option value="none">None</option>
+                                                                    <option value="user_signal_read_write">Read &
+                                                                        write
+                                                                    </option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div class="modal-footer" data-element-type="acl-aware">
-                                            <input type="submit" id="btn-confirm-remove-user" class="btn btn-danger"
-                                                   value="Remove" formnovalidate="formnovalidate" disabled="disabled"/>
-                                            <input type="submit" id="btn-confirm-import-user" class="btn btn-secondary"
-                                                   value="Import" formnovalidate="formnovalidate" style="display: none;"/>
-                                            <input type="submit" id="btn-confirm-save-user" class="btn btn-primary" value="Save"
-                                                   disabled="disabled"/>
-                                        </div>
-                                    </form>
+                                            <br/>
+                                            <div class="form-group row">
+                                                <label for="sel-change-password-on-logon"
+                                                       class="col-sm-3 col-form-label">Change
+                                                    password on logon</label>
+                                                <div class="col-sm-9">
+                                                    <select id="sel-change-password-on-logon"
+                                                            class="form-control custom-select">
+                                                        <option value="true">Yes</option>
+                                                        <option value="false" selected="selected">No</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="input-new-password1" class="col-sm-3 col-form-label">New
+                                                    password</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-new-password1" type="password" class="form-control"
+                                                           required="required" pattern=".{6,}"
+                                                           title="The password should be at least 6 characters long"/>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="input-new-password2" class="col-sm-3 col-form-label">Retype
+                                                    password</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-new-password2" type="password" class="form-control"
+                                                           required="required" pattern=".{6,}"
+                                                           title="The password should be at least 6 characters long"/>
+                                                </div>
+                                            </div>
+                                            <br/>
+                                            <div class="modal-footer" data-element-type="acl-aware">
+                                                <input type="submit" id="btn-confirm-remove-user" class="btn btn-danger"
+                                                       value="Remove" formnovalidate="formnovalidate"
+                                                       disabled="disabled"/>
+                                                <input type="submit" id="btn-confirm-import-user"
+                                                       class="btn btn-secondary"
+                                                       value="Import" formnovalidate="formnovalidate"
+                                                       style="display: none;"/>
+                                                <input type="submit" id="btn-confirm-save-user" class="btn btn-primary"
+                                                       value="Save"
+                                                       disabled="disabled"/>
+                                            </div>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -497,7 +569,7 @@
             </div>
         </div>
     </div>
-</main>
+</div>
 
 <div class="modal fade" id="modal-user-overwrite">
     <div class="modal-dialog" role="document">
@@ -605,6 +677,12 @@
     </div>
 </div>
 
+<script src="../scripts/jquery.min.js"></script>
+<script src="../scripts/popper.min.js"></script>
+<script src="../scripts/bootstrap.min.js"></script>
+<script src="../scripts/jquery.scrollbar.min.js"></script>
+<script src="../scripts/jquery-ui.min.js"></script>
+<script src="../scripts/atlantis.min.js"></script>
 <script src="../scripts/autocomplete_fields.js"></script>
 <script src="../scripts/users.js"></script>
 <script src="../scripts/etm-commons.js"></script>

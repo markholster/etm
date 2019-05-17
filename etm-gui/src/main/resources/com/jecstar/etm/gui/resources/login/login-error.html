@@ -20,11 +20,18 @@
                 path += '../';
             }
         }
-        const styles = document.createElement('link');
+        let styles = document.createElement('link');
         styles.rel = 'stylesheet';
         styles.type = 'text/css';
         styles.media = 'screen';
-        styles.href = path + 'styles/theme.min.css';
+        styles.href = path + 'styles/bootstrap.min.css';
+        document.getElementsByTagName('head')[0].appendChild(styles);
+
+        styles = document.createElement('link');
+        styles.rel = 'stylesheet';
+        styles.type = 'text/css';
+        styles.media = 'screen';
+        styles.href = path + 'styles/atlantis.min.css';
         document.getElementsByTagName('head')[0].appendChild(styles);
     })();
 

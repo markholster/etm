@@ -12,7 +12,9 @@
     <link rel="icon" type="image/png" sizes="16x16" href="../images/favicon/favicon-16x16.png">
     <link rel="mask-icon" href="../images/favicon/safari-pinned-tab.svg" color="#5bbad5">
 
-    <link rel="stylesheet" href="../styles/theme.min.css">
+    <link rel="stylesheet" href="../styles/bootstrap.min.css">
+    <link rel="stylesheet" href="../styles/fonts.min.css">
+    <link rel="stylesheet" href="../styles/atlantis.min.css">
     <link rel="stylesheet" href="../styles/font-awesome.min.css">
     <link rel="stylesheet" href="../styles/jquery-ui.min.css">
     <link rel="stylesheet" href="../styles/autocomplete.css">
@@ -27,13 +29,6 @@
 	border: 0px;
 }
     </style>
-    <!-- jQuery first, then Bootstrap JS. -->
-    <script src="../scripts/tether.min.js"></script>
-    <script src="../scripts/jquery.min.js"></script>
-    <script src="../scripts/jquery-ui.min.js"></script>
-    <script src="../scripts/popper.min.js"></script>
-    <script src="../scripts/bootstrap.min.js"></script>
-    <script src="../scripts/flatpickr.min.js"></script>
     <script src="../scripts/d3-format.v1.min.js"></script>
     <script src="../scripts/moment.min.js"></script>
     <script src="../scripts/moment-timezone-with-data.min.js"></script>
@@ -43,84 +38,102 @@
     <script src="../scripts/highcharts/export-data.js"></script>
 </head>
 <body>
-<header class="u-header">
-    <div class="u-header-left">
-        <a class="u-header-logo" href="https://www.jecstar.com" target="_blank">
-            <img class="u-logo-desktop" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website" />
-            <img class="img-fluid u-logo-mobile" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website" />
-        </a>
-        <div class="ml-2 mt-1 d-none d-lg-block u-header-brand">
-            <h2 class="text-white">Jecstar</h2>
-        </div>
-    </div>
+<div class="wrapper">
 
-    <div class="u-header-middle">
-        <a class="js-sidebar-invoker u-sidebar-invoker" href="#"
-           data-is-close-all-except-this="true"
-           data-target="#sidebar">
-            <i class="fa fa-bars u-sidebar-invoker__icon--open"></i>
-        </a>
-
-        <div id="placeholder-for-headerSearch"></div>
-    </div>
-
-    <div class="u-header-right">
-        <div class="ml-2">
-            Logged in as: <span class="text-dark d-none d-sm-inline-block">placeholder-for-contextUser</span>
-        </div>
-    </div>
-</header>
-<main class="u-main" role="main">
-    <aside id="sidebar" class="u-sidebar">
-        <div class="u-sidebar-inner">
-            <header class="u-sidebar-header">
-                <a class="u-sidebar-logo" href="https://www.jecstar.com">
-                    <img class="img-fluid" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website">
-                </a>
-            </header>
-
-            <nav class="u-sidebar-nav">
-                <ul class="u-sidebar-nav-menu u-sidebar-nav-menu--top-level">
-                    <li id="placeholder-for-MenuAwareURLResource"></li>
-                </ul>
-            </nav>
-        </div>
-    </aside>
-    <div class="u-content">
-        <div id="dashboard-container" class="container-fluid" style="margin-top: 1em;">
-            <div id="dasboard-heading" class="text-center"><h2 id="dashboard-name"></h2></div>
-            <div id="graph-container">
+    <div class="main-header">
+        <!-- Logo Header -->
+        <div class="logo-header" data-background-color="etm-navbar-color">
+            <a href="https://www.jecstar.com" target="_blank" class="logo">
+                <img src="../images/jecstar.svg" alt="navbar brand" class="navbar-brand h-75">
+            </a>
+            <button class="navbar-toggler sidenav-toggler ml-auto" type="button" data-toggle="collapse"
+                    data-target="collapse" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon">
+                    <i class="icon-menu"></i>
+                </span>
+            </button>
+            <button class="topbar-toggler more"><i class="icon-options-vertical"></i></button>
+            <div class="nav-toggle">
+                <button class="btn btn-toggle toggle-sidebar">
+                    <i class="icon-menu"></i>
+                </button>
             </div>
         </div>
+        <!-- End Logo Header -->
 
-        <div id="dashboard-settings" class="container" style="margin-top: 1em; display: none;">
-            <div class="card card-block">
-                <div class="card-body">
-                    <h3 class="card-title">Dashboard settings</h3>
-                    <div class="card-text">
-                        <div id="dashboard-settings_errorBox" class="alert alert-danger errorBox" style="display: none;"
-                             role="alert"></div>
-                        <div id="dashboard-settings_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
-                        <div id="dashboard-settings_box">
-                            <div class="row">
-                                <div class=col-sm-12>
-                                    <form id="dashboard-settings_form">
-                                        <div class="form-group row">
-                                            <label for="input-dashboard-name" class="col-sm-3 col-form-label">Name</label>
-                                            <div class="col-sm-9">
-                                                <input id="input-dashboard-name" type="text" class="form-control"
-                                                       required="required"/>
+        <!-- Navbar Header -->
+        <nav class="navbar navbar-header navbar-expand-lg" data-background-color="etm-navbar-color">
+            <div class="container-fluid">
+                <div id="search-nav"></div>
+                <ul class="navbar-nav topbar-nav ml-md-auto align-items-center">
+                    <li class="nav-item dropdown hidden-caret">
+                        <a class="nav-link" data-toggle="dropdown" href="#" aria-expanded="false">
+                            <i class="fa fa-user-ninja"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-user animated fadeIn">
+                            <div class="dropdown-user-scroll scrollbar-outer"></div>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+        <!-- End Navbar -->
+    </div>
+
+    <div class="sidebar sidebar-style-2" data-background-color="etm-sidebar-color">
+        <div class="sidebar-wrapper scrollbar scrollbar-inner">
+            <div class="sidebar-content">
+                <ul class="nav nav-primary">
+                    <li id="placeholder-for-MenuAwareURLResource"></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!-- End Sidebar -->
+
+    <div class="main-panel">
+        <div class="content">
+            <div id="dashboard-container" class="container-fluid" style="margin-top: 1em;">
+                <div id="dasboard-heading" class="text-center"><h2 id="dashboard-name"></h2></div>
+                <div id="graph-container">
+                </div>
+            </div>
+
+            <div id="dashboard-settings" class="container" style="margin-top: 1em; display: none;">
+                <div class="card card-block">
+                    <div class="card-body">
+                        <h3 class="card-title">Dashboard settings</h3>
+                        <div class="card-text">
+                            <div id="dashboard-settings_errorBox" class="alert alert-danger errorBox"
+                                 style="display: none;"
+                                 role="alert"></div>
+                            <div id="dashboard-settings_infoBox" class="alert alert-info" style="display: none;"
+                                 role="alert"></div>
+                            <div id="dashboard-settings_box">
+                                <div class="row">
+                                    <div class=col-sm-12>
+                                        <form id="dashboard-settings_form">
+                                            <div class="form-group row">
+                                                <label for="input-dashboard-name"
+                                                       class="col-sm-3 col-form-label">Name</label>
+                                                <div class="col-sm-9">
+                                                    <input id="input-dashboard-name" type="text" class="form-control"
+                                                           required="required"/>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div id="dashboard-settings-columns" class="form-group">
-                                        </div>
-                                        <div class="modal-footer">
-                                            <input type="submit" id="btn-confirm-remove-dashboard" class="btn btn-danger"
-                                                   value="Remove" formnovalidate="formnovalidate" disabled="disabled"/>
-                                            <input type="submit" id="btn-confirm-save-dashboard" class="btn btn-primary"
-                                                   value="Save" disabled="disabled"/>
-                                        </div>
-                                    </form>
+                                            <div id="dashboard-settings-columns" class="form-group">
+                                            </div>
+                                            <div class="modal-footer">
+                                                <input type="submit" id="btn-confirm-remove-dashboard"
+                                                       class="btn btn-danger"
+                                                       value="Remove" formnovalidate="formnovalidate"
+                                                       disabled="disabled"/>
+                                                <input type="submit" id="btn-confirm-save-dashboard"
+                                                       class="btn btn-primary"
+                                                       value="Save" disabled="disabled"/>
+                                            </div>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -129,7 +142,7 @@
             </div>
         </div>
     </div>
-</main>
+</div>
 
 <div class="modal fade" id="modal-graph-settings">
     <div class="modal-dialog modal-lg" role="document">
@@ -336,6 +349,13 @@
     </div>
 </div>
 
+<script src="../scripts/jquery.min.js"></script>
+<script src="../scripts/popper.min.js"></script>
+<script src="../scripts/bootstrap.min.js"></script>
+<script src="../scripts/jquery.scrollbar.min.js"></script>
+<script src="../scripts/jquery-ui.min.js"></script>
+<script src="../scripts/atlantis.min.js"></script>
+<script src="../scripts/flatpickr.min.js"></script>
 <script src="../scripts/autocomplete_fields.js"></script>
 <script src="../scripts/etm-commons.js"></script>
 <script src="../scripts/dashboards.js"></script>

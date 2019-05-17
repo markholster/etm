@@ -2,13 +2,13 @@ function buildSignalsPage(groupName) {
     'use strict';
     const $notifierSelect = $('<select>').addClass('form-control form-control-sm custom-select custom-select-sm etm-notifier').attr('required', 'required');
     let contextRoot = '../rest/signal/';
-    $('ul.u-sidebar-nav-menu--top-level').find('.active').removeClass('active');
+    $('#sub_signals').find('.active').removeClass('active');
     if (groupName) {
         contextRoot += encodeURIComponent(groupName) + '/';
         $('#block-email-all-group-members').show();
-        $('#sub_signals').find('.u-sidebar-nav-menu__item-title:contains(' + groupName + ')').parent().addClass('active');
+        $('#sub_signals').find('p:contains(' + groupName + ')').parent().parent().addClass('active');
     } else {
-        $('#sub_signals').children('li').last().children('a').first().addClass('active');
+        $('#sub_signals > ul > li').last().addClass('active');
     }
     const signalMap = {};
     let keywords = [];

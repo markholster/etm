@@ -134,27 +134,6 @@ $(function () {
     if ('true' === commons.queryString['readonly']) {
         $("[data-element-type='acl-aware']").hide();
     }
-    // Handle submenus.
-    $('.dropdown-menu a.dropdown-toggle').on('click', function () {
-        const $el = $(this);
-        const $parent = $(this).offsetParent(".dropdown-menu");
-        if (!$(this).next().hasClass('show') ) {
-            $(this).parents('.dropdown-menu').first().find('.show').removeClass("show");
-        }
-        const $subMenu = $(this).next(".dropdown-menu");
-        $subMenu.toggleClass( 'show' );
-
-        $(this).parent("li").toggleClass('show');
-
-        $(this).parents('li.nav-item.dropdown.show').on('hidden.bs.dropdown', function () {
-            $('.dropdown-menu .show').removeClass("show");
-        });
-
-        if (!$parent.parent().hasClass('navbar-nav')) {
-            $el.next().css({"top": $el[0].offsetTop, "left": $parent.outerWidth() - 4});
-        }
-        return false;
-    });
 
     // Change all labels of required fields to italic
     $("[required='required']").each(function (index, item) {

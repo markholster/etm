@@ -12,406 +12,456 @@
     <link rel="icon" type="image/png" sizes="16x16" href="../images/favicon/favicon-16x16.png">
     <link rel="mask-icon" href="../images/favicon/safari-pinned-tab.svg" color="#5bbad5">
 
-    <link rel="stylesheet" href="../styles/theme.min.css">
+    <link rel="stylesheet" href="../styles/bootstrap.min.css">
+    <link rel="stylesheet" href="../styles/fonts.min.css">
+    <link rel="stylesheet" href="../styles/atlantis.min.css">
     <link rel="stylesheet" href="../styles/font-awesome.min.css">
     <link rel="stylesheet" href="../styles/jquery-ui.min.css">
     <link rel="stylesheet" href="../styles/autocomplete.css">
     <link rel="stylesheet" href="../styles/etm-commons.css">
     <link rel="stylesheet" href="../styles/flatpickr.min.css">
-    <script src="../scripts/tether.min.js"></script>
-    <script src="../scripts/jquery.min.js"></script>
-    <script src="../scripts/jquery-ui.min.js"></script>
-    <script src="../scripts/popper.min.js"></script>
-    <script src="../scripts/bootstrap.min.js"></script>
-    <script src="../scripts/flatpickr.min.js"></script>
+
     <script src="../scripts/moment.min.js"></script>
     <script src="../scripts/moment-timezone-with-data.min.js"></script>
     <script src="../scripts/highcharts/highcharts.js"></script>
 </head>
 <body>
-<header class="u-header">
-    <div class="u-header-left">
-        <a class="u-header-logo" href="https://www.jecstar.com" target="_blank">
-            <img class="u-logo-desktop" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website" />
-            <img class="img-fluid u-logo-mobile" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website" />
-        </a>
-        <div class="ml-2 mt-1 d-none d-lg-block u-header-brand">
-            <h2 class="text-white">Jecstar</h2>
+<div class="wrapper">
+    <div class="main-header">
+        <!-- Logo Header -->
+        <div class="logo-header" data-background-color="etm-navbar-color">
+            <a href="https://www.jecstar.com" target="_blank" class="logo">
+                <img src="../images/jecstar.svg" alt="navbar brand" class="navbar-brand h-75">
+            </a>
+            <button class="navbar-toggler sidenav-toggler ml-auto" type="button" data-toggle="collapse"
+                    data-target="collapse" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon">
+                    <i class="icon-menu"></i>
+                </span>
+            </button>
+            <button class="topbar-toggler more"><i class="icon-options-vertical"></i></button>
+            <div class="nav-toggle">
+                <button class="btn btn-toggle toggle-sidebar">
+                    <i class="icon-menu"></i>
+                </button>
+            </div>
         </div>
+        <!-- End Logo Header -->
+
+        <!-- Navbar Header -->
+        <nav class="navbar navbar-header navbar-expand-lg" data-background-color="etm-navbar-color">
+            <div class="container-fluid">
+                <div id="search-nav"></div>
+                <ul class="navbar-nav topbar-nav ml-md-auto align-items-center">
+                    <li class="nav-item dropdown hidden-caret">
+                        <a class="nav-link" data-toggle="dropdown" href="#" aria-expanded="false">
+                            <i class="fa fa-user-ninja"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-user animated fadeIn">
+                            <div class="dropdown-user-scroll scrollbar-outer"></div>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+        <!-- End Navbar -->
     </div>
 
-    <div class="u-header-middle">
-        <a class="js-sidebar-invoker u-sidebar-invoker" href="#"
-           data-is-close-all-except-this="true"
-           data-target="#sidebar">
-            <i class="fa fa-bars u-sidebar-invoker__icon--open"></i>
-        </a>
-
-        <div id="placeholder-for-headerSearch"></div>
-    </div>
-
-    <div class="u-header-right">
-        <div class="ml-2">
-            Logged in as: <span class="text-dark d-none d-sm-inline-block">placeholder-for-contextUser</span>
-        </div>
-    </div>
-</header>
-<main class="u-main" role="main">
-    <aside id="sidebar" class="u-sidebar">
-        <div class="u-sidebar-inner">
-            <header class="u-sidebar-header">
-                <a class="u-sidebar-logo" href="https://www.jecstar.com">
-                    <img class="img-fluid" src="../images/jecstar.svg" style="max-height: 2.1rem; max-width: 2.1rem;" alt="Jecstar website">
-                </a>
-            </header>
-
-            <nav class="u-sidebar-nav">
-                <ul class="u-sidebar-nav-menu u-sidebar-nav-menu--top-level">
+    <div class="sidebar sidebar-style-2" data-background-color="etm-sidebar-color">
+        <div class="sidebar-wrapper scrollbar scrollbar-inner">
+            <div class="sidebar-content">
+                <ul class="nav nav-primary">
                     <li id="placeholder-for-MenuAwareURLResource"></li>
                 </ul>
-            </nav>
+            </div>
         </div>
-    </aside>
-    <div class="u-content">
-        <div class="container-fluid" style="margin-top: 1em;">
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card card-block">
-                <div class="card-body">
-                    <h3 class="card-title">Signals
-                        <small style="font-size: 100%;">
-                            <a id="link-export-signal" href="#" class="mr-1 fa fa-file-export float-right" title="Export signal" style="display: none;"></a>
-                        </small>
-                    </h3>
-                    <div class="card-text">
-                        <div id="signals_errorBox" class="alert alert-danger errorBox" style="display: none;"
-                             role="alert"></div>
-                        <div id="signals_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
-                        <div id="signals_box">
-                            <div class="row">
-                                <div class=col-sm-12>
-                                    <select id="sel-signal"
-                                            class="form-control form-control-sm custom-select custom-select-sm"
-                                            autofocus="autofocus">
-                                        <option selected="selected"></option>
-                                    </select>
-                                </div>
-                            </div>
-                            <hr/>
-                            <div class="row">
-                                <div class=col-sm-12>
-                                    <div class="form-group row">
-                                        <label for="input-signal-name"
-                                               class="col-sm-3 col-form-label col-form-label-sm">Name</label>
-                                        <div class="col-sm-9">
-                                            <input id="input-signal-name" type="text"
-                                                   class="form-control form-control-sm" required="required"/>
+    </div>
+    <!-- End Sidebar -->
+
+    <div class="main-panel">
+        <div class="content">
+            <div class="container-fluid" style="margin-top: 1em;">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card card-block">
+                            <div class="card-body">
+                                <h3 class="card-title">Signals
+                                    <small style="font-size: 100%;">
+                                        <a id="link-export-signal" href="#" class="mr-1 fa fa-file-export float-right"
+                                           title="Export signal" style="display: none;"></a>
+                                    </small>
+                                </h3>
+                                <div class="card-text">
+                                    <div id="signals_errorBox" class="alert alert-danger errorBox"
+                                         style="display: none;"
+                                         role="alert"></div>
+                                    <div id="signals_infoBox" class="alert alert-info" style="display: none;"
+                                         role="alert"></div>
+                                    <div id="signals_box">
+                                        <div class="row">
+                                            <div class=col-sm-12>
+                                                <select id="sel-signal"
+                                                        class="form-control form-control-sm custom-select custom-select-sm"
+                                                        autofocus="autofocus">
+                                                    <option selected="selected"></option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <hr/>
+                                        <div class="row">
+                                            <div class=col-sm-12>
+                                                <div class="form-group row">
+                                                    <label for="input-signal-name"
+                                                           class="col-sm-3 col-form-label col-form-label-sm">Name</label>
+                                                    <div class="col-sm-9">
+                                                        <input id="input-signal-name" type="text"
+                                                               class="form-control form-control-sm"
+                                                               required="required"/>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group row">
+                                                    <label for="sel-signal-enabled"
+                                                           class="col-sm-3 col-form-label col-form-label-sm">Enabled</label>
+                                                    <div class="col-sm-9">
+                                                        <select id="sel-signal-enabled"
+                                                                class="form-control form-control-sm custom-select custom-select-sm"
+                                                                required="required">
+                                                            <option value="true" selected="selected">Yes</option>
+                                                            <option value="false">No</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="accordion" id="signal-accordion">
+                                                    <div class="card">
+                                                        <div class="card-header p-0" id="acc-heading-data">
+                                                            <button id="btn-heading-data" class="btn btn-link"
+                                                                    type="button"
+                                                                    data-toggle="collapse"
+                                                                    data-target="#acc-collapse-data"
+                                                                    aria-expanded="true"
+                                                                    aria-controls="acc-collapse-data">
+                                                                <span class="fa fa-database hidden-md-down">&nbsp;</span>Data
+                                                            </button>
+                                                        </div>
+                                                        <form id="form-data">
+                                                            <div id="acc-collapse-data" class="collapse show"
+                                                                 aria-labelledby="acc-heading-data"
+                                                                 data-parent="#signal-accordion">
+                                                                <div class="card-body">
+                                                                    <div class="form-group row">
+                                                                        <label for="sel-data-source"
+                                                                               class="col-sm-3 col-form-label col-form-label-sm">Data
+                                                                            source</label>
+                                                                        <div class="col-sm-9">
+                                                                            <select id="sel-data-source"
+                                                                                    class="form-control form-control-sm custom-select custom-select-sm"
+                                                                                    data-required="required"
+                                                                                    required="required">
+                                                                            </select>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="row form-group">
+                                                                        <label for="input-signal-from"
+                                                                               class="col-sm-3 col-form-label col-form-label-sm">Start
+                                                                            date</label>
+                                                                        <div class="col-sm-9">
+                                                                            <div class="input-group input-group-sm flatpickr">
+                                                                                <input id="input-signal-from"
+                                                                                       type="text"
+                                                                                       class="form-control form-control-sm"
+                                                                                       value="now-1h"
+                                                                                       data-input/>
+                                                                                <div class="input-group-append">
+                                                                                    <a class="btn btn-outline-secondary"
+                                                                                       title="Toggle calendar"
+                                                                                       data-toggle>
+                                                                                        <i class="fa fa-calendar"></i>
+                                                                                    </a>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="row form-group">
+                                                                        <label for="input-signal-till"
+                                                                               class="col-sm-3 col-form-label col-form-label-sm">End
+                                                                            date</label>
+                                                                        <div class="col-sm-9">
+                                                                            <div class="input-group input-group-sm flatpickr">
+                                                                                <input id="input-signal-till"
+                                                                                       type="text"
+                                                                                       class="form-control form-control-sm"
+                                                                                       value="now" data-input/>
+                                                                                <div class="input-group-append">
+                                                                                    <a class="btn btn-outline-secondary"
+                                                                                       title="Toggle calendar"
+                                                                                       data-toggle>
+                                                                                        <i class="fa fa-calendar"></i>
+                                                                                    </a>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="row form-group">
+                                                                        <label for="input-signal-time-filter-field"
+                                                                               class="col-sm-3 col-form-label col-form-label-sm">Time
+                                                                            field</label>
+                                                                        <div class="col-sm-9">
+                                                                            <div class="input-group input-group-sm">
+                                                                                <input id="input-signal-time-filter-field"
+                                                                                       type="text"
+                                                                                       class="form-control form-control-sm"
+                                                                                       value="timestamp"/>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="form-group row">
+                                                                        <label for="input-signal-query"
+                                                                               class="col-sm-3 col-form-label col-form-label-sm">Query</label>
+                                                                        <div class="col-sm-9">
+                                                                            <input id="input-signal-query" type="text"
+                                                                                   class="form-control form-control-sm"
+                                                                                   value="*"
+                                                                                   data-required="required"
+                                                                                   required="required"/>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                    <div class="card" id="card-threshold" data-context="threshold">
+                                                        <div class="card-header p-0" id="acc-heading-threshold">
+                                                            <button id="btn-heading-threshold"
+                                                                    class="btn btn-link collapsed"
+                                                                    type="button"
+                                                                    data-toggle="collapse"
+                                                                    data-target="#acc-collapse-threshold"
+                                                                    aria-expanded="true"
+                                                                    aria-controls="acc-collapse-threshold">
+                                                                <span class="fa fa-thermometer-three-quarters hidden-md-down">&nbsp;</span>Threshold
+                                                            </button>
+                                                        </div>
+                                                        <form id="form-threshold">
+                                                            <div id="acc-collapse-threshold" class="collapse"
+                                                                 aria-labelledby="acc-heading-threshold"
+                                                                 data-parent="#signal-accordion">
+                                                                <div class="card-body">
+                                                                    <div class="form-group row">
+                                                                        <label for="input-signal-threshold"
+                                                                               class="col-sm-3 col-form-label col-form-label-sm">Threshold
+                                                                            is</label>
+                                                                        <div class="col-sm-4">
+                                                                            <select id="sel-signal-comparison"
+                                                                                    class="form-control form-control-sm custom-select custom-select-sm">
+                                                                                <option value="LT">Less than</option>
+                                                                                <option value="LTE">Less than or equal
+                                                                                    to
+                                                                                </option>
+                                                                                <option value="EQ">Equal to</option>
+                                                                                <option value="GTE">Greater than or
+                                                                                    equal to
+                                                                                </option>
+                                                                                <option value="GT">Greater than</option>
+                                                                            </select>
+                                                                        </div>
+                                                                        <div class="col-sm-5">
+                                                                            <input id="input-signal-threshold"
+                                                                                   type="number"
+                                                                                   class="form-control form-control-sm"
+                                                                                   data-required="required"
+                                                                                   required="required"/>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="form-group row">
+                                                                        <label for="input-signal-cardinality"
+                                                                               class="col-sm-3 col-form-label col-form-label-sm">Group
+                                                                            per</label>
+                                                                        <div class="col-sm-4">
+                                                                            <input id="input-signal-cardinality"
+                                                                                   type="number"
+                                                                                   class="form-control form-control-sm"
+                                                                                   value="5"
+                                                                                   min="1"
+                                                                                   data-required="required"
+                                                                                   required="required"/>
+                                                                        </div>
+                                                                        <div class="col-sm-5">
+                                                                            <select id="sel-signal-cardinality-timeunit"
+                                                                                    class="form-control form-control-sm custom-select custom-select-sm">
+                                                                                <option id="cardinality-minute"
+                                                                                        value="MINUTES">
+                                                                                    Minutes
+                                                                                </option>
+                                                                                <option id="cardinality-hour"
+                                                                                        value="HOURS">Hours
+                                                                                </option>
+                                                                                <option id="cardinality-day"
+                                                                                        value="DAYS">Days
+                                                                                </option>
+                                                                            </select>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div class="aggregator-container-block"
+                                                                         data-aggregator-level="0">
+                                                                        <div class="d-flex justify-content-end bucket-aggregator-header">
+                                                                            <div class="p-1">
+                                                                                <a href="#"
+                                                                                   data-element-type="add-bucket-aggregator">Add
+                                                                                    bucket</a>
+                                                                            </div>
+                                                                            <div class="p-1">
+                                                                                <a href="#"
+                                                                                   data-element-type="add-metrics-aggregator">Add
+                                                                                    metric</a>
+                                                                            </div>
+                                                                            <div class="p-1">
+                                                                                <a href="#"
+                                                                                   data-element-type="add-pipeline-aggregator">Add
+                                                                                    pipeline</a>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                    <div class="card" id="card-notifications">
+                                                        <div class="card-header p-0" id="acc-heading-notifications">
+                                                            <button id="btn-heading-notifications"
+                                                                    class="btn btn-link collapsed"
+                                                                    type="button"
+                                                                    data-toggle="collapse"
+                                                                    data-target="#acc-collapse-notifications"
+                                                                    aria-expanded="true"
+                                                                    aria-controls="acc-collapse-notifications">
+                                                                <span class="fa fa-satellite-dish hidden-md-down">&nbsp;</span>Notifications
+                                                            </button>
+                                                        </div>
+                                                        <form id="form-notifications">
+                                                            <div id="acc-collapse-notifications" class="collapse"
+                                                                 aria-labelledby="acc-heading-notifications"
+                                                                 data-parent="#signal-accordion">
+                                                                <div class="card-body">
+                                                                    <div class="form-group row">
+                                                                        <label for="input-signal-interval"
+                                                                               class="col-sm-3 col-form-label col-form-label-sm">Check
+                                                                            every</label>
+                                                                        <div class="col-sm-4">
+                                                                            <input id="input-signal-interval"
+                                                                                   type="number"
+                                                                                   class="form-control form-control-sm"
+                                                                                   value="30"
+                                                                                   min="1"
+                                                                                   data-required="required"
+                                                                                   required="required"/>
+                                                                        </div>
+                                                                        <div class="col-sm-5">
+                                                                            <select id="sel-signal-interval-timeunit"
+                                                                                    class="form-control form-control-sm custom-select custom-select-sm">
+                                                                                <option id="interval-minute"
+                                                                                        value="MINUTES">Minutes
+                                                                                </option>
+                                                                                <option id="interval-hour"
+                                                                                        value="HOURS">Hours
+                                                                                </option>
+                                                                                <option id="interval-day" value="DAYS">
+                                                                                    Days
+                                                                                </option>
+                                                                            </select>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="form-group row">
+                                                                        <label for="input-signal-max-frequency-of-exceedance"
+                                                                               class="col-sm-3 col-form-label col-form-label-sm">Max
+                                                                            frequency
+                                                                            of exceedance</label>
+                                                                        <div class="col-sm-9">
+                                                                            <input id="input-signal-max-frequency-of-exceedance"
+                                                                                   type="number"
+                                                                                   class="form-control form-control-sm"
+                                                                                   value="1"
+                                                                                   min="1"
+                                                                                   data-required="required"
+                                                                                   required="required"/>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <a id="lnk-add-notifier"
+                                                                           class="float-right col-form-label-sm"
+                                                                           href="#">Add
+                                                                            notifier</a>
+                                                                        <label class="col-form-label col-form-label-sm"
+                                                                               style="font-style: italic;">Notifiers</label>
+                                                                        <ol id="list-notifiers">
+                                                                        </ol>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                                <br/>
+                                                <div class="modal-footer">
+                                                    <input type="submit" id="btn-confirm-remove-signal"
+                                                           data-element-type="acl-aware"
+                                                           class="btn btn-danger" value="Remove"
+                                                           formnovalidate="formnovalidate"
+                                                           disabled="disabled"/>
+                                                    <input type="submit" id="btn-select-import-file"
+                                                           class="btn btn-secondary"
+                                                           data-element-type="acl-aware"
+                                                           value="Import" formnovalidate="formnovalidate"/>
+                                                    <input type="submit" id="btn-visualize-signal"
+                                                           class="btn btn-secondary"
+                                                           value="Visualize" formnovalidate="formnovalidate"
+                                                           disabled="disabled"/>
+                                                    <input type="submit" id="btn-confirm-save-signal"
+                                                           data-element-type="acl-aware"
+                                                           class="btn btn-primary" value="Save" disabled="disabled"/>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="form-group row">
-                                        <label for="sel-signal-enabled"
-                                               class="col-sm-3 col-form-label col-form-label-sm">Enabled</label>
+                                </div>
+                            </div>
+                        </div>
+                        <br/>
+                    </div>
+                    <div class="col-md-6">
+                        <div id="block-recipients" class="card card-block" style="display: none;">
+                            <div class="card-body">
+                                <h3 class="card-title">Email recipients
+                                    <small><a id="lnk-add-recipient" class="float-right" href="#">Add recipient</a>
+                                    </small>
+                                </h3>
+                                <div class="card-text">
+                                    <div id="block-email-all-group-members" class="form-group row"
+                                         style="display:none;">
+                                        <label for="sel-email-all-group-members" class="col-sm-3 col-form-label">Email
+                                            all
+                                            group members</label>
                                         <div class="col-sm-9">
-                                            <select id="sel-signal-enabled"
-                                                    class="form-control form-control-sm custom-select custom-select-sm"
-                                                    required="required">
-                                                <option value="true" selected="selected">Yes</option>
-                                                <option value="false">No</option>
+                                            <select id="sel-email-all-group-members"
+                                                    class="form-control form-control-sm custom-select custom-select-sm">
+                                                <option value="true">Yes</option>
+                                                <option value="false" selected="selected">No</option>
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="accordion" id="signal-accordion">
-                                        <div class="card">
-                                            <div class="card-header p-0" id="acc-heading-data">
-                                                <button id="btn-heading-data" class="btn btn-link" type="button"
-                                                        data-toggle="collapse"
-                                                        data-target="#acc-collapse-data" aria-expanded="true"
-                                                        aria-controls="acc-collapse-data">
-                                                    <span class="fa fa-database hidden-md-down">&nbsp;</span>Data
-                                                </button>
-                                            </div>
-                                            <form id="form-data">
-                                                <div id="acc-collapse-data" class="collapse show"
-                                                     aria-labelledby="acc-heading-data" data-parent="#signal-accordion">
-                                                    <div class="card-body">
-                                                        <div class="form-group row">
-                                                            <label for="sel-data-source"
-                                                                   class="col-sm-3 col-form-label col-form-label-sm">Data
-                                                                source</label>
-                                                            <div class="col-sm-9">
-                                                                <select id="sel-data-source"
-                                                                        class="form-control form-control-sm custom-select custom-select-sm"
-                                                                        data-required="required" required="required">
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                        <div class="row form-group">
-                                                            <label for="input-signal-from"
-                                                                   class="col-sm-3 col-form-label col-form-label-sm">Start
-                                                                date</label>
-                                                            <div class="col-sm-9">
-                                                                <div class="input-group input-group-sm flatpickr">
-                                                                    <input id="input-signal-from" type="text"
-                                                                           class="form-control form-control-sm"
-                                                                           value="now-1h"
-                                                                           data-input/>
-                                                                    <div class="input-group-append">
-                                                                        <a class="btn btn-outline-secondary"
-                                                                           title="Toggle calendar" data-toggle>
-                                                                            <i class="fa fa-calendar"></i>
-                                                                        </a>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="row form-group">
-                                                            <label for="input-signal-till"
-                                                                   class="col-sm-3 col-form-label col-form-label-sm">End
-                                                                date</label>
-                                                            <div class="col-sm-9">
-                                                                <div class="input-group input-group-sm flatpickr">
-                                                                    <input id="input-signal-till" type="text"
-                                                                           class="form-control form-control-sm"
-                                                                           value="now" data-input/>
-                                                                    <div class="input-group-append">
-                                                                        <a class="btn btn-outline-secondary"
-                                                                           title="Toggle calendar" data-toggle>
-                                                                            <i class="fa fa-calendar"></i>
-                                                                        </a>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="row form-group">
-                                                            <label for="input-signal-time-filter-field"
-                                                                   class="col-sm-3 col-form-label col-form-label-sm">Time
-                                                                field</label>
-                                                            <div class="col-sm-9">
-                                                                <div class="input-group input-group-sm">
-                                                                    <input id="input-signal-time-filter-field"
-                                                                           type="text"
-                                                                           class="form-control form-control-sm"
-                                                                           value="timestamp"/>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="form-group row">
-                                                            <label for="input-signal-query"
-                                                                   class="col-sm-3 col-form-label col-form-label-sm">Query</label>
-                                                            <div class="col-sm-9">
-                                                                <input id="input-signal-query" type="text"
-                                                                       class="form-control form-control-sm"
-                                                                       value="*"
-                                                                       data-required="required" required="required"/>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </form>
-                                        </div>
-                                        <div class="card" id="card-threshold" data-context="threshold">
-                                            <div class="card-header p-0" id="acc-heading-threshold">
-                                                <button id="btn-heading-threshold" class="btn btn-link collapsed"
-                                                        type="button"
-                                                        data-toggle="collapse" data-target="#acc-collapse-threshold"
-                                                        aria-expanded="true" aria-controls="acc-collapse-threshold">
-                                                    <span class="fa fa-thermometer-three-quarters hidden-md-down">&nbsp;</span>Threshold
-                                                </button>
-                                            </div>
-                                            <form id="form-threshold">
-                                                <div id="acc-collapse-threshold" class="collapse"
-                                                     aria-labelledby="acc-heading-threshold"
-                                                     data-parent="#signal-accordion">
-                                                    <div class="card-body">
-                                                        <div class="form-group row">
-                                                            <label for="input-signal-threshold"
-                                                                   class="col-sm-3 col-form-label col-form-label-sm">Threshold
-                                                                is</label>
-                                                            <div class="col-sm-4">
-                                                                <select id="sel-signal-comparison"
-                                                                        class="form-control form-control-sm custom-select custom-select-sm">
-                                                                    <option value="LT">Less than</option>
-                                                                    <option value="LTE">Less than or equal to</option>
-                                                                    <option value="EQ">Equal to</option>
-                                                                    <option value="GTE">Greater than or equal to
-                                                                    </option>
-                                                                    <option value="GT">Greater than</option>
-                                                                </select>
-                                                            </div>
-                                                            <div class="col-sm-5">
-                                                                <input id="input-signal-threshold" type="number"
-                                                                       class="form-control form-control-sm"
-                                                                       data-required="required"
-                                                                       required="required"/>
-                                                            </div>
-                                                        </div>
-                                                        <div class="form-group row">
-                                                            <label for="input-signal-cardinality"
-                                                                   class="col-sm-3 col-form-label col-form-label-sm">Group
-                                                                per</label>
-                                                            <div class="col-sm-4">
-                                                                <input id="input-signal-cardinality" type="number"
-                                                                       class="form-control form-control-sm"
-                                                                       value="5"
-                                                                       min="1"
-                                                                       data-required="required"
-                                                                       required="required"/>
-                                                            </div>
-                                                            <div class="col-sm-5">
-                                                                <select id="sel-signal-cardinality-timeunit"
-                                                                        class="form-control form-control-sm custom-select custom-select-sm">
-                                                                    <option id="cardinality-minute" value="MINUTES">
-                                                                        Minutes
-                                                                    </option>
-                                                                    <option id="cardinality-hour" value="HOURS">Hours
-                                                                    </option>
-                                                                    <option id="cardinality-day" value="DAYS">Days
-                                                                    </option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="aggregator-container-block"
-                                                             data-aggregator-level="0">
-                                                            <div class="d-flex justify-content-end bucket-aggregator-header">
-                                                                <div class="p-1">
-                                                                    <a href="#"
-                                                                       data-element-type="add-bucket-aggregator">Add
-                                                                        bucket</a>
-                                                                </div>
-                                                                <div class="p-1">
-                                                                    <a href="#"
-                                                                       data-element-type="add-metrics-aggregator">Add
-                                                                        metric</a>
-                                                                </div>
-                                                                <div class="p-1">
-                                                                    <a href="#"
-                                                                       data-element-type="add-pipeline-aggregator">Add
-                                                                        pipeline</a>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </form>
-                                        </div>
-                                        <div class="card" id="card-notifications">
-                                            <div class="card-header p-0" id="acc-heading-notifications">
-                                                <button id="btn-heading-notifications" class="btn btn-link collapsed"
-                                                        type="button"
-                                                        data-toggle="collapse" data-target="#acc-collapse-notifications"
-                                                        aria-expanded="true" aria-controls="acc-collapse-notifications">
-                                                    <span class="fa fa-satellite-dish hidden-md-down">&nbsp;</span>Notifications
-                                                </button>
-                                            </div>
-                                            <form id="form-notifications">
-                                                <div id="acc-collapse-notifications" class="collapse"
-                                                     aria-labelledby="acc-heading-notifications"
-                                                     data-parent="#signal-accordion">
-                                                    <div class="card-body">
-                                                        <div class="form-group row">
-                                                            <label for="input-signal-interval"
-                                                                   class="col-sm-3 col-form-label col-form-label-sm">Check
-                                                                every</label>
-                                                            <div class="col-sm-4">
-                                                                <input id="input-signal-interval" type="number"
-                                                                       class="form-control form-control-sm"
-                                                                       value="30"
-                                                                       min="1"
-                                                                       data-required="required"
-                                                                       required="required"/>
-                                                            </div>
-                                                            <div class="col-sm-5">
-                                                                <select id="sel-signal-interval-timeunit"
-                                                                        class="form-control form-control-sm custom-select custom-select-sm">
-                                                                    <option id="interval-minute" value="MINUTES">Minutes
-                                                                    </option>
-                                                                    <option id="interval-hour" value="HOURS">Hours
-                                                                    </option>
-                                                                    <option id="interval-day" value="DAYS">Days</option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                        <div class="form-group row">
-                                                            <label for="input-signal-max-frequency-of-exceedance"
-                                                                   class="col-sm-3 col-form-label col-form-label-sm">Max
-                                                                frequency
-                                                                of exceedance</label>
-                                                            <div class="col-sm-9">
-                                                                <input id="input-signal-max-frequency-of-exceedance"
-                                                                       type="number"
-                                                                       class="form-control form-control-sm"
-                                                                       value="1"
-                                                                       min="1"
-                                                                       data-required="required"
-                                                                       required="required"/>
-                                                            </div>
-                                                        </div>
-                                                        <div class="form-group">
-                                                            <a id="lnk-add-notifier"
-                                                               class="float-right col-form-label-sm" href="#">Add
-                                                                notifier</a>
-                                                            <label class="col-form-label col-form-label-sm"
-                                                                   style="font-style: italic;">Notifiers</label>
-                                                            <ol id="list-notifiers">
-                                                            </ol>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <input type="submit" id="btn-confirm-remove-signal"
-                                               data-element-type="acl-aware"
-                                               class="btn btn-danger" value="Remove" formnovalidate="formnovalidate"
-                                               disabled="disabled"/>
-                                        <input type="submit" id="btn-select-import-file" class="btn btn-secondary"
-                                               data-element-type="acl-aware"
-                                               value="Import" formnovalidate="formnovalidate" />
-                                        <input type="submit" id="btn-visualize-signal" class="btn btn-secondary"
-                                               value="Visualize" formnovalidate="formnovalidate"
-                                               disabled="disabled"/>
-                                        <input type="submit" id="btn-confirm-save-signal"
-                                               data-element-type="acl-aware"
-                                               class="btn btn-primary" value="Save" disabled="disabled"/>
-                                    </div>
+                                    <ol id="list-recipients">
+                                    </ol>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-            <br/>
-        </div>
-        <div class="col-md-6">
-            <div id="block-recipients" class="card card-block" style="display: none;">
-                <div class="card-body">
-                    <h3 class="card-title">Email recipients
-                        <small><a id="lnk-add-recipient" class="float-right" href="#">Add recipient</a></small>
-                    </h3>
-                    <div class="card-text">
-                        <div id="block-email-all-group-members" class="form-group row" style="display:none;">
-                            <label for="sel-email-all-group-members" class="col-sm-3 col-form-label">Email all
-                                group members</label>
-                            <div class="col-sm-9">
-                                <select id="sel-email-all-group-members"
-                                        class="form-control form-control-sm custom-select custom-select-sm">
-                                    <option value="true">Yes</option>
-                                    <option value="false" selected="selected">No</option>
-                                </select>
+                        <div class="card card-block">
+                            <div class="card-body">
+                                <h3 class="card-title">Visualize</h3>
+                                <div class="card-text">
+                                    <div id="preview_box" style="text-align: center;">
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <ol id="list-recipients">
-                        </ol>
-                    </div>
-                </div>
-            </div>
-            <div class="card card-block">
-                <div class="card-body">
-                    <h3 class="card-title">Visualize</h3>
-                    <div class="card-text">
-                        <div id="preview_box" style="text-align: center;">
                         </div>
                     </div>
                 </div>
@@ -419,8 +469,6 @@
         </div>
     </div>
 </div>
-    </div>
-</main>
 
 <div class="modal fade" id="modal-signal-overwrite">
     <div class="modal-dialog" role="document">
@@ -486,6 +534,13 @@
     </div>
 </div>
 
+<script src="../scripts/jquery.min.js"></script>
+<script src="../scripts/popper.min.js"></script>
+<script src="../scripts/bootstrap.min.js"></script>
+<script src="../scripts/jquery.scrollbar.min.js"></script>
+<script src="../scripts/jquery-ui.min.js"></script>
+<script src="../scripts/atlantis.min.js"></script>
+<script src="../scripts/flatpickr.min.js"></script>
 <script src="../scripts/autocomplete_fields.js"></script>
 <script src="../scripts/aggregators.js"></script>
 <script src="../scripts/signals.js"></script>
