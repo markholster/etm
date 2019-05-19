@@ -23,6 +23,11 @@ public class QueryAuditLogBuilder extends AbstractAuditLogBuilder<QueryAuditLog,
         return this;
     }
 
+    public QueryAuditLogBuilder setNumberOfResultsRelation(String numberOfResultsRelation) {
+        this.audit.numberOfResultsRelation = numberOfResultsRelation;
+        return this;
+    }
+
     public QueryAuditLogBuilder setQueryTime(long queryTime) {
         this.audit.queryTime = queryTime;
         return this;

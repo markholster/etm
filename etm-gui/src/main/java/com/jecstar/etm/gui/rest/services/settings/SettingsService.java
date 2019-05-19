@@ -1312,6 +1312,7 @@ public class SettingsService extends AbstractGuiService {
         SearchRequestBuilder builder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
                 .setFetchSource(false)
                 .setSize(0)
+                .trackTotalHits(true)
                 .setQuery(query);
         SearchResponse response = dataRepository.search(builder);
         return response.getHits().getTotalHits().value;

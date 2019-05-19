@@ -9,6 +9,7 @@ import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.elasticsearch.builder.GetRequestBuilder;
 import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
+import org.apache.lucene.search.TotalHits;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.unit.TimeValue;
@@ -96,10 +97,12 @@ public class AuditService extends AbstractIndexMetadataService {
         result.append("{");
         result.append("\"status\": \"success\"");
         result.append(",\"hits\": ").append(response.getHits().getTotalHits().value);
-        result.append(",\"hits_as_string\": \"").append(numberFormat.format(response.getHits().getTotalHits().value)).append("\"");
+        result.append(",\"hits_relation\": \"").append(response.getHits().getTotalHits().relation.name()).append("\"");
+        result.append(",\"hits_as_string\": \"").append(numberFormat.format(response.getHits().getTotalHits().value)).append((TotalHits.Relation.GREATER_THAN_OR_EQUAL_TO.equals(response.getHits().getTotalHits().relation)) ? "+\"" : "\"");
         result.append(",\"time_zone\": \"").append(etmPrincipal.getTimeZone().getID()).append("\"");
         result.append(",\"start_ix\": ").append(parameters.getStartIndex());
         result.append(",\"end_ix\": ").append(parameters.getStartIndex() + response.getHits().getHits().length - 1);
+        // TODO has_more_results is inaccurate in etm 4 because totalhits is a GTE value.
         result.append(",\"has_more_results\": ").append(parameters.getStartIndex() + response.getHits().getHits().length < response.getHits().getTotalHits().value - 1);
         result.append(",\"time_zone\": \"").append(etmPrincipal.getTimeZone().getID()).append("\"");
         result.append(",\"results\": [");

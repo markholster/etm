@@ -29,6 +29,12 @@ public class QueryAuditLog extends AuditLog {
     public long numberOfResults;
 
     /**
+     * The relation of number of results. Can be EQ or GTE.
+     */
+    @JsonField("number_of_results_relation")
+    public String numberOfResultsRelation;
+
+    /**
      * The time in milliseconds the query took.
      */
     @JsonField("query_time")

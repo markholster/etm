@@ -185,7 +185,7 @@ public class UserService extends AbstractGuiService {
         StringBuilder result = new StringBuilder();
         NumberFormat numberFormat = NumberFormat.getInstance(getEtmPrincipal().getLocale());
         SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL), etmConfiguration)
-                .setSize(0).setQuery(QueryBuilders.matchAllQuery());
+                .setSize(0).trackTotalHits(true).setQuery(QueryBuilders.matchAllQuery());
         SearchResponse searchResponse = dataRepository.search(searchRequestBuilder);
         result.append("{");
         addLongElementToJsonBuffer("event_count", searchResponse.getHits().getTotalHits().value, result, true);

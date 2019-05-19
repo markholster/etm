@@ -1,7 +1,7 @@
-var clipboards = [];
+let clipboards = [];
 
 function buildAuditLogPage() {
-	var currentQuery = {
+	const currentQuery = {
 	    results_per_page: 50,
 	    sort_field: 'handling_time',
 	    sort_order: 'desc',
@@ -13,7 +13,7 @@ function buildAuditLogPage() {
 		clipboard.destroy();
 	}); 
 	clipboards = [];
-	var queryInProgress = false;
+	let queryInProgress = false;
 	
 	$.ajax({
         type: 'GET',
@@ -47,23 +47,19 @@ function buildAuditLogPage() {
         }
    });
 
-   $('#btn-search').click(function() {
+	$('#btn-search').on('click', function () {
 	   startNewQuery();
    });
    
    $('#result_card').on('click', '#search_result_table thead th', function(event) {
 	   event.preventDefault();
        sortResultTable($(this).attr('data-event-field'));
-   });
-   
-   $('#result_card').on('click', '#search_result_table tfoot a', function(event) {
+   }).on('click', '#search_result_table tfoot a', function (event) {
        event.preventDefault();
-       var query = createQuery(true);
+	   const query = createQuery(true);
        query.start_ix = currentQuery.current_ix + currentQuery.results_per_page; 
        executeQuery(query, true);
-   });
-   
-   $('#result_card').on('click', '#search_result_table tbody a', function(event) {
+   }).on('click', '#search_result_table tbody a', function (event) {
 	   event.preventDefault();
        showEvent($(window).scrollTop(), $(this).attr('data-event-index'), $(this).attr('id'), $(this).parent().parent().parent().attr('data-user-timezone'));
        $('#search_result_table > tbody > tr.event-selected').removeClass('event-selected');
@@ -78,7 +74,7 @@ function buildAuditLogPage() {
    });
    
    $(window).scroll(function(event) {
-	   var $showMoreLink = $('#lnk_show_more');
+	   const $showMoreLink = $('#lnk_show_more');
        if (commons.isInViewport($showMoreLink)) {
 		   $showMoreLink.click();
 	   }
@@ -94,7 +90,7 @@ function buildAuditLogPage() {
 
 	function startNewQuery() {
 		currentQuery.timestamp = new Date().getTime();
-		var queryParams = createQuery(false);
+		const queryParams = createQuery(false);
 		queryParams.start_ix = 0;
 		executeQuery(queryParams);
 	}
@@ -108,7 +104,7 @@ function buildAuditLogPage() {
 		} else if (!currentQuery.current_query) {
 			return null;
 		}
-		var query = {
+		const query = {
 			query : currentQuery.current_query,
 			start_ix : currentQuery.current_ix,
 			max_results: currentQuery.results_per_page,
@@ -137,16 +133,16 @@ function buildAuditLogPage() {
                 }
                 currentQuery.current_ix = data.start_ix;
                 if (appendToCurrent) {
-                    var endIx = $('#search-stats').text().lastIndexOf(' ');
+					const endIx = $('#search-stats').text().lastIndexOf(' ');
                     $('#search-stats').text($('#search-stats').text().substring(0, endIx + 1) + (data.end_ix + 1) + '.');
-                    var $body = $('#search_result_table > tbody')
+					const $body = $('#search_result_table > tbody')
                     $(data.results).each(function (index, auditLog) {
                         $body.append(function () {
                             return createResultTableRow(auditLog, data.time_zone);
                         })
                     });
                     if (!data.has_more_results) {
-                        var $body = $('#search_result_table > tfoot').remove();    
+						$('#search_result_table > tfoot').remove();
                     }
                 } else {
                     $('#result_card').empty();
@@ -155,8 +151,8 @@ function buildAuditLogPage() {
                         $('#result_card').append($('<p>').text('No results found'));
                     } else {
                         $('#search-stats').text(':  Found ' + data.hits_as_string + ' audit logs in ' + data.query_time_as_string + 'ms. Showing audit logs ' + (data.start_ix + 1) + ' to ' + (data.end_ix + 1) + '.');
-                        var resultTable = $('<table id="search_result_table">');
-                        $(resultTable)
+						const $resultTable = $('<table id="search_result_table">');
+						$resultTable
                             .addClass('table table-hover table-sm')
                             .append(
                             	$('<thead>').append(
@@ -178,13 +174,13 @@ function buildAuditLogPage() {
                                 }
                             })
                             .append(function() {
-                                var $body = $('<tbody>').attr('data-user-timezone', data.time_zone);
+								const $timezones = $('<tbody>').attr('data-user-timezone', data.time_zone);
                                 $(data.results).each(function (index, auditLog) {
-                                    $body.append(function () {
+									$timezones.append(function () {
                                         return createResultTableRow(auditLog, data.time_zone);
                                     })
                                 });
-                                return $body;
+								return $timezones;
                             });
                         $('#result_card').append($('<div>').addClass('table-responsive').append($(resultTable)));
                         if (!commons.isInViewport($('#result_card'))) {
@@ -200,7 +196,7 @@ function buildAuditLogPage() {
     }
     
     function createResultTableRow(auditLog, timeZone) {
-        var $tr = $('<tr>');
+		const $tr = $('<tr>');
         
         $tr.append(
         	$('<td style="padding: 0.1rem">').append(
@@ -298,7 +294,7 @@ function buildAuditLogPage() {
 
     	if (data.correlated_events) {
         	$('#event-detail').append($('<br/>'));
-	        $correlationTable = $('<table id="correlation-table">').addClass('table table-hover table-sm').append(
+			const $correlationTable = $('<table id="correlation-table">').addClass('table table-hover table-sm').append(
 	        	$('<caption>').attr('style', 'caption-side: top;').text('Correlated events')
 	        ).append(
 	        	$('<thead>').append(
@@ -308,7 +304,7 @@ function buildAuditLogPage() {
 		        	)
 		        )
 	        ).append(function () {
-		        $tbody = $('<tbody>');
+				const $tbody = $('<tbody>');
 		        $.each(data.correlated_events, function(index, event) {
 		        	$tbody.append(
 		        		$('<tr>').append(
@@ -334,14 +330,14 @@ function buildAuditLogPage() {
     	appendToContainerInRow($('#event-detail'), 'Handling time', moment.tz(data.handling_time, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
     	appendToContainerInRow($('#event-detail'), 'Type', 'Search');
     	appendToContainerInRow($('#event-detail'), 'Principal id', data.principal_id);
-    	appendToContainerInRow($('#event-detail'), 'Number of results', data.number_of_results);
+		appendToContainerInRow($('#event-detail'), 'Number of results', data.number_of_results + ('GTE' === data.number_of_results_relation ? '+' : ''));
     	appendToContainerInRow($('#event-detail'), 'Query', data.user_query);
     	appendToContainerInRow($('#event-detail'), 'Query time', data.query_time);
     
     	$('#event-detail').append($('<br/>'));
     	$('#event-detail').append($('<label>').addClass('font-weight-bold form-control-static').text('Executed query on database'));
-	    var executedQuery = $('<code>').text(vkbeautify.json(data.executed_query, 4));
-	    $clipboard = $('<a>').attr('href', "#").addClass('small').text('Copy raw query to clipboard');
+		const executedQuery = $('<code>').text(vkbeautify.json(data.executed_query, 4));
+		const $clipboard = $('<a>').attr('href', "#").addClass('small').text('Copy raw query to clipboard');
 	    $('#event-detail').append(
 	    		$('<div>').addClass('row').attr('style', 'background-color: #eceeef;').append(
 	    				$('<div>').addClass('col-sm-12').append(
@@ -360,7 +356,7 @@ function buildAuditLogPage() {
 	        }
 	    }));
 	    if (typeof(Worker) !== "undefined") {
-	    	var worker = new Worker('../scripts/highlight-worker.js');
+			const worker = new Worker('../scripts/highlight-worker.js');
 	    	worker.onmessage = function(result) { 
 	    		executedQuery.html(result.data);
 	    	}
@@ -373,8 +369,8 @@ function buildAuditLogPage() {
 	}
 	
 	function appendElementToContainerInRow(container, name, element) {
-		var $container = $(container);
-		var $row = $container.children(":last-child");
+		const $container = $(container);
+		const $row = $container.children(":last-child");
 		if ($row.children().length > 0 && $row.children().length <= 2) {
 			$row.append(
 			    $('<div>').addClass('col-md-2').append($('<label>').addClass('font-weight-bold form-control-static').text(name)),

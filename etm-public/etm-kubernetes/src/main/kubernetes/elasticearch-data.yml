@@ -67,10 +67,10 @@ spec:
           value: "true"
         - name: node.ingest
           value: "false"
-        - name: discovery.zen.ping.unicast.hosts
+        - name: discovery.seed_hosts
           value: "elasticsearch-discovery"
-        - name: discovery.zen.minimum_master_nodes
-          value: "2"
+        - name: cluster.initial_master_nodes
+          value: "elasticsearch-discovery"
         - name: ES_JAVA_OPTS
           value: "-Djava.net.preferIPv4Stack=true -Xms512M -Xmx512M"
         - name: node.name

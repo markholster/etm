@@ -30,6 +30,7 @@ import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import com.jecstar.etm.server.core.util.DateUtils;
+import org.apache.lucene.search.TotalHits;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchResponse;
@@ -202,10 +203,12 @@ public class SearchService extends AbstractIndexMetadataService {
         result.append("\"status\": \"success\"");
         result.append(",\"history_size\": ").append(etmPrincipal.getHistorySize());
         result.append(",\"hits\": ").append(response.getHits().getTotalHits().value);
-        result.append(",\"hits_as_string\": \"").append(numberFormat.format(response.getHits().getTotalHits().value)).append("\"");
+        result.append(",\"hits_relation\": \"").append(response.getHits().getTotalHits().relation.name()).append("\"");
+        result.append(",\"hits_as_string\": \"").append(numberFormat.format(response.getHits().getTotalHits().value)).append((TotalHits.Relation.GREATER_THAN_OR_EQUAL_TO.equals(response.getHits().getTotalHits().relation)) ? "+\"" : "\"");
         result.append(",\"time_zone\": \"").append(etmPrincipal.getTimeZone().getID()).append("\"");
         result.append(",\"start_ix\": ").append(parameters.getStartIndex());
         result.append(",\"end_ix\": ").append(parameters.getStartIndex() + response.getHits().getHits().length - 1);
+        // TODO has_more_results is inaccurate in etm 4 because totalhits is a GTE value.
         result.append(",\"has_more_results\": ").append(parameters.getStartIndex() + response.getHits().getHits().length < response.getHits().getTotalHits().value - 1);
         result.append(",\"time_zone\": \"").append(etmPrincipal.getTimeZone().getID()).append("\"");
         result.append(",\"max_downloads\": ").append(etmConfiguration.getMaxSearchResultDownloadRows());
@@ -238,6 +241,7 @@ public class SearchService extends AbstractIndexMetadataService {
                     .setUserQuery(parameters.getQueryString())
                     .setExectuedQuery(executedQuery)
                     .setNumberOfResults(response.getHits().getTotalHits().value)
+                    .setNumberOfResultsRelation(response.getHits().getTotalHits().relation.name())
                     .setQueryTime(queryTime);
             IndexRequestBuilder builder = enhanceRequest(
                     new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now)),

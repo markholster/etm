@@ -69,6 +69,11 @@ public class SearchRequestBuilder extends AbstractActionRequestBuilder<SearchReq
         return this;
     }
 
+    public SearchRequestBuilder trackTotalHits(boolean trackTotalHits) {
+        this.searchSourceBuilder.trackTotalHits(true);
+        return this;
+    }
+
     public SearchRequestBuilder addAggregation(AggregationBuilder aggregationBuilder) {
         this.searchSourceBuilder.aggregation(aggregationBuilder);
         return this;

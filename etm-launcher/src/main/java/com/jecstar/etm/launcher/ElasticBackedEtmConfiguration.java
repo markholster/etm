@@ -1,6 +1,9 @@
 package com.jecstar.etm.launcher;
 
-import com.jecstar.etm.server.core.domain.configuration.*;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.License;
+import com.jecstar.etm.server.core.domain.configuration.WaitStrategy;
 import com.jecstar.etm.server.core.domain.configuration.converter.EtmConfigurationConverter;
 import com.jecstar.etm.server.core.domain.configuration.converter.LdapConfigurationConverter;
 import com.jecstar.etm.server.core.domain.configuration.converter.json.EtmConfigurationConverterJsonImpl;
@@ -236,7 +239,7 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
     @Override
     public Boolean isLicenseSizeExceeded() {
         reloadConfigurationWhenNecessary();
-        License license = getLicense();
+        var license = getLicense();
         if (license == null) {
             return true;
         }
@@ -251,18 +254,18 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 
     @SuppressWarnings("unchecked")
     private boolean reloadConfigurationWhenNecessary() {
-        long updateCheckInterval = 60 * 1000;
+        var updateCheckInterval = 60 * 1000L;
         if (System.currentTimeMillis() - this.lastCheckedForUpdates <= updateCheckInterval) {
             return false;
         }
         this.lastCheckedForUpdates = System.currentTimeMillis();
 
-        String indexNameOfToday = ElasticsearchLayout.EVENT_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now());
+        var indexNameOfToday = ElasticsearchLayout.EVENT_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now());
         this.dataRepository.indicesGetStatsAsync(new IndicesStatsRequestBuilder()
                         .setIndices(indexNameOfToday)
                         .clear()
                         .setStore(true),
-                new ActionListener<IndicesStatsResponse>() {
+                new ActionListener<>() {
                     @Override
                     public void onResponse(IndicesStatsResponse response) {
                         sizePersistedToday = response.getPrimaries().getStore().getSizeInBytes();
@@ -273,8 +276,8 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
                     }
                 });
         this.dataRepository.searchAsync(
-                new SearchRequestBuilder().setIndices(indexNameOfToday).setQuery(new BoolQueryBuilder().mustNot(new QueryStringQueryBuilder("endpoints.endpoint_handlers.application.name: \"Enterprise Telemetry Monitor\""))),
-                new ActionListener<SearchResponse>() {
+                new SearchRequestBuilder().setIndices(indexNameOfToday).trackTotalHits(true).setQuery(new BoolQueryBuilder().mustNot(new QueryStringQueryBuilder("endpoints.endpoint_handlers.application.name: \"Enterprise Telemetry Monitor\""))),
+                new ActionListener<>() {
                     @Override
                     public void onResponse(SearchResponse response) {
                         eventsPersistedToday = response.getHits().getTotalHits().value;
@@ -290,37 +293,36 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
         SyncActionListener<GetResponse> ldapExecute = DataRepository.syncActionListener(30_000L);
         this.dataRepository.getAsync(new GetRequestBuilder(this.elasticsearchIndexName, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LICENSE_DEFAULT), licenseExecute);
         this.dataRepository.getAsync(new GetRequestBuilder(this.elasticsearchIndexName, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LDAP_DEFAULT), ldapExecute);
-        GetResponse defaultResponse = this.dataRepository.get(new GetRequestBuilder(this.elasticsearchIndexName, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_NODE_DEFAULT));
-        GetResponse nodeResponse = this.dataRepository.get(new GetRequestBuilder(this.elasticsearchIndexName, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getNodeName()));
+        var defaultResponse = this.dataRepository.get(new GetRequestBuilder(this.elasticsearchIndexName, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_NODE_DEFAULT));
+        var nodeResponse = this.dataRepository.get(new GetRequestBuilder(this.elasticsearchIndexName, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getNodeName()));
 
-        String defaultContent = defaultResponse.getSourceAsString();
+        var defaultContent = defaultResponse.getSourceAsString();
         String nodeContent = null;
 
         if (nodeResponse.isExists()) {
             nodeContent = nodeResponse.getSourceAsString();
         }
-        EtmConfiguration etmConfiguration = this.etmConfigurationConverter.read(nodeContent, defaultContent, "temp-for-reload-merge");
-        GetResponse licenseResponse = licenseExecute.get();
+        var etmConfiguration = this.etmConfigurationConverter.read(nodeContent, defaultContent, "temp-for-reload-merge");
+        var licenseResponse = licenseExecute.get();
         if (licenseResponse != null && licenseResponse.isExists() && !licenseResponse.isSourceEmpty() && licenseResponse.getSourceAsMap().containsKey(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LICENSE)) {
-            Map<String, Object> licenseObject = (Map<String, Object>) licenseResponse.getSourceAsMap().get(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LICENSE);
-            Object license = licenseObject.get(this.etmConfigurationConverter.getTags().getLicenseTag());
+            var licenseObject = (Map<String, Object>) licenseResponse.getSourceAsMap().get(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LICENSE);
+            var license = licenseObject.get(this.etmConfigurationConverter.getTags().getLicenseTag());
             if (license != null && isValidLicenseKey(license.toString())) {
                 etmConfiguration.setLicenseKey(license.toString());
             }
         }
-        GetResponse ldapResponse = ldapExecute.get();
+        var ldapResponse = ldapExecute.get();
         if (ldapResponse != null && ldapResponse.isExists() && !ldapResponse.isSourceEmpty()) {
-            LdapConfiguration ldapConfiguration = this.ldapConfigurationConverter.read(ldapResponse.getSourceAsString());
+            var ldapConfiguration = this.ldapConfigurationConverter.read(ldapResponse.getSourceAsString());
             if (super.getDirectory() != null) {
                 super.getDirectory().merge(ldapConfiguration);
             } else {
-                Directory directory = new Directory(ldapConfiguration);
+                var directory = new Directory(ldapConfiguration);
                 setDirectory(directory);
             }
         } else {
             setDirectory(null);
         }
-        boolean changed = this.mergeAndNotify(etmConfiguration);
-        return changed;
+        return this.mergeAndNotify(etmConfiguration);
     }
 }
