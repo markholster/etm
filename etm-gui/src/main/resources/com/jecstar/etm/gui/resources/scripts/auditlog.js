@@ -182,7 +182,7 @@ function buildAuditLogPage() {
                                 });
 								return $timezones;
                             });
-                        $('#result_card').append($('<div>').addClass('table-responsive').append($(resultTable)));
+                        $('#result_card').append($('<div>').addClass('table-responsive').append($resultTable));
                         if (!commons.isInViewport($('#result_card'))) {
                             $('html,body').animate({scrollTop: $('#query-string').offset().top},'slow');
                         }
@@ -309,7 +309,7 @@ function buildAuditLogPage() {
 		        	$tbody.append(
 		        		$('<tr>').append(
 		        			$('<td>').attr('style' ,'padding: 0.1rem;').text(event.event_id),
-		        			$('<td>').attr('style' ,'padding: 0.1rem;').text('sql' == event.event_type ? 'SQL' : capitalize(event.event_type))
+                            $('<td>').attr('style', 'padding: 0.1rem;').text('sql' === event.event_type ? 'SQL' : capitalize(event.event_type))
 		        		)
 		        	);	
 		        });
@@ -330,7 +330,7 @@ function buildAuditLogPage() {
     	appendToContainerInRow($('#event-detail'), 'Handling time', moment.tz(data.handling_time, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
     	appendToContainerInRow($('#event-detail'), 'Type', 'Search');
     	appendToContainerInRow($('#event-detail'), 'Principal id', data.principal_id);
-		appendToContainerInRow($('#event-detail'), 'Number of results', data.number_of_results + ('GTE' === data.number_of_results_relation ? '+' : ''));
+        appendToContainerInRow($('#event-detail'), 'Number of results', data.number_of_results + ('GREATER_THAN_OR_EQUAL_TO' === data.number_of_results_relation ? '+' : ''));
     	appendToContainerInRow($('#event-detail'), 'Query', data.user_query);
     	appendToContainerInRow($('#event-detail'), 'Query time', data.query_time);
     
