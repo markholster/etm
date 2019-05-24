@@ -67,6 +67,6 @@ fi
 #git pull
 #git checkout master
 #git merge develop
-#git tag -a $VERSION
+#git tag -a v$VERSION
 #git push --tags
 
