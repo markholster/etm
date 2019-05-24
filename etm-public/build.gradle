@@ -1,5 +1,5 @@
 ext {
-    version_elasticsearch = "6.6.0"
+    version_elasticsearch = "6.6.1"
     dep_junit = "junit:junit:4.12"
     dep_jsonPath = "com.jayway.jsonpath:json-path:2.4.0"
 }
@@ -7,7 +7,7 @@ ext {
 allprojects {
     apply plugin: "eclipse"
     apply plugin: "idea"
-    version "3.5.1-SNAPSHOT"
+    version "3.5.1"
     group "com.jecstar.etm"
 
     repositories {

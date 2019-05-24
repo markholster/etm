@@ -40,6 +40,12 @@ if [ $? -ne 0 ]; then
   echo "Publishing distribution failed"
   exit 1
 fi
+scp etm-documentation/build/asciidoc/html5/etm.html mark@www.jecstar.com:/home/mark/etm-$VERSION.html
+if [ $? -ne 0 ]; then
+  echo "Publishing documentation failed"
+  exit 1
+fi
+
 
 echo "Now make the distribution available on the website"
 read -n1 -r -p "Press any key when the distibution is available for download..." key
