@@ -1,7 +1,7 @@
 == Changelog
 == Version 4.0.0
 * [ETM-23] Remove all api references to event type.
-* [ETM-103] Change gui to htmlstreams.com template.
+* [ETM-103] Change gui to themekita.
 * [ETM-105] Option to export and import graphs + signals.
 * [ETM-106] Upgrade to elasticsearch 7.x
 * [ETM-107] Add a quicksearch bar.

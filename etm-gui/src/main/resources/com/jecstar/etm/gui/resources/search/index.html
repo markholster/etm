@@ -952,6 +952,7 @@
     } else if (commons.queryString['q']) {
         $('#query-string').val(commons.queryString['q']);
         executeQuery(createQuery(false));
+        enableOrDisableSearchButton();
     }
 
 </script>
