@@ -666,10 +666,10 @@ public class SearchService extends AbstractIndexMetadataService {
         List<TransactionEvent> events = new ArrayList<>();
         for (SearchHit searchHit : scrollableSearch) {
             TransactionEvent event = new TransactionEvent();
-            event.index = searchHit.getIndex();
-            event.objectType = getEventType(searchHit);
-            event.id = searchHit.getId();
             Map<String, Object> source = searchHit.getSourceAsMap();
+            event.index = searchHit.getIndex();
+            event.objectType = getString(this.eventTags.getObjectTypeTag(), source);
+            event.id = searchHit.getId();
             event.name = getString(this.eventTags.getNameTag(), source);
             event.payload = getString(this.eventTags.getPayloadTag(), source);
             List<Map<String, Object>> endpoints = getArray(this.eventTags.getEndpointsTag(), source);
@@ -740,10 +740,10 @@ public class SearchService extends AbstractIndexMetadataService {
 
     @SuppressWarnings("unchecked")
     @GET
-    @Path("/event/{type}/{id}/chain")
+    @Path("/event/{id}/chain")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
-    public String getEventChain(@PathParam("type") String eventType, @PathParam("id") String eventId) {
+    public String getEventChain(@PathParam("id") String eventId) {
         IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder()
                 .addIds(eventId);
         // No principal filtered query. We would like to show the entire event chain, but the user should not be able to retrieve all information.
@@ -839,18 +839,5 @@ public class SearchService extends AbstractIndexMetadataService {
             result.append(", \"source\": ").append(searchHit.getSourceAsString());
             result.append("}");
         }
-    }
-
-    /**
-     * Gives the event type of a <code>SearchHit</code> instance.
-     *
-     * @param searchHit The <code>SearchHit</code> to determine the event type for.
-     * @return The event type, or <code>null</code> if the event type cannot determined.
-     */
-    private String getEventType(SearchHit searchHit) {
-        if (searchHit == null) {
-            return null;
-        }
-        return getString(this.eventTags.getObjectTypeTag(), searchHit.getSourceAsMap());
     }
 }
