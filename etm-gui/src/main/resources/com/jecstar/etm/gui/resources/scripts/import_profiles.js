@@ -355,7 +355,7 @@ function buildImportProfilesPage() {
                     commons.sortSelectOptions($importProfileSelect);
         		}
                 importProfilesMap[importProfileData.name] = importProfileData;
-                $('#import-profiles_infoBox').text('Import profile \'' + getImportProfileNameById(importProfileData.name) + '\' saved.').show('fast').delay(5000).hide('fast');
+                commons.showNotification('Import profile \'' + getImportProfileNameById(importProfileData.name) + '\' saved.', 'success');
         		enableOrDisableButtons();
             }
         }).always(function () {
@@ -377,7 +377,7 @@ function buildImportProfilesPage() {
                 $("#sel-import-profile > option").filter(function () {
                     return $(this).attr("value") === getImportProfileIdByName(importProfileName);
         		}).remove();
-                $('#import-profiles_infoBox').text('Import profile \'' + importProfileName + '\' removed.').show('fast').delay(5000).hide('fast');
+                commons.showNotification('Import profile \'' + importProfileName + '\' removed.', 'success');
         		enableOrDisableButtons();
             }
         }).always(function () {

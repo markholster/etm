@@ -230,7 +230,7 @@ function buildGroupPage() {
                     commons.sortSelectOptions($groupSelect);
         		}
         		groupMap[groupData.name] = groupData;
-        		$('#groups_infoBox').text('Group \'' + groupData.name+ '\' saved.').show('fast').delay(5000).hide('fast');
+				commons.showNotification('Group \'' + groupData.name + '\' saved.', 'success');
             }
         }).always(function () {
             commons.hideModals($('#modal-group-overwrite'));
@@ -251,7 +251,7 @@ function buildGroupPage() {
 				$("#sel-group > option").filter(function () {
 					return $(this).attr("value") === groupName;
         		}).remove();
-        		$('#groups_infoBox').text('Group \'' + groupName + '\' removed.').show('fast').delay(5000).hide('fast');
+				commons.showNotification('Group \'' + groupName + '\' removed.', 'success');
             }
         }).always(function () {
             commons.hideModals($('#modal-group-remove'));

@@ -133,7 +133,7 @@ function buildParserPage() {
                     commons.sortSelectOptions($parserSelect);
         		}
         		parserMap[parserData.name] = parserData;
-        		$('#parsers_infoBox').text('Parser \'' + parserData.name + '\' saved.').show('fast').delay(5000).hide('fast');
+				commons.showNotification('Parser \'' + parserData.name + '\' saved.', 'success');
             }
         }).always(function () {
             commons.hideModals($('#modal-parser-overwrite'));
@@ -152,9 +152,9 @@ function buildParserPage() {
                 }
         		delete parserMap[parserName];
         		$("#sel-parser > option").filter(function(i){
-        		       return $(this).attr("value") == parserName;
+					return $(this).attr("value") === parserName;
         		}).remove();
-        		$('#parsers_infoBox').text('Parser \'' + parserName + '\' removed.').show('fast').delay(5000).hide('fast');
+				commons.showNotification('Parser \'' + parserName + '\' removed.', 'success');
             }
         }).always(function () {
             commons.hideModals($('#modal-parser-remove'));
@@ -166,16 +166,16 @@ function buildParserPage() {
 			name: $('#input-parser-name').val(),
 			type: $('#input-parser-type').val()
 		}
-		if ('copy_value' == parserData.type) {
-		} else if ('fixed_position' == parserData.type) {
+		if ('copy_value' === parserData.type) {
+		} else if ('fixed_position' === parserData.type) {
 			parserData['line'] = Number($('#input-fixed_position-line').val()) - 1;
 			parserData['start_ix'] = Number($('#input-fixed_position-start-ix').val()) - 1;
 			parserData['end_ix'] = Number($('#input-fixed_position-end-ix').val()) - 1;
-		} else if ('fixed_value' == parserData.type) {
+		} else if ('fixed_value' === parserData.type) {
 			parserData['value'] = $('#input-fixed-value').val();
-		} else if ('jsonpath' == parserData.type) {
+		} else if ('jsonpath' === parserData.type) {
 			parserData['expression'] = $('#input-jsonpath-expression').val();
-		} else if ('regex' == parserData.type) {
+		} else if ('regex' === parserData.type) {
 			parserData['expression'] = $('#input-regex-expression').val();
 			parserData['group'] = Number($('#input-regex-group').val());
 			parserData['canonical_equivalence'] = $('#sel-regex-canonical-equivalence').val() == 'true' ? true : false;
@@ -186,9 +186,9 @@ function buildParserPage() {
 			parserData['unicode_case'] = $('#sel-regex-unicode-case').val() == 'true' ? true : false;
 			parserData['unicode_character_class'] = $('#sel-regex-unicode-character-class').val() == 'true' ? true : false;
 			parserData['unix_lines'] = $('#sel-regex-unix-lines').val() == 'true' ? true : false;
-		} else if ('xpath' == parserData.type) {
+		} else if ('xpath' === parserData.type) {
 			parserData['expression'] = $('#input-xpath-expression').val();
-		} else if ('xslt' == parserData.type) {
+		} else if ('xslt' === parserData.type) {
 			parserData['template'] = $('#input-xslt-template').val();
 		}
 		return parserData;

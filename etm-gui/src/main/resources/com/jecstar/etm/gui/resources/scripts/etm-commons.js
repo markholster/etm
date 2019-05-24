@@ -117,6 +117,17 @@ const commons = (function () {
         return !isNaN(parseFloat(varToTest));
     };
 
+    /**
+     * Shows a notification to the user.
+     * @param message The message to show.
+     * @param type The notification type, for example 'danger'.
+     */
+    const showNotification = function showNotification(message, type) {
+        $.notify(
+            {message: message}
+            , {type: type});
+    };
+
     return {
         addAjaxHandlers: addAjaxHandlers,
         generateUUID: generateUUID,
@@ -124,6 +135,7 @@ const commons = (function () {
         isInViewport: isInViewport,
         isNumeric: isNumeric,
         queryString: queryString,
+        showNotification: showNotification,
         sortSelectOptions: sortSelectOptions
 
     };

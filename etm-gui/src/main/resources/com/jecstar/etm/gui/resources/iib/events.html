@@ -78,9 +78,6 @@
                     <div class="card-body">
                         <h3 class="card-title">Events</h3>
                         <div class="card-text">
-                            <div id="events_errorBox" class="alert alert-danger errorBox" style="display: none;"
-                                 role="alert"></div>
-                            <div id="events_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
                             <div id="events_box">
                                 <div class="row">
                                     <div class=col-sm-12>
@@ -146,6 +143,7 @@
 <script src="../scripts/jquery.min.js"></script>
 <script src="../scripts/popper.min.js"></script>
 <script src="../scripts/bootstrap.min.js"></script>
+<script src="../scripts/bootstrap-notify.min.js"></script>
 <script src="../scripts/jquery.scrollbar.min.js"></script>
 <script src="../scripts/jquery-ui.min.js"></script>
 <script src="../scripts/atlantis.min.js"></script>
@@ -157,11 +155,10 @@
         null,
         function(event, jqXHR, settings, thrownError) {
             if ("undefined" != typeof jqXHR.responseJSON) {
-                $('#events_errorBox').text('Error saving event configuration: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
+                commons.showNotification('Error saving event configuration: ' + jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')', 'danger');
             } else {
-                $('#events_errorBox').text('Error saving event configuration: ' +  thrownError).show('fast');
+                commons.showNotification('Error saving event configuration: ' + thrownError, 'danger');
             }
-            $('html,body').animate({scrollTop: 0},'fast');
         },
         function() {
             $('html,body').animate({scrollTop: 0},'fast');

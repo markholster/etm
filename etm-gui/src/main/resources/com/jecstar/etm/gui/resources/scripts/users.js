@@ -441,7 +441,7 @@ function buildUserPage() {
                     commons.sortSelectOptions($userSelect);
                 }
                 userMap[userData.id] = userData;
-                $('#users_infoBox').text('User \'' + userData.id + '\' saved.').show('fast').delay(5000).hide('fast');
+                commons.showNotification('User \'' + userData.id + '\' saved.', 'success');
             }
         }).always(function () {
             commons.hideModals($('#modal-user-overwrite'));
@@ -479,7 +479,7 @@ function buildUserPage() {
                 $("#sel-user > option").filter(function () {
                     return $(this).attr("value") === userId;
                 }).remove();
-                $('#users_infoBox').text('User \'' + userId + '\' removed.').show('fast').delay(5000).hide('fast');
+                commons.showNotification('User \'' + userId + '\' removed.', 'success');
             }
         }).always(function () {
             commons.hideModals($('#modal-user-remove'));

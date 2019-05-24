@@ -79,10 +79,6 @@
                     <div class="card-body">
                         <h3 class="card-title">Preferences</h3>
                         <div class="card-text">
-                            <div id="settings_errorBox" class="alert alert-danger errorBox" style="display: none;"
-                                 role="alert"></div>
-                            <div id="settings_infoBox" class="alert alert-info" style="display: none;"
-                                 role="alert"></div>
                             <form id="settings_form">
                                 <div class="form-group row">
                                     <label for="input-user-id" class="col-sm-3 col-form-label">User id</label>
@@ -156,10 +152,6 @@
                         <h3 class="card-title">Change password</h3>
                         <div class="card-text">
                             <form id="password_form">
-                                <div id="password_errorBox" class="alert alert-danger errorBox" style="display: none;"
-                                     role="alert"></div>
-                                <div id="password_infoBox" class="alert alert-info" style="display: none;"
-                                     role="alert"></div>
                                 <div class="form-group row">
                                     <label for="input-current-password" class="col-sm-3 col-form-label">Current
                                         password</label>
@@ -225,6 +217,7 @@
 <script src="../scripts/jquery.min.js"></script>
 <script src="../scripts/popper.min.js"></script>
 <script src="../scripts/bootstrap.min.js"></script>
+<script src="../scripts/bootstrap-notify.min.js"></script>
 <script src="../scripts/jquery.scrollbar.min.js"></script>
 <script src="../scripts/jquery-ui.min.js"></script>
 <script src="../scripts/atlantis.min.js"></script>
@@ -233,8 +226,6 @@
 <script src="../scripts/etm-commons.js"></script>
 <script>
     $(document).ajaxStart(function () {
-        $("#settings_errorBox").hide('fast');
-        $("#password_errorBox").hide('fast');
         $('#spinner').show('fast');
     }).ajaxStop(function () {
         $('#spinner').hide('fast');
@@ -321,16 +312,15 @@
                 contentType: 'application/json',
                 dataType: 'json',
                 success: function(jqXHR) {
-                    $('#settings_infoBox').text('Preferences saved').show('fast').delay(5000).hide('fast');
+                    commons.showNotification('Preferences saved.', 'success');
                     $('html,body').animate({scrollTop: 0},'fast');
                 },
                 error: function (jqXHR, settings, thrownError) {
                     if ("undefined" != typeof jqXHR.responseJSON) {
-                        $('#settings_errorBox').text('Error saving preferences: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
+                        commons.showNotification('Error saving preferences: ' + jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')', 'danger');
                     } else {
-                        $('#settings_errorBox').text('Error saving preferences: ' +  thrownError).show('fast');
+                        commons.showNotification('Error saving preferences: ' + thrownError, 'danger');
                     }
-                    $('html,body').animate({scrollTop: 0},'fast');
                 }
              });
         });
@@ -381,7 +371,7 @@
         if ($new1 !== $new2) {
             $('#input-new-password1').parent().addClass('has-danger');
             $('#input-new-password2').parent().addClass('has-danger');
-            $("#password_errorBox").text('The new password didn\'t match the retyped password').show('fast');
+            commons.showNotification('The new password didn\'t match the retyped password.', 'danger');
             return;
         }
 
@@ -397,14 +387,14 @@
             contentType: 'application/json',
             dataType: 'json',
             success: function(jqXHR) {
-                $('#password_infoBox').text('Password changed').show('fast').delay(5000).hide('fast');
+                commons.showNotification('Password changed.', 'success');
                 document.getElementById('password_form').reset();
             },
             error: function (jqXHR, settings, thrownError) {
                 if ("undefined" != typeof jqXHR.responseJSON) {
-                    $('#password_errorBox').text('Error saving password: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
+                    commons.showNotification('Error saving password: ' + jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')', 'danger');
                 } else {
-                    $('#password_errorBox').text('Error saving password: ' +  thrownError).show('fast');
+                    commons.showNotification('Error saving password: ' + thrownError, 'danger');
                 }
             }
          });

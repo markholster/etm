@@ -80,11 +80,6 @@
                     <div class="card-body">
                         <h3 class="card-title">Import profiles</h3>
                         <div class="card-text">
-                            <div id="import-profiles_errorBox" class="alert alert-danger errorBox"
-                                 style="display: none;"
-                                 role="alert"></div>
-                            <div id="import-profiles_infoBox" class="alert alert-info" style="display: none;"
-                                 role="alert"></div>
                             <div id="import-profiles_box">
                                 <div class="row">
                                     <div class=col-sm-12>
@@ -209,6 +204,7 @@
 <script src="../scripts/jquery.min.js"></script>
 <script src="../scripts/popper.min.js"></script>
 <script src="../scripts/bootstrap.min.js"></script>
+<script src="../scripts/bootstrap-notify.min.js"></script>
 <script src="../scripts/jquery.scrollbar.min.js"></script>
 <script src="../scripts/jquery-ui.min.js"></script>
 <script src="../scripts/atlantis.min.js"></script>
@@ -221,11 +217,10 @@
         null,
         function(event, jqXHR, settings, thrownError) {
             if ("undefined" != typeof jqXHR.responseJSON) {
-                $('#import-profiles_errorBox').text('Error saving import profile: ' + jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
+                commons.showNotification('Error saving import profile: ' + jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')', 'danger');
             } else {
-                $('#import-profiless_errorBox').text('Error saving import profile: ' + thrownError).show('fast');
+                commons.showNotification('Error saving import profile: ' + thrownError, 'danger');
             }
-            $('html,body').animate({scrollTop: 0},'fast');
         },
         function() {
             $('html,body').animate({scrollTop: 0},'fast');

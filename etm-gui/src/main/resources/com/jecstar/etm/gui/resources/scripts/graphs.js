@@ -580,7 +580,7 @@ function buildGraphsPage(groupName) {
                     commons.sortSelectOptions($graphSelect);
                 }
                 graphContainerMap[graphData.name] = graphData;
-                $('#graphs_infoBox').text('Graph \'' + graphData.name + '\' saved.').show('fast').delay(5000).hide('fast');
+                commons.showNotification('Graph \'' + graphData.name + '\' saved.', 'success');
                 enableOrDisableButtons();
             }
         }).always(function () {
@@ -602,7 +602,7 @@ function buildGraphsPage(groupName) {
                 $("#sel-graph > option").filter(function () {
                     return $(this).attr("value") === graphName;
                 }).remove();
-                $('#graphs_infoBox').text('Graph \'' + graphName + '\' removed.').show('fast').delay(5000).hide('fast');
+                commons.showNotification('Graph \'' + graphName + '\' removed.', 'success');
                 enableOrDisableButtons();
             }
         }).always(function () {

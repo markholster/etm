@@ -168,7 +168,7 @@ function buildEventPage() {
 			        if (!data) {
 			            return;
 			        }
-			        $('#events_infoBox').text('Event monitoring configuration applied.').show('fast').delay(5000).hide('fast');
+					commons.showNotification('Event monitoring configuration applied.', 'success');
 					var serverMapKey = $('#sel-node').val() + '_'  + $('#sel-server').val();
 					var serverData = serverMap[serverMapKey];
 					if ('application' == objectType) {

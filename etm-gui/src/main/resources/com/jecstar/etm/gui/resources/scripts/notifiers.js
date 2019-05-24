@@ -176,7 +176,7 @@ function buildNotifiersPage() {
                     commons.sortSelectOptions($notifierSelect);
                 }
                 notifierMap[notifierData.name] = notifierData;
-                $('#notifiers_infoBox').text('Notifier \'' + notifierData.name + '\' saved.').show('fast').delay(5000).hide('fast');
+                commons.showNotification('Notifier \'' + notifierData.name + '\' saved.', 'success');
                 enableOrDisableButtons();
             }
         }).always(function () {
@@ -198,7 +198,7 @@ function buildNotifiersPage() {
                 $("#sel-notifier > option").filter(function(i){
                    return $(this).attr("value") == notifierName;
                 }).remove();
-                $('#notifiers_infoBox').text('Notifier \'' + notifierName + '\' removed.').show('fast').delay(5000).hide('fast');
+                commons.showNotification('Notifier \'' + notifierName + '\' removed.', 'success');
                 enableOrDisableButtons();
             }
         }).always(function () {

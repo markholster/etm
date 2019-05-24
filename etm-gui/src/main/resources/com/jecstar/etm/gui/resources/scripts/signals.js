@@ -518,7 +518,7 @@ function buildSignalsPage(groupName) {
                     commons.sortSelectOptions($signalSelect);
                 }
                 signalMap[signalData.name] = signalData;
-                $('#signals_infoBox').text('Signal \'' + signalData.name + '\' saved.').show('fast').delay(5000).hide('fast');
+                commons.showNotification('Signal \'' + signalData.name + '\' saved.', 'success');
                 enableOrDisableButtons();
             }
         }).always(function () {
@@ -540,7 +540,7 @@ function buildSignalsPage(groupName) {
                 $("#sel-signal > option").filter(function () {
                     return $(this).attr("value") === signalName;
                 }).remove();
-                $('#signals_infoBox').text('Signal \'' + signalName + '\' removed.').show('fast').delay(5000).hide('fast');
+                commons.showNotification('Signal \'' + signalName + '\' removed.', 'success');
                 enableOrDisableButtons();
             }
         }).always(function () {

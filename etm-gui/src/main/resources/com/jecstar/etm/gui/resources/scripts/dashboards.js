@@ -842,7 +842,7 @@ function saveDashboard(successFunction) {
             if (!data) {
                 return;
             }
-            $('#dashboard-settings_infoBox').text('Dashboard \'' + backendData.name + '\' saved.').show('fast').delay(5000).hide('fast');
+            commons.showNotification('Dashboard \'' + backendData.name + '\' saved.', 'success');
             enableOrDisableButtons();
             if (successFunction) {
                 successFunction();
@@ -1140,7 +1140,7 @@ function removeDashboard(dashboardName) {
             if (!data) {
                 return;
             }
-            $('#dashboard-settings_infoBox').text('Dashboard \'' + dashboardName + '\' removed.').show('fast').delay(5000).hide('fast');
+            commons.showNotification('Dashboard \'' + dashboardName + '\' removed.', 'success');
             enableOrDisableButtons();
         }
     }).always(function () {

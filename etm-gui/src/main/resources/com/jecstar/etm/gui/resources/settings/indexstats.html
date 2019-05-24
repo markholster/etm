@@ -81,9 +81,6 @@
                     <div class="card-body">
                         <h3 class="card-title">Index statistics</h3>
                         <div class="card-text">
-                            <div id="index_errorBox" class="alert alert-danger errorBox" style="display: none;"
-                                 role="alert"></div>
-                            <div id="index_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
                             <div id="index_box">
                                 <div class="row">
                                     <div class=col-sm-12>
@@ -131,6 +128,7 @@
 <script src="../scripts/jquery.min.js"></script>
 <script src="../scripts/popper.min.js"></script>
 <script src="../scripts/bootstrap.min.js"></script>
+<script src="../scripts/bootstrap-notify.min.js"></script>
 <script src="../scripts/jquery.scrollbar.min.js"></script>
 <script src="../scripts/jquery-ui.min.js"></script>
 <script src="../scripts/atlantis.min.js"></script>
@@ -142,11 +140,10 @@
         null,
         function(event, jqXHR, settings, thrownError) {
             if ("undefined" != typeof jqXHR.responseJSON) {
-                $('#index_errorBox').text('Error loading index statistics: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
+                commons.showNotification('Error loading index statistics: ' + jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')', 'danger');
             } else {
-                $('#index_errorBox').text('Error loading index statistics: ' +  thrownError).show('fast');
+                commons.showNotification('Error loading index statistics: ' + thrownError, 'danger');
             }
-            $('html,body').animate({scrollTop: 0},'fast');
         },
         function() {
             $('html,body').animate({scrollTop: 0},'fast');

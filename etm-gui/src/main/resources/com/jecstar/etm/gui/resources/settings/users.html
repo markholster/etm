@@ -83,9 +83,6 @@
                                       title="Download users"></a></small>
                         </h3>
                         <div class="card-text">
-                            <div id="users_errorBox" class="alert alert-danger errorBox" style="display: none;"
-                                 role="alert"></div>
-                            <div id="users_infoBox" class="alert alert-info" style="display: none;" role="alert"></div>
                             <div id="users_box">
                                 <div class="row">
                                     <div class=col-sm-12>
@@ -680,6 +677,7 @@
 <script src="../scripts/jquery.min.js"></script>
 <script src="../scripts/popper.min.js"></script>
 <script src="../scripts/bootstrap.min.js"></script>
+<script src="../scripts/bootstrap-notify.min.js"></script>
 <script src="../scripts/jquery.scrollbar.min.js"></script>
 <script src="../scripts/jquery-ui.min.js"></script>
 <script src="../scripts/atlantis.min.js"></script>
@@ -692,11 +690,10 @@
         null,
         function(event, jqXHR, settings, thrownError) {
             if ("undefined" != typeof jqXHR.responseJSON) {
-                $('#users_errorBox').text('Error saving user configuration: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
+                commons.showNotification('Error saving user configuration: ' + jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')', 'danger');
             } else {
-                $('#users_errorBox').text('Error saving user configuration: ' +  thrownError).show('fast');
+                commons.showNotification('Error saving user configuration: ' + thrownError, 'danger');
             }
-            $('html,body').animate({scrollTop: 0},'fast');
         },
         function(event, jqXHR, settings) {
             if (settings.url !== "../rest/settings/users/ldap/search") {

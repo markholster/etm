@@ -78,10 +78,6 @@
                     <div class="card-body">
                         <h3 class="card-title">License</h3>
                         <div class="card-text">
-                            <div id="license_errorBox" class="alert alert-danger errorBox" style="display: none;"
-                                 role="alert"></div>
-                            <div id="license_infoBox" class="alert alert-info" style="display: none;"
-                                 role="alert"></div>
                             <div class="row">
                                 <div class="form-group col-sm-6">
                                     <label for="input-owner">Owner</label>
@@ -127,6 +123,7 @@
 <script src="../scripts/jquery.min.js"></script>
 <script src="../scripts/popper.min.js"></script>
 <script src="../scripts/bootstrap.min.js"></script>
+<script src="../scripts/bootstrap-notify.min.js"></script>
 <script src="../scripts/jquery.scrollbar.min.js"></script>
 <script src="../scripts/jquery-ui.min.js"></script>
 <script src="../scripts/atlantis.min.js"></script>
@@ -139,11 +136,10 @@
         null,
         function(event, jqXHR, settings, thrownError) {
             if ("undefined" != typeof jqXHR.responseJSON) {
-                $('#license_errorBox').text('Error saving license: ' +  jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')').show('fast');
+                commons.showNotification('Error saving license: ' + jqXHR.responseJSON.message + ' (' + jqXHR.responseJSON.code + ')', 'danger');
             } else {
-                $('#license_errorBox').text('Error saving license: ' +  thrownError).show('fast');
+                commons.showNotification('Error saving license: ' + thrownError, 'danger');
             }
-            $('html,body').animate({scrollTop: 0},'fast');
         },
         function() {
             $('html,body').animate({scrollTop: 0},'fast');
@@ -180,11 +176,11 @@
                 if (!data) {
                     return;
                 }
-                $('#license_infoBox').text('License applied').show('fast').delay(5000).hide('fast');
+                commons.showNotification('License applied.', 'success');
                 $('#input-owner').val(data.owner);
                 $('#input-expiration-date').val(moment.tz(data.expiration_date, data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
-                $('#input-max-events').val(data.max_events_per_day == -1 ? 'Unlimited' : data.max_events_per_day_as_text);
-                $('#input-max-size').val(data.max_size_per_day == -1 ? 'Unlimited' : data.max_size_per_day_as_text);
+                $('#input-max-events').val(data.max_events_per_day === -1 ? 'Unlimited' : data.max_events_per_day_as_text);
+                $('#input-max-size').val(data.max_size_per_day === -1 ? 'Unlimited' : data.max_size_per_day_as_text);
                 $('#license-key').val('');
             }
         });    

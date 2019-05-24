@@ -105,7 +105,7 @@ function buildNodePage() {
                     commons.sortSelectOptions($nodeSelect);
         		}
         		nodeMap[nodeData.name] = nodeData;
-        		$('#nodes_infoBox').text('Node \'' + nodeData.name + '\' saved.').show('fast').delay(5000).hide('fast');
+				commons.showNotification('Node \'' + nodeData.name + '\' saved.', 'success');
             }
         }).always(function () {
             commons.hideModals($('#modal-node-overwrite'));
@@ -126,7 +126,7 @@ function buildNodePage() {
         		$("#sel-node > option").filter(function(i){
         		       return $(this).attr("value") == nodeName;
         		}).remove();
-        		$('#nodes_infoBox').text('Node \'' + nodeName + '\' removed.').show('fast').delay(5000).hide('fast');
+				commons.showNotification('Node \'' + nodeName + '\' removed.', 'success');
             }
         }).always(function() {
             commons.hideModals($('#modal-node-remove'));
