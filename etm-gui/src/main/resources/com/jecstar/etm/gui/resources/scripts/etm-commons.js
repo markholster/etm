@@ -41,14 +41,13 @@ const commons = (function () {
             if (startFunction) {
                 startFunction();
             }
-            $('.errorBox').hide('fast');
-            $('.u-header-logo').addClass('pulse');
+            $('.navbar-brand').addClass('pulse');
         }).ajaxStop(function () {
             if (stopFunction) {
                 stopFunction();
             }
             if (jQuery.active === 0) {
-                $('.u-header-logo').removeClass('pulse');
+                $('.navbar-brand').removeClass('pulse');
             }
         }).ajaxError(errorFunction)
             .ajaxComplete(function (event, jqXHR, settings) {

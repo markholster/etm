@@ -1,4 +1,4 @@
-var max_search_templates;
+let max_search_templates;
 let timeZone;
 
 $('#template-name').on('input', function() {
@@ -10,11 +10,11 @@ $('#template-name').on('input', function() {
 });
 
 $('#btn-save-template').on('click', function () {
-    var template = createTemplate();
-    var current = $('#list-template-links > li > a').filter(function() {
+    const template = createTemplate();
+    const current = $('#list-template-links > li > a').filter(function () {
         return $(this).text() === template.name;
     }).toArray();
-    if (current.length != 0) {
+    if (current.length !== 0) {
         $('#overwrite-template-name').text(template.name);
         $('#modal-template-overwrite').modal();
     } else {
@@ -29,13 +29,14 @@ $('#btn-overwrite-template').on('click', function () {
 
 $('#btn-remove-template').on('click', function (event) {
     event.preventDefault();
-    var templateName = $('#remove-template-name').text();
+    const templateName = $('#remove-template-name').text();
     $.ajax({
         type: 'DELETE',
         contentType: 'application/json',
         url: '../rest/search/templates/' + encodeURIComponent(templateName),
         cache: false,
         success: function() {
+            commons.showNotification('Search template \'' + templateName + '\' removed.', 'success');
             $('#list-template-links > li > a').filter(function() {
                     return $(this).text() === templateName;
                 }).parent().remove();
@@ -168,7 +169,7 @@ function updateHistory(query, max_size) {
 }
 
 function createTemplate() {
-    var template = { 
+    const template = {
         name: $('#template-name').val(),
         query: $('#query-string').val(),
         types: $('[id^=check-type-]:checked').map(function(){ return $(this).val(); }).get(),
@@ -180,18 +181,18 @@ function createTemplate() {
         end_time: null,
         time_filter_field: null
     };
-    var dateValue = $('#query-string-from').val();
+    let dateValue = $('#query-string-from').val();
     if (dateValue) {
-        var momentValue = moment(dateValue, moment.HTML5_FMT.DATETIME_LOCAL_SECONDS, true);
+        const momentValue = moment(dateValue, moment.HTML5_FMT.DATETIME_LOCAL_SECONDS, true);
         if (momentValue.isValid()) {
             template.start_time = Number(momentValue.valueOf());
         } else {
             template.start_time = dateValue;
         }
     }
-    var dateValue = $('#query-string-till').val();
+    dateValue = $('#query-string-till').val();
     if (dateValue) {
-        var momentValue = moment(dateValue, moment.HTML5_FMT.DATETIME_LOCAL_SECONDS, true);
+        const momentValue = moment(dateValue, moment.HTML5_FMT.DATETIME_LOCAL_SECONDS, true);
         if (momentValue.isValid()) {
             template.end_time = Number(momentValue.valueOf());
         } else {
@@ -210,6 +211,7 @@ function storeTemplate(template, isOverwrite) {
         cache: false,
         data: JSON.stringify(template),
         success: function() {
+            commons.showNotification('Search template \'' + template.name + '\' saved.', 'success');
             $('#template-name').val('');
             $('#btn-save-template').attr('disabled', 'disabled');
             if (isOverwrite) {

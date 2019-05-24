@@ -491,7 +491,7 @@ function buildUserPage() {
         const new2 = $('#input-new-password2').val();
         if (new1 !== new2) {
             $('#input-new-password1, #input-new-password2').parent().addClass('has-danger');
-            $("#users_errorBox").text('The new password didn\'t match the retyped password').show('fast');
+            commons.showNotification('The new password didn\'t match the retyped password', 'danger');
             return false;
         }
         return true;
