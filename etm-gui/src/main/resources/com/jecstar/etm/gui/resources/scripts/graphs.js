@@ -156,7 +156,7 @@ function buildGraphsPage(groupName) {
 
     const graphContainerMap = {};
     let keywords = [];
-    const $page = $('body > main > .u-content > .container-fluid');
+    const $page = $('body > .wrapper > .main-panel');
 
     const originalFromValue = $('#input-graph-from').val();
     const originalTillValue = $('#input-graph-till').val();

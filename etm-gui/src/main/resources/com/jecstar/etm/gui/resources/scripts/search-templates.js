@@ -23,7 +23,6 @@ $('#btn-save-template').on('click', function () {
 });
 
 $('#btn-overwrite-template').on('click', function () {
-    commons.hideModals($('#modal-template-overwrite'));
     storeTemplate(createTemplate(), true);
 });
 
@@ -224,11 +223,11 @@ function storeTemplate(template, isOverwrite) {
             } else {
                 $('#list-template-links').append(
                     $('<li>').append(
-                        $('<a href="#">').click(function(event) {
+                        $('<a href="#">').on('click', function (event) {
                            event.preventDefault();
                            setValuesFromTemplate(template)
                         }).text(template.name),
-                        $('<a href="#" class="fa fa-times float-right text-danger">').click(function (event) {
+                        $('<a href="#" class="fa fa-times float-right text-danger">').on('click', function (event) {
                            event.preventDefault();
                            askRemoveTemplate(template)
                         })
@@ -237,6 +236,8 @@ function storeTemplate(template, isOverwrite) {
                 validateMaxTemplates();                
             }
         }
+    }).always(function () {
+        commons.hideModals($('#modal-template-overwrite'));
     });
 }
 

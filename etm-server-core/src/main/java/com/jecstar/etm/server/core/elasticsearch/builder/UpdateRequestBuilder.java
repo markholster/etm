@@ -30,11 +30,6 @@ public class UpdateRequestBuilder extends AbstractActionRequestBuilder<UpdateReq
         return this;
     }
 
-    public UpdateRequestBuilder setVersion(long version) {
-        this.request.version(version);
-        return this;
-    }
-
     public UpdateRequestBuilder setDoc(Map<String, Object> source) {
         this.request.doc(source);
         return this;
@@ -79,6 +74,18 @@ public class UpdateRequestBuilder extends AbstractActionRequestBuilder<UpdateReq
         this.request.scriptedUpsert(scriptedUpsert);
         return this;
     }
+
+    public UpdateRequestBuilder setIfSeqNo(long seqNo) {
+        this.request.setIfSeqNo(seqNo);
+        return this;
+    }
+
+    public UpdateRequestBuilder setIfPrimaryTerm(long primaryTerm) {
+        this.request.setIfPrimaryTerm(primaryTerm);
+        return this;
+    }
+
+
 
     @Override
     public UpdateRequest build() {

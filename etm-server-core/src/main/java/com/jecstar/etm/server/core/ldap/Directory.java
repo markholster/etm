@@ -62,7 +62,7 @@ public class Directory implements AutoCloseable {
     }
 
     public boolean isConnected() {
-        return this.connectionPool != null;
+        return this.connectionPool != null && this.connectionPool.availableCount() > 0;
     }
 
     /**

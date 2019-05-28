@@ -21,7 +21,6 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
-import org.joda.time.DateTime;
 
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
@@ -31,6 +30,7 @@ import java.io.UnsupportedEncodingException;
 import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 /**
@@ -66,7 +66,7 @@ class EmailSignal implements Closeable {
                                     String clusterName,
                                     Signal signal,
                                     EmailNotifier notifier,
-                                    Map<DateTime, Double> thresholdExceedances,
+                                    Map<ZonedDateTime, Double> thresholdExceedances,
                                     EtmSecurityEntity etmSecurityEntity
     ) {
         try {
@@ -93,10 +93,10 @@ class EmailSignal implements Closeable {
                         + signal.getNotifications().getMaxFrequencyOfExceedance() + ".\r\n");
                 messageContent.append("\r\n");
                 messageContent.append("The following exceedances are recorded:\r\n");
-                ArrayList<DateTime> dateTimes = new ArrayList<>(thresholdExceedances.keySet());
+                ArrayList<ZonedDateTime> dateTimes = new ArrayList<>(thresholdExceedances.keySet());
                 Collections.sort(dateTimes);
-                for (DateTime dateTime : dateTimes) {
-                    messageContent.append(dateFormat.format(dateTime.toDate()) + ": " + numberFormat.format(thresholdExceedances.get(dateTime)) + "\r\n");
+                for (ZonedDateTime dateTime : dateTimes) {
+                    messageContent.append(dateFormat.format(dateTime) + ": " + numberFormat.format(thresholdExceedances.get(dateTime)) + "\r\n");
                 }
                 messageContent.append("\r\n");
                 messageContent.append("Kind regards,\r\n");

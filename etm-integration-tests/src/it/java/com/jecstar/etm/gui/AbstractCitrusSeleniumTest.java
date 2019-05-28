@@ -30,7 +30,6 @@ public abstract class AbstractCitrusSeleniumTest {
     protected final String username = "it-tester";
     private final String password = "Welcome123";
 
-
     /**
      * Gives the url Enterprise Telemetry Monitor is running on.
      *
@@ -126,7 +125,17 @@ public abstract class AbstractCitrusSeleniumTest {
      * @param answer     The answer for the modal.
      */
     protected void confirmModalWith(TestRunner runner, String modalTitle, String answer) {
+        sleep(500);
         runner.selenium(action -> action.click().element(By.xpath("//*[@class='modal-title' and text()='" + modalTitle + "']/../../div[@class='modal-footer']/button[text()='" + answer + "']")));
+    }
+
+    /**
+     * Wait for all notification popups to be hidden.
+     *
+     * @param browser The Citrus <code>SeleniumBrowser</code>.
+     */
+    protected void waitForNotificationsToHide(SeleniumBrowser browser) {
+        new WebDriverWait(browser.getWebDriver(), 10).until(f -> f.findElements(By.xpath("//div[@data-notify='container']")).isEmpty());
     }
 
     /**
@@ -202,19 +211,21 @@ public abstract class AbstractCitrusSeleniumTest {
      *
      * @param type The event type.
      * @param data The data that belongs to the event type.
+     * @param apiKey The api key to use for authentication on the rest processor.
      * @return <code>true</code> when the event is acknowledges, <code>false</code> otherwise.
      * @throws IOException If the connection to Enterprise Telemetry Monitor fails for some reason.
      */
-    protected boolean sendEventToEtm(String type, String data) throws IOException {
+    protected boolean sendEventToEtm(String type, String data, String apiKey) throws IOException {
         HttpURLConnection con = null;
         DataOutputStream stream = null;
         BufferedReader in = null;
         try {
-            URL url = new URL(getEtmUrl() + "/rest/processor/event/");
+            var url = new URL(getEtmUrl() + "/rest/processor/event/");
             con = (HttpURLConnection) url.openConnection();
             con.setConnectTimeout(1000);
             con.setRequestMethod("POST");
             con.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+            con.setRequestProperty("apikey", apiKey);
             con.setDoOutput(true);
             stream = new DataOutputStream(con.getOutputStream());
             stream.write(("{\"type\": \"" + type + "\", \"data\": " + data + "}").getBytes(Charset.forName("utf-8")));
@@ -224,7 +235,6 @@ public abstract class AbstractCitrusSeleniumTest {
             in = new BufferedReader(new InputStreamReader(con.getInputStream()));
             String inputLine;
             StringBuilder response = new StringBuilder();
-            response.append("");
             while ((inputLine = in.readLine()) != null) {
                 response.append(inputLine);
             }

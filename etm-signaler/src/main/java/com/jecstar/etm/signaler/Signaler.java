@@ -37,12 +37,12 @@ import org.elasticsearch.search.aggregations.HasAggregations;
 import org.elasticsearch.search.aggregations.ParsedMultiBucketAggregation;
 import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
 import org.elasticsearch.search.aggregations.bucket.ParsedSingleBucketAggregation;
-import org.joda.time.DateTime;
 import org.snmp4j.smi.OctetString;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 /**
@@ -232,9 +232,9 @@ public class Signaler extends AbstractJsonService implements Runnable {
                     new UpdateRequestBuilder().setIndex(index).setId(id),
                     this.etmConfiguration
             )
-                    .setVersion(getResponse.getVersion())
+                    .setIfSeqNo(getResponse.getSeqNo())
+                    .setIfPrimaryTerm(getResponse.getPrimaryTerm())
                     .setDoc(sourceMap)
-                    .setDocAsUpsert(true)
                     // No retry because we specify the version
                     .setRetryOnConflict(0);
             this.dataRepository.update(updateRequestBuilder);
@@ -311,7 +311,7 @@ public class Signaler extends AbstractJsonService implements Runnable {
             } else {
                 final MetricValue metricValue = new MetricValue(aggregation);
                 if (metricValue.hasValidValue() && threshold.getComparison().isExceeded(threshold.getValue(), metricValue.getValue())) {
-                    signalTestResult.addThresholdExceedance((DateTime) root.getKey(), metricValue.getValue());
+                    signalTestResult.addThresholdExceedance((ZonedDateTime) root.getKey(), metricValue.getValue());
                 }
             }
         }

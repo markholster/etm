@@ -9,9 +9,9 @@ import com.jecstar.etm.server.core.domain.principal.EtmSecurityEntity;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.persisting.internal.BusinessEventLogger;
 import com.jecstar.etm.signaler.domain.Signal;
-import org.joda.time.DateTime;
 
 import java.io.Closeable;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -52,7 +52,7 @@ public class NotificationExecutor implements Closeable {
                                  String clusterName,
                                  Signal signal,
                                  Notifier notifier,
-                                 Map<DateTime, Double> thresholdExceedances,
+                                 Map<ZonedDateTime, Double> thresholdExceedances,
                                  EtmSecurityEntity etmSecurityEntity,
                                  long systemStartTime
     ) {
@@ -68,12 +68,12 @@ public class NotificationExecutor implements Closeable {
             this.jsonConverter.addStringElementToJsonBuffer("owner_id", etmSecurityEntity.getId(), buffer, false);
             this.jsonConverter.addDoubleElementToJsonBuffer("threshold", signal.getThreshold().getValue(), buffer, false);
             this.jsonConverter.addIntegerElementToJsonBuffer("max_frequency_of_exceedance", signal.getNotifications().getMaxFrequencyOfExceedance(), buffer, false);
-            List<DateTime> keys = new ArrayList<>(thresholdExceedances.keySet());
+            List<ZonedDateTime> keys = new ArrayList<>(thresholdExceedances.keySet());
             Collections.sort(keys);
             buffer.append(", " + this.jsonConverter.escapeToJson("threshold_exceedances", true) + ": [");
             buffer.append(
                     keys.stream().map(k -> "{"
-                            + "\"timestamp\": " + k.getMillis()
+                            + "\"timestamp\": " + k.toInstant().toEpochMilli()
                             + ",\"value\": " + thresholdExceedances.get(k)
                             + "}").collect(Collectors.joining(","))
             );

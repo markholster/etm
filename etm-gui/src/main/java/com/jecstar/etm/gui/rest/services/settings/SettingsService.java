@@ -693,7 +693,7 @@ public class SettingsService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.USER_SETTINGS_READ, SecurityRoles.USER_SETTINGS_READ_WRITE})
     public String getLdapGroupsOfUser(@PathParam("userId") String userId) {
-        if (etmConfiguration.getDirectory() == null) {
+        if (etmConfiguration.getDirectory() == null || !etmConfiguration.getDirectory().isConnected()) {
             return null;
         }
         EtmPrincipal principal = etmConfiguration.getDirectory().getPrincipal(userId, true);

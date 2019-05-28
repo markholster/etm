@@ -16,7 +16,7 @@ function buildSignalsPage(groupName) {
     let keywords = [];
     let timeZone;
     let currentSelectedFile;
-    const $page = $('body > main > .u-content > .container-fluid');
+    const $page = $('body > .wrapper > .main-panel');
 
 
     const originalFromValue = $('#input-signal-from').val();

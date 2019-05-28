@@ -65,7 +65,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
                 }
                 return null;
             }
-            if (this.etmConfiguration.getDirectory() != null) {
+            if (this.etmConfiguration.getDirectory() != null && this.etmConfiguration.getDirectory().isConnected()) {
                 var ldapPrincipal = this.etmConfiguration.getDirectory().getPrincipal(principal.getId(), true);
                 addLdapGroups(principal, ldapPrincipal.getGroups());
             }

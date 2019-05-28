@@ -15,6 +15,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -54,13 +55,14 @@ public class EventChain {
                                 + ",\"partialFill\": " + (this.events.get(i).absoluteTransactionPercentage != null ? this.events.get(i).absoluteTransactionPercentage.toString() : 0.0)
                                 + ",\"dataLabels\": {\"enabled\": " + (this.events.get(i).absoluteTransactionPercentage != null ? "true" : "false") + "}"
                                 + ",\"event_time\": " + this.jsonConverter.escapeToJson(this.events.get(i).getTotalEventTime() != null ? etmPrincipal.getNumberFormat().format(this.events.get(i).getTotalEventTime().toMillis()) : null, true)
+                                + ",\"event_absolute_time\": " + this.jsonConverter.escapeToJson(this.events.get(i).getAbsoluteEventTime() != null ? etmPrincipal.getNumberFormat().format(this.events.get(i).getAbsoluteEventTime().toMillis()) : null, true)
                                 + ",\"event_id\": " + this.jsonConverter.escapeToJson(this.events.get(i).id, true)
                                 + ",\"endpoint\": " + this.jsonConverter.escapeToJson(this.events.get(i).endpoint, true)
                                 + ",\"application\": " + this.jsonConverter.escapeToJson(this.events.get(i).applicationName, true)
                                 + ",\"transaction_id\": " + this.jsonConverter.escapeToJson(this.events.get(i).transactionId, true) + "}")
                         .collect(Collectors.joining(","))
         );
-        result.append("], \"tooltip\": { \"pointFormat\": " + this.jsonConverter.escapeToJson("Name: <b>{point.yCategory}</b><br/>Application: <b>{point.application}</b><br/>Endpoint: <b>{point.endpoint}</b><br/>Response time: <b>{point.event_time}ms</b><br/>", true) + "}}]");
+        result.append("], \"tooltip\": { \"pointFormat\": " + this.jsonConverter.escapeToJson("Name: <b>{point.yCategory}</b><br/>Application: <b>{point.application}</b><br/>Endpoint: <b>{point.endpoint}</b><br/>Response time: <b>{point.event_time}ms</b><br/>Absolute time: <b>{point.event_absolute_time}ms</b><br/>", true) + "}}]");
         result.append("}");
         return result.toString();
     }
@@ -83,7 +85,7 @@ public class EventChain {
             if (event.writer) {
                 // A writer -> the percentage is calculated over the max latency of all readers of the same event.
                 if (event.async) {
-                    event.setAbsoluteTransactionPercentage(0);
+//                    event.setAbsoluteTransactionPercentage(0);
                 } else {
                     long lowestStartTime = event.startTime.toEpochMilli();
                     long highestEndTime = event.endTime.toEpochMilli();
@@ -102,8 +104,8 @@ public class EventChain {
                     if (maxEvent.isPresent()) {
                         highestEndTime = maxEvent.get().endTime.toEpochMilli();
                     }
-                    final long latency = eventTime.toMillis() - (highestEndTime - lowestStartTime);
-                    event.setAbsoluteTransactionPercentage((float) latency / (float) totalEventTime.toMillis());
+                    final Duration latency = eventTime.minus((highestEndTime - lowestStartTime), ChronoUnit.MILLIS);
+                    event.calculateAbsoluteTransactionMetrics(latency, totalEventTime);
                 }
             } else {
                 // A reader -> search for event from the same application that are written after the current event.
@@ -113,7 +115,7 @@ public class EventChain {
                         .mapToLong(e -> e.getTotalEventTime().toMillis())
                         .sum();
                 Duration absoluteTime = eventTime.minusMillis(backendTime);
-                event.setAbsoluteTransactionPercentage((float) absoluteTime.toMillis() / (float) totalEventTime.toMillis());
+                event.calculateAbsoluteTransactionMetrics(absoluteTime, totalEventTime);
             }
         }
     }
@@ -216,6 +218,7 @@ public class EventChain {
         private final int order;
         private final boolean writer;
         private BigDecimal absoluteTransactionPercentage;
+        private Duration absoluteDuration;
 
         private Event(String id, String transactionId, String endpoint, String name, String applicationName, boolean writer, Instant startTime, Instant endTime, boolean async) {
             this.id = id;
@@ -237,8 +240,13 @@ public class EventChain {
             return Duration.ofMillis(this.endTime.toEpochMilli() - this.startTime.toEpochMilli());
         }
 
-        private void setAbsoluteTransactionPercentage(float percentage) {
-            this.absoluteTransactionPercentage = new BigDecimal(Float.toString(percentage));
+        private Duration getAbsoluteEventTime() {
+            return this.absoluteDuration;
+        }
+
+        private void calculateAbsoluteTransactionMetrics(Duration absoluteDuration, Duration totalTransactionDuration) {
+            this.absoluteDuration = absoluteDuration;
+            this.absoluteTransactionPercentage = new BigDecimal(Float.toString((float) absoluteDuration.toMillis() / (float) totalTransactionDuration.toMillis()));
             this.absoluteTransactionPercentage = this.absoluteTransactionPercentage.setScale(4, RoundingMode.HALF_UP);
         }
     }

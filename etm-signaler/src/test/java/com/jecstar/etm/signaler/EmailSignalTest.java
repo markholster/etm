@@ -12,13 +12,13 @@ import com.jecstar.etm.signaler.domain.Notifications;
 import com.jecstar.etm.signaler.domain.Signal;
 import com.jecstar.etm.signaler.domain.Threshold;
 import com.jecstar.etm.signaler.domain.converter.SignalConverter;
-import org.joda.time.DateTime;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 /**
@@ -66,8 +66,8 @@ public class EmailSignalTest {
         Signal signal = signalConverter.read(signalMap);
 
 
-        DateTime now = DateTime.now();
-        Map<DateTime, Double> thresholdExceedances = new HashMap<>();
+        ZonedDateTime now = ZonedDateTime.now();
+        Map<ZonedDateTime, Double> thresholdExceedances = new HashMap<>();
         thresholdExceedances.put(now.minusHours(1), 4D);
         thresholdExceedances.put(now.minusHours(2), 5D);
         thresholdExceedances.put(now.minusHours(3), 6D);
@@ -89,10 +89,10 @@ public class EmailSignalTest {
                                     "The threshold (1.0) of signal 'Signal Test' has exceeded 4 times which tops the configured max frequency of exceedance of 3.\n" +
                                     "\n" +
                                     "The following exceedances are recorded:\n" +
-                                    emailSignal.defaultDateFormat.format(now.minusHours(4).toDate()) + ": " + emailSignal.defaultNumberFormat.format(thresholdExceedances.get(now.minusHours(4))) + "\n" +
-                                    emailSignal.defaultDateFormat.format(now.minusHours(3).toDate()) + ": " + emailSignal.defaultNumberFormat.format(thresholdExceedances.get(now.minusHours(3))) + "\n" +
-                                    emailSignal.defaultDateFormat.format(now.minusHours(2).toDate()) + ": " + emailSignal.defaultNumberFormat.format(thresholdExceedances.get(now.minusHours(2))) + "\n" +
-                                    emailSignal.defaultDateFormat.format(now.minusHours(1).toDate()) + ": " + emailSignal.defaultNumberFormat.format(thresholdExceedances.get(now.minusHours(1))) + "\n" +
+                                    emailSignal.defaultDateFormat.format(now.minusHours(4)) + ": " + emailSignal.defaultNumberFormat.format(thresholdExceedances.get(now.minusHours(4))) + "\n" +
+                                    emailSignal.defaultDateFormat.format(now.minusHours(3)) + ": " + emailSignal.defaultNumberFormat.format(thresholdExceedances.get(now.minusHours(3))) + "\n" +
+                                    emailSignal.defaultDateFormat.format(now.minusHours(2)) + ": " + emailSignal.defaultNumberFormat.format(thresholdExceedances.get(now.minusHours(2))) + "\n" +
+                                    emailSignal.defaultDateFormat.format(now.minusHours(1)) + ": " + emailSignal.defaultNumberFormat.format(thresholdExceedances.get(now.minusHours(1))) + "\n" +
                                     "\n" +
                                     "Kind regards,\n" +
                                     "Your Enterprise Telemetry Monitor administrator", "text/plain; charset=us-ascii"))

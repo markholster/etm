@@ -73,7 +73,7 @@ public class UsersIntegrationTest extends AbstractCitrusSeleniumTest {
                 sleepWhenChrome(browser, 500);
 
                 Select userSettingsAcl = new Select(browser.getWebDriver().findElement(By.id("sel-user-settings-acl")));
-                if ("Read & write".equals(userSettingsAcl.getFirstSelectedOption().getText())) {
+                if ("user_settings_read_write".equals(userSettingsAcl.getFirstSelectedOption().getAttribute("value"))) {
                     userSettingsAcl.selectByValue(SecurityRoles.USER_SETTINGS_READ);
                     sleepWhenChrome(browser, 500);
                     runner.selenium(action -> action.click().element(By.id("btn-confirm-save-user")));
@@ -81,6 +81,7 @@ public class UsersIntegrationTest extends AbstractCitrusSeleniumTest {
                     confirmModalWith(runner, "User already exists", "Yes");
                     waitForModalToHide(runner, "User already exists");
                     waitForAjaxToComplete(runner);
+                    waitForNotificationsToHide(browser);
                 }
             }
         }
@@ -108,8 +109,9 @@ public class UsersIntegrationTest extends AbstractCitrusSeleniumTest {
         waitForModalToHide(runner, "User already exists");
         waitForAjaxToComplete(runner);
         // An error box should be shown.
-        String errorText = browser.getWebDriver().findElement(By.id("users_errorBox")).getText();
-        assertTrue(errorText.contains("" + EtmException.NO_MORE_USER_ADMINS_LEFT));
+        String errorText = browser.getWebDriver().findElement(By.xpath("//span[@data-notify='message']")).getText();
+        assertTrue(errorText.contains("" + EtmException.NO_MORE_USER_ADMINS_LEFT), errorText);
+        waitForNotificationsToHide(browser);
         // A try to remove the user should also fail
         runner.selenium(action -> action.click().element(By.id("btn-confirm-remove-user")));
         waitForModalToShow(runner, "Confirm removal");
@@ -117,8 +119,9 @@ public class UsersIntegrationTest extends AbstractCitrusSeleniumTest {
         waitForModalToHide(runner, "Confirm removal");
         waitForAjaxToComplete(runner);
         // An error box should be shown.
-        errorText = browser.getWebDriver().findElement(By.id("users_errorBox")).getText();
-        assertTrue(errorText.contains("" + EtmException.NO_MORE_USER_ADMINS_LEFT));
+        errorText = browser.getWebDriver().findElement(By.xpath("//span[@data-notify='message']")).getText();
+        assertTrue(errorText.contains("" + EtmException.NO_MORE_USER_ADMINS_LEFT), errorText);
+        waitForNotificationsToHide(browser);
     }
 
 

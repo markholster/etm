@@ -5,7 +5,6 @@ import com.jecstar.etm.server.core.domain.configuration.EtmSnmpConstants;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.signaler.domain.Signal;
-import org.joda.time.DateTime;
 import org.snmp4j.*;
 import org.snmp4j.mp.MPv3;
 import org.snmp4j.mp.SnmpConstants;
@@ -18,6 +17,7 @@ import org.snmp4j.transport.DefaultUdpTransportMapping;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.time.ZonedDateTime;
 import java.util.Map;
 
 
@@ -44,7 +44,7 @@ class SnmpSignal {
         this.engineId = engineId;
     }
 
-    void sendExceedanceNotification(String clusterName, Signal signal, SnmpNotifier notifier, Map<DateTime, Double> thresholdExceedances, long systemStartTime) {
+    void sendExceedanceNotification(String clusterName, Signal signal, SnmpNotifier notifier, Map<ZonedDateTime, Double> thresholdExceedances, long systemStartTime) {
         InetAddress inetAddress;
         try {
             inetAddress = InetAddress.getLocalHost();
@@ -67,7 +67,7 @@ class SnmpSignal {
         }
     }
 
-    private void sendSnmpV1Trap(String clusterName, Signal signal, SnmpNotifier notifier, Map<DateTime, Double> thresholdExceedances, InetAddress inetAddress, long systemStartTime) {
+    private void sendSnmpV1Trap(String clusterName, Signal signal, SnmpNotifier notifier, Map<ZonedDateTime, Double> thresholdExceedances, InetAddress inetAddress, long systemStartTime) {
         Snmp snmp = null;
         try {
             // Create Transport Mapping
@@ -108,7 +108,7 @@ class SnmpSignal {
         }
     }
 
-    private void sendSnmpV2Notification(String clusterName, Signal signal, SnmpNotifier notifier, Map<DateTime, Double> thresholdExceedances, InetAddress inetAddress, long systemStartTime) {
+    private void sendSnmpV2Notification(String clusterName, Signal signal, SnmpNotifier notifier, Map<ZonedDateTime, Double> thresholdExceedances, InetAddress inetAddress, long systemStartTime) {
         Snmp snmp = null;
         try {
             // Create Transport Mapping
@@ -148,7 +148,7 @@ class SnmpSignal {
         }
     }
 
-    private void sendSnmpV3Notification(String clusterName, Signal signal, SnmpNotifier notifier, Map<DateTime, Double> thresholdExceedances, InetAddress inetAddress, long systemStartTime) {
+    private void sendSnmpV3Notification(String clusterName, Signal signal, SnmpNotifier notifier, Map<ZonedDateTime, Double> thresholdExceedances, InetAddress inetAddress, long systemStartTime) {
         OctetString engineId = new OctetString(this.engineId);
 
         PrivacyProtocol privacyProtocol = null;
@@ -268,7 +268,7 @@ class SnmpSignal {
         return EtmSnmpConstants.ETM_SIGNAL_NOTIFICATION_OID + variableSuffix;
     }
 
-    private void addSignalVariables(PDU pdu, String clusterName, Signal signal, Map<DateTime, Double> thresholdExceedances) {
+    private void addSignalVariables(PDU pdu, String clusterName, Signal signal, Map<ZonedDateTime, Double> thresholdExceedances) {
         pdu.add(new VariableBinding(new OID(getVariableOid(EtmSnmpConstants.ETM_SIGNAL_NOTIFICATION_CLUSTER_NAME_SUFFIX)), new OctetString(clusterName)));
         pdu.add(new VariableBinding(new OID(getVariableOid(EtmSnmpConstants.ETM_SIGNAL_NOTIFICATION_NAME_SUFFIX)), new OctetString(signal.getName())));
         pdu.add(new VariableBinding(new OID(getVariableOid(EtmSnmpConstants.ETM_SIGNAL_NOTIFICATION_THRESHOLD_SUFFIX)), new Integer32(Double.valueOf(signal.getThreshold().getValue()).intValue())));

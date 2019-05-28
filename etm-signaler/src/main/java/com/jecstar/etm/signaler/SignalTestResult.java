@@ -5,9 +5,9 @@ import com.jecstar.etm.signaler.backoff.AlwaysNotifyBackoffPolicy;
 import com.jecstar.etm.signaler.backoff.BackoffPolicy;
 import com.jecstar.etm.signaler.backoff.ExponentialBackoffPolicy;
 import com.jecstar.etm.signaler.domain.Signal;
-import org.joda.time.DateTime;
 
 import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,7 +17,7 @@ public class SignalTestResult {
 
     private boolean executed;
 
-    private Map<DateTime, Double> thresholdExceedances = new HashMap<>();
+    private Map<ZonedDateTime, Double> thresholdExceedances = new HashMap<>();
 
     private int consecutiveFailures = 0;
     private Duration testInterval;
@@ -31,12 +31,12 @@ public class SignalTestResult {
         return this.executed;
     }
 
-    SignalTestResult addThresholdExceedance(DateTime moment, Double value) {
+    SignalTestResult addThresholdExceedance(ZonedDateTime moment, Double value) {
         this.thresholdExceedances.put(moment, value);
         return this;
     }
 
-    Map<DateTime, Double> getThresholdExceedances() {
+    Map<ZonedDateTime, Double> getThresholdExceedances() {
         return this.thresholdExceedances;
     }
 
