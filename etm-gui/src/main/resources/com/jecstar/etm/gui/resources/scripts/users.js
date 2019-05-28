@@ -336,11 +336,8 @@ function buildUserPage() {
     $('#lnk-refresh-api-key').on('click', function (event) {
         event.preventDefault();
         const userId = $('#input-user-id').val();
-        if (!userId) {
-            return false;
-        }
-        if (!$('#input-user-api-key').text()) {
-            updateApiKey(userId);
+        if (!$('#input-user-api-key').text() || !userId) {
+            updateApiKey();
         } else {
             $('#update-api-key-user-id').text(userId);
             $('#modal-update-user-api-key').modal();
@@ -448,11 +445,11 @@ function buildUserPage() {
         });
     }
 
-    function updateApiKey(userId) {
+    function updateApiKey() {
         $.ajax({
             type: 'GET',
             contentType: 'application/json',
-            url: '../rest/settings/user/' + encodeURIComponent(userId) + '/api_key',
+            url: '../rest/settings/user/api_key',
             cache: false,
             success: function (data) {
                 if (!data) {

@@ -5,6 +5,7 @@
 * [ETM-105] Option to export and import graphs + signals.
 * [ETM-106] Upgrade to elasticsearch 7.x
 * [ETM-107] Add a quicksearch bar.
+* [ETM-108] Replace endpoint configuration with import profiles.
 * [ETM-110] Ldap groups never reloaded.
 
 === Version 3.5.1

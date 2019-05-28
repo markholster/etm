@@ -850,10 +850,10 @@ public class SettingsService extends AbstractGuiService {
     }
 
     @GET
-    @Path("/user/{userId}/api_key")
+    @Path("/user/api_key")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.USER_SETTINGS_READ_WRITE})
-    public String createNewApiKey(@PathParam("userId") String userId) {
+    public String createNewApiKey() {
         return "{" + this.escapeObjectToJsonNameValuePair("api_key", UUID.randomUUID().toString()) + "}";
     }
 
