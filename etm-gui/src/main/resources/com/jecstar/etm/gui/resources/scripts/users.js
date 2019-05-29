@@ -193,6 +193,7 @@ function buildUserPage() {
                     contentType: 'application/json',
                     url: '../rest/settings/user/' + encodeURIComponent(userData.id) + '/ldap/groups',
                     cache: false,
+                    global: false,
                     success: function (data) {
                         if (!data) {
                             return;
@@ -200,6 +201,9 @@ function buildUserPage() {
                         $.each(data.groups, function (index, group) {
                             $('#list-groups').append(createLdapGroupRow(group.name));
                         });
+                    },
+                    error: function () {
+                        $('#list-groups').append(createLdapGroupRow("FAILED TO LOAD LDAP GROUPS!"));
                     }
                 });
             }
