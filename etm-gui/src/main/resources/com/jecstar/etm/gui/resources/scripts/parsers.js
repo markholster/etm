@@ -1,6 +1,6 @@
 function buildParserPage() {
 	var parserMap = {};
-	$('#input-parser-type').change(function() {
+    $('#sel-parser-type').change(function () {
 		$('#grp-copy_value, #grp-fixed_position, #grp-fixed_value, #grp-jsonpath, #grp-regex, #grp-xpath, #grp-xslt').hide();
 		// Disable all input fields otherwise form validation will fail.
 		$('#grp-fixed_position input, #grp-fixed_value input, #grp-jsonpath input, #grp-regex input, #grp-regex select, #grp-xpath input ,#grp-xslt textarea').attr('disabled', 'disabled');
@@ -19,7 +19,7 @@ function buildParserPage() {
 		}
 		
 		$('#input-parser-name').val(parserData.name);
-		$('#input-parser-type').val(parserData.type).change();
+        $('#sel-parser-type').val(parserData.type).change();
 		if ('fixed_position' == parserData.type) {
 			$('#input-fixed_position-line').val(parserData.line + 1)
 			$('#input-fixed_position-start-ix').val(parserData.start_ix + 1);
@@ -164,7 +164,7 @@ function buildParserPage() {
 	function createParserData() {
 		var parserData = {
 			name: $('#input-parser-name').val(),
-			type: $('#input-parser-type').val()
+            type: $('#sel-parser-type').val()
 		}
 		if ('copy_value' === parserData.type) {
 		} else if ('fixed_position' === parserData.type) {
@@ -196,7 +196,7 @@ function buildParserPage() {
 
 	function resetValues() {
 	    document.getElementById('parser_form').reset();
-		$('#input-parser-type').val('copy_value').change();
+        $('#sel-parser-type').val('copy_value').change();
 		enableOrDisableButtons();
 	}
 }

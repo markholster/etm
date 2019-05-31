@@ -21,6 +21,8 @@ import java.time.Month;
 import java.time.ZoneId;
 import java.util.Date;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 /**
  * Abstract superclass for all Citrus Selenium test cases.
  */
@@ -165,8 +167,10 @@ public abstract class AbstractCitrusSeleniumTest {
      * @param browser  The Citrus <code>SeleniumBrowser</code>.
      * @param itemType The item type that needs to be selected and removed.
      * @param itemId   The item id that needs to be selected and removed.
+     * @return <code>true</code> when at least one item is removed, <code>false</code> otherwise.
      */
-    protected void selectAndRemoveItem(TestRunner runner, SeleniumBrowser browser, String itemType, String itemId) {
+    protected boolean selectAndRemoveItem(TestRunner runner, SeleniumBrowser browser, String itemType, String itemId) {
+        var removed = false;
         Select itemSelect = new Select(browser.getWebDriver().findElement(By.id("sel-" + itemType)));
         if (itemSelect.getOptions().stream().anyMatch(p -> itemId.equals(p.getAttribute("value")))) {
             sleepWhenChrome(browser, 500);
@@ -177,7 +181,24 @@ public abstract class AbstractCitrusSeleniumTest {
             confirmModalWith(runner, "Confirm removal", "Yes");
             waitForModalToHide(runner, "Confirm removal");
             waitForAjaxToComplete(runner);
+            removed = true;
         }
+        return removed;
+    }
+
+    /**
+     * Method to retrieve the api key of the integration test user from the preferences page.
+     *
+     * @param runner  The Citrus <code>TestRunner</code>.
+     * @param browser The Citrus <code>SeleniumBrowser</code>.
+     * @return The api key of the user.
+     */
+    protected String getApiKey(TestRunner runner, SeleniumBrowser browser) {
+        runner.selenium(action -> action.navigate(getEtmUrl() + "/gui/preferences/"));
+        waitForAjaxToComplete(runner);
+        final String apiKey = browser.getWebDriver().findElement(By.id("input-user-api-key")).getText();
+        assertNotNull(apiKey, "Apikey of user " + this.username + " must not be null.");
+        return apiKey;
     }
 
     /**
@@ -210,12 +231,13 @@ public abstract class AbstractCitrusSeleniumTest {
      * Send an event to Enterprise Telemetry Monitor.
      *
      * @param type The event type.
+     * @param importProfile The import profule.
      * @param data The data that belongs to the event type.
      * @param apiKey The api key to use for authentication on the rest processor.
      * @return <code>true</code> when the event is acknowledges, <code>false</code> otherwise.
      * @throws IOException If the connection to Enterprise Telemetry Monitor fails for some reason.
      */
-    protected boolean sendEventToEtm(String type, String data, String apiKey) throws IOException {
+    protected boolean sendEventToEtm(String type, String importProfile, String data, String apiKey) throws IOException {
         HttpURLConnection con = null;
         DataOutputStream stream = null;
         BufferedReader in = null;
@@ -228,7 +250,7 @@ public abstract class AbstractCitrusSeleniumTest {
             con.setRequestProperty("apikey", apiKey);
             con.setDoOutput(true);
             stream = new DataOutputStream(con.getOutputStream());
-            stream.write(("{\"type\": \"" + type + "\", \"data\": " + data + "}").getBytes(Charset.forName("utf-8")));
+            stream.write(("{\"type\": \"" + type + (importProfile != null ? "\", \"import_profile\": \"" + importProfile + "\"" : "\"") + ", \"data\": " + data + "}").getBytes(Charset.forName("utf-8")));
             stream.flush();
             stream.close();
 
