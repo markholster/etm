@@ -135,14 +135,23 @@ public class LruCacheTest {
     public void testMaxSizeMultiThreads() {
         final int maxSize = 5000;
         final int expiry = 5000;
+        final int nrOfThreads = 5;
         LruCache<Integer, Integer> cache = new LruCache<>(maxSize, expiry);
 
-        ExecutorService executorService = Executors.newFixedThreadPool(5);
-        for (int i=0; i < 5; i++) {
+        ExecutorService executorService = Executors.newFixedThreadPool(nrOfThreads);
+        for (int i = 0; i < nrOfThreads; i++) {
             final int instanceIx = i;
             executorService.submit(() -> {
                 for (int j = 0; j < 500_000; j++) {
                     Integer uniqueValue = Integer.valueOf("" + instanceIx + j);
+                    cache.put(uniqueValue, uniqueValue);
+                    cache.get(uniqueValue);
+                    cache.get(uniqueValue);
+                    cache.put(uniqueValue, uniqueValue);
+                    cache.get(uniqueValue);
+                    cache.put(uniqueValue, uniqueValue);
+                    cache.get(uniqueValue);
+                    cache.put(uniqueValue, uniqueValue);
                     cache.put(uniqueValue, uniqueValue);
                 }
             });

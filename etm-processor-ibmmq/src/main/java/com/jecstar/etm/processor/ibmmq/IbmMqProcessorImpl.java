@@ -61,7 +61,7 @@ public class IbmMqProcessorImpl implements IbmMqProcessor {
                         )
                 );
                 Gauge<Integer> readerPoolGauge = readerPool::getNumberOfActiveReaders;
-                this.metricRegistry.register("ibmmq-processor.readerpool." + destination.getName().replaceAll("\\.", "_") + ".size", readerPoolGauge);
+                this.metricRegistry.register("ibmmq-processor.readerpool." + queueManager.getName().replaceAll("\\.", "_") + "." + destination.getName().replaceAll("\\.", "_") + ".size", readerPoolGauge);
                 this.readerPools.add(readerPool);
             }
         }
