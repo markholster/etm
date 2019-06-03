@@ -5,6 +5,7 @@ import com.codahale.metrics.Timer;
 import com.codahale.metrics.Timer.Context;
 import com.ibm.mq.*;
 import com.ibm.mq.constants.CMQC;
+import com.ibm.mq.constants.MQConstants;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.handler.HandlerResults;
 import com.jecstar.etm.processor.ibmmq.configuration.Destination;
@@ -420,6 +421,9 @@ class IbmMqDestinationReader implements DestinationReader {
         this.lastPoolCheckTime = System.currentTimeMillis();
         MQQueue queue = (MQQueue) this.mqDestination;
         try {
+            if (MQConstants.MQQT_LOCAL != queue.getQueueType()) {
+                return;
+            }
             int currentDepth = queue.getCurrentDepth();
             if (currentDepth > 1000) {
                 this.instantiationContext.getDestinationReaderPool().increaseIfPossible();

@@ -1,5 +1,6 @@
 == Changelog
 === Version 3.5.2
+* [ETM-112] Not that auto scaling to maxNrOfListeners only works on local queues.
 * [ETM-111] ETM stops reading messages after 5 minutes.
 
 === Version 3.5.1
