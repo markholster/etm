@@ -136,7 +136,6 @@ public class DestinationReaderPool<T extends DestinationReader> {
      * A <code>Future</code> should only be finished on program shutdown, but we're better safe tha sorry in this case.
      */
     private void removeFinishedFutures() {
-        Iterator<DestinationReaderContext> iterator = this.currentReaders.iterator();
         this.currentReaders.removeIf(p -> p.future.isDone());
     }
 
