@@ -21,4 +21,19 @@ public class XPathExpressionParserTest {
             assertEquals("test", result);
         }
     }
+
+    @Test
+    public void testInvalidDtdLocation() {
+        final String xml = "<?xml version=\"1.0\"?>\n" +
+                "<!DOCTYPE note SYSTEM \"http://invalid.com/note.dtd\">\n" +
+                "<note>\n" +
+                "  <to>Tove</to>\n" +
+                "  <from>Jani</from>\n" +
+                "  <heading>Reminder</heading>\n" +
+                "  <body>Don't forget me this weekend!</body>\n" +
+                "</note>";
+        XPathExpressionParser parser = new XPathExpressionParser("test", "local-name(/*)");
+        String result = parser.evaluate(xml);
+        assertEquals("note", result);
+    }
 }
