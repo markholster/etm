@@ -4,6 +4,7 @@ import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import net.sf.saxon.Configuration;
+import net.sf.saxon.lib.Validation;
 import net.sf.saxon.om.NamePool.NamePoolLimitException;
 import net.sf.saxon.xpath.XPathFactoryImpl;
 import org.xml.sax.InputSource;
@@ -33,6 +34,11 @@ public class XPathExpressionParser extends AbstractExpressionParser {
         try {
             Configuration config = Configuration.newConfiguration();
             config.setErrorListener(new XmlErrorListener());
+            config.setSchemaValidationMode(Validation.STRIP);
+            config.setValidation(false);
+            config.getParseOptions().addParserFeature("http://xml.org/sax/features/validation", false);
+            config.getParseOptions().addParserFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
+            config.getParseOptions().addParserFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
             XPath xPath = new XPathFactoryImpl(config).newXPath();
             return xPath.compile(expression);
         } catch (XPathExpressionException e) {

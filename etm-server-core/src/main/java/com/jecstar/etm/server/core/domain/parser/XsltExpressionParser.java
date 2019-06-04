@@ -5,6 +5,7 @@ import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.TransformerFactoryImpl;
+import net.sf.saxon.lib.Validation;
 import net.sf.saxon.om.NamePool.NamePoolLimitException;
 
 import javax.xml.transform.*;
@@ -40,6 +41,12 @@ public class XsltExpressionParser extends AbstractExpressionParser {
     private TransformerFactory createTransformerFactory(ErrorListener errorListener) {
         Configuration config = Configuration.newConfiguration();
         config.setErrorListener(errorListener);
+        config.setErrorListener(new XmlErrorListener());
+        config.setSchemaValidationMode(Validation.STRIP);
+        config.setValidation(false);
+        config.getParseOptions().addParserFeature("http://xml.org/sax/features/validation", false);
+        config.getParseOptions().addParserFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
+        config.getParseOptions().addParserFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
         return new TransformerFactoryImpl(config);
     }
 
