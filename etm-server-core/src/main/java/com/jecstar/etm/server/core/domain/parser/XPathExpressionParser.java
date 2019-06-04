@@ -33,6 +33,7 @@ public class XPathExpressionParser extends AbstractExpressionParser {
         try {
             Configuration config = Configuration.newConfiguration();
             config.setErrorListener(new XmlErrorListener());
+            config.setValidation(false);
             XPath xPath = new XPathFactoryImpl(config).newXPath();
             return xPath.compile(expression);
         } catch (XPathExpressionException e) {
