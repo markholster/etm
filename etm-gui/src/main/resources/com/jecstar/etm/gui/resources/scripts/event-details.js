@@ -36,7 +36,7 @@ function showEvent(scrollTo, id) {
         const q = {
             fileType: $('#sel-download-transaction-type').val()
         };
-        window.location.href = '../rest/search/download/transaction/' + encodeURIComponent($('#input-download-transaction-application').val()) + '/'+ encodeURIComponent($('#input-download-transaction-id').val())+ '?q=' + encodeURIComponent(JSON.stringify(q));
+		window.location.href = '../rest/search/download/transaction/' + encodeURIComponent($('#input-download-transaction-id').val()) + '?q=' + encodeURIComponent(JSON.stringify(q));
     });
 
 	function initialize() {

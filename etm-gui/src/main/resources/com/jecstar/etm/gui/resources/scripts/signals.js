@@ -340,7 +340,7 @@ function buildSignalsPage(groupName) {
         $('#list-recipients').empty();
         if (signalData.notifications.email_recipients) {
             $('#sel-email-all-group-members').val(signalData.notifications.email_all_etm_group_members ? 'true' : 'false');
-            $.each(signalData.email_recipients, function(index, email) {
+            $.each(signalData.notifications.email_recipients, function (index, email) {
                 $('#list-recipients').append(createRecipientRow(email));
             });
         }
