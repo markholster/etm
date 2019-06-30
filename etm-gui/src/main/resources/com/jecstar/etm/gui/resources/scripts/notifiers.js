@@ -1,6 +1,6 @@
 function buildNotifiersPage() {
-    var Base64={_keyStr:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",encode:function(e){var t="";var n,r,i,s,o,u,a;var f=0;e=Base64._utf8_encode(e);while(f<e.length){n=e.charCodeAt(f++);r=e.charCodeAt(f++);i=e.charCodeAt(f++);s=n>>2;o=(n&3)<<4|r>>4;u=(r&15)<<2|i>>6;a=i&63;if(isNaN(r)){u=a=64}else if(isNaN(i)){a=64}t=t+this._keyStr.charAt(s)+this._keyStr.charAt(o)+this._keyStr.charAt(u)+this._keyStr.charAt(a)}return t},decode:function(e){var t="";var n,r,i;var s,o,u,a;var f=0;e=e.replace(/[^A-Za-z0-9+/=]/g,"");while(f<e.length){s=this._keyStr.indexOf(e.charAt(f++));o=this._keyStr.indexOf(e.charAt(f++));u=this._keyStr.indexOf(e.charAt(f++));a=this._keyStr.indexOf(e.charAt(f++));n=s<<2|o>>4;r=(o&15)<<4|u>>2;i=(u&3)<<6|a;t=t+String.fromCharCode(n);if(u!=64){t=t+String.fromCharCode(r)}if(a!=64){t=t+String.fromCharCode(i)}}t=Base64._utf8_decode(t);return t},_utf8_encode:function(e){e=e.replace(/rn/g,"n");var t="";for(var n=0;n<e.length;n++){var r=e.charCodeAt(n);if(r<128){t+=String.fromCharCode(r)}else if(r>127&&r<2048){t+=String.fromCharCode(r>>6|192);t+=String.fromCharCode(r&63|128)}else{t+=String.fromCharCode(r>>12|224);t+=String.fromCharCode(r>>6&63|128);t+=String.fromCharCode(r&63|128)}}return t},_utf8_decode:function(e){var t="";var n=0;var r=c1=c2=0;while(n<e.length){r=e.charCodeAt(n);if(r<128){t+=String.fromCharCode(r);n++}else if(r>191&&r<224){c2=e.charCodeAt(n+1);t+=String.fromCharCode((r&31)<<6|c2&63);n+=2}else{c2=e.charCodeAt(n+1);c3=e.charCodeAt(n+2);t+=String.fromCharCode((r&15)<<12|(c2&63)<<6|c3&63);n+=3}}return t}}
-    var notifierMap = {};
+    "use strict";
+    let notifierMap = {};
 
 	$.ajax({
 	    type: 'GET',
@@ -16,7 +16,7 @@ function buildNotifiersPage() {
 	        	$notifierSelect.append($('<option>').attr('value', notifier.name).text(notifier.name));
 	        	notifierMap[notifier.name] = notifier;
 	        });
-            commons.sortSelectOptions($notifierSelect)
+            commons.sortSelectOptions($notifierSelect);
 	        $notifierSelect.val('');
 	    }
 	});
@@ -32,7 +32,7 @@ function buildNotifiersPage() {
         }
         $('#input-notifier-name').val(notifierData.name);
         $('#sel-notifier-type').val(notifierData.type).trigger('change');
-        if ('EMAIL' == notifierData.type) {
+        if ('EMAIL' === notifierData.type) {
             $('#input-smtp-host').val(notifierData.host);
             $('#input-smtp-port').val(notifierData.port);
             $('#sel-smtp-connection-security').val(notifierData.smtp_connection_security);
@@ -40,13 +40,13 @@ function buildNotifiersPage() {
             $('#input-smtp-password').val(decode(notifierData.password));
             $('#input-from-address').val(notifierData.smtp_from_address);
             $('#input-from-name').val(notifierData.smtp_from_name);
-        } else if ('SNMP' == notifierData.type) {
+        } else if ('SNMP' === notifierData.type) {
             $('#input-snmp-host').val(notifierData.host);
             $('#input-snmp-port').val(notifierData.port);
             $('#sel-snmp-version').val(notifierData.snmp_version).trigger('change');
-            if ('V1' == notifierData.snmp_version || 'V2C' == notifierData.snmp_version) {
+            if ('V1' === notifierData.snmp_version || 'V2C' === notifierData.snmp_version) {
                 $('#input-snmp-community').val(decode(notifierData.snmp_community));
-            } else if ('V3' == notifierData.snmp_version) {
+            } else if ('V3' === notifierData.snmp_version) {
                 $('#input-snmp-security-name').val(notifierData.username);
                 $('#sel-snmp-authentication-protocol').val(notifierData.snmp_authentication_protocol);
                 $('#input-snmp-authentication-passphrase').val(decode(notifierData.password));
@@ -61,13 +61,13 @@ function buildNotifiersPage() {
 
 	$('#sel-notifier-type').on('change', function(event) {
         event.preventDefault();
-	    if ('ETM_BUSINESS_EVENT' == $(this).val()) {
+        if ('ETM_BUSINESS_EVENT' === $(this).val()) {
             $('#email-fields, #snmp-fields').hide();
 	        $('#business-event-fields').show();
-	    } else if ('EMAIL' == $(this).val()) {
+        } else if ('EMAIL' === $(this).val()) {
             $('#business-event-fields, #snmp-fields').hide();
 	        $('#email-fields').show();
-        } else if ('SNMP' == $(this).val()) {
+        } else if ('SNMP' === $(this).val()) {
             $('#business-event-fields, #email-fields').hide();
             $('#snmp-fields').show();
         }
@@ -76,14 +76,14 @@ function buildNotifiersPage() {
 
     $('#sel-snmp-version').on('change', function (event) {
         event.preventDefault();
-        if ('V1' == $(this).val() || 'V2C' == $(this).val()) {
+        if ('V1' === $(this).val() || 'V2C' === $(this).val()) {
             $('#group-snmp-security-name' +
                 ', #group-snmp-authentication-protocol' +
                 ', #group-snmp-authentication-passphrase' +
                 ', #group-snmp-privacy-protocol' +
                 ', #group-input-snmp-privacy-passphrase').hide();
             $('#group-snmp-community').show();
-        } else if ('V3' == $(this).val()) {
+        } else if ('V3' === $(this).val()) {
             $('#group-snmp-community').hide();
             $('#group-snmp-security-name' +
                 ', #group-snmp-authentication-protocol').show();
@@ -111,31 +111,39 @@ function buildNotifiersPage() {
         }
     });
 
-    $('#btn-confirm-save-notifier').click(function(event) {
+    $('#btn-confirm-save-notifier').on('click', function (event) {
         if (!document.getElementById('notifier_form').checkValidity()) {
             return;
         }
         event.preventDefault();
-        var notifierName = $('#input-notifier-name').val();
+        const notifierName = $('#input-notifier-name').val();
         if (isNotifierExistent(notifierName)) {
             $('#overwrite-notifier-name').text(notifierName);
             $('#modal-notifier-overwrite').modal();
         } else {
-            saveNotifier();
+            saveNotifier(true);
         }
     });
 
-    $('#btn-save-notifier').click(function(event) {
-        saveNotifier();
+    $('#btn-save-notifier').on('click', function (event) {
+        event.preventDefault();
+        saveNotifier(true);
     });
 
-    $('#btn-confirm-remove-notifier').click(function(event) {
+    $('#btn-save-notifier-without-connection-test').on('click', function (event) {
+        event.preventDefault();
+        commons.hideModals($('#modal-notifier-connection-error'));
+        saveNotifier(false);
+    });
+
+    $('#btn-confirm-remove-notifier').on('click', function (event) {
         event.preventDefault();
         $('#remove-notifier-name').text($('#input-notifier-name').val());
         $('#modal-notifier-remove').modal();
     });
 
-    $('#btn-remove-notifier').click(function(event) {
+    $('#btn-remove-notifier').on('click', function (event) {
+        event.preventDefault();
         removeNotifier($('#input-notifier-name').val());
     });
 
@@ -158,8 +166,8 @@ function buildNotifiersPage() {
         }
     }
 
-    function saveNotifier() {
-        var notifierData = createNotifierData();
+    function saveNotifier(testConnection) {
+        const notifierData = createNotifierData(testConnection);
         $.ajax({
             type: 'PUT',
             contentType: 'application/json',
@@ -170,14 +178,20 @@ function buildNotifiersPage() {
                 if (!data) {
                     return;
                 }
-                if (!isNotifierExistent(notifierData.name)) {
-                    const $notifierSelect = $('#sel-notifier');
-                    $notifierSelect.append($('<option>').attr('value', notifierData.name).text(notifierData.name));
-                    commons.sortSelectOptions($notifierSelect);
+                if (data.status === 'success') {
+                    if (!isNotifierExistent(notifierData.name)) {
+                        const $notifierSelect = $('#sel-notifier');
+                        $notifierSelect.append($('<option>').attr('value', notifierData.name).text(notifierData.name));
+                        commons.sortSelectOptions($notifierSelect);
+                    }
+                    notifierMap[notifierData.name] = notifierData;
+                    commons.showNotification('Notifier \'' + notifierData.name + '\' saved.', 'success');
+                    enableOrDisableButtons();
+                } else {
+                    commons.hideModals($('#modal-notifier-overwrite'));
+                    $('#modal-notifier-connection-message').text(data.reason);
+                    $('#modal-notifier-connection-error').modal();
                 }
-                notifierMap[notifierData.name] = notifierData;
-                commons.showNotification('Notifier \'' + notifierData.name + '\' saved.', 'success');
-                enableOrDisableButtons();
             }
         }).always(function () {
             commons.hideModals($('#modal-notifier-overwrite'));
@@ -195,8 +209,8 @@ function buildNotifiersPage() {
                     return;
                 }
                 delete notifierMap[notifierName];
-                $("#sel-notifier > option").filter(function(i){
-                   return $(this).attr("value") == notifierName;
+                $("#sel-notifier > option").filter(function () {
+                    return $(this).attr("value") === notifierName;
                 }).remove();
                 commons.showNotification('Notifier \'' + notifierName + '\' removed.', 'success');
                 enableOrDisableButtons();
@@ -206,12 +220,13 @@ function buildNotifiersPage() {
         });
     }
 
-    function createNotifierData() {
-        var notifierData = {
+    function createNotifierData(testConnection) {
+        const notifierData = {
             name: $('#input-notifier-name').val(),
-            type: $('#sel-notifier-type').val()
+            type: $('#sel-notifier-type').val(),
+            test_connection: !!testConnection
         };
-        if ('EMAIL' == notifierData.type) {
+        if ('EMAIL' === notifierData.type) {
             notifierData.host = $('#input-smtp-host').val();
             notifierData.port = Number($('#input-smtp-port').val());
             notifierData.smtp_connection_security = $('#sel-smtp-connection-security').val() ? $('#sel-smtp-connection-security').val() : null;
@@ -219,13 +234,13 @@ function buildNotifiersPage() {
             notifierData.password = encode($('#input-smtp-password').val());
             notifierData.smtp_from_address = $('#input-from-address').val() ? $('#input-from-address').val() : null;
             notifierData.smtp_from_name = $('#input-from-name').val() ? $('#input-from-name').val() : null;
-        } else if ('SNMP' == notifierData.type) {
+        } else if ('SNMP' === notifierData.type) {
             notifierData.host = $('#input-snmp-host').val();
             notifierData.port = Number($('#input-snmp-port').val());
             notifierData.snmp_version = $('#sel-snmp-version').val();
-            if ('V1' == notifierData.snmp_version || 'V2C' == notifierData.snmp_version) {
+            if ('V1' === notifierData.snmp_version || 'V2C' === notifierData.snmp_version) {
                 notifierData.snmp_community = encode($('#input-snmp-community').val())
-            } else if ('V3' == notifierData.snmp_version) {
+            } else if ('V3' === notifierData.snmp_version) {
                 notifierData.username = $('#input-snmp-security-name').val() ? $('#input-snmp-security-name').val() : null;
                 if ($('#sel-snmp-authentication-protocol').val()) {
                     notifierData.snmp_authentication_protocol = $('#sel-snmp-authentication-protocol').val();
@@ -248,8 +263,8 @@ function buildNotifiersPage() {
         if (!data) {
             return null;
         }
-        for (i = 0; i < 7; i++) {
-            data = Base64.decode(data);
+        for (let i = 0; i < 7; i++) {
+            data = commons.base64Decode(data);
         }
         return data;
     }
@@ -258,8 +273,8 @@ function buildNotifiersPage() {
         if (!data) {
             return null;
         }
-        for (i = 0; i < 7; i++) {
-            data = Base64.encode(data);
+        for (let i = 0; i < 7; i++) {
+            data = commons.base64Encode(data);
         }
         return data;
     }

@@ -70,7 +70,7 @@ class EmailSignal implements Closeable {
                                     EtmSecurityEntity etmSecurityEntity
     ) {
         try {
-            SessionAndTransport sessionAndTransport = getSessionAndTransport(notifier);
+            SessionAndTransport sessionAndTransport = getSessionAndTransport(dataRepository, notifier);
             for (String recipient : determineRecipients(dataRepository, etmConfiguration, signal, etmSecurityEntity)) {
                 final String subject = "[" + clusterName + "] - Signal: " + signal.getName();
                 InternetAddress toAddress = new InternetAddress(recipient);
@@ -131,7 +131,7 @@ class EmailSignal implements Closeable {
                                           EtmSecurityEntity etmSecurityEntity
     ) {
         try {
-            SessionAndTransport sessionAndTransport = getSessionAndTransport(notifier);
+            SessionAndTransport sessionAndTransport = getSessionAndTransport(dataRepository, notifier);
             for (String recipient : determineRecipients(dataRepository, etmConfiguration, signal, etmSecurityEntity)) {
                 final String subject = "[" + clusterName + "] - Signal fixed: " + signal.getName();
                 InternetAddress toAddress = new InternetAddress(recipient);
@@ -255,29 +255,17 @@ class EmailSignal implements Closeable {
     /**
      * Gives a <code>SessionAndTransport</code> instance that belongs to a certain <code>Notifier</code>.
      *
+     * @param dataRepository The <code>DataRepository</code> that contains the trusted certificates.
      * @param notifier The <code>Notifier</code> to retrieve the <code>SessionAndTransport</code> for.
      * @return The <code>SessionAndTransport</code> instance.
      */
-    private SessionAndTransport getSessionAndTransport(EmailNotifier notifier) {
+    private SessionAndTransport getSessionAndTransport(final DataRepository dataRepository, final EmailNotifier notifier) {
         if (this.serverConnections.containsKey(notifier.getName())) {
             return this.serverConnections.get(notifier.getName());
         }
-        Properties mailProps = new Properties();
-        mailProps.put("mail.transport.protocol", "smtp");
-        mailProps.put("mail.smtp.host", notifier.getHost());
-        mailProps.put("mail.smtp.port", notifier.getPort());
-        mailProps.put("mail.smtp.auth", notifier.getUsername() != null || notifier.getPassword() != null ? "true" : "false");
-        if (EmailNotifier.SmtpConnectionSecurity.STARTTLS.equals(notifier.getSmtpConnectionSecurity())) {
-            mailProps.put("mail.smtp.starttls.enable", "true");
-            mailProps.put("mail.smtp.ssl.trust", "*");
-        } else if (EmailNotifier.SmtpConnectionSecurity.SSL_TLS.equals(notifier.getSmtpConnectionSecurity())) {
-            mailProps.put("mail.smtp.ssl.enable", "true");
-            mailProps.put("mail.smtp.ssl.trust", "*");
-        }
-
         Session mailSession;
         if (notifier.getUsername() != null || notifier.getPassword() != null) {
-            mailSession = Session.getInstance(mailProps, new Authenticator() {
+            mailSession = Session.getInstance(notifier.getConnectionProperties(dataRepository), new Authenticator() {
 
                 @Override
                 protected PasswordAuthentication getPasswordAuthentication() {
@@ -286,7 +274,7 @@ class EmailSignal implements Closeable {
 
             });
         } else {
-            mailSession = Session.getInstance(mailProps);
+            mailSession = Session.getInstance(notifier.getConnectionProperties(dataRepository));
         }
         try {
             Transport transport = mailSession.getTransport();

@@ -12,7 +12,7 @@ import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
-import com.jecstar.etm.server.core.ssl.SSLContextBuilder;
+import com.jecstar.etm.server.core.tls.SSLContextBuilder;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.Undertow.Builder;

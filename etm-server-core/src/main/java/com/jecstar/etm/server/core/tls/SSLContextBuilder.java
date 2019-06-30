@@ -1,4 +1,4 @@
-package com.jecstar.etm.server.core.ssl;
+package com.jecstar.etm.server.core.tls;
 
 import javax.net.ssl.*;
 import java.io.File;

@@ -1,10 +1,25 @@
 package com.jecstar.etm.server.core.domain.cluster.notifier;
 
+import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.converter.JsonField;
 import com.jecstar.etm.server.core.converter.JsonNamespace;
 import com.jecstar.etm.server.core.converter.custom.Base64Converter;
 import com.jecstar.etm.server.core.converter.custom.EnumConverter;
+import com.jecstar.etm.server.core.domain.cluster.certificate.Usage;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.tls.ElasticBackedTrustManager;
+
+import javax.mail.Authenticator;
+import javax.mail.MessagingException;
+import javax.mail.PasswordAuthentication;
+import javax.mail.Session;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Properties;
 
 @JsonNamespace(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER)
 public class EmailNotifier extends Notifier {
@@ -104,6 +119,68 @@ public class EmailNotifier extends Notifier {
 
     public void setSmtpFromName(String smtpFromName) {
         this.smtpFromName = smtpFromName;
+    }
+
+    @Override
+    public ConnectionTestResult testConnection(DataRepository dataRepository) {
+        Session mailSession;
+        if (getUsername() != null || getPassword() != null) {
+            mailSession = Session.getInstance(getConnectionProperties(dataRepository), new Authenticator() {
+
+                @Override
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    return new PasswordAuthentication(getUsername(), getPassword());
+                }
+
+            });
+        } else {
+            mailSession = Session.getInstance(getConnectionProperties(dataRepository));
+        }
+        try (var transport = mailSession.getTransport()) {
+            transport.connect();
+        } catch (MessagingException e) {
+            return new ConnectionTestResult(e.getMessage());
+        }
+        return ConnectionTestResult.OK;
+    }
+
+
+    /**
+     * Gives the <code>Properties</code> instances that can be used to setup a connection to the SMTP server configured in this <code>Notifier</code>.
+     *
+     * @param dataRepository The <code>DataRepository</code> that stores the trusted ssl certificats.
+     * @return A <code>Properties</code> instance with the JavaMail connection configuration.
+     */
+    public Properties getConnectionProperties(DataRepository dataRepository) {
+        var mailProps = new Properties();
+        mailProps.put("mail.transport.protocol", "smtp");
+        mailProps.put("mail.smtp.host", getHost());
+        mailProps.put("mail.smtp.port", getPort());
+        mailProps.put("mail.smtp.auth", getUsername() != null || getPassword() != null ? "true" : "false");
+        if (EmailNotifier.SmtpConnectionSecurity.STARTTLS.equals(getSmtpConnectionSecurity())) {
+            mailProps.put("mail.smtp.starttls.enable", "true");
+            mailProps.put("mail.smtp.ssl.socketFactory", createSslSocketFactory(dataRepository));
+        } else if (EmailNotifier.SmtpConnectionSecurity.SSL_TLS.equals(getSmtpConnectionSecurity())) {
+            mailProps.put("mail.smtp.ssl.enable", "true");
+            mailProps.put("mail.smtp.ssl.socketFactory", createSslSocketFactory(dataRepository));
+        }
+        return mailProps;
+    }
+
+    /**
+     * Creates a new <code>SSLSocketFactory</code> that can be used for creating secure SMTP connection.s
+     *
+     * @param dataRepository The <code>DataRepository</code> that contains the trusted certificates.
+     * @return A <code>SSLSocketFactory</code> for setting up secure SMTP connections.
+     */
+    private SSLSocketFactory createSslSocketFactory(DataRepository dataRepository) {
+        try {
+            var sslcontext = SSLContext.getInstance("TLS");
+            sslcontext.init(null, new TrustManager[]{new ElasticBackedTrustManager(Usage.SMTP, dataRepository)}, null);
+            return sslcontext.getSocketFactory();
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+        }
     }
 
 }

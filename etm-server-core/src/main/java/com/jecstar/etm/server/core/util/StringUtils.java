@@ -33,7 +33,7 @@ public final class StringUtils {
                 else {
                     // Not 7 Bit use the unicode system
                     result.append("&#");
-                    result.append(Integer.toString(ci));
+                    result.append(ci);
                     result.append(';');
                 }
             }
@@ -56,4 +56,13 @@ public final class StringUtils {
             return "";
         }
     }
+
+    public static String byteArrayToHex(byte[] array) {
+        StringBuilder sb = new StringBuilder(array.length * 2);
+        for (byte b : array) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
+    }
+
 }

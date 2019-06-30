@@ -5,6 +5,7 @@ import com.jecstar.etm.server.core.converter.JsonNamespace;
 import com.jecstar.etm.server.core.converter.custom.Base64Converter;
 import com.jecstar.etm.server.core.converter.custom.EnumConverter;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 
 @JsonNamespace(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER)
 public class SnmpNotifier extends Notifier {
@@ -155,5 +156,10 @@ public class SnmpNotifier extends Notifier {
 
     public void setSnmpPrivacyPassphrase(String snmpPrivacyPassphrase) {
         this.snmpPrivacyPassphrase = snmpPrivacyPassphrase;
+    }
+
+    @Override
+    public ConnectionTestResult testConnection(DataRepository dataRepository) {
+        return ConnectionTestResult.OK;
     }
 }

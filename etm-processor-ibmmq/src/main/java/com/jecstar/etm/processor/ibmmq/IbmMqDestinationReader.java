@@ -17,7 +17,7 @@ import com.jecstar.etm.processor.reader.DestinationReaderInstantiationContext;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.persisting.internal.BusinessEventLogger;
-import com.jecstar.etm.server.core.ssl.SSLContextBuilder;
+import com.jecstar.etm.server.core.tls.SSLContextBuilder;
 
 import javax.net.ssl.SSLContext;
 import java.io.IOException;

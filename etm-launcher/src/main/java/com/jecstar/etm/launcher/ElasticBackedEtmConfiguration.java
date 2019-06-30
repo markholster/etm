@@ -317,7 +317,7 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
             if (super.getDirectory() != null) {
                 super.getDirectory().merge(ldapConfiguration);
             } else {
-                var directory = new Directory(ldapConfiguration);
+                var directory = new Directory(this.dataRepository, ldapConfiguration);
                 setDirectory(directory);
             }
         } else {

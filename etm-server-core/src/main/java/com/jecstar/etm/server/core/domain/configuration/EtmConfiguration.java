@@ -421,11 +421,19 @@ public class EtmConfiguration {
     }
 
     public boolean isLicenseExpired() {
-        return this.license == null || !isLicenseValidAt(Instant.now());
+        return !isLicenseExpired(Instant.now());
     }
 
     public Boolean isLicenseAlmostExpired() {
-        return this.license != null && !isLicenseExpired() && !isLicenseValidAt(Instant.now().plus(Period.ofDays(14)));
+        return !isLicenseExpired() && !isLicenseExpired(Instant.now().plus(Period.ofDays(14)));
+    }
+
+    private boolean isLicenseExpired(Instant moment) {
+        return this.license != null && this.license.isExpiredAt(moment);
+    }
+
+    public boolean isLicenseValid() {
+        return this.license == null && this.license.isValidAt(Instant.now());
     }
 
     public Boolean isLicenseCountExceeded() {
@@ -434,10 +442,6 @@ public class EtmConfiguration {
 
     public Boolean isLicenseSizeExceeded() {
         return this.license == null;
-    }
-
-    private boolean isLicenseValidAt(Instant moment) {
-        return this.license != null && !moment.isAfter(this.license.getExpiryDate());
     }
 
     /**
@@ -561,5 +565,4 @@ public class EtmConfiguration {
         }
         return changed.size() > 0;
     }
-
 }

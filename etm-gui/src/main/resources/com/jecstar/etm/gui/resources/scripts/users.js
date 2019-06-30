@@ -1,4 +1,5 @@
 function buildUserPage() {
+    const userMap = {};
     const $groupSelect = $('<select>').addClass('form-control custom-select etm-group');
     const $notifierSelect = $('<select>').addClass('form-control custom-select etm-notifier');
 
@@ -140,8 +141,6 @@ function buildUserPage() {
         minLength: 1,
     });
 
-
-    const userMap = {};
     $('#sel-user').on('change', function (event) {
         event.preventDefault();
         const userData = userMap[$(this).val()];
@@ -246,7 +245,7 @@ function buildUserPage() {
         $('#modal-download-users').modal();
     });
 
-    $('#btn-download-users').click(function(event) {
+    $('#btn-download-users').on('click', function (event) {
         event.preventDefault();
         commons.hideModals($('#modal-download-users'));
         const q = {

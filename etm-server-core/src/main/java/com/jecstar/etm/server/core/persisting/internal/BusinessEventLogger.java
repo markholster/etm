@@ -13,6 +13,7 @@ public class BusinessEventLogger {
     private static final String BUSINESS_EVENT_IBM_MQ_PROCESSOR_EMERGENCY_SHUTDOWN = "{\"component\": \"ibm mq processor\", \"node\": {0}, \"action\": \"emergency shutdown\", \"reason\": {1}}";
     private static final String BUSINESS_EVENT_REMOVED_INDEX = "{\"component\": \"index cleaner\", \"node\": {0}, \"action\": \"removed index\", \"index\": {1}}";
     private static final String BUSINESS_EVENT_LICENSE_EXPIRED = "{\"component\": \"etm\", \"action\": \"license expired\"}";
+    private static final String BUSINESS_EVENT_LICENSE_NOT_YET_VALID = "{\"component\": \"etm\", \"action\": \"license not yet valid\"}";
     private static final String BUSINESS_EVENT_LICENSE_COUNT_EXCEEDED = "{\"component\": \"etm\", \"action\": \"license count exceeded\"}";
     private static final String BUSINESS_EVENT_LICENSE_SIZE_EXCEEDED = "{\"component\": \"etm\", \"action\": \"license size exceeded\"}";
     private static final String BUSINESS_EVENT_SNMP_ENGINE_ID_ASSIGNMENT = "{\"component\": \"signaler\", \"node\": {0}, \"action\": \"SNMP engine ID assignment\", \"engineId\" : {1}}";
@@ -85,6 +86,16 @@ public class BusinessEventLogger {
                 .setPayload(BUSINESS_EVENT_LICENSE_EXPIRED)
                 .setPayloadFormat(PayloadFormat.JSON)
                 .setName("License expired")
+                .addOrMergeEndpoint(etmEndpoint.setWritingTimeToNow())
+                .build();
+        BusinessEventLogger.internalBulkProcessorWrapper.persist(businessEvent);
+    }
+
+    public static void logLicenseNotYetValid() {
+        BusinessTelemetryEvent businessEvent = new BusinessTelemetryEventBuilder()
+                .setPayload(BUSINESS_EVENT_LICENSE_NOT_YET_VALID)
+                .setPayloadFormat(PayloadFormat.JSON)
+                .setName("License not yet valid")
                 .addOrMergeEndpoint(etmEndpoint.setWritingTimeToNow())
                 .build();
         BusinessEventLogger.internalBulkProcessorWrapper.persist(businessEvent);

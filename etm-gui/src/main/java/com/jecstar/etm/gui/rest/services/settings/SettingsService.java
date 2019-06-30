@@ -5,6 +5,8 @@ import com.jecstar.etm.gui.rest.export.*;
 import com.jecstar.etm.gui.rest.services.search.DefaultSearchTemplates;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.ImportProfile;
+import com.jecstar.etm.server.core.domain.cluster.certificate.converter.CertificateConverter;
+import com.jecstar.etm.server.core.domain.cluster.notifier.ConnectionTestResult;
 import com.jecstar.etm.server.core.domain.cluster.notifier.Notifier;
 import com.jecstar.etm.server.core.domain.cluster.notifier.converter.NotifierConverter;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
@@ -32,7 +34,10 @@ import com.jecstar.etm.server.core.enhancers.DefaultField;
 import com.jecstar.etm.server.core.enhancers.DefaultTelemetryEventEnhancer;
 import com.jecstar.etm.server.core.enhancers.DefaultTransformation;
 import com.jecstar.etm.server.core.ldap.Directory;
+import com.jecstar.etm.server.core.logging.LogFactory;
+import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
+import com.jecstar.etm.server.core.tls.TrustAllTrustManager;
 import com.jecstar.etm.server.core.util.BCrypt;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.get.MultiGetItemResponse;
@@ -46,17 +51,28 @@ import org.elasticsearch.search.SearchHit;
 
 import javax.annotation.security.DeclareRoles;
 import javax.annotation.security.RolesAllowed;
+import javax.net.ssl.*;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.File;
+import java.io.*;
+import java.net.Socket;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 @Path("/settings")
 @DeclareRoles(SecurityRoles.ALL_ROLES)
 public class SettingsService extends AbstractGuiService {
+
+    private final LogWrapper log = LogFactory.getLogger(SettingsService.class);
 
     private final EtmConfigurationConverterJsonImpl etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
     private final LdapConfigurationConverter ldapConfigurationConverter = new LdapConfigurationConverter();
@@ -65,6 +81,7 @@ public class SettingsService extends AbstractGuiService {
     private final ImportProfileConverter<String> importProfileConverter = new ImportProfileConverterJsonImpl();
     private final EtmPrincipalConverterJsonImpl etmPrincipalConverter = new EtmPrincipalConverterJsonImpl();
     private final EtmPrincipalTags principalTags = this.etmPrincipalConverter.getTags();
+    private final CertificateConverter certificateConverter = new CertificateConverter();
 
     private final List<FieldLayout> exportPrincipalFields = Arrays.asList(
             new FieldLayout("Account ID", ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.principalTags.getIdTag(), FieldType.PLAIN, MultiSelect.FIRST),
@@ -149,12 +166,13 @@ public class SettingsService extends AbstractGuiService {
         EtmPrincipal etmPrincipal = getEtmPrincipal();
         boolean added = !firstElement;
         added = addStringElementToJsonBuffer("owner", license.getOwner(), buffer, !added) || added;
+        added = addLongElementToJsonBuffer("start_date", license.getStartDate() != null ? license.getStartDate().toEpochMilli() : null, buffer, !added) || added;
         added = addLongElementToJsonBuffer("expiration_date", license.getExpiryDate().toEpochMilli(), buffer, !added) || added;
         added = addStringElementToJsonBuffer("time_zone", etmPrincipal.getTimeZone().getID(), buffer, !added) || added;
         added = addLongElementToJsonBuffer("max_events_per_day", license.getMaxEventsPerDay(), buffer, !added) || added;
         added = addStringElementToJsonBuffer("max_events_per_day_as_text", etmPrincipal.getNumberFormat().format(license.getMaxEventsPerDay()), buffer, !added) || added;
         added = addLongElementToJsonBuffer("max_size_per_day", license.getMaxSizePerDay(), buffer, !added) || added;
-        added = addStringElementToJsonBuffer("max_size_per_day_as_text", etmPrincipal.getNumberFormat().format(license.getMaxSizePerDay()), buffer, !added) || added;
+        addStringElementToJsonBuffer("max_size_per_day_as_text", etmPrincipal.getNumberFormat().format(license.getMaxSizePerDay()), buffer, !added);
         buffer.append("}");
         return buffer;
     }
@@ -227,7 +245,7 @@ public class SettingsService extends AbstractGuiService {
         if (etmConfiguration.getDirectory() != null) {
             etmConfiguration.getDirectory().merge(config);
         } else {
-            Directory directory = new Directory(config);
+            Directory directory = new Directory(dataRepository, config);
             etmConfiguration.setDirectory(directory);
         }
         return "{\"status\":\"success\"}";
@@ -263,7 +281,7 @@ public class SettingsService extends AbstractGuiService {
      * @param config The configuration to test.
      */
     private void testLdapConnection(LdapConfiguration config) {
-        try (Directory directory = new Directory(config)) {
+        try (Directory directory = new Directory(dataRepository, config)) {
             directory.test();
         }
     }
@@ -779,6 +797,274 @@ public class SettingsService extends AbstractGuiService {
         return toStringWithoutNamespace(this.etmPrincipalConverter.writePrincipal(principal), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER);
     }
 
+    @GET
+    @Path("/certificates")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed(SecurityRoles.CLUSTER_SETTINGS_READ_WRITE)
+    public String getCertificates() {
+        SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
+                .setFetchSource(true)
+                .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE));
+        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
+        if (!scrollableSearch.hasNext()) {
+            return "{\"time_zone\": \"" + getEtmPrincipal().getTimeZone().getID() + "\"}";
+        }
+        StringBuilder result = new StringBuilder();
+        result.append("{\"certificates\": [");
+        boolean first = true;
+        for (SearchHit searchHit : scrollableSearch) {
+            if (!first) {
+                result.append(",");
+            }
+            result.append(toStringWithoutNamespace(searchHit.getSourceAsMap(), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE));
+            first = false;
+        }
+        result.append("],\"time_zone\": \"").append(getEtmPrincipal().getTimeZone().getID()).append("\"}");
+        return result.toString();
+    }
+
+    @GET
+    @Path("/certificate/download/{host}/{port}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed(SecurityRoles.CLUSTER_SETTINGS_READ_WRITE)
+    public String getCertificateChain(@PathParam("host") String host, @PathParam("port") Integer port) {
+        var certChain = downloadCertificateChain(host, port);
+        return certChainToJson(certChain);
+    }
+
+    @POST
+    @Path("/certificate/load/")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed(SecurityRoles.CLUSTER_SETTINGS_READ_WRITE)
+    public String getCertificateChain(String json) {
+        var objectMap = toMap(json);
+        var certificateString = getString("certificate", objectMap);
+        var certChain = loadCertificate(certificateString);
+        return certChainToJson(certChain);
+    }
+
+    private String certChainToJson(Certificate... certChain) {
+        var result = new StringBuilder();
+        result.append("{ \"certificates\": [");
+        if (certChain != null) {
+            result.append(
+                    Arrays.stream(certChain).filter(c -> c instanceof X509Certificate).map(c -> {
+                        var x509Cert = (X509Certificate) c;
+                        StringBuilder certJsonBuilder = new StringBuilder();
+                        certJsonBuilder.append("{");
+                        addStringElementToJsonBuffer("dn", x509Cert.getSubjectDN().getName(), true, certJsonBuilder, true);
+                        addStringElementToJsonBuffer("serial", x509Cert.getSerialNumber().toString(16), true, certJsonBuilder, false);
+                        certJsonBuilder.append("}");
+                        return certJsonBuilder.toString();
+                    }).collect(Collectors.joining(","))
+            );
+        }
+        result.append("]}");
+        return result.toString();
+    }
+
+
+    @POST
+    @Path("/certificate/import")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed(SecurityRoles.CLUSTER_SETTINGS_READ_WRITE)
+    public String importCertificate(String json) {
+        var objectMap = toMap(json);
+        var host = getString("host", objectMap);
+        var port = getInteger("port", objectMap);
+        List<String> serials = getArray("serials", objectMap);
+        Certificate[] certChain;
+        if (host != null && port != null) {
+            certChain = downloadCertificateChain(host, port);
+        } else {
+            certChain = loadCertificateChain(getArray("certificates", objectMap));
+        }
+
+        var result = new StringBuilder();
+        result.append("{ \"certificates\": [");
+        Arrays.stream(certChain).filter(c -> {
+            if (!(c instanceof X509Certificate)) {
+                return false;
+            }
+            return serials.contains((((X509Certificate) c).getSerialNumber().toString(16)));
+        }).forEach(c -> {
+            var certificate = new com.jecstar.etm.server.core.domain.cluster.certificate.Certificate((X509Certificate) c);
+            Map<String, Object> values = toMap(this.certificateConverter.write(certificate));
+            values.put(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE);
+            IndexRequestBuilder indexRequestBuilder = enhanceRequest(new IndexRequestBuilder()
+                    .setIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+                    .setId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE_ID_PREFIX + certificate.getSerial())
+                    .setSource(values), etmConfiguration);
+            dataRepository.index(indexRequestBuilder);
+            if (result.toString().endsWith("}")) {
+                result.append(",");
+            }
+            result.append(toStringWithoutNamespace(values, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE));
+        });
+        result.append("]}");
+        return result.toString();
+    }
+
+    @PUT
+    @Path("/certificate/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed(SecurityRoles.CLUSTER_SETTINGS_READ_WRITE)
+    public Response updateCertificate(@PathParam("id") String id, String json) {
+        Map<String, Object> inputMap = toMap(json);
+        GetResponse getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE_ID_PREFIX + id));
+        if (!getResponse.isExists()) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        Map<String, Object> sourceMap = getResponse.getSourceAsMap();
+        Map<String, Object> certMap = getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE, sourceMap);
+        certMap.put("trust_anchor", getBoolean("trust_anchor", inputMap));
+        certMap.put("usage", getArray("usage", inputMap));
+        UpdateRequestBuilder builder = enhanceRequest(
+                new UpdateRequestBuilder().setIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME).setId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE_ID_PREFIX + id).setDoc(sourceMap),
+                etmConfiguration
+        );
+        dataRepository.update(builder);
+        return Response.ok("{\"status\":\"success\"}", MediaType.APPLICATION_JSON).build();
+    }
+
+    @DELETE
+    @Path("/certificate/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed(SecurityRoles.CLUSTER_SETTINGS_READ_WRITE)
+    public String deleteCertificate(@PathParam("id") String id) {
+        DeleteRequestBuilder builder = enhanceRequest(
+                new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE_ID_PREFIX + id),
+                etmConfiguration
+        );
+        dataRepository.delete(builder);
+        return "{\"status\":\"success\"}";
+    }
+
+    /**
+     * Download the certificate chain from a given host.
+     *
+     * @param host The hostname of the server to download the certificate chain from.
+     * @param port The port on which the server process is listening.
+     * @return An array with server certificates.
+     */
+    private Certificate[] downloadCertificateChain(String host, int port) {
+        Socket socket = null;
+        try {
+            var sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, new TrustManager[]{new TrustAllTrustManager()}, null);
+            var socketFactory = sslContext.getSocketFactory();
+            socket = socketFactory.createSocket(host, port);
+            socket.setSoTimeout(5000);
+            var session = ((SSLSocket) socket).getSession();
+            return session.getPeerCertificates();
+        } catch (SSLPeerUnverifiedException e) {
+            return downloadWithStartTls(host, port);
+        } catch (IOException | NoSuchAlgorithmException | KeyManagementException e) {
+            throw new EtmException((EtmException.WRAPPED_EXCEPTION), e);
+        } finally {
+            if (socket != null) {
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    if (log.isDebugLevelEnabled()) {
+                        log.logDebugMessage(e.getMessage(), e);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Try to download the peer certificates with support for SMTP STARTTLS support.
+     *
+     * @param host The hostname of the server to download the certificate chain from.
+     * @param port The port on which the server process is listening.
+     * @return An array with server certificates.
+     */
+    private Certificate[] downloadWithStartTls(String host, int port) {
+        Socket socket = null;
+        try {
+            socket = new Socket(host, port);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            OutputStream outputStream = socket.getOutputStream();
+            waitForReader(reader, 1000);
+            while (waitForReader(reader, 100)) {
+                if (!reader.readLine().startsWith("220")) {
+                    return null;
+                }
+            }
+            outputStream.write("EHLO etm\r\n".getBytes());
+            outputStream.flush();
+            waitForReader(reader, 1000);
+            while (waitForReader(reader, 100)) {
+                if (!reader.readLine().startsWith("250")) {
+                    return null;
+                }
+            }
+            outputStream.write("STARTTLS\r\n".getBytes());
+            outputStream.flush();
+            waitForReader(reader, 1000);
+            while (waitForReader(reader, 100)) {
+                var line = reader.readLine();
+                if (line.startsWith("220")) {
+                    SSLContext sc = SSLContext.getInstance("TLS");
+                    sc.init(null, new TrustManager[]{new TrustAllTrustManager()}, null);
+                    SSLSocketFactory sslSocketFactory = ((SSLSocketFactory) sc.getSocketFactory());
+                    SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(
+                            socket,
+                            socket.getInetAddress().getHostAddress(),
+                            socket.getPort(),
+                            true);
+                    sslSocket.startHandshake();
+                    return sslSocket.getSession().getPeerCertificates();
+                }
+            }
+        } catch (IOException | NoSuchAlgorithmException | KeyManagementException e) {
+            throw new EtmException((EtmException.WRAPPED_EXCEPTION), e);
+        } finally {
+            if (socket != null) {
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    if (log.isDebugLevelEnabled()) {
+                        log.logDebugMessage(e.getMessage(), e);
+                    }
+                }
+
+            }
+        }
+        return null;
+    }
+
+    private boolean waitForReader(BufferedReader reader, int timeout) throws IOException {
+        var startTime = System.currentTimeMillis();
+        while ((!reader.ready()) && (System.currentTimeMillis() - startTime < timeout)) {
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        return reader.ready();
+    }
+
+
+    private Certificate[] loadCertificateChain(List<String> certificateStrings) {
+        var result = new ArrayList<Certificate>();
+        for (var certificateString : certificateStrings) {
+            result.addAll(Arrays.asList(loadCertificate(certificateString)));
+        }
+        return result.toArray(Certificate[]::new);
+    }
+
+    private Certificate[] loadCertificate(String certificateString) {
+        try {
+            return CertificateFactory.getInstance("X.509").generateCertificates(new ByteArrayInputStream(certificateString.getBytes())).toArray(Certificate[]::new);
+        } catch (CertificateException e) {
+            throw new EtmException((EtmException.WRAPPED_EXCEPTION), e);
+        }
+    }
+
     @DELETE
     @Path("/user/{userId}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -1025,18 +1311,7 @@ public class SettingsService extends AbstractGuiService {
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER));
         ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
-        StringBuilder result = new StringBuilder();
-        result.append("{\"notifiers\": [");
-        boolean first = true;
-        for (SearchHit searchHit : scrollableSearch) {
-            if (!first) {
-                result.append(",");
-            }
-            result.append(toStringWithoutNamespace(searchHit.getSourceAsMap(), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER));
-            first = false;
-        }
-        result.append("]}");
-        return result.toString();
+        return notifiersToJson(scrollableSearch);
     }
 
     @GET
@@ -1055,6 +1330,10 @@ public class SettingsService extends AbstractGuiService {
                 }, null)
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER));
         ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
+        return notifiersToJson(scrollableSearch);
+    }
+
+    private String notifiersToJson(ScrollableSearch scrollableSearch) {
         StringBuilder result = new StringBuilder();
         result.append("{\"notifiers\": [");
         boolean first = true;
@@ -1076,7 +1355,15 @@ public class SettingsService extends AbstractGuiService {
     public String addNotifier(@PathParam("notifierName") String notifierName, String json) {
         // Do a read and write of the notifier to make sure it's valid.
         Map<String, Object> objectMap = toMapWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER);
+        var testConnection = getBoolean("test_connection", getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER, objectMap), false);
         Notifier notifier = this.notifierConverter.read(objectMap);
+
+        if (testConnection) {
+            ConnectionTestResult testResult = notifier.testConnection(dataRepository);
+            if (testResult.isFailed()) {
+                return "{ \"status\": \"failed\", " + escapeObjectToJsonNameValuePair("reason", testResult.getErrorMessage()) + "}";
+            }
+        }
 
         IndexRequestBuilder builder = enhanceRequest(
                 new IndexRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER_ID_PREFIX + notifier.getName()),

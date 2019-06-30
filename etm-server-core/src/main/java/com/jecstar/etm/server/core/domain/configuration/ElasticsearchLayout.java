@@ -63,6 +63,8 @@ public final class ElasticsearchLayout {
     public static final String CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX = CONFIGURATION_OBJECT_TYPE_IIB_NODE + "_";
     public static final String CONFIGURATION_OBJECT_TYPE_NOTIFIER = "notifier";
     public static final String CONFIGURATION_OBJECT_TYPE_NOTIFIER_ID_PREFIX = CONFIGURATION_OBJECT_TYPE_NOTIFIER + "_";
+    public static final String CONFIGURATION_OBJECT_TYPE_CERTIFICATE = "certificate";
+    public static final String CONFIGURATION_OBJECT_TYPE_CERTIFICATE_ID_PREFIX = CONFIGURATION_OBJECT_TYPE_CERTIFICATE + "_";
 
     public static final String AUDIT_LOG_TEMPLATE_NAME = ETM_INDEX_PREFIX + "audit";
     public static final String AUDIT_LOG_INDEX_PREFIX = AUDIT_LOG_TEMPLATE_NAME + "_";

@@ -40,6 +40,7 @@ public class TelemetryCommandProcessorImpl implements TelemetryCommandProcessor 
     private Timer offerTimer;
 
     private boolean licenseExpiredLogged = false;
+    private boolean licenseNotYetValidLogged = false;
     private boolean licenseCountExceededLogged = false;
     private boolean licenseSizeExceededLogged = false;
 
@@ -266,7 +267,7 @@ public class TelemetryCommandProcessorImpl implements TelemetryCommandProcessor 
         if (!this.started) {
             return false;
         }
-        return !this.etmConfiguration.isLicenseExpired();
+        return this.etmConfiguration.isLicenseValid();
     }
 
     private void preProcess() {
@@ -281,6 +282,15 @@ public class TelemetryCommandProcessorImpl implements TelemetryCommandProcessor 
             throw new EtmException(EtmException.LICENSE_EXPIRED);
         } else {
             this.licenseExpiredLogged = false;
+        }
+        if (!this.etmConfiguration.isLicenseValid()) {
+            if (!this.licenseNotYetValidLogged) {
+                BusinessEventLogger.logLicenseNotYetValid();
+                this.licenseNotYetValidLogged = true;
+            }
+            throw new EtmException(EtmException.LICENSE_NOT_YET_VALID);
+        } else {
+            this.licenseNotYetValidLogged = false;
         }
         if (this.etmConfiguration.isLicenseCountExceeded()) {
             if (!this.licenseCountExceededLogged) {

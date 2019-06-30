@@ -14,6 +14,7 @@ public class EtmException extends RuntimeException {
     public static final int LICENSE_EXPIRED = 200_001;
     public static final int LICENSE_MESSAGE_COUNT_EXCEEDED = 200_002;
     public static final int LICENSE_MESSAGE_SIZE_EXCEEDED = 200_003;
+    public static final int LICENSE_NOT_YET_VALID = 200_004;
 
     // 201_* reserved for configuration errors.
     public static final int CONFIGURATION_LOAD_EXCEPTION = 201_000;

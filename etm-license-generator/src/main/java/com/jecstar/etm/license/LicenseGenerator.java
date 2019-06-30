@@ -7,9 +7,9 @@ import javax.crypto.NoSuchPaddingException;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.time.Instant;
 import java.util.Base64;
 import java.util.Calendar;
 import java.util.TimeZone;
@@ -39,7 +39,7 @@ class LicenseGenerator {
 
 
     public static void main(String[] args) throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException {
-        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+        var calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
         calendar.set(Calendar.YEAR, 2019);
         calendar.set(Calendar.MONTH, Calendar.DECEMBER);
         calendar.set(Calendar.DAY_OF_MONTH, 31);
@@ -48,28 +48,29 @@ class LicenseGenerator {
         calendar.set(Calendar.SECOND, 59);
         calendar.set(Calendar.MILLISECOND, 999)
         ;
-        final String company = "Jecstar Innovation V.O.F.";
-        final Long maxEventsPerDay = -1L;
-        final Long maxSizePerDay = -1L;
+        final var company = "Jecstar Innovation V.O.F.";
+        final var maxEventsPerDay = -1L;
+        final var maxSizePerDay = -1L;
         final long expiry = calendar.getTimeInMillis();
 
         final String licenseKey = "{"
                 + "\"owner\":" + escapeToJson(company, true)
+                + ",\"start_date\":" + Instant.now().toEpochMilli()
                 + ",\"expiry_date\":" + expiry
                 + ",\"max_events_per_day\":" + maxEventsPerDay
                 + ",\"max_size_per_day\":" + maxSizePerDay
                 + ",\"license_type\":\"ON_PREM\""
-        + "}";
+                + "}";
 
-        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        var keyFactory = KeyFactory.getInstance("RSA");
         PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(
                 Base64.getDecoder().decode(PRIVATE_KEY));
-        PrivateKey privateKey = keyFactory.generatePrivate(privateKeySpec);
+        var privateKey = keyFactory.generatePrivate(privateKeySpec);
 
-        Cipher encryptCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+        var encryptCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
         encryptCipher.init(Cipher.ENCRYPT_MODE, privateKey);
 
-        byte[] encryptedBytes = encryptCipher.doFinal(licenseKey.getBytes());
+        var encryptedBytes = encryptCipher.doFinal(licenseKey.getBytes());
         System.out.println("License key: " + Base64.getEncoder().encodeToString(encryptedBytes));
     }
 

@@ -51,7 +51,7 @@ http:
   sslKeystorePassword: null
 # The keystore type
   sslKeystoreType: PKCS12
-# The ssl protocol that will be used.
+  # The tls protocol that will be used.
   sslProtocol: TLSv1.2
 # The location of the truststore. This store will hold the information from clients that are allowed to connect to the https interface. 
   sslTruststoreLocation: null

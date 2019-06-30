@@ -1,52 +1,57 @@
 function buildClusterPage() {
-	var Base64={_keyStr:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",encode:function(e){var t="";var n,r,i,s,o,u,a;var f=0;e=Base64._utf8_encode(e);while(f<e.length){n=e.charCodeAt(f++);r=e.charCodeAt(f++);i=e.charCodeAt(f++);s=n>>2;o=(n&3)<<4|r>>4;u=(r&15)<<2|i>>6;a=i&63;if(isNaN(r)){u=a=64}else if(isNaN(i)){a=64}t=t+this._keyStr.charAt(s)+this._keyStr.charAt(o)+this._keyStr.charAt(u)+this._keyStr.charAt(a)}return t},decode:function(e){var t="";var n,r,i;var s,o,u,a;var f=0;e=e.replace(/[^A-Za-z0-9+/=]/g,"");while(f<e.length){s=this._keyStr.indexOf(e.charAt(f++));o=this._keyStr.indexOf(e.charAt(f++));u=this._keyStr.indexOf(e.charAt(f++));a=this._keyStr.indexOf(e.charAt(f++));n=s<<2|o>>4;r=(o&15)<<4|u>>2;i=(u&3)<<6|a;t=t+String.fromCharCode(n);if(u!=64){t=t+String.fromCharCode(r)}if(a!=64){t=t+String.fromCharCode(i)}}t=Base64._utf8_decode(t);return t},_utf8_encode:function(e){e=e.replace(/rn/g,"n");var t="";for(var n=0;n<e.length;n++){var r=e.charCodeAt(n);if(r<128){t+=String.fromCharCode(r)}else if(r>127&&r<2048){t+=String.fromCharCode(r>>6|192);t+=String.fromCharCode(r&63|128)}else{t+=String.fromCharCode(r>>12|224);t+=String.fromCharCode(r>>6&63|128);t+=String.fromCharCode(r&63|128)}}return t},_utf8_decode:function(e){var t="";var n=0;var r=c1=c2=0;while(n<e.length){r=e.charCodeAt(n);if(r<128){t+=String.fromCharCode(r);n++}else if(r>191&&r<224){c2=e.charCodeAt(n+1);t+=String.fromCharCode((r&31)<<6|c2&63);n+=2}else{c2=e.charCodeAt(n+1);c3=e.charCodeAt(n+2);t+=String.fromCharCode((r&15)<<12|(c2&63)<<6|c3&63);n+=3}}return t}}
+    'use strict';
 
-	$('#btn-save-general').click(function(event) {
-		if (!document.getElementById('form-general').checkValidity()) {
+    const certificateMap = {};
+    const maxCertFileSize = 1024 * 64;
+    let timeZone;
+    let uploadedCerts = [];
+
+    $('#btn-save-general').on('click', function (event) {
+        if (!validateForm('form-general')) {
 			return;
 		}
 		event.preventDefault();
 		saveCluster('General');
 	});
 
-	$('#btn-save-elasticsearch').click(function(event) {
-		if (!document.getElementById('form-elasticsearch').checkValidity()) {
+    $('#btn-save-elasticsearch').on('click', function (event) {
+        if (!validateForm('form-elasticsearch')) {
 			return;
 		}
 		event.preventDefault();
 		saveCluster('Elasticsearch');
 	});
 
-	$('#btn-save-persisting').click(function(event) {
-		if (!document.getElementById('form-persisting').checkValidity()) {
+    $('#btn-save-persisting').on('click', function (event) {
+        if (!validateForm('form-persisting')) {
 			return;
 		}
 		event.preventDefault();
 		saveCluster('Persisting');
 	});
 
-	$('#btn-save-ldap').click(function(event) {
-		if (!document.getElementById('form-ldap').checkValidity()) {
+    $('#btn-save-ldap').on('click', function (event) {
+        if (!validateForm('form-ldap')) {
 			return;
 		}
 		event.preventDefault();
 		saveLdap();
 	});
 
-	$('#btn-confirm-remove-ldap').click(function(event) {
+    $('#btn-confirm-remove-ldap').on('click', function (event) {
 		event.preventDefault();
 		$('#modal-ldap-remove').modal();
 	});
 
-	$('#btn-save-notifications').click(function(event) {
-        if (!document.getElementById('form-notifications').checkValidity()) {
+    $('#btn-save-notifications').on('click', function (event) {
+        if (!validateForm('form-notifications')) {
             return;
         }
         event.preventDefault();
         saveCluster('Notifications');
     });
 
-	$('#btn-remove-ldap').click(function(event) {
+    $('#btn-remove-ldap').on('click', function (event) {
 		event.preventDefault();
 		$.ajax({
 		    type: 'DELETE',
@@ -65,7 +70,232 @@ function buildClusterPage() {
             commons.hideModals($('#modal-ldap-remove'));
         });
 	});
-	
+
+    $('#btn-save-certificate').on('click', function (event) {
+        event.preventDefault();
+        const certData = createCertificateData();
+        const id = $('#sel-certificate').val();
+        $.ajax({
+            type: 'PUT',
+            contentType: 'application/json',
+            url: '../rest/settings/certificate/' + encodeURIComponent(id),
+            cache: false,
+            data: JSON.stringify(certData),
+            success: function (data) {
+                if (!data) {
+                    return;
+                }
+                certificateMap[id].trust_anchor = certData.trust_anchor;
+                certificateMap[id].usage = certData.usage;
+                commons.showNotification('Certificate \'' + certificateMap[id].dn + '\' saved.', 'success');
+            }
+        }).always(function () {
+            commons.hideModals($('#modal-certificate-overwrite'));
+        });
+    });
+
+    $('#btn-confirm-remove-certificate').on('click', function (event) {
+        event.preventDefault();
+        const id = $('#sel-certificate').val();
+        $('#remove-certificate-id').text(certificateMap[id].dn);
+        $('#modal-certificate-remove').modal();
+    });
+
+    $('#btn-remove-certificate').on('click', function (event) {
+        event.preventDefault();
+        const id = $('#sel-certificate').val();
+        $.ajax({
+            type: 'DELETE',
+            contentType: 'application/json',
+            url: '../rest/settings/certificate/' + encodeURIComponent(id),
+            cache: false,
+            success: function (data) {
+                if (!data) {
+                    return;
+                }
+                const dn = certificateMap[id].dn;
+                delete certificateMap[id];
+                $("#sel-certificate > option").filter(function () {
+                    return $(this).attr("value") === id;
+                }).remove();
+                commons.showNotification('Certificate \'' + dn + '\' removed.', 'success');
+                $('#sel-certificate').trigger('change');
+                enableOrDisableCertificateButtons();
+            }
+        }).always(function () {
+            commons.hideModals($('#modal-certificate-remove'));
+        });
+    });
+
+    $('#btn-confirm-import-certificate').on('click', function (event) {
+        event.preventDefault();
+        $('#list-import-certificate-chain').empty();
+        document.getElementById('form-import-certificate').reset();
+        $('#sel-import-certificate-method').trigger('change');
+        $('#modal-import-certificate').modal();
+    });
+
+    $('#lnk-download-certificates').on('click', function (event) {
+        event.preventDefault();
+        const $list = $('#list-import-certificate-chain').empty();
+        if (!validateForm('form-import-certificate')) {
+            return;
+        }
+        const host = $("#input-import-certificate-host").val();
+        const port = $("#input-import-certificate-port").val();
+        $.ajax({
+            type: 'GET',
+            contentType: 'application/json',
+            url: '../rest/settings/certificate/download/' + encodeURIComponent(host) + '/' + encodeURIComponent(port),
+            cache: false,
+            success: function (data) {
+                if (!data || !data.certificates) {
+                    return;
+                }
+                $(data.certificates).each(function (index, certificate) {
+                    $('<div>').addClass('form-group row')
+                        .append($('<div>').addClass('col-sm-3').append(function () {
+                            if ("undefined" != typeof certificateMap[certificate.serial]) {
+                                return $('<span class="imported">').text("Imported")
+                            } else {
+                                return $('<select>').addClass("form-control form-control-sm custom-select custom-select-sm")
+                                    .append($('<option>').attr('value', 'ignore').attr('selected', 'selected').text('Ignore'))
+                                    .append($('<option>').attr('value', 'import').text('Import'))
+                            }
+                        }))
+                        .append($('<div>').addClass('col col-form-label col-form-label-sm').text(certificate.dn))
+                        .append($('<input>').attr('type', 'hidden').val(certificate.serial))
+                        .appendTo($list)
+                });
+                $('<hr>').prependTo($list);
+                $list.find('.imported').parent().addClass('col-form-label col-form-label-sm');
+                $list.find('select').last().val('import');
+            }
+        });
+    });
+
+    $('#btn-import-certificate').on('click', function (event) {
+        event.preventDefault();
+        const certData = {
+            serials: []
+        };
+        if ('connect' === $('#sel-import-certificate-method').val()) {
+            certData.host = $("#input-import-certificate-host").val();
+            certData.port = Number($("#input-import-certificate-port").val());
+        } else {
+            certData.certificates = uploadedCerts;
+        }
+
+        $('#list-import-certificate-chain').find('.row').each(function (index, certRow) {
+            if ('import' === $(certRow).find('select').val()) {
+                certData.serials.push($(certRow).find('input').val())
+            }
+        });
+        if (certData.serials.length === 0) {
+            commons.hideModals($('#modal-import-certificate'));
+            return true;
+        }
+
+        $.ajax({
+            type: 'POST',
+            contentType: 'application/json',
+            url: '../rest/settings/certificate/import',
+            cache: false,
+            data: JSON.stringify(certData),
+            success: function (data) {
+                if (!data) {
+                    return;
+                }
+                const $certSelect = $('#sel-certificate');
+                let lastAdded;
+                $.each(data.certificates, function (index, certificate) {
+                    $certSelect.append($('<option>').attr('value', certificate.serial).text(certificate.dn));
+                    certificateMap[certificate.serial] = certificate;
+                    lastAdded = certificate.serial;
+                });
+                commons.sortSelectOptions($certSelect);
+                if (lastAdded) {
+                    $certSelect.val(lastAdded).trigger('change');
+                }
+                commons.showNotification('Certificate(s) imported.', 'success');
+                enableOrDisableCertificateButtons();
+            }
+        }).always(function () {
+            commons.hideModals($('#modal-import-certificate'));
+        });
+    });
+
+    $('#sel-certificate').on('change', function (event) {
+        event.preventDefault();
+        const certificateData = certificateMap[$(this).val()];
+        if ('undefined' == typeof certificateData) {
+            document.getElementById('form-certificate').reset();
+            return;
+        }
+        setCertificateData(certificateData);
+    });
+
+    $('#sel-import-certificate-method').on('change', function (event) {
+        event.preventDefault();
+        uploadedCerts = [];
+        $('#list-import-certificate-chain').empty();
+        const selected = $(this).val();
+        $('#import-cert-connect-group').toggle('connect' === selected);
+        $('#import-cert-upload-group').toggle('upload' === selected);
+    });
+
+    $('#certificate-import-file').on('change', function (event) {
+        event.preventDefault();
+        uploadedCerts = [];
+        const $list = $('#list-import-certificate-chain').empty();
+        $('<hr>').prependTo($list);
+
+        $.each($(this)[0].files, function (index, file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const contents = e.target.result;
+                const loadedData = {
+                    certificate: contents
+                };
+                uploadedCerts.push(contents);
+                $.ajax({
+                    type: 'POST',
+                    contentType: 'application/json',
+                    url: '../rest/settings/certificate/load/',
+                    data: JSON.stringify(loadedData),
+                    cache: false,
+                    success: function (data) {
+                        if (!data || !data.certificates) {
+                            return;
+                        }
+                        $(data.certificates).each(function (index, certificate) {
+                            $('<div>').addClass('form-group row')
+                                .append($('<div>').addClass('col-sm-3').append(function () {
+                                    if ("undefined" != typeof certificateMap[certificate.serial]) {
+                                        return $('<span class="imported">').text("Imported")
+                                    } else {
+                                        return $('<select>').addClass("form-control form-control-sm custom-select custom-select-sm")
+                                            .append($('<option>').attr('value', 'ignore').attr('selected', 'selected').text('Ignore'))
+                                            .append($('<option>').attr('value', 'import').text('Import'))
+                                    }
+                                }))
+                                .append($('<div>').addClass('col col-form-label col-form-label-sm').text(certificate.dn))
+                                .append($('<input>').attr('type', 'hidden').val(certificate.serial))
+                                .appendTo($list)
+                        });
+                        $('<hr>').prependTo($list);
+                        $list.find('.imported').parent().addClass('col-form-label col-form-label-sm');
+                        $list.find('select').last().val('import');
+                    }
+                });
+
+            };
+            if (file.size < maxCertFileSize) {
+                reader.readAsText(file);
+            }
+        });
+    });
+
 	$.ajax({
 	    type: 'GET',
 	    contentType: 'application/json',
@@ -88,13 +318,35 @@ function buildClusterPage() {
 	        if (!data) {
 	            return;
 	        }
-	        setLdapData(data)
+            setLdapData(data);
 	        $('#btn-confirm-remove-ldap').removeAttr('disabled');
 	    }
 	});
+
+    $.ajax({
+        type: 'GET',
+        contentType: 'application/json',
+        url: '../rest/settings/certificates',
+        cache: false,
+        success: function (data) {
+            if (!data) {
+                return;
+            }
+            timeZone = data.time_zone;
+            const $certSelect = $('#sel-certificate');
+            $.each(data.certificates, function (index, certificate) {
+                $certSelect.append($('<option>').attr('value', certificate.serial).text(certificate.dn));
+                certificateMap[certificate.serial] = certificate;
+            });
+            commons.sortSelectOptions($certSelect);
+            $certSelect.val($("#sel-certificate option:first").val());
+            $certSelect.trigger('change');
+            enableOrDisableCertificateButtons();
+        }
+    });
 	
 	function saveCluster(context) {
-		var clusterData = createClusterData(context);
+        const clusterData = createClusterData(context);
 		$.ajax({
             type: 'PUT',
             contentType: 'application/json',
@@ -105,7 +357,7 @@ function buildClusterPage() {
                 if (!data) {
                     return;
                 }
-				commons.showNotification((context + ' configuration saved.', 'success'));
+                commons.showNotification(context + ' configuration saved.', 'success');
             }
         });    		
 	}
@@ -127,6 +379,16 @@ function buildClusterPage() {
             }
         });    		
 	}
+
+    function enableOrDisableCertificateButtons() {
+        if (Object.keys(certificateMap).length) {
+            $('#btn-confirm-remove-certificate').removeAttr('disabled');
+            $('#btn-save-certificate').removeAttr('disabled');
+        } else {
+            $('#btn-confirm-remove-certificate').attr('disabled', 'disabled');
+            $('#btn-save-certificate').attr('disabled', 'disabled');
+        }
+    }
 	
 	function setClusterData(data) {
 		$("#input-session-timeout").val(data.session_timeout);
@@ -156,8 +418,8 @@ function buildClusterPage() {
 	}
 	
 	function createClusterData(context) {
-		var clusterData = {};
-		if ('General' == context) {
+        const clusterData = {};
+        if ('General' === context) {
 			clusterData.session_timeout = Number($("#input-session-timeout").val());
             clusterData.endpoint_configuration_cache_size = Number($("#input-endpoint-configuration-cache-size").val());
 			clusterData.max_search_result_download_rows = Number($("#input-search-export-max-rows").val());
@@ -166,7 +428,7 @@ function buildClusterPage() {
 			clusterData.max_graph_count = Number($("#input-visualization-max-graph-count").val());
 			clusterData.max_dashboard_count = Number($("#input-visualization-max-dashboard-count").val());
 			clusterData.max_signal_count = Number($("#input-signal-max-signal-count").val());
-		} else if ('Elasticsearch' == context) {
+        } else if ('Elasticsearch' === context) {
 			clusterData.shards_per_index = Number($("#input-shards-per-index").val());
 			clusterData.replicas_per_index = Number($("#input-replicas-per-index").val());
 			clusterData.max_event_index_count = Number($("#input-max-event-indices").val());
@@ -175,7 +437,7 @@ function buildClusterPage() {
 			clusterData.wait_for_active_shards = Number($("#input-wait-for-active-shards").val());
 			clusterData.retry_on_conflict_count = Number($("#input-retries-on-conflict").val());
 			clusterData.query_timeout = Number($("#input-query-timeout").val());
-		} else if ('Persisting' == context) {
+        } else if ('Persisting' === context) {
 			clusterData.enhancing_handler_count = Number($("#input-enhancing-handler-count").val());
 			clusterData.persisting_handler_count = Number($("#input-persisting-handler-count").val());
 			clusterData.event_buffer_size = Number($("#input-event-buffer-size").val());
@@ -212,7 +474,7 @@ function buildClusterPage() {
 	}
 	
 	function createLdapData() {
-		var ldapData = {};
+        const ldapData = {};
 		ldapData.host = $('#input-ldap-host').val();
 		ldapData.port = Number($('#input-ldap-port').val());
 		ldapData.connection_security = $('#sel-ldap-connection-security').val() ? $('#sel-ldap-connection-security').val() : null;
@@ -224,7 +486,7 @@ function buildClusterPage() {
 		ldapData.connection_test_search_filter = $('#input-ldap-connection-test-search-filter').val();
 		ldapData.user_base_dn = $('#input-ldap-user-base-dn').val();
 		ldapData.user_search_filter = $('#input-ldap-user-search-filter').val();
-		ldapData.user_search_in_subtree = $('#sel-ldap-user-search-in-subtree').val() == 'true' ? true : false;
+        ldapData.user_search_in_subtree = $('#sel-ldap-user-search-in-subtree').val() === 'true';
 		ldapData.user_identifier_attribute = $('#input-ldap-user-id-attribute').val();
 		ldapData.user_full_name_attribute = $('#input-ldap-user-fullname-attribute').val();
 		ldapData.user_email_attribute = $('#input-ldap-user-email-attribute').val();
@@ -236,13 +498,46 @@ function buildClusterPage() {
 
 		return ldapData;
 	}
+
+    function setCertificateData(data) {
+        $('#input-certificate-distinguished-name').val(data.dn);
+        let momentValue = moment(data.not_before, 'x', true);
+        if (momentValue.isValid()) {
+            $('#input-certificate-not-before').val(momentValue.tz(timeZone).format('YYYY-MM-DDTHH:mm:ssZ'));
+        } else {
+            $('#input-certificate-not-before').val('');
+        }
+        momentValue = moment(data.not_after, 'x', true);
+        if (momentValue.isValid()) {
+            $('#input-certificate-not-after').val(momentValue.tz(timeZone).format('YYYY-MM-DDTHH:mm:ssZ'));
+        } else {
+            $('#input-certificate-not-after').val('');
+        }
+        $('#input-certificate-issued-by').val(data.issuer_dn ? data.issuer_dn : '');
+        $('#sel-certificate-trust-anchor').val(data.self_signed ? 'true' : (data.trust_anchor ? 'true' : 'false')).prop('disabled', data.self_signed);
+        $('[id^=check-type-]').prop('checked', false);
+        $.each(data.usage, function (index, usage) {
+            $('#check-type-' + usage.toLowerCase()).prop('checked', true);
+        });
+        $('#input-certificate-sha1').val(data.fingerprint_sha1.toUpperCase().match(/.{1,2}/g).join(":"));
+    }
+
+    function createCertificateData() {
+        const certData = {
+            trust_anchor: $('#sel-certificate-trust-anchor').val() === 'true',
+            usage: $('[id^=check-type-]:checked').map(function () {
+                return $(this).val();
+            }).get()
+        };
+        return certData;
+    }
 	
 	function decode(data) {
 		if (!data) {
 			return null;
 		}
         for (let i = 0; i < 7; i++) {
-		    data = Base64.decode(data);
+            data = commons.base64Decode(data);
 		}
 		return data;
 	}
@@ -252,9 +547,23 @@ function buildClusterPage() {
 			return null;
 		}
         for (let i = 0; i < 7; i++) {
-		    data = Base64.encode(data);
+            data = commons.base64Decode(data);
 		}
 		return data;
 	}
+
+    function validateForm(formId) {
+        const $form = $('#' + formId);
+        $form.find(':hidden').each(function () {
+            $(this).find('[data-required="required"]').removeAttr('required');
+        });
+
+        let valid = false;
+        if ($form[0].checkValidity()) {
+            valid = true;
+        }
+        $form.find('[data-required]').attr('required', 'required');
+        return valid;
+    }
 
 }

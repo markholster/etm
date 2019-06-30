@@ -1,4 +1,4 @@
-package com.jecstar.etm.server.core.ssl;
+package com.jecstar.etm.server.core.tls;
 
 import javax.net.ssl.X509TrustManager;
 import java.security.cert.X509Certificate;

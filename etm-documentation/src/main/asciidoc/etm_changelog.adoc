@@ -1,5 +1,6 @@
 == Changelog
 === Version 4.0.0
+* [ETM-18] Allow/Deny server certificates.
 * [ETM-23] Remove all api references to event type.
 * [ETM-103] Change gui to themekita.
 * [ETM-105] Option to export and import graphs + signals.
@@ -129,7 +130,7 @@
 === Version 2.3.0
 * Support for x-pack secured Elasticsearch clusters.
 * Upgrade to Elasticsearch 5.5.x.
-* Separate rate limiting on GUI and REST processor. 
+* Separate rate limiting on GUI and REST processor.
 
 === Version 2.2.0
 * Upgrade to Elasicsearch 5.4.x.
@@ -182,6 +183,7 @@ Sometimes your {etm} configuration needs additional changes before it can be upg
 
 === Upgrade from version 3.5.0 to 4.x
 . Your data will be converted during the upgrade so as always make sure you have a backup of all Elasticsearch data!
+. Make sure you have a non-ldap (local) admin account! {etm} requires the import of server certificates starting with release 4.x so you wont be able to login using an LDAP account configured on an LDAP server connected over TLS.
 . {etm} requires Java 11. Download and install Java 11 when necessary.
 . Download and uncompress Elasticsearch 7.x to a new directory.
 . Stop all {etm} nodes.
@@ -194,6 +196,7 @@ Sometimes your {etm} configuration needs additional changes before it can be upg
 . Copy the 'config/etm.yml' & 'config/jvm.options' files from your old {etm} installation to the new one.
 .. If you want to play save, disable all processors in the etm.yml. This will prevent events to be processed in the case your migrated somehow failed.
 . Start a single {etm} node in console mode and wait for the data migration to complete. Login to {etm} and validate the migration.
+.. <<Certificate settings,Import>> your LDAP and/or SMTP certificates used to setup a secure connection.
 . Enable all required processors when disabled in a previous step and restart the node.
 . Start all other {etm} nodes.
 

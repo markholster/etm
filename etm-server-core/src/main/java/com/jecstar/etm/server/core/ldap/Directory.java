@@ -1,19 +1,21 @@
 package com.jecstar.etm.server.core.ldap;
 
 import com.jecstar.etm.server.core.EtmException;
+import com.jecstar.etm.server.core.domain.cluster.certificate.Usage;
 import com.jecstar.etm.server.core.domain.configuration.LdapConfiguration;
 import com.jecstar.etm.server.core.domain.configuration.LdapConfiguration.ConnectionSecurity;
 import com.jecstar.etm.server.core.domain.principal.EtmGroup;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
-import com.jecstar.etm.server.core.ssl.TrustAllTrustManager;
+import com.jecstar.etm.server.core.tls.ElasticBackedTrustManager;
 import org.ldaptive.*;
 import org.ldaptive.auth.*;
 import org.ldaptive.auth.ext.PasswordPolicyAuthenticationResponseHandler;
 import org.ldaptive.control.PasswordPolicyControl;
 import org.ldaptive.pool.*;
-import org.ldaptive.ssl.AllowAnyHostnameVerifier;
+import org.ldaptive.ssl.DefaultHostnameVerifier;
 import org.ldaptive.ssl.SslConfig;
 
 import java.time.Duration;
@@ -32,11 +34,13 @@ public class Directory implements AutoCloseable {
     private static final Duration CONNECTION_TIMEOUT = Duration.ofMillis(2500);
 
     private final Pattern attributePattern = Pattern.compile("\\{(.*?)}");
+    private final DataRepository dataRepository;
     private LdapConfiguration ldapConfiguration;
     private AbstractConnectionPool connectionPool;
     private PooledConnectionFactory connectionFactory;
 
-    public Directory(LdapConfiguration ldapConfiguration) {
+    public Directory(DataRepository dataRepository, LdapConfiguration ldapConfiguration) {
+        this.dataRepository = dataRepository;
         this.ldapConfiguration = ldapConfiguration;
     }
 
@@ -323,9 +327,8 @@ public class Directory implements AutoCloseable {
             connectionConfig.setConnectionInitializer(new BindConnectionInitializer(ldapConfiguration.getBindDn(), new Credential(ldapConfiguration.getBindPassword())));
         }
         if (connectionConfig.getUseSSL() || connectionConfig.getUseStartTLS()) {
-            // TODO trustmanager & hostname verifier zouden eigenlijk configurabel moeten zijn
-            SslConfig sslConfig = new SslConfig(new TrustAllTrustManager());
-            sslConfig.setHostnameVerifier(new AllowAnyHostnameVerifier());
+            SslConfig sslConfig = new SslConfig(new ElasticBackedTrustManager(Usage.LDAP, this.dataRepository));
+            sslConfig.setHostnameVerifier(new DefaultHostnameVerifier());
             connectionConfig.setSslConfig(sslConfig);
         }
         return connectionConfig;

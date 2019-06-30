@@ -177,7 +177,7 @@ The cluster page has grouped related configuration items into several tabs:
 |Name|Description
 |Ldap host|The hostname or ip-address the ldap server is running on.
 |Ldap port|The port number the ldap server is listening on.
-|Connection security|Select the connection security that applies to the ldap server.
+|Connection security|Select the connection security that applies to the ldap server. Make sure to add the required root certificates to the <<Certificate settings>> when connecting to an LDAP server over TLS.
 |Bind DN|The Distinguished Name (DN) of the user that is conencting to the ldap server.
 |Bind password|The password used to connect to the ldap server. Note that this password will be base64 encoded into the database. Make sure only {etm} has access to your database!
 |Min connections|The minimum number of connections to the ldap server in the connection pool. 
@@ -203,6 +203,13 @@ Thirdly, if a user is already present in the {etm} user administration this pass
 Finally, ldap users can be added to non-ldap groups, but non-ldap users cannot be added to ldap groups. Password management and groups membership of ldap users cannot be managed in {etm}.
 
 TIP: Make sure you have at least one account with admin privileges that is a non-ldap account. This way it is always possible to login to {etm} even when the LDAP server isn't reachable for some reason.
+
+==== Certificate settings
+To make a secure connection to other systems, like an LDAP server, you need to trust te servers certificate. This can be done by adding the root certificate of the trust chain, or importing an intermediate and explicitly set is as trust anchor.
+
+Click on the ''Import'' and a popup window will be shown. The import method let you choose between download a certificate chain from a remote server, or upload a PEM encoded certificate file to {etm}. After downloading or uploading a chain you have to select which certificate(s) need to be imported. Usually this would be a root or intermediate certificate.
+After importing the certificates you need to tell {etm} if the certificate is a trust anchor or not. When {etm} comes across a trust anchor while validating the certificate chain of a server it will stop validating certificates further down the chain. Because of this nature self signed certificates are always acting as trust anchors.
+Finally you should provide the ''Usage'' of the certificate. If you want, for example, add a root certificate that should only be trusted for an LDAP server and not for a SMTP server you should only select the LDAP option at the ''Usage'' input field. During chain validation all certificates loaded into {etm} should have the usage selected in the context they are used. So if you also have loaded both the root and intermediate certificates of an LDAP server both certificates should have the LDAP usage enabled.
 
 === Nodes
 To manage node specific settings browse to http://localhost:8080/gui/settings/nodes.html or select the menu option ''Settings -> Nodes''. When you have several {etm} instances running on different kind of hardware the default <<Cluster>> settings might not be optimal for every node. On the nodes configuration page you can fine tune node specific settings. To configure a node, the node name must be the same as the instanceName configured in the <<General configuration in etm.yml>>.
@@ -254,6 +261,7 @@ To add, modify or delete notifiers browse to http://localhost:8080/gui/settings/
 When you need to store passwords for notifiers note that this password will be base64 encoded into the database. Make sure only {etm} has access to your database!
 
 When using an SNMPv3 Notifier your SNMP administrator might need an engine id of an {etm} instance to allow it on the SNMP infrastructure. {etm} assigns an engine id based on the Private Enterprise Number of Jecstar and the ip address the {etm} instance is running on. During startup of the {etm} node a <<Business event>> will be logged with the assigned engine id. As long as your ip address will be the same the engine id will also be the same. Keep in mind that running multiple {etm} instances on the same ip will cause all those instances to have the same engine id.
+Make sure to add the required root certificates to the <<Certificate settings>> when connecting to a notifier endpoint over TLS.
 
 === Audit logs
 To view the audit logs browse to http://localhost:8080/gui/settings/auditlogs.html or select the menu option ''Settings -> Audit logs''. This page shows all audit logs that are recorded. Of course all audit logs are searchable the way you expect them to be. By pressing the arrow down button in the search you get to see an overview of all attributes that can be searched for. 

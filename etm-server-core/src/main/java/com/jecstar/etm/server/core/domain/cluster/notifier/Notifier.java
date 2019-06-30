@@ -2,6 +2,7 @@ package com.jecstar.etm.server.core.domain.cluster.notifier;
 
 import com.jecstar.etm.server.core.converter.JsonField;
 import com.jecstar.etm.server.core.converter.custom.EnumConverter;
+import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 
 /**
  * A notifier that is able to send notifications to the end user or another system.
@@ -22,8 +23,6 @@ public abstract class Notifier {
             }
         }
     }
-
-
 
     public static final String NAME = "name";
     public static final String NOTIFIER_TYPE = "type";
@@ -49,6 +48,14 @@ public abstract class Notifier {
     public void setNotifierType(Notifier.NotifierType notifierType) {
         this.notifierType = notifierType;
     }
+
+    /**
+     * Test the connection to the backend.
+     *
+     * @param dataRepository The <code>DataRepository</code> that holds the trusted server certificates.
+     * @return A <code>ConnectionTestResult</code> instance with the status and an optional error message.
+     */
+    public abstract ConnectionTestResult testConnection(DataRepository dataRepository);
 
 
 }

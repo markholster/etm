@@ -10,8 +10,9 @@ During execution {etm} can run into an error. These may be shown to the end user
 |100002|Data communication error. {etm} is unable to communicate with Elasticsearch.|
 |200000|Invalid license key.|You have provided an invalid license key. Please make sure your license key is exactly copied as provided by Jecstar Innovation.
 |200001|License expired.|Your license has expired and needs to be renewed.
-|200002|License exceeded.|The maximum number of events that can be processed per day with your license is exceeded. Upgrader your license or process the messages on another day.
-|200003|License exceeded.|The maximum size of events that can be processed per day with your license is exceeded. Upgrader your license or process the messages on another day.
+|200002|License exceeded.|The maximum number of events that can be processed per day with your license is exceeded. Upgrade your license or process the messages on another day.
+|200003|License exceeded.|The maximum size of events that can be processed per day with your license is exceeded. Upgrade your license or process the messages on another day.
+|200004|License not yet valid.|Your license is not yet valid.
 |201000|Configuration load error.|Please check the connection to your Elasticsearch cluster.
 |201010|Error creating XML unmarshaller.|
 |201011|Invalid xpath expression. The provided input is an invalid XPath expression.|Change your input to a valid XPath expression.

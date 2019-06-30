@@ -61,7 +61,7 @@ public class DirectoryTest {
 
     @Test
     public void testAuthenticate() {
-        Directory directory = new Directory(createLdapConfiguration());
+        Directory directory = new Directory(null, createLdapConfiguration());
         EtmPrincipal principal = directory.authenticate("etm-admin", "password");
         directory.close();
         assertEquals("ETM Administrator", principal.getName());
@@ -72,7 +72,7 @@ public class DirectoryTest {
 
     @Test
     public void testAuthenticateWithWrongPassword() {
-        Directory directory = new Directory(createLdapConfiguration());
+        Directory directory = new Directory(null, createLdapConfiguration());
         EtmPrincipal principal = directory.authenticate("etm-admin", "wrongPassword");
         assertNull(principal);
         principal = directory.authenticate("etm-admin", "password");
@@ -84,7 +84,7 @@ public class DirectoryTest {
     public void testAuthenticateWithoutSubtreeSearch() {
         LdapConfiguration ldapConfig = createLdapConfiguration();
         assertFalse(ldapConfig.isUserSearchInSubtree());
-        Directory directory = new Directory(ldapConfig);
+        Directory directory = new Directory(null, ldapConfig);
         // Test user 1 is placed in user base dn and should be able to login.
         assertNotNull(directory.authenticate("test-user-1", "password"));
         // Test users 2 & 3 are a level below the base dn and should not be able to login.
@@ -98,7 +98,7 @@ public class DirectoryTest {
         LdapConfiguration ldapConfig = createLdapConfiguration();
         ldapConfig.setUserSearchInSubtree(true);
         assertTrue(ldapConfig.isUserSearchInSubtree());
-        Directory directory = new Directory(ldapConfig);
+        Directory directory = new Directory(null, ldapConfig);
         // Test user 1 is placed in user base dn and should be able to login.
         assertNotNull(directory.authenticate("test-user-1", "password"));
         // Test users 2 & 3 are a level below the base dn and should also able to login.
@@ -109,7 +109,7 @@ public class DirectoryTest {
 
     @Test
     public void testGetGroups() {
-        Directory directory = new Directory(createLdapConfiguration());
+        Directory directory = new Directory(null, createLdapConfiguration());
         Set<EtmGroup> groups = directory.getGroups();
         assertEquals(2, groups.size());
         directory.close();
