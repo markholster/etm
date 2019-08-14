@@ -433,7 +433,7 @@ public class EtmConfiguration {
     }
 
     public boolean isLicenseValid() {
-        return this.license == null && this.license.isValidAt(Instant.now());
+        return this.license != null && this.license.isValidAt(Instant.now());
     }
 
     public Boolean isLicenseCountExceeded() {

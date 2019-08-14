@@ -227,6 +227,12 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
     }
 
     @Override
+    public boolean isLicenseValid() {
+        reloadConfigurationWhenNecessary();
+        return super.isLicenseValid();
+    }
+
+    @Override
     public Boolean isLicenseCountExceeded() {
         reloadConfigurationWhenNecessary();
         License license = getLicense();
