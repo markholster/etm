@@ -80,8 +80,10 @@ public class Version4Migrator extends AbstractEtmMigrator {
         indexTemplateCreator.reinitialize();
 
         deleteIndices(this.dataRepository, "old index", ElasticsearchLayout.CONFIGURATION_INDEX_NAME);
+
         reindexTemporaryIndicesToNew(this.dataRepository, listener, this.migrationIndexPrefix);
         deleteIndices(this.dataRepository, "temporary indices", this.migrationIndexPrefix + "*");
+        deleteTemporaryIndexTemplates(this.dataRepository, this.migrationIndexPrefix);
         checkAndCreateIndexExistence(this.dataRepository,
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME
         );

@@ -268,7 +268,7 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
                 + "]}";
     }
 
-    private String createEtmConfigurationMapping() {
+    public String createEtmConfigurationMapping() {
         return "{\"dynamic_templates\": ["
                 + "{ \"" + Signal.LAST_EXECUTED + "\": { \"match\": \"" + Signal.LAST_EXECUTED + "\", \"mapping\": {\"type\": \"date\"}}}"
                 + ", { \"" + Signal.LAST_FAILED + "\": { \"match\": \"" + Signal.LAST_FAILED + "\", \"mapping\": {\"type\": \"date\"}}}"

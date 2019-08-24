@@ -40,6 +40,11 @@ public class PutIndexTemplateRequestBuilder extends AbstractActionRequestBuilder
         return this;
     }
 
+    public PutIndexTemplateRequestBuilder setOrder(int order) {
+        this.request.order(order);
+        return this;
+    }
+
     @Override
     public PutIndexTemplateRequest build() {
         return this.request;

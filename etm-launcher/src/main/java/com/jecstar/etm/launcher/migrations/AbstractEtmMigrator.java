@@ -1,5 +1,7 @@
 package com.jecstar.etm.launcher.migrations;
 
+import com.jecstar.etm.launcher.ElasticsearchIndexTemplateCreator;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.elasticsearch.builder.*;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
@@ -11,8 +13,11 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.indices.GetIndexResponse;
+import org.elasticsearch.client.indices.GetIndexTemplatesResponse;
+import org.elasticsearch.client.indices.IndexTemplateMetaData;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 
@@ -129,22 +134,37 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
         System.out.println("Done moving temporary indices to permanent indices.");
     }
 
-    protected void createTemporaryIndexTemplate(DataRepository dataRepository, String indexPrefix, int shardsPerIndex) {
-        deleteTemporaryIndexTemplate(dataRepository, indexPrefix);
-        PutIndexTemplateRequestBuilder requestBuilder = new PutIndexTemplateRequestBuilder(indexPrefix)
+    protected void createTemporaryIndexTemplates(DataRepository dataRepository, String migrationIndexPrefix, int shardsPerIndex) {
+        PutIndexTemplateRequestBuilder requestBuilder = new PutIndexTemplateRequestBuilder(migrationIndexPrefix)
                 .setCreate(true)
-                .setPatterns(Collections.singletonList(indexPrefix + "*"))
+                .setOrder(0)
+                .setPatterns(Collections.singletonList(migrationIndexPrefix + "*"))
                 .setSettings(Settings.builder()
                         .put("index.number_of_shards", shardsPerIndex)
                         .put("index.number_of_replicas", 0)
                 );
         dataRepository.indicesPutTemplate(requestBuilder);
+
+        requestBuilder = new PutIndexTemplateRequestBuilder(migrationIndexPrefix + ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+                .setCreate(true)
+                .setOrder(1)
+                .setPatterns(Collections.singletonList(migrationIndexPrefix + ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
+                .setSettings(Settings.builder()
+                        .put("index.number_of_shards", shardsPerIndex)
+                        .put("index.number_of_replicas", 0)
+                ).setMapping(new ElasticsearchIndexTemplateCreator(null).createEtmConfigurationMapping(), XContentType.JSON);
+        dataRepository.indicesPutTemplate(requestBuilder);
     }
 
-    protected void deleteTemporaryIndexTemplate(DataRepository dataRepository, String indexPrefix) {
-        boolean templatesExist = dataRepository.indicesTemplatesExist(new IndexTemplatesExistRequestBuilder(indexPrefix));
-        if (templatesExist) {
-            dataRepository.indicesDeleteTemplate(new DeleteIndexTemplateRequestBuilder().setName(indexPrefix));
+    protected void deleteTemporaryIndexTemplates(DataRepository dataRepository, String migrationIndexPrefix) {
+        GetIndexTemplatesResponse templatesResponse = dataRepository.indicesGetTemplate(new GetIndexTemplateRequestBuilder());
+        if (templatesResponse.getIndexTemplates() == null) {
+            return;
+        }
+        for (IndexTemplateMetaData indexTemplateMetaData : templatesResponse.getIndexTemplates()) {
+            if (indexTemplateMetaData.name().startsWith(migrationIndexPrefix)) {
+                dataRepository.indicesDeleteTemplate(new DeleteIndexTemplateRequestBuilder().setName(indexTemplateMetaData.name()));
+            }
         }
     }
 
@@ -156,9 +176,9 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
                 dataRepository.indicesDelete(new DeleteIndexRequestBuilder().setIndices(index));
                 System.out.println("Removed migration index '" + index + "'.");
             }
-            deleteTemporaryIndexTemplate(dataRepository, migrationIndexPrefix);
         }
-        createTemporaryIndexTemplate(dataRepository, migrationIndexPrefix, 1);
+        deleteTemporaryIndexTemplates(dataRepository, migrationIndexPrefix);
+        createTemporaryIndexTemplates(dataRepository, migrationIndexPrefix, 1);
     }
 
     protected boolean migrateEntity(SearchRequestBuilder searchRequestBuilder, String entityName, DataRepository dataRepository, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener, Function<SearchHit, DocWriteRequest> processor) {
