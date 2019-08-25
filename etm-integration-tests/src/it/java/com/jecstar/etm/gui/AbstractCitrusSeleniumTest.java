@@ -21,7 +21,7 @@ import java.time.Month;
 import java.time.ZoneId;
 import java.util.Date;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * Abstract superclass for all Citrus Selenium test cases.
@@ -197,7 +197,7 @@ public abstract class AbstractCitrusSeleniumTest {
         runner.selenium(action -> action.navigate(getEtmUrl() + "/gui/preferences/"));
         waitForAjaxToComplete(runner);
         final String apiKey = browser.getWebDriver().findElement(By.id("input-user-api-key")).getText();
-        assertNotNull(apiKey, "Apikey of user " + this.username + " must not be null.");
+        assertFalse(apiKey == null || apiKey.trim().length() == 0, "Apikey of user " + this.username + " must be set.");
         return apiKey;
     }
 

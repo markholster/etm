@@ -32,7 +32,7 @@ public class EventChain {
     private Set<String> eventIds = new HashSet<>();
     private List<Event> events = new ArrayList<>();
 
-    public String toJson(EtmPrincipal etmPrincipal) {
+    public String toXrangeJson(EtmPrincipal etmPrincipal) {
         calculateAbsoluteTransactionPercentages();
         StringBuilder result = new StringBuilder();
         result.append("\"chart_config\": {");
@@ -59,10 +59,11 @@ public class EventChain {
                                 + ",\"event_id\": " + this.jsonConverter.escapeToJson(this.events.get(i).id, true)
                                 + ",\"endpoint\": " + this.jsonConverter.escapeToJson(this.events.get(i).endpoint, true)
                                 + ",\"application\": " + this.jsonConverter.escapeToJson(this.events.get(i).applicationName, true)
+                                + ",\"application_instance\": " + this.jsonConverter.escapeToJson(this.events.get(i).applicationInstance, true)
                                 + ",\"transaction_id\": " + this.jsonConverter.escapeToJson(this.events.get(i).transactionId, true) + "}")
                         .collect(Collectors.joining(","))
         );
-        result.append("], \"tooltip\": { \"pointFormat\": " + this.jsonConverter.escapeToJson("Name: <b>{point.yCategory}</b><br/>Application: <b>{point.application}</b><br/>Endpoint: <b>{point.endpoint}</b><br/>Response time: <b>{point.event_time}ms</b><br/>Absolute time: <b>{point.event_absolute_time}ms</b><br/>", true) + "}}]");
+        result.append("], \"tooltip\": { \"pointFormat\": " + this.jsonConverter.escapeToJson("Name: <b>{point.yCategory}</b><br/>Application: <b>{point.application}</b><br/>Application instance: <b>{point.application_instance}</b><br/>Endpoint: <b>{point.endpoint}</b><br/>Response time: <b>{point.event_time}ms</b><br/>Absolute time: <b>{point.event_absolute_time}ms</b><br/>", true) + "}}]");
         result.append("}");
         return result.toString();
     }
@@ -172,11 +173,13 @@ public class EventChain {
                             endTime = expiry;
                         }
                         String appName = null;
+                        String appInstance = null;
                         Map<String, Object> appMap = this.jsonConverter.getObject(this.eventTags.getEndpointHandlerApplicationTag(), eh);
                         if (appMap != null) {
                             appName = this.jsonConverter.getString(this.eventTags.getApplicationNameTag(), appMap);
+                            appInstance = this.jsonConverter.getString(this.eventTags.getApplicationInstanceTag(), appMap);
                         }
-                        this.events.add(new Event(searchHit.getId(), transactionId, endpointName, eventName, appName, writer, startTime, endTime, async));
+                        this.events.add(new Event(searchHit.getId(), transactionId, endpointName, eventName, appName, appInstance, writer, startTime, endTime, async));
                     }
                 }
             }
@@ -212,6 +215,7 @@ public class EventChain {
         private final String endpoint;
         private final String name;
         private final String applicationName;
+        private final String applicationInstance;
         private final Instant startTime;
         private final Instant endTime;
         private final boolean async;
@@ -220,12 +224,13 @@ public class EventChain {
         private BigDecimal absoluteTransactionPercentage;
         private Duration absoluteDuration;
 
-        private Event(String id, String transactionId, String endpoint, String name, String applicationName, boolean writer, Instant startTime, Instant endTime, boolean async) {
+        private Event(String id, String transactionId, String endpoint, String name, String applicationName, String applicationInstance, boolean writer, Instant startTime, Instant endTime, boolean async) {
             this.id = id;
             this.transactionId = transactionId;
             this.endpoint = endpoint;
             this.name = name + (writer ? " (sent)" : " (received)");
             this.applicationName = applicationName;
+            this.applicationInstance = applicationInstance;
             this.startTime = startTime;
             this.endTime = endTime;
             this.async = async;

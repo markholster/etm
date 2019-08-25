@@ -778,7 +778,7 @@ public class SearchService extends AbstractIndexMetadataService {
         StringBuilder result = new StringBuilder();
         result.append("{");
         result.append("\"locale\": ").append(getLocalFormatting(etmPrincipal));
-        result.append(", " + eventChain.toJson(etmPrincipal));
+        result.append(", " + eventChain.toXrangeJson(etmPrincipal));
         result.append("}");
         return result.toString();
     }

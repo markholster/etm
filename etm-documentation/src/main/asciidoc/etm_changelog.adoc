@@ -10,6 +10,7 @@
 * [ETM-110] Ldap groups never reloaded.
 * [ETM-113] Email recipients disappeared after saving signal.
 * [ETM-114] java.lang.IllegalArgumentException during migration of version 3.5.2.
+* [ETM-115] Show application instance in event chain tab.
 
 === Version 3.5.2
 * [ETM-112] Note that auto scaling to maxNrOfListeners only works on local queues.
@@ -120,30 +121,6 @@
 * Make the number of update threads to Elasticsearch configurable.
 * Support for bulk events in JMS & MQ processor.
 
-=== Version 2.4.0
-* Fixed Terms and Significant Terms autocompletion fields in Graphs page.
-* Upgrade to Elasticsearch 5.6.x.
-* Removed \_missing_ query parameter. It should be replaced with NOT \_exists_
-* Added JMS processor.
-* Fixed LDAP Authentication bug.
-* Option to download all users to a csv or excel sheet.
-
-=== Version 2.3.0
-* Support for x-pack secured Elasticsearch clusters.
-* Upgrade to Elasticsearch 5.5.x.
-* Separate rate limiting on GUI and REST processor.
-
-=== Version 2.2.0
-* Upgrade to Elasicsearch 5.4.x.
-* Support for basic authentication on rest processor.
-* Added audit logs to audit the usage of {etm}.
-* Configurable ringbuffer wait strategy.
-* Automatic date interval determination in graphs.
-* Custom y-axis format in graphs.
-* Automatic installation of free license.
-* Allow subtree scope in LDAP user authentication.
-* Add a write policy to endpoint configurations alowing fields to be overwritten.
-
 == Upgrades
 {etm} is maintaining a semantic versioning strategy. Given a version number MAJOR.MINOR.PATCH, increment the:
 
@@ -179,9 +156,6 @@ Sometimes your {etm} configuration needs additional changes before it can be upg
 . Change the 'connectAddresses' in the elasticsearch chapter from the Elasticsearch transport address to the Elasticsearch http address.
 . Remove the options 'sslEnabled', 'sslKeyLocation', 'sslCertificateLocation' & 'sslCertificateAuthoritiesLocation' in the elasticsearch chapter in the file 'config/etm.yml'. These options are replaced by 'sslTrustStoreLocation' and 'sslTrustStorePassword' which can hold a jks key store.
 
-===== Upgrade from versions before 2.3.0 to 2.3.x or higher
-. Remove the options 'maxConcurrentRequests', 'maxQueuedRequests' & 'sessionTimeout' in the http chapter in the file 'config/etm.yml'. These parameters may now be provided for the GUI and REST processor separately. See the <<Http section in etm.yml>> for more information.
-
 === Upgrade from version 3.5.0 to 4.x
 . Your data will be converted during the upgrade so as always make sure you have a backup of all Elasticsearch data!
 . Make sure you have a non-ldap (local) admin account! {etm} requires the import of server certificates starting with release 4.x so you wont be able to login using an LDAP account configured on an LDAP server connected over TLS.
@@ -200,29 +174,3 @@ Sometimes your {etm} configuration needs additional changes before it can be upg
 .. <<Certificate settings,Import>> your LDAP and/or SMTP certificates used to setup a secure connection.
 . Enable all required processors when disabled in a previous step and restart the node.
 . Start all other {etm} nodes.
-
-=== Upgrade from version 2.4.0 to 3.x
-. Your data will be converted during the upgrade so as always make sure you have a backup of all Elasticsearch data!
-. Download and uncompress Elasticsearch 6.2.x to a new directory.
-. Stop all {etm} nodes.
-. Stop your current Elasticsearch nodes.
-. Copy the 'config/elasticsearch.yml' file from your current Elasticsearch nodes to your new ones.
-. If your Elasticsearch data resides in the same directory as your Elasticsearch installation make sure you copy the data to the new Elasticsearch installation.
-. Start your new Elasticsearch nodes and wait for the message ''Cluster health status changed from [RED] to [GREEN]'' to appear.
-. Download and uncompress {etm} 3.0.x to a new directory.
-. Copy all files under 'lib/ext/' from your old {etm} installation to the new one.
-. Copy the file 'config/etm.yml' from your old {etm} installation to the new one.
-.. Remove the option 'nrOfListeners' under the ibmMq chapter. This option must be replaced with the 'minNrOfListeners' and 'maxNrOfListeners' options. See the <<IBM MQ section in etm.yml>> for more information.
-.. Changes configuration elasticsearch.connectAddresses to a list. For example
-[source,yaml,subs=attributes+]
-    ----
-    elasticsearch:
-      connectAddresses:
-      - "127.0.0.1:9300"
-      - "server-2:9300"
-    ----
-.. If you want to play save, disable all processors. This will prevent events to be processed in the case your migrated somehow failed.
-. Start a single {etm} node in console mode and wait for the data migration to complete. Login to {etm} and validate the migration.
-. Enable all required processors when disabled in a previous step and start the node.
-. Start all other {etm} nodes.
-
