@@ -33,7 +33,12 @@ public class EventChain {
     private List<Event> events = new ArrayList<>();
 
     public String toXrangeJson(EtmPrincipal etmPrincipal) {
+        // First sort the events.
+        this.events.sort(Comparator.comparing((Event c) -> c.startTime).thenComparing(c -> c.order).thenComparing(c -> c.endTime, Comparator.reverseOrder()));
+        // Then calculate the percentages.
         calculateAbsoluteTransactionPercentages();
+        // Filter out any responses.
+        List<Event> requests = this.events.stream().filter(e -> !e.response).collect(Collectors.toList());
         StringBuilder result = new StringBuilder();
         result.append("\"chart_config\": {");
         result.append("\"credits\": {\"enabled\": false}");
@@ -43,24 +48,24 @@ public class EventChain {
         result.append(", \"title\": {\"text\": \"Event chain times\"}");
         result.append(", \"xAxis\": {\"type\": \"datetime\"}");
         result.append(", \"yAxis\": {\"title\": { \"text\": \"Events\"}, \"reversed\": true, \"categories\": [");
-        result.append(this.events.stream().map(e -> this.jsonConverter.escapeToJson(e.name, true)).collect(Collectors.joining(",")));
+        result.append(requests.stream().map(e -> this.jsonConverter.escapeToJson(e.name, true)).collect(Collectors.joining(",")));
         result.append("]}");
         result.append(", \"series\": [{\"name\": \"Chain overview\", \"pointPadding\": 0, \"colorByPoint\": false, \"colorIndex\": 7, \"data\": [");
         result.append(
-                IntStream.range(0, this.events.size())
+                IntStream.range(0, requests.size())
                         .mapToObj(i -> "{ \"x\": "
-                                + this.events.get(i).startTime.toEpochMilli()
-                                + ", \"x2\": " + (this.events.get(i).endTime != null ? this.events.get(i).endTime.toEpochMilli() : this.events.get(i).startTime.toEpochMilli() + 10)
+                                + requests.get(i).startTime.toEpochMilli()
+                                + ", \"x2\": " + (requests.get(i).endTime != null ? requests.get(i).endTime.toEpochMilli() : requests.get(i).startTime.toEpochMilli() + 10)
                                 + ",\"y\": " + i
-                                + ",\"partialFill\": " + (this.events.get(i).absoluteTransactionPercentage != null ? this.events.get(i).absoluteTransactionPercentage.toString() : 0.0)
-                                + ",\"dataLabels\": {\"enabled\": " + (this.events.get(i).absoluteTransactionPercentage != null ? "true" : "false") + "}"
-                                + ",\"event_time\": " + this.jsonConverter.escapeToJson(this.events.get(i).getTotalEventTime() != null ? etmPrincipal.getNumberFormat().format(this.events.get(i).getTotalEventTime().toMillis()) : null, true)
-                                + ",\"event_absolute_time\": " + this.jsonConverter.escapeToJson(this.events.get(i).getAbsoluteEventTime() != null ? etmPrincipal.getNumberFormat().format(this.events.get(i).getAbsoluteEventTime().toMillis()) : null, true)
-                                + ",\"event_id\": " + this.jsonConverter.escapeToJson(this.events.get(i).id, true)
-                                + ",\"endpoint\": " + this.jsonConverter.escapeToJson(this.events.get(i).endpoint, true)
-                                + ",\"application\": " + this.jsonConverter.escapeToJson(this.events.get(i).applicationName, true)
-                                + ",\"application_instance\": " + this.jsonConverter.escapeToJson(this.events.get(i).applicationInstance, true)
-                                + ",\"transaction_id\": " + this.jsonConverter.escapeToJson(this.events.get(i).transactionId, true) + "}")
+                                + ",\"partialFill\": " + (requests.get(i).absoluteTransactionPercentage != null ? requests.get(i).absoluteTransactionPercentage.toString() : 0.0)
+                                + ",\"dataLabels\": {\"enabled\": " + (requests.get(i).absoluteTransactionPercentage != null ? "true" : "false") + "}"
+                                + ",\"event_time\": " + this.jsonConverter.escapeToJson(requests.get(i).getTotalEventTime() != null ? etmPrincipal.getNumberFormat().format(requests.get(i).getTotalEventTime().toMillis()) : null, true)
+                                + ",\"event_absolute_time\": " + this.jsonConverter.escapeToJson(requests.get(i).getAbsoluteEventTime() != null ? etmPrincipal.getNumberFormat().format(requests.get(i).getAbsoluteEventTime().toMillis()) : null, true)
+                                + ",\"event_id\": " + this.jsonConverter.escapeToJson(requests.get(i).id, true)
+                                + ",\"endpoint\": " + this.jsonConverter.escapeToJson(requests.get(i).endpoint, true)
+                                + ",\"application\": " + this.jsonConverter.escapeToJson(requests.get(i).applicationName, true)
+                                + ",\"application_instance\": " + this.jsonConverter.escapeToJson(requests.get(i).applicationInstance, true)
+                                + ",\"transaction_id\": " + this.jsonConverter.escapeToJson(requests.get(i).transactionId, true) + "}")
                         .collect(Collectors.joining(","))
         );
         result.append("], \"tooltip\": { \"pointFormat\": " + this.jsonConverter.escapeToJson("Name: <b>{point.yCategory}</b><br/>Application: <b>{point.application}</b><br/>Application instance: <b>{point.application_instance}</b><br/>Endpoint: <b>{point.endpoint}</b><br/>Response time: <b>{point.event_time}ms</b><br/>Absolute time: <b>{point.event_absolute_time}ms</b><br/>", true) + "}}]");
@@ -72,13 +77,15 @@ public class EventChain {
         if (this.events.size() == 0) {
             return;
         }
-        this.events.sort(Comparator.comparing((Event c) -> c.startTime).thenComparing(c -> c.order).thenComparing(c -> c.endTime, Comparator.reverseOrder()));
         Duration totalEventTime = this.events.get(0).getTotalEventTime();
         if (totalEventTime == null) {
             return;
         }
         for (int i = 0; i < this.events.size(); i++) {
             Event event = this.events.get(i);
+            if (event.response) {
+                continue;
+            }
             Duration eventTime = event.getTotalEventTime();
             if (eventTime == null) {
                 continue;
@@ -112,7 +119,13 @@ public class EventChain {
                 // A reader -> search for event from the same application that are written after the current event.
                 long backendTime = this.events.stream()
                         .skip(i)
-                        .filter(p -> p.writer && Objects.equals(p.transactionId, event.transactionId) && Objects.equals(p.applicationName, event.applicationName) && p.getTotalEventTime() != null && !p.async)
+                        .filter(p -> p.writer
+                                && Objects.equals(p.transactionId, event.transactionId)
+                                && Objects.equals(p.applicationName, event.applicationName)
+                                && Objects.equals(p.applicationInstance, event.applicationInstance)
+                                && p.getTotalEventTime() != null
+                                && !p.async
+                                && !p.response)
                         .mapToLong(e -> e.getTotalEventTime().toMillis())
                         .sum();
                 Duration absoluteTime = eventTime.minusMillis(backendTime);
@@ -163,23 +176,25 @@ public class EventChain {
                     if (transactionId != null) {
                         transactionIds.add(transactionId);
                     }
+                    Instant startTime = this.jsonConverter.getInstant(this.eventTags.getEndpointHandlerHandlingTimeTag(), eh);
+                    String appName = null;
+                    String appInstance = null;
+                    Map<String, Object> appMap = this.jsonConverter.getObject(this.eventTags.getEndpointHandlerApplicationTag(), eh);
+                    if (appMap != null) {
+                        appName = this.jsonConverter.getString(this.eventTags.getApplicationNameTag(), appMap);
+                        appInstance = this.jsonConverter.getString(this.eventTags.getApplicationInstanceTag(), appMap);
+                    }
                     if (!response) {
                         Long responseTime = this.jsonConverter.getLong(this.eventTags.getEndpointHandlerResponseTimeTag(), eh);
-                        Instant startTime = this.jsonConverter.getInstant(this.eventTags.getEndpointHandlerHandlingTimeTag(), eh);
                         Instant endTime = null;
                         if (responseTime != null) {
                             endTime = startTime.plusMillis(responseTime);
                         } else if (expiry != null) {
                             endTime = expiry;
                         }
-                        String appName = null;
-                        String appInstance = null;
-                        Map<String, Object> appMap = this.jsonConverter.getObject(this.eventTags.getEndpointHandlerApplicationTag(), eh);
-                        if (appMap != null) {
-                            appName = this.jsonConverter.getString(this.eventTags.getApplicationNameTag(), appMap);
-                            appInstance = this.jsonConverter.getString(this.eventTags.getApplicationInstanceTag(), appMap);
-                        }
-                        this.events.add(new Event(searchHit.getId(), transactionId, endpointName, eventName, appName, appInstance, writer, startTime, endTime, async));
+                        this.events.add(new Event(searchHit.getId(), transactionId, endpointName, eventName, appName, appInstance, writer, startTime, endTime, async, false));
+                    } else {
+                        this.events.add(new Event(searchHit.getId(), transactionId, endpointName, eventName, appName, appInstance, writer, startTime, null, async, true));
                     }
                 }
             }
@@ -221,10 +236,11 @@ public class EventChain {
         private final boolean async;
         private final int order;
         private final boolean writer;
+        private final boolean response;
         private BigDecimal absoluteTransactionPercentage;
         private Duration absoluteDuration;
 
-        private Event(String id, String transactionId, String endpoint, String name, String applicationName, String applicationInstance, boolean writer, Instant startTime, Instant endTime, boolean async) {
+        private Event(String id, String transactionId, String endpoint, String name, String applicationName, String applicationInstance, boolean writer, Instant startTime, Instant endTime, boolean async, boolean response) {
             this.id = id;
             this.transactionId = transactionId;
             this.endpoint = endpoint;
@@ -236,6 +252,7 @@ public class EventChain {
             this.async = async;
             this.writer = writer;
             this.order = writer ? 0 : 1;
+            this.response = response;
         }
 
         private Duration getTotalEventTime() {
