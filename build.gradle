@@ -20,6 +20,7 @@ ext {
     dep_jacksonDatabind = "com.fasterxml.jackson.core:jackson-databind:2.9.8"
     dep_jms = "javax.jms:javax.jms-api:2.0.1"
     dep_jaxb = "javax.xml.bind:jaxb-api:2.3.1"
+    dep_jaxbRuntime = "org.glassfish.jaxb:jaxb-runtime:2.3.1"
     dep_jsonPath = "com.jayway.jsonpath:json-path:2.4.0"
     dep_kafka = "org.apache.kafka:kafka-clients:2.2.0"
     dep_ldaptive = "org.ldaptive:ldaptive:1.2.4"

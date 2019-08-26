@@ -8,7 +8,7 @@ dependencies {
     jaxb 'com.sun.xml.bind:jaxb-impl:2.2.7-b41'
     jaxb 'javax.xml.bind:jaxb-api:2.2.7'
 
-    compile project(":etm-processor"), dep_resteasyJaxrs
+    compile project(":etm-processor"), dep_resteasyJaxrs, dep_jaxb, dep_jaxbRuntime
     compile files('../lib/com.ibm.mq.allclient.jar')
 }
 
