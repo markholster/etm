@@ -37,6 +37,7 @@ public class XPathExpressionParser extends AbstractExpressionParser {
             config.setSchemaValidationMode(Validation.STRIP);
             config.setValidation(false);
             config.getParseOptions().addParserFeature("http://xml.org/sax/features/validation", false);
+            config.getParseOptions().addParserFeature("http://apache.org/xml/features/validation/schema", false);
             config.getParseOptions().addParserFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
             config.getParseOptions().addParserFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
             XPath xPath = new XPathFactoryImpl(config).newXPath();
