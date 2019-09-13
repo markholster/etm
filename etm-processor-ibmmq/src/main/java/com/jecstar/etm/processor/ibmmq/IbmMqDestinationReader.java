@@ -319,7 +319,7 @@ class IbmMqDestinationReader implements DestinationReader {
         }
         if (this.mqQueueManager != null) {
             try {
-                counter = 0;
+                this.counter = 0;
                 this.lastCommitTime = System.currentTimeMillis();
                 this.mqQueueManager.commit();
             } catch (MQException e1) {

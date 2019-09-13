@@ -36,4 +36,20 @@ public class XPathExpressionParserTest {
         String result = parser.evaluate(xml);
         assertEquals("note", result);
     }
+
+    @Test
+    public void testInvalidSchemaLocation() {
+        final String xml = "<?xml version=\"1.0\"?>\n" +
+                "<note xmlns=\"https://www.jecstar.com\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"https://www.jecstar.com http://invalid.com/note.xsd\">\n" +
+                "  <to>Tove</to>\n" +
+                "  <from>Jani</from>\n" +
+                "  <heading>Reminder</heading>\n" +
+                "  <body>Don't forget me this weekend!</body>\n" +
+                "</note>";
+        System.out.println(xml);
+        XPathExpressionParser parser = new XPathExpressionParser("test", "local-name(/*)");
+        String result = parser.evaluate(xml);
+        assertEquals("note", result);
+    }
+
 }
