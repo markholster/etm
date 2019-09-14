@@ -46,7 +46,6 @@ public class XPathExpressionParserTest {
                 "  <heading>Reminder</heading>\n" +
                 "  <body>Don't forget me this weekend!</body>\n" +
                 "</note>";
-        System.out.println(xml);
         XPathExpressionParser parser = new XPathExpressionParser("test", "local-name(/*)");
         String result = parser.evaluate(xml);
         assertEquals("note", result);

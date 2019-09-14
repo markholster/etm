@@ -48,6 +48,8 @@ public class XsltExpressionParser extends AbstractExpressionParser {
         config.getParseOptions().addParserFeature("http://apache.org/xml/features/validation/schema", false);
         config.getParseOptions().addParserFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
         config.getParseOptions().addParserFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        config.getParseOptions().addParserFeature("http://xml.org/sax/features/external-general-entities", false);
+        config.getParseOptions().addParserFeature("http://xml.org/sax/features/external-parameter-entities", false);
         return new TransformerFactoryImpl(config);
     }
 
