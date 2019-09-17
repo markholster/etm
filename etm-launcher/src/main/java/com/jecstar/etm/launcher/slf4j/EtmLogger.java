@@ -20,7 +20,6 @@ import java.io.Writer;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
 import java.util.Locale;
 
 class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger {
@@ -383,7 +382,7 @@ class EtmLogger extends MarkerIgnoringBase implements LocationAwareLogger {
                 .build();
         this.internalBulkProcessorWrapper.persist(logTelemetryEvent);
         if (!this.quiet) {
-            System.out.println("[" + formatter.format(now) + "][" +  logLevel + "][" + logLocation.fullInfo + "] " + payload);
+            System.out.println("[" + formatter.format(now) + "][" + logLevel + "][" + logLocation.fullInfo + "] " + (stackTrace == null ? payload : payload + "\n" + stackTrace));
         }
     }
 

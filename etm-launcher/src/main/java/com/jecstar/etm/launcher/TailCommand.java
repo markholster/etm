@@ -88,11 +88,13 @@ class TailCommand extends AbstractCommand {
         Map<String, Object> endpointHandlerMap = ((List<Map<String, Object>>) endpointMap.get(this.tags.getEndpointHandlersTag())).get(0);
         Map<String, Object> applicationMap = (Map<String, Object>) endpointHandlerMap.get(this.tags.getEndpointHandlerApplicationTag());
         long timestamp = (long) endpointHandlerMap.get(this.tags.getEndpointHandlerHandlingTimeTag());
+        String stackTrace = (String) sourceMap.get(this.tags.getStackTraceTag());
         System.out.println(df.format(new Date(timestamp))
                 + " - " + applicationMap.get(this.tags.getApplicationInstanceTag())
                 + " - " + sourceMap.get(this.tags.getLogLevelTag())
                 + " - " + endpointMap.get(this.tags.getEndpointNameTag())
-                + ": " + sourceMap.get(this.tags.getPayloadTag()));
+                + ": " + (stackTrace == null ? sourceMap.get(this.tags.getPayloadTag()) : sourceMap.get(this.tags.getPayloadTag()) + "\n" + stackTrace)
+        );
         lastPrinted.id = hit.getId();
         lastPrinted.timestamp = timestamp;
     }
@@ -116,7 +118,8 @@ class TailCommand extends AbstractCommand {
                 this.tags.getEndpointsTag() + "." + this.tags.getEndpointHandlersTag() + "." + this.tags.getEndpointHandlerApplicationTag() + "." + this.tags.getApplicationInstanceTag(),
                 this.tags.getEndpointsTag() + "." + this.tags.getEndpointNameTag(),
                 this.tags.getLogLevelTag(),
-                this.tags.getPayloadTag()
+                this.tags.getPayloadTag(),
+                this.tags.getStackTraceTag()
         };
     }
 
