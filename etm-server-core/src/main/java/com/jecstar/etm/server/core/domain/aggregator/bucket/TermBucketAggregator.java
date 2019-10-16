@@ -93,4 +93,9 @@ public class TermBucketAggregator extends BucketAggregator {
         }
         return builder;
     }
+
+    @Override
+    protected boolean isBucketKeyNumeric() {
+        return false;
+    }
 }

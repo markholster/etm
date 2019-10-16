@@ -11,6 +11,7 @@ import com.jecstar.etm.gui.rest.services.dashboard.domain.converter.GraphContain
 import com.jecstar.etm.gui.rest.services.dashboard.domain.graph.*;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.aggregator.Aggregator;
+import com.jecstar.etm.server.core.domain.aggregator.bucket.BucketAggregator;
 import com.jecstar.etm.server.core.domain.aggregator.bucket.BucketKey;
 import com.jecstar.etm.server.core.domain.aggregator.metric.MetricValue;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
@@ -741,8 +742,9 @@ public class DashboardService extends AbstractUserAttributeService {
         }
         Map<String, List<String>> seriesData = new LinkedHashMap<>();
         MultiBucketsAggregation multiBucketsAggregation = (MultiBucketsAggregation) aggregation;
+        final boolean bucketKeyAsString = (boolean) multiBucketsAggregation.getMetaData().get(BucketAggregator.METADATA_BUCKET_KEY_AS_STRING);
         for (Bucket bucket : multiBucketsAggregation.getBuckets()) {
-            final BucketKey bucketKey = new BucketKey(bucket);
+            final BucketKey bucketKey = new BucketKey(bucket, bucketKeyAsString);
             if (bucket.getAggregations().asList().size() == 0) {
                 String bucketName = multiBucketsAggregation.getMetaData().get(Aggregator.NAME) + "(" + bucket.getKey() + ")";
                 final MetricValue metricValue = new MetricValue(bucketName, bucket.getDocCount());
@@ -786,10 +788,8 @@ public class DashboardService extends AbstractUserAttributeService {
      * @param currentName       The current name of the hierarchy.
      */
     private void processAggregations(BucketKey root, HasAggregations aggregationHolder, Map<String, List<String>> seriesData, String currentName) {
-        Iterator<Aggregation> iterator = aggregationHolder.getAggregations().iterator();
-        while (iterator.hasNext()) {
+        for (Aggregation aggregation : aggregationHolder.getAggregations()) {
             String name = currentName;
-            Aggregation aggregation = iterator.next();
             boolean showOnGraph = (boolean) aggregation.getMetaData().get(Aggregator.SHOW_ON_GRAPH);
             if (!showOnGraph) {
                 continue;
@@ -832,11 +832,7 @@ public class DashboardService extends AbstractUserAttributeService {
     }
 
     private void addToSeries(Map<String, List<String>> seriesData, BucketKey bucketKey, MetricValue metricValue, String serieName) {
-        List<String> values = seriesData.get(serieName);
-        if (values == null) {
-            values = new ArrayList<>();
-            seriesData.put(serieName, values);
-        }
+        List<String> values = seriesData.computeIfAbsent(serieName, k -> new ArrayList<>());
         if (metricValue.hasValidValue()) {
             // If we want to allow gaps in the graph we have to remove this if statement.
             values.add("[" + bucketKey.getJsonValue() + ", " + metricValue.getJsonValue() + "]");

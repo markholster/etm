@@ -11,12 +11,14 @@ import org.elasticsearch.search.aggregations.AggregationBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public abstract class BucketAggregator extends Aggregator {
 
     public static final String TYPE = "bucket";
     public static final String BUCKET_AGGREGATOR_TYPE = "bucket_type";
+    public static final String METADATA_BUCKET_KEY_AS_STRING = "bucket_key_as_string";
     private static final String FIELD = "field";
     private static final String FIELD_TYPE = "field_type";
     private static final String AGGREGATORS = "aggregators";
@@ -121,6 +123,17 @@ public abstract class BucketAggregator extends Aggregator {
         if (getAggregators() != null) {
             getAggregators().stream().filter(p -> p instanceof BucketAggregator).forEach(c -> ((BucketAggregator) c).prepareForSearch(dataRepository, searchRequestBuilder));
         }
+    }
+
+    @Override
+    protected Map<String, Object> getMetadata() {
+        Map<String, Object> metadata = super.getMetadata();
+        metadata.put(METADATA_BUCKET_KEY_AS_STRING, !isBucketKeyNumeric());
+        return metadata;
+    }
+
+    protected boolean isBucketKeyNumeric() {
+        return true;
     }
 
 }

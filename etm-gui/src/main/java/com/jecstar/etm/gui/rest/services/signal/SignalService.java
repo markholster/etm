@@ -4,6 +4,7 @@ import com.jecstar.etm.gui.rest.services.AbstractUserAttributeService;
 import com.jecstar.etm.gui.rest.services.Keyword;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.aggregator.Aggregator;
+import com.jecstar.etm.server.core.domain.aggregator.bucket.BucketAggregator;
 import com.jecstar.etm.server.core.domain.aggregator.bucket.BucketKey;
 import com.jecstar.etm.server.core.domain.aggregator.metric.MetricValue;
 import com.jecstar.etm.server.core.domain.cluster.notifier.Notifier;
@@ -430,8 +431,9 @@ public class SignalService extends AbstractUserAttributeService {
         SearchResponse searchResponse = dataRepository.search(requestBuilder);
         Map<String, List<String>> seriesData = new LinkedHashMap<>();
         MultiBucketsAggregation multiBucketsAggregation = searchResponse.getAggregations().get(SignalSearchRequestBuilderBuilder.CARDINALITY_AGGREGATION_KEY);
+        final boolean bucketKeyAsString = (boolean) multiBucketsAggregation.getMetaData().get(BucketAggregator.METADATA_BUCKET_KEY_AS_STRING);
         for (MultiBucketsAggregation.Bucket bucket : multiBucketsAggregation.getBuckets()) {
-            final BucketKey bucketKey = new BucketKey(bucket);
+            final BucketKey bucketKey = new BucketKey(bucket, bucketKeyAsString);
             if (bucket.getAggregations().asList().size() == 0) {
                 String bucketName = multiBucketsAggregation.getMetaData().get(Aggregator.NAME) + "(" + bucket.getKey() + ")";
                 final MetricValue metricValue = new MetricValue(bucketName, bucket.getDocCount());

@@ -12,6 +12,7 @@
 * [ETM-114] java.lang.IllegalArgumentException during migration of version 3.5.2.
 * [ETM-115] Show application instance in event chain tab.
 * [ETM-116] Show stacktrace in console and tail commands.
+* [ETM-117] Legend not correct in Pie charts.
 
 === Version 3.5.2
 * [ETM-112] Note that auto scaling to maxNrOfListeners only works on local queues.

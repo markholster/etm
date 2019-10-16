@@ -40,7 +40,6 @@ public class SignificantTermBucketAggregator extends BucketAggregator {
         return this.minDocCount;
     }
 
-
     @Override
     public SignificantTermBucketAggregator clone() {
         SignificantTermBucketAggregator clone = new SignificantTermBucketAggregator();
@@ -61,4 +60,8 @@ public class SignificantTermBucketAggregator extends BucketAggregator {
         return builder;
     }
 
+    @Override
+    protected boolean isBucketKeyNumeric() {
+        return false;
+    }
 }
