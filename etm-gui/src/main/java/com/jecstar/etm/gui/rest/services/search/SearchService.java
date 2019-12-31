@@ -1,12 +1,15 @@
 package com.jecstar.etm.gui.rest.services.search;
 
 import com.jecstar.etm.domain.EndpointHandler;
+import com.jecstar.etm.domain.HttpTelemetryEvent;
+import com.jecstar.etm.domain.MessagingTelemetryEvent;
 import com.jecstar.etm.domain.writer.TelemetryEventTags;
 import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
 import com.jecstar.etm.gui.rest.export.FileType;
 import com.jecstar.etm.gui.rest.export.QueryExporter;
 import com.jecstar.etm.gui.rest.services.AbstractIndexMetadataService;
 import com.jecstar.etm.gui.rest.services.Keyword;
+import com.jecstar.etm.gui.rest.services.search.graphs.*;
 import com.jecstar.etm.server.core.domain.audit.AuditLog;
 import com.jecstar.etm.server.core.domain.audit.GetEventAuditLog;
 import com.jecstar.etm.server.core.domain.audit.builder.GetEventAuditLogBuilder;
@@ -56,10 +59,12 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 import java.io.File;
 import java.io.IOException;
 import java.text.NumberFormat;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Path("/search")
 @DeclareRoles(SecurityRoles.ALL_ROLES)
@@ -274,7 +279,7 @@ public class SearchService extends AbstractIndexMetadataService {
             if (parameters.getEndTime() != null) {
                 try {
                     // Check if the endtime is given as an exact timestamp or an elasticsearch date math.
-                    long endTime = Long.valueOf(parameters.getEndTime());
+                    long endTime = Long.parseLong(parameters.getEndTime());
                     timestampFilter.lte(endTime < parameters.getNotAfterTimestamp() ? endTime : parameters.getNotAfterTimestamp());
                     notAfterFilterNecessary = false;
                     needsUtcZone = true;
@@ -295,8 +300,8 @@ public class SearchService extends AbstractIndexMetadataService {
             }
             if (parameters.getStartTime() != null) {
                 try {
-                    // Check if the starttime is given as an exact timestamp or an elasticsearch date math.
-                    long endTime = Long.valueOf(parameters.getStartTime());
+                    // Check if the start time is given as an exact timestamp or an elasticsearch date math.
+                    long endTime = Long.parseLong(parameters.getStartTime());
                     timestampFilter.gte(endTime);
                     needsUtcZone = true;
                 } catch (NumberFormatException e) {
@@ -539,6 +544,102 @@ public class SearchService extends AbstractIndexMetadataService {
     }
 
     @GET
+    @Path("/event/{id}/dag")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
+    public String getDirectedGraphData(@PathParam("id") String eventId) {
+        var directedGraph = calculateDirectedGraph(eventId);
+        if (directedGraph == null) {
+            return null;
+        }
+        var layers = directedGraph.getLayers();
+        var result = new StringBuilder();
+        result.append("{");
+        result.append("\"locale\": ").append(getLocalFormatting(getEtmPrincipal()));
+        var firstLayer = true;
+        result.append(", \"layers\": [");
+        for (var layer : layers) {
+            if (firstLayer) {
+                result.append("{");
+                firstLayer = false;
+            } else {
+                result.append(", {");
+            }
+            var firstVertex = true;
+            result.append("\"vertices\": [");
+            for (var vertex : layer.getVertices()) {
+                if (firstVertex) {
+                    result.append("{");
+                    firstVertex = false;
+                } else {
+                    result.append(", {");
+                }
+                vertex.toJson(result, true);
+                var childVertices = layer.getChildVertices(vertex);
+                if (childVertices != null && childVertices.size() > 0) {
+                    var firstChild = true;
+                    result.append(", \"children\": [");
+                    for (var childVertex : childVertices) {
+                        if (firstChild) {
+                            result.append("{");
+                            firstChild = false;
+                        } else {
+                            result.append(", {");
+                        }
+                        childVertex.toJson(result, true);
+                        result.append("}");
+                    }
+                    result.append("]");
+                }
+                result.append("}");
+            }
+            result.append("]}");
+        }
+        result.append("]");
+        var firstEdge = true;
+        result.append(", \"edges\": [");
+        Duration totalEventTime = directedGraph.getTotalEventTime();
+        if (totalEventTime.toMillis() <= 0) {
+            totalEventTime = null;
+        }
+        for (var vertex : directedGraph.getVertices()) {
+            for (var adjVertex : directedGraph.getAdjacentOutVertices(vertex)) {
+                if (firstEdge) {
+                    result.append("{");
+                    firstEdge = false;
+                } else {
+                    result.append(", {");
+                }
+                addStringElementToJsonBuffer("from", vertex.getVertexId(), result, true);
+                addStringElementToJsonBuffer("to", adjVertex.getVertexId(), result, false);
+                if (totalEventTime != null) {
+                    Instant startTime = null;
+                    Instant endTime = null;
+                    if (vertex instanceof Event && adjVertex instanceof Event) {
+                        startTime = ((Event) vertex).getEventStartTime();
+                        endTime = ((Event) adjVertex).getEventStartTime();
+                    } else if (vertex instanceof Endpoint && adjVertex instanceof Event) {
+                        startTime = ((Endpoint) vertex).getWriteTime();
+                        endTime = ((Event) adjVertex).getEventStartTime();
+                    } else if (vertex instanceof Endpoint && adjVertex instanceof Endpoint) {
+                        startTime = ((Endpoint) vertex).getWriteTime();
+                        endTime = ((Endpoint) adjVertex).getFirstReadTime();
+                    }
+                    if (startTime != null && endTime != null) {
+                        long transitionTime = endTime.toEpochMilli() - startTime.toEpochMilli();
+                        addLongElementToJsonBuffer("transition_time", transitionTime, result, false);
+                        addDoubleElementToJsonBuffer("transition_time_percentage", (double) ((float) transitionTime / (float) totalEventTime.toMillis()), result, false);
+                    }
+                }
+                result.append("}");
+            }
+        }
+        result.append("]}");
+        return result.toString();
+
+    }
+
+    @GET
     @Path("/event/{id}/endpoints")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
@@ -738,12 +839,59 @@ public class SearchService extends AbstractIndexMetadataService {
         return response.build();
     }
 
-    @SuppressWarnings("unchecked")
     @GET
     @Path("/event/{id}/chain")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
     public String getEventChain(@PathParam("id") String eventId) {
+        var directedGraph = calculateDirectedGraph(eventId);
+        if (directedGraph == null) {
+            return null;
+        }
+        List<Event> events = directedGraph.findEvents(x -> !x.isResponse());
+        events.sort(Comparator.comparing(Event::getEventStartTime).thenComparing(Event::getOrder).thenComparing(Event::getEventEndTime, Comparator.reverseOrder()));
+
+        EtmPrincipal etmPrincipal = getEtmPrincipal();
+        return "{" +
+                "\"locale\": " + getLocalFormatting(etmPrincipal) +
+                ", \"chart_config\": {" +
+                "\"credits\": {\"enabled\": false}" +
+                ", \"legend\": {\"enabled\": false}" +
+                ", \"time\": {\"timezone\": " + escapeToJson(etmPrincipal.getTimeZone().toZoneId().toString(), true) + "}" +
+                ", \"chart\": {\"type\": \"xrange\"}" +
+                ", \"title\": {\"text\": \"Event chain times\"}" +
+                ", \"xAxis\": {\"type\": \"datetime\"}" +
+                ", \"yAxis\": {\"title\": { \"text\": \"Events\"}, \"reversed\": true, \"categories\": [" +
+                events.stream().map(e -> escapeToJson(e.getName() + (e.isSent() ? " (sent)" : " (received)"), true)).collect(Collectors.joining(",")) +
+                "]}" +
+                ", \"series\": [{\"name\": \"Chain overview\", \"pointPadding\": 0, \"colorByPoint\": false, \"colorIndex\": 7, \"data\": [" +
+                IntStream.range(0, events.size())
+                        .mapToObj(i -> "{ \"x\": "
+                                + events.get(i).getEventStartTime().toEpochMilli()
+                                + ", \"x2\": " + (events.get(i).getEventEndTime() != null ? events.get(i).getEventEndTime().toEpochMilli() : events.get(i).getEventStartTime().toEpochMilli() + 10)
+                                + ",\"y\": " + i
+                                + ",\"partialFill\": " + (events.get(i).getAbsoluteTransactionPercentage() != null ? events.get(i).getAbsoluteTransactionPercentage().toString() : 0.0)
+                                + ",\"dataLabels\": {\"enabled\": " + (events.get(i).getAbsoluteTransactionPercentage() != null ? "true" : "false") + "}"
+                                + ",\"event_time\": " + escapeToJson(events.get(i).getTotalEventTime() != null ? etmPrincipal.getNumberFormat().format(events.get(i).getTotalEventTime().toMillis()) : null, true)
+                                + ",\"event_absolute_time\": " + escapeToJson(events.get(i).getAbsoluteDuration() != null ? etmPrincipal.getNumberFormat().format(events.get(i).getAbsoluteDuration().toMillis()) : null, true)
+                                + ",\"event_id\": " + escapeToJson(events.get(i).getEventId(), true)
+                                + ",\"endpoint\": " + escapeToJson(events.get(i).getEndpointName(), true)
+                                + ",\"application\": " + (events.get(i).getParent() != null ? escapeToJson(events.get(i).getParent().getName(), true) : null)
+                                + ",\"application_instance\": " + (events.get(i).getParent() != null ? escapeToJson(events.get(i).getParent().getInstance(), true) : null)
+                                + ",\"transaction_id\": " + escapeToJson(events.get(i).getTransactionId(), true) + "}")
+                        .collect(Collectors.joining(",")) +
+                "], \"tooltip\": { \"pointFormat\": " + escapeToJson("Name: <b>{point.yCategory}</b><br/>Application: <b>{point.application}</b><br/>Application instance: <b>{point.application_instance}</b><br/>Endpoint: <b>{point.endpoint}</b><br/>Response time: <b>{point.event_time}ms</b><br/>Absolute time: <b>{point.event_absolute_time}ms</b><br/>", true) + "}}]" +
+                "}}";
+    }
+
+    /**
+     * Creates a <code>DirectedGraph</code> for a given event.
+     *
+     * @param eventId The event id.
+     * @return The <code>DirectedGraph</code> for the event.
+     */
+    @SuppressWarnings("unchecked")
+    private DirectedGraph calculateDirectedGraph(String eventId) {
         IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder()
                 .addIds(eventId);
         // No principal filtered query. We would like to show the entire event chain, but the user should not be able to retrieve all information.
@@ -756,38 +904,106 @@ public class SearchService extends AbstractIndexMetadataService {
         if (response.getHits().getHits().length == 0) {
             return null;
         }
-        EventChain eventChain = new EventChain();
-
-        SearchHit searchHit = response.getHits().getAt(0);
-        Map<String, Object> source = searchHit.getSourceAsMap();
-        List<Map<String, Object>> endpoints = (List<Map<String, Object>>) source.get(this.eventTags.getEndpointsTag());
+        var directedGraph = new DirectedGraph();
+        var handledTransactions = new HashSet<String>();
+        var searchHit = response.getHits().getAt(0);
+        var source = searchHit.getSourceAsMap();
+        var endpoints = (List<Map<String, Object>>) source.get(this.eventTags.getEndpointsTag());
         if (endpoints != null) {
-            for (Map<String, Object> endpoint : endpoints) {
+            for (var endpoint : endpoints) {
                 List<Map<String, Object>> endpointHandlers = getArray(this.eventTags.getEndpointHandlersTag(), endpoint);
                 if (endpointHandlers != null) {
-                    for (Map<String, Object> endpointHandler : endpointHandlers) {
+                    for (var endpointHandler : endpointHandlers) {
                         if (endpointHandler.containsKey(this.eventTags.getEndpointHandlerTransactionIdTag())) {
-                            String transactionId = (String) endpointHandler.get(this.eventTags.getEndpointHandlerTransactionIdTag());
-                            addTransactionToEventChain(transactionId, eventChain);
+                            var transactionId = (String) endpointHandler.get(this.eventTags.getEndpointHandlerTransactionIdTag());
+                            addTransactionToDirectedGraph(transactionId, directedGraph, handledTransactions);
                         }
                     }
                 }
             }
         }
-        EtmPrincipal etmPrincipal = getEtmPrincipal();
-        StringBuilder result = new StringBuilder();
-        result.append("{");
-        result.append("\"locale\": ").append(getLocalFormatting(etmPrincipal));
-        result.append(", " + eventChain.toXrangeJson(etmPrincipal));
-        result.append("}");
-        return result.toString();
+        // Add edges within a transaction.
+        var vertices = directedGraph.getVertices();
+        for (var vertex : vertices) {
+            if (!(vertex instanceof Event)) {
+                continue;
+            }
+            if (!directedGraph.getAdjacentOutVertices(vertex).isEmpty()) {
+                continue;
+            }
+            // We've found an event without a connection to a next vertex. Let's see if we can make some connections.
+            var event = (Event) vertex;
+            if (event.getTransactionId() != null) {
+                var transactionEvents = directedGraph.findEvents(e -> event.getTransactionId().equals(e.getTransactionId()));
+                transactionEvents.sort(Comparator.comparing(Event::getEventStartTime));
+                for (var transactionEvent : transactionEvents) {
+                    if (!transactionEvent.getEventStartTime().isBefore(event.getEventStartTime()) && !event.getEventId().equals(transactionEvent.getEventId())) {
+                        directedGraph.addEdge(event, transactionEvent);
+                        break;
+                    }
+                }
+            }
+        }
+        // See if all requests are connected to responses. If not, try to add the connection.
+        for (var vertex : vertices) {
+            if (!(vertex instanceof Event)) {
+                continue;
+            }
+            var event = (Event) vertex;
+            // Check if this event is a response and has a correlation to a request.
+            if (!event.isResponse() || event.getCorrelationEventId() == null) {
+                continue;
+            }
+            // Find the corresponding request of the response.
+            Optional<Event> first = vertices.stream().filter(v -> v instanceof Event).map(e -> (Event) e).filter(e -> e.getEventId().equals(event.getCorrelationEventId())).findFirst();
+            if (first.isEmpty()) {
+                continue;
+            }
+            var requestEvent = first.get();
+            if (directedGraph.hasPathTo(requestEvent, event)) {
+                // There's a path from the request to the response. Nothing to do...
+                continue;
+            }
+            // Let's see if we can find the end of the path seen from the request.
+            Vertex lastAfterRequest = requestEvent;
+            while (directedGraph.getAdjacentOutVertices(lastAfterRequest) != null && !directedGraph.getAdjacentOutVertices(lastAfterRequest).isEmpty()) {
+                var next = directedGraph.getAdjacentOutVertices(lastAfterRequest).get(0);
+                if (next.equals(requestEvent)) {
+                    // Somehow a cycle has introduced into the DAG. This should not be possible.
+                    break;
+                }
+                lastAfterRequest = next;
+            }
+            if (lastAfterRequest.equals(requestEvent)) {
+                // Nothing found...
+                continue;
+            }
+            Vertex firstBeforeResponse = event;
+            while (directedGraph.getAdjacentInVertices(firstBeforeResponse) != null && !directedGraph.getAdjacentInVertices(firstBeforeResponse).isEmpty()) {
+                var next = directedGraph.getAdjacentInVertices(firstBeforeResponse).get(0);
+                if (next.equals(event)) {
+                    // Somehow a cycle has introduced into the DAG. This should not be possible.
+                    break;
+                }
+                firstBeforeResponse = next;
+            }
+            directedGraph.addEdge(lastAfterRequest, firstBeforeResponse);
+        }
+        return directedGraph.calculateAbsoluteMetrics();
     }
 
-    private void addTransactionToEventChain(String transactionId, EventChain eventChain) {
-        if (eventChain.containsTransaction(transactionId)) {
+    /**
+     * Adds a transaction to a <code>DirectedGraph</code>.
+     *
+     * @param transactionId       The id of the transaction to add.
+     * @param directedGraph       The <code>DirectedGraph</code> to add the transaction data to.
+     * @param handledTransactions A set of transaction id's on which the recursive transaction id's that are covered by this method are added.
+     */
+    private void addTransactionToDirectedGraph(String transactionId, DirectedGraph directedGraph, Set<String> handledTransactions) {
+        if (handledTransactions.contains(transactionId)) {
             return;
         }
-        eventChain.addTransactionId(transactionId);
+        handledTransactions.add(transactionId);
         BoolQueryBuilder findEventsQuery = new BoolQueryBuilder()
                 .must(new TermQueryBuilder(this.eventTags.getEndpointsTag() +
                         "." + this.eventTags.getEndpointHandlersTag() +
@@ -804,9 +1020,109 @@ public class SearchService extends AbstractIndexMetadataService {
         }
         Set<String> transactionIds = new HashSet<>();
         for (SearchHit searchHit : scrollableSearch) {
-            transactionIds.addAll(eventChain.addSearchHit(searchHit));
+            transactionIds.addAll(addSearchHitToDirectedGraph(searchHit, directedGraph));
         }
-        transactionIds.forEach(c -> addTransactionToEventChain(c, eventChain));
+        transactionIds.forEach(c -> addTransactionToDirectedGraph(c, directedGraph, handledTransactions));
+    }
+
+    /**
+     * Add a <code>SearchHit</code> to the given <code>DirectedGraph</code>. When a <code>SearchHit</code> is already present in the <code>DirectedGraph</code> this method call is ignored.
+     *
+     * @param searchHit     The <code>SearchHit</code> to add.
+     * @param directedGraph The <code>DirectedGraph</code> to add the <code>SearchHit</code> to.
+     * @return A <code>Set</code> of transaction id's that are stored within this <code>SearchHit</code>. This list can be used to create a full event chain.
+     */
+    private Set<String> addSearchHitToDirectedGraph(SearchHit searchHit, DirectedGraph directedGraph) {
+        if (directedGraph.containsEvent(e -> searchHit.getId().equals(e.getEventId()))) {
+            return Collections.emptySet();
+        }
+        var transactionIds = new HashSet<String>();
+        var source = searchHit.getSourceAsMap();
+        var expiry = getInstant(this.eventTags.getExpiryTag(), source);
+        String subType = null;
+        if ("http".equals(getString(this.eventTags.getObjectTypeTag(), source))) {
+            subType = getString(this.eventTags.getHttpEventTypeTag(), source);
+        } else if ("messaging".equals(getString(this.eventTags.getObjectTypeTag(), source))) {
+            subType = getString(this.eventTags.getMessagingEventTypeTag(), source);
+        }
+        var eventName = getString(this.eventTags.getNameTag(), source);
+        var response = false;
+        String correlationId = null;
+        if (MessagingTelemetryEvent.MessagingEventType.RESPONSE.name().equals(subType) || HttpTelemetryEvent.HttpEventType.RESPONSE.name().equals(subType)) {
+            response = true;
+            correlationId = getString(this.eventTags.getCorrelationIdTag(), source);
+        }
+        var async = MessagingTelemetryEvent.MessagingEventType.FIRE_FORGET.name().equals(subType);
+        var writerEndpoints = new ArrayList<Endpoint>();
+        var readerEndpoints = new ArrayList<Endpoint>();
+        List<Map<String, Object>> endpoints = getArray(this.eventTags.getEndpointsTag(), source, Collections.emptyList());
+        for (var endpointValues : endpoints) {
+            var endpoint = new Endpoint(UUID.randomUUID().toString(), getString(this.eventTags.getEndpointNameTag(), endpointValues)).setEventId(searchHit.getId());
+            if ("http".equals(getString(this.eventTags.getObjectTypeTag(), source)) && eventName == null) {
+                eventName = subType + " " + endpoint.getName();
+            }
+            List<Map<String, Object>> endpointHandlers = getArray(this.eventTags.getEndpointHandlersTag(), endpointValues);
+            if (endpointHandlers != null) {
+                for (var eh : endpointHandlers) {
+                    var writer = EndpointHandler.EndpointHandlerType.WRITER.name().equals(getString(this.eventTags.getEndpointHandlerTypeTag(), eh));
+                    var transactionId = getString(this.eventTags.getEndpointHandlerTransactionIdTag(), eh);
+                    if (transactionId != null) {
+                        transactionIds.add(transactionId);
+                    }
+                    var startTime = getInstant(this.eventTags.getEndpointHandlerHandlingTimeTag(), eh);
+                    String appName = null;
+                    String appInstance = null;
+                    Map<String, Object> appMap = getObject(this.eventTags.getEndpointHandlerApplicationTag(), eh);
+                    if (appMap != null) {
+                        appName = getString(this.eventTags.getApplicationNameTag(), appMap);
+                        appInstance = getString(this.eventTags.getApplicationInstanceTag(), appMap);
+                    }
+                    Instant endTime = null;
+                    if (!response) {
+                        var responseTime = getLong(this.eventTags.getEndpointHandlerResponseTimeTag(), eh);
+                        if (responseTime != null) {
+                            endTime = startTime.plusMillis(responseTime);
+                        } else if (expiry != null) {
+                            endTime = expiry;
+                        }
+                    }
+                    Application app = null;
+                    if (appName != null) {
+                        var appKey = appInstance == null ? appName : appName + " (" + appInstance + ")";
+                        app = new Application(appKey, appName).setInstance(appInstance);
+                    }
+                    Event event = new Event(searchHit.getId(), eventName, app)
+                            .setTransactionId(transactionId)
+                            .setCorrelationEventId(correlationId)
+                            .setEventStartTime(startTime)
+                            .setEventEndTime(endTime)
+                            .setAsync(async)
+                            .setResponse(response)
+                            .setSent(writer)
+                            .setEndpointName(endpoint.getName())
+                            .setOrder(writer ? 0 : 1);
+                    if (writer) {
+                        directedGraph.addEdge(event, endpoint);
+                        writerEndpoints.add(endpoint);
+                    } else {
+                        directedGraph.addEdge(endpoint, event);
+                        readerEndpoints.add(endpoint);
+                    }
+                }
+            }
+        }
+        // Check if we have a situation where we have endpoints with a single write and no readers. Try to match them with endpoints without a writer and only readers.
+        for (var writerEndpoint : writerEndpoints) {
+            if (!readerEndpoints.contains(writerEndpoint)) {
+                // Filter all reader endpoints without a corresponding writer endpoint
+                Optional<Endpoint> first = readerEndpoints.stream().filter(e -> !writerEndpoints.contains(e)).findFirst();
+                if (first.isPresent()) {
+                    directedGraph.addEdge(writerEndpoint, first.get());
+                    readerEndpoints.add(first.get());
+                }
+            }
+        }
+        return transactionIds;
     }
 
     @SuppressWarnings("unchecked")
@@ -819,10 +1135,7 @@ public class SearchService extends AbstractIndexMetadataService {
             return false;
         }
         Map<String, Object> application = (Map<String, Object>) endpointHandler.get(this.eventTags.getEndpointHandlerApplicationTag());
-        if (application == null) {
-            return false;
-        }
-        return true;
+        return application != null;
     }
 
     private void addSearchHits(StringBuilder result, SearchHits hits) {

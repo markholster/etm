@@ -27,10 +27,9 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.io.Closeable;
 import java.io.UnsupportedEncodingException;
-import java.text.DateFormat;
 import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -46,7 +45,7 @@ class EmailSignal implements Closeable {
     private final JsonConverter jsonConverter = new JsonConverter();
     private final EtmPrincipalConverter<String> etmPrincipalConverter = new EtmPrincipalConverterJsonImpl();
     private final EtmPrincipalTags etmPrincipalTags = this.etmPrincipalConverter.getTags();
-    final SimpleDateFormat defaultDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+    final DateTimeFormatter defaultDateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
     final NumberFormat defaultNumberFormat = NumberFormat.getInstance();
     private final Map<String, SessionAndTransport> serverConnections = new HashMap<>();
 
@@ -74,7 +73,7 @@ class EmailSignal implements Closeable {
             for (String recipient : determineRecipients(dataRepository, etmConfiguration, signal, etmSecurityEntity)) {
                 final String subject = "[" + clusterName + "] - Signal: " + signal.getName();
                 InternetAddress toAddress = new InternetAddress(recipient);
-                DateFormat dateFormat = this.defaultDateFormat;
+                DateTimeFormatter dateFormat = this.defaultDateFormat;
                 NumberFormat numberFormat = this.defaultNumberFormat;
                 EtmPrincipal etmRecipient = getUserByEmail(dataRepository, etmConfiguration, recipient);
                 if (etmRecipient != null) {

@@ -2,5 +2,5 @@ plugins {
     id 'java'
 }
 dependencies {
-    compile project(":etm-public:etm-domain"), dep_slf4jApi
+    implementation project(":etm-public:etm-domain"), dep_slf4jApi
 }

@@ -28,7 +28,7 @@ public class EmbeddableSnmpReceiver implements CommandResponder {
 
     public void startServer() {
         try {
-            AbstractTransportMapping transport = new DefaultUdpTransportMapping(new UdpAddress(HOST + "/" + PORT));
+            AbstractTransportMapping<UdpAddress> transport = new DefaultUdpTransportMapping(new UdpAddress(HOST + "/" + PORT));
 
             ThreadPool threadPool = ThreadPool.create("DispatcherPool", 3);
             MessageDispatcher dispatcher = new MultiThreadedMessageDispatcher(

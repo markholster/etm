@@ -3,7 +3,11 @@ plugins {
 }
 
 dependencies {
-    compile project(":etm-gui"),
+    implementation project(":etm-gui"),
+            project(":etm-public:etm-domain"),
+            project(":etm-server-core"),
+            project(":etm-signaler"),
+            project(":etm-processor"),
             project(":etm-processor-rest"),
             project(":etm-processor-ibmmq"),
             project(":etm-processor-jms"),
@@ -14,5 +18,6 @@ dependencies {
             dep_resteasyWadl,
             dep_snakeyaml,
             dep_undertowServlet,
-            dep_elasticsearchClient
+            dep_elasticsearchClient,
+            dep_metricsCore
 }

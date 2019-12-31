@@ -10,13 +10,13 @@ sourceSets {
         resources {
             srcDir 'src/it/resources'
         }
-        compileClasspath += sourceSets.main.output.classesDirs
-        runtimeClasspath += sourceSets.main.output.classesDirs
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
     }
 }
 
 dependencies {
-    integrationTestCompile project(":etm-public:etm-domain"),
+    integrationTestImplementation project(":etm-public:etm-domain"),
             project(":etm-server-core"),
             project(":etm-gui"),
             dep_citrus,
@@ -24,16 +24,12 @@ dependencies {
             dep_apacheDs,
             dep_elasticsearchClient,
             dep_kafka,
-            dep_slf4jSimple
+            dep_slf4jSimple,
+            dep_snmp4j
 }
 
 eclipse {
     classpath {
         plusConfigurations += [configurations.integrationTestCompile, configurations.integrationTestRuntime]
     }
-}
-
-task integrationTest(type: Test) {
-    testClassesDirs = sourceSets.integrationTest.output.classesDirs
-    classpath = sourceSets.integrationTest.runtimeClasspath
 }

@@ -31,7 +31,6 @@ allprojects {
 
 
         dependencies {
-            testCompile 'org.junit.jupiter:junit-jupiter-api:' + version_junit
             testImplementation 'org.junit.jupiter:junit-jupiter-api:' + version_junit
             testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:' + version_junit
             testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:' + version_junit
@@ -40,7 +39,6 @@ allprojects {
         sourceSets.whenObjectAdded {
             if ('integrationTest'.equals(it.name)) {
                 dependencies {
-                    integrationTestCompile 'org.junit.jupiter:junit-jupiter-api:' + version_junit
                     integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api:' + version_junit
                     integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:' + version_junit
                     integrationTestRuntimeOnly 'org.junit.vintage:junit-vintage-engine:' + version_junit

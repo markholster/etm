@@ -21,6 +21,11 @@
     <link rel="stylesheet" href="../styles/highlightjs-googlecode.css">
     <link rel="stylesheet" href="../styles/flatpickr.min.css">
     <style type="text/css">
+        .tooltip-inner {
+            text-align: left;
+            max-width: 30em;
+        }
+
         .headerSortAsc, .headerSortDesc {
             border-bottom-color: #777 !important;
             font-weight: 700 !important;
@@ -50,6 +55,20 @@
         .event-selected {
             font-weight: bold;
         }
+
+        .moving-path {
+            stroke-dasharray: 4;
+            animation-name: dash;
+            animation-duration: 6s;
+            animation-iteration-count: infinite;
+            animation-timing-function: linear;
+        }
+
+        @keyframes dash {
+            to {
+                stroke-dashoffset: -250;
+            }
+        }
     </style>
     <!-- jQuery first, then Bootstrap JS. -->
     <script src="../scripts/d3-format.v1.min.js"></script>
@@ -59,6 +78,7 @@
     <script src="../scripts/highcharts/exporting.js"></script>
     <script src="../scripts/highcharts/offline-exporting.js"></script>
     <script src="../scripts/highcharts/export-data.js"></script>
+    <script src="../scripts/svg-pan-zoom.min.js"></script>
 
 </head>
 <body>

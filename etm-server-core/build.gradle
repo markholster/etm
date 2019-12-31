@@ -16,23 +16,23 @@ sourceSets {
 }
 
 dependencies {
-    compile project(":etm-public:etm-domain")
-    compile dep_elasticsearchClient,
+    implementation project(":etm-public:etm-domain"),
+            dep_elasticsearchClient,
             dep_elasticsearchClientSniffer,
             dep_jacksonDatabind,
             dep_ldaptive,
             dep_saxonHE,
             dep_slf4jApi,
             dep_mailApi
-    compile(dep_jsonPath) {
+    implementation(dep_jsonPath) {
         exclude module: "json-smart"
         exclude module: "gson"
     }
-    integrationTestCompile project(":etm-server-core"),
+    integrationTestImplementation project(":etm-server-core"), project(":etm-public:etm-domain"),
             dep_metricsCore,
             dep_disruptor,
             dep_elasticsearchClient
-    integrationTestRuntime dep_log4jToSlf4j
+    integrationTestRuntimeOnly dep_log4jToSlf4j
 }
 
 
@@ -40,9 +40,4 @@ eclipse {
     classpath {
         plusConfigurations += [configurations.integrationTestCompile, configurations.integrationTestRuntime]
     }
-}
-
-task integrationTest(type: Test) {
-    testClassesDirs = sourceSets.integrationTest.output.classesDirs
-    classpath = sourceSets.integrationTest.runtimeClasspath
 }

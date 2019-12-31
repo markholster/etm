@@ -44,6 +44,8 @@ public interface TelemetryEventTags {
 
     String getEndpointNameTag();
 
+    String getEndpointProtocolTag();
+
     // EndpointHandler attributes
     String getEndpointHandlerTypeTag();
 
@@ -58,8 +60,8 @@ public interface TelemetryEventTags {
     String getEndpointHandlerSequenceNumberTag();
 
     String getEndpointHandlerApplicationTag();
-
     // Application attributes
+
     String getApplicationNameTag();
 
     String getApplicationHostAddressTag();
@@ -71,29 +73,29 @@ public interface TelemetryEventTags {
     String getApplicationVersionTag();
 
     String getApplicationPrincipalTag();
-
     // Location attributes.
+
     String getEndpointHandlerLocationTag();
 
     String getLatitudeTag();
 
     String getLongitudeTag();
-
     // Messaging event attributes
+
     String getExpiryTag();
 
     String getMessagingEventTypeTag();
-
     // Log event attributes
+
     String getLogLevelTag();
 
     String getStackTraceTag();
-
     // Http event attributes
+
     String getHttpEventTypeTag();
 
     String getStatusCodeTag();
-
     // Sql event attributes
+
     String getSqlEventTypeTag();
 }

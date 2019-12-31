@@ -40,22 +40,24 @@ function showEvent(scrollTo, id) {
     });
 
 	function initialize() {
-        if (eventEndpointsChart) {
-            eventEndpointsChart.destroy();
+		if (eventEndpointsChart) {
+			eventEndpointsChart.destroy();
 			eventEndpointsChart = null;
-        }
+		}
 		if (eventChainChart) {
 			eventChainChart.destroy();
 			eventChainChart = null;
 		}
-		$.map(transactionMap, function(value, index) {
-    		return [value];
-		}).forEach(function (element) {$(element).remove();});
+		$.map(transactionMap, function (value) {
+			return [value];
+		}).forEach(function (element) {
+			$(element).remove();
+		});
 		transactionMap = {};
 		eventMap = {};
-		$.each(clipboards, function(index, clipboard) {
+		$.each(clipboards, function (index, clipboard) {
 			clipboard.destroy();
-		}); 
+		});
 		clipboards = [];
 	}
 
@@ -94,16 +96,16 @@ function showEvent(scrollTo, id) {
 			}
             const $endpoints = $(data.event.source.endpoints);
 			if ("undefined" != typeof $endpoints && $endpoints.length > 0) {
-				createEndpointsTab($endpoints, data.time_zone);
+				createEndpointsTab(data.event.id);
 				// Check if a transaction id is present
-                let hasTransactionId = false;
+				let hasTransactionId = false;
 				$.each($endpoints, function (index, endpoint) {
-                    const writingEndpointHandler = getWritingEndpointHandler(endpoint.endpoint_handlers);
+					const writingEndpointHandler = getWritingEndpointHandler(endpoint.endpoint_handlers);
 					if (writingEndpointHandler && writingEndpointHandler.transaction_id) {
 						hasTransactionId = true;
 						return false;
 					}
-                    const readingEndpointHandlers = getReadingEndpointHandlers(endpoint.endpoint_handlers);
+					const readingEndpointHandlers = getReadingEndpointHandlers(endpoint.endpoint_handlers);
 					if (readingEndpointHandlers) {
 						$.each(readingEndpointHandlers, function (index, eh) {
 							if (eh.transaction_id) {
@@ -480,188 +482,381 @@ function showEvent(scrollTo, id) {
             });
             detailItems.sort(function(item1,item2){ return item1.key.localeCompare(item2.key);});
             $.each(detailItems, function(index, item) {
-                $tbody.append(
-                        $('<tr>').append(
-                                $('<td>').attr('style', 'padding: 0.1rem;').text(item.key),
-                                $('<td>').attr('style', 'padding: 0.1rem;').text(item.value)
-                        )
-                );
-            });
-            return $tbody;
-        });
-        $(responsiveTableDiv).append($table);
+				$tbody.append(
+					$('<tr>').append(
+						$('<td>').attr('style', 'padding: 0.1rem;').text(item.key),
+						$('<td>').attr('style', 'padding: 0.1rem;').text(item.value)
+					)
+				);
+			});
+			return $tbody;
+		});
+		$(responsiveTableDiv).append($table);
 	}
-	
-	function createEndpointsTab(endpoints, timeZone) {
+
+	function createEndpointsTab(id) {
 		$('#event-tabs').append(
-				$('<li>').addClass('nav-item').append(
-						$('<a>').attr('id', 'endpoint-tab-header')
-							.attr('data-toggle', 'tab')
-							.attr('href', '#endpoint-tab')
-							.attr('role', 'tab')
-							.attr('aria-controls', 'endpoint-tab')
-							.attr('aria-selected', 'false')
-							.addClass('nav-link')
-							.text('Endpoints')
+			$('<li>').addClass('nav-item').append(
+				$('<a>').attr('id', 'endpoint-tab-header')
+					.attr('data-toggle', 'tab')
+					.attr('href', '#endpoint-tab')
+					.attr('role', 'tab')
+					.attr('aria-controls', 'endpoint-tab')
+					.attr('aria-selected', 'false')
+					.addClass('nav-link')
+					.text('Endpoints')
+			)
+		);
+
+		$('#tabcontents').append(
+			$('<div>').attr('id', 'endpoint-tab')
+				.attr('role', 'tabpanel')
+				.attr('aria-labelledby', 'endpoint-tab-header')
+				.addClass('tab-pane fade pt-3')
+				.append(
+					$('<div>').addClass('row').append(
+						$('<div>').attr('id', 'endpoint-overview').attr('style', 'height: 30em; width: 100%; resize: vertical;')
+					),
+					$('<br />'),
+					$('<div>').attr('id', 'endpoint-node-detail').append(
+						$('<div>').addClass('row').append(
+							$('<div>').addClass('col-sm-12').append(
+								$('<p>').addClass('text-center').text('Click on a node to view more details')
+							)
+						)
+					),
+					$('<div>').attr('id', 'endpoint-node-transaction-detail')
 				)
 		);
-
-		// Sort endpoints on handling time
-		endpoints.sort(function (ep1, ep2) {
-			return getEarliestEndpointTime(ep1.endpoint_handlers).handling_time - getEarliestEndpointTime(ep2.endpoint_handlers).handling_time;
-		});
-
-        const data = [];
-        const nodes = [];
-        let totalEndpointHandlers = 0;
-        let nodeId = -1;
-        $.each(endpoints, function (index, endpoint) {
-            const writingEndpointHandler = getWritingEndpointHandler(endpoint.endpoint_handlers);
-            const readingEndpointHandlers = getReadingEndpointHandlers(endpoint.endpoint_handlers);
-            let writerCount = writingEndpointHandler ? 1 : 0;
-            let readerCount = readingEndpointHandlers ? readingEndpointHandlers.length : 0;
-            totalEndpointHandlers += Math.max(writerCount, readerCount);
-            const endpointId = 'node-' + ++nodeId;
-            const endpointName = endpoint.name ? endpoint.name : 'Unknown endpoint';
-            nodes.push(
-                {
-                    id: endpointId,
-                    name: endpointName,
-                    endpoint: endpoint
-                }
-            );
-            if (writingEndpointHandler) {
-                const writerAppName = (writingEndpointHandler.application && writingEndpointHandler.application.name) ? writingEndpointHandler.application.name : 'Unknown writer application';
-                data.push({
-                    from: 'node-' + ++nodeId,
-                    to: endpointId,
-                    weight: Math.max(1, readerCount),
-                    handling_time: moment.tz(writingEndpointHandler.handling_time, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'),
-                });
-                nodes.push(
-                    {
-                        id: 'node-' + nodeId,
-                        name: writerAppName,
-                        writing_endpoint_handler: writingEndpointHandler
-                    }
-                );
-            }
-            if (readingEndpointHandlers) {
-                readingEndpointHandlers.sort(function (han1, han2) {
-                    return han1.handling_time - han2.handling_time;
-                });
-                $.each(readingEndpointHandlers, function (repIx, rep) {
-                    const readerAppName = (rep.application && rep.application.name) ? rep.application.name : 'Unknown reader application';
-                    data.push({
-                        from: endpointId,
-                        to: 'node-' + ++nodeId,
-                        weight: 1,
-                        handling_time: moment.tz(rep.handling_time, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ')
-                    });
-                    nodes.push(
-                        {
-                            id: 'node-' + nodeId,
-                            name: readerAppName,
-                            reading_endpoint_handler: rep
-                        }
-                    );
-                });
-            }
-
-        });
-
-        const height = 7 + (totalEndpointHandlers * 3);
-		$('#tabcontents').append(
-				$('<div>').attr('id', 'endpoint-tab')
-					.attr('role', 'tabpanel')
-					.attr('aria-labelledby', 'endpoint-tab-header')
-					.addClass('tab-pane fade pt-3')
-					.append(
-							$('<div>').addClass('row').append(
-                                $('<div>').attr('id', 'endpoint-overview').attr('style', 'height: ' + height + 'em; width: 100%;')
-							),
-							$('<div>').attr('id', 'endpoint-node-detail').append(
-									$('<div>').addClass('row').append(
-											$('<div>').addClass('col-sm-12').append(
-													$('<p>').addClass('text-center').text('Click on a node to view more details')
-                                            )
-                                    )
-							),
-							$('<div>').attr('id', 'endpoint-node-transaction-detail')
-                    )
-		);
 		$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-            const target = $(e.target).attr("href"); // activated tab
-            if (target === '#endpoint-tab' && !$('#endpoint-overview > div > svg').length) {
-                eventEndpointsChart = Highcharts.chart('endpoint-overview', {
-                    credits: {
-                        enabled: false
-                    },
-                    exporting: {
-                        fallbackToExportServer: false,
-                        buttons: {
-                            contextButton: {
-                                menuItems: ['downloadPNG', 'downloadSVG']
-                            }
-                        }
-                    },
-                    chart: {
-                        type: 'sankey'
-                    },
-                    plotOptions: {
-                        sankey: {
-                            nodeWidth: 40,
-                            dataLabels: {
-                                style: {
-                                    fontSize: '1.5em'
-                                }
-                            },
-                            tooltip: {
-                                headerFormat: '',
-                                nodeFormat: '{point.name}',
-                                pointFormat: '{point.fromNode.name} → {point.toNode.name}: <b>{point.handling_time}</b><br/>.'
-                            },
-                            events: {
-                                click: function (event) {
-                                    if (event.point.isNode) {
-                                        if (event.point.options.writing_endpoint_handler) {
-                                            displayWritingEndpointHandler('endpoint-node-detail', 'endpoint-node-transaction-detail', event.point.options.writing_endpoint_handler, timeZone);
-                                        } else if (event.point.options.endpoint) {
-                                            displayEndpoint('endpoint-node-detail', 'endpoint-node-transaction-detail', event.point.options.endpoint, timeZone);
-                                        } else if (event.point.options.reading_endpoint_handler) {
-                                            displayReadingEndpointHandler('endpoint-node-detail', 'endpoint-node-transaction-detail', event.point.options.reading_endpoint_handler, timeZone);
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                    },
-                    series: [{
-                        colorByPoint: false,
-                        colorIndex: 7,
-                        data: data,
-                        nodes: nodes
-                    }],
-                    title: {
-                        text: 'Endpoints overview'
-                    }
+			const target = $(e.target).attr("href"); // activated tab
+			if (target === '#endpoint-tab' && !$('#endpoint-overview > div > svg').length) {
+				$.ajax({
+					type: 'GET',
+					contentType: 'application/json',
+					url: '../rest/search/event/' + encodeURIComponent(id) + '/dag',
+					cache: false,
+					success: function (response) {
+						if (!response) {
+							return;
+						}
+						Highcharts.setOptions({
+							lang: {
+								decimalPoint: response.locale.decimal,
+								thousandsSep: response.locale.thousands,
+								timezone: response.locale.timezone
+							}
+						});
+						d3.formatDefaultLocale({
+							decimal: response.locale.decimal,
+							thousands: response.locale.thousands,
+							currency: response.locale.currency
+						});
+
+						eventEndpointsChart = Highcharts.chart('endpoint-overview', {
+							credits: {enabled: false},
+							exporting: {
+								fallbackToExportServer: false,
+								buttons: {
+									contextButton: {
+										menuItems: ['downloadPNG', 'downloadSVG']
+									}
+								}
+							},
+							chart: {
+								backgroundColor: 'white',
+								height: '100%',
+								panning: true,
+								events: {
+									load: function () {
+										const ren = this.renderer, colors = Highcharts.getOptions().colors;
+
+										let bbox = ren.boxWrapper.getBBox();
+										const mainGroup = ren.g('mainGroup').attr('text-anchor', 'middle').add();
+
+										const yTop = 75;
+										const yLevelHeight = 150;
+
+										const lineHeight = 12;
+										const endpointSize = lineHeight * 3;
+										const halfEndpointSize = endpointSize / 2;
+										const eventSize = lineHeight * 2;
+										const halfEventSize = eventSize / 2;
+										const flowOffset = 5;
+
+										const calculatedPositions = {};
+
+										$.each(response.layers, function (layerIx, layer) {
+											const nrOfVertices = layer.vertices.length;
+											const xUnits = bbox.width / (nrOfVertices + 1);
+
+											$.each(layer.vertices, function (vertexIx, vertex) {
+												if ('endpoint' === vertex.type) {
+													const xPos = xUnits * (vertexIx + 1);
+													const yPos = yTop + (layerIx * yLevelHeight);
+													const vertexGroup = ren.g().addClass('endpoint').translate(xPos, yPos).add(mainGroup);
+													let image;
+													if ('HTTPS' === vertex.protocol) {
+														image = '../images/chain/https.svg';
+													} else if ('HTTP' === vertex.protocol) {
+														image = '../images/chain/http.svg';
+													} else if ('MQ' === vertex.protocol) {
+														image = '../images/chain/queue.svg';
+													} else if ('KAFKA' === vertex.protocol) {
+														image = '../images/chain/kafka.svg';
+													}
+													ren.image(image, -halfEndpointSize, 0, endpointSize, endpointSize)
+														.attr({
+															'data-event-id': vertex.event_id,
+															'data-endpoint': vertex.name
+														})
+														.addClass('etm-gen-drawing-endpoint')
+														.add(vertexGroup);
+													ren.text(vertex.name, 0, endpointSize + lineHeight).add(vertexGroup);
+													calculatedPositions[vertex.vertex_id] = {
+														x: xPos,
+														y: yPos + halfEndpointSize,
+														r: halfEndpointSize
+													};
+												} else if ('application' === vertex.type) {
+													const xPos = (xUnits * (vertexIx + 1)) - xUnits / 2;
+													const yPos = yTop + (layerIx * yLevelHeight) - (yLevelHeight / 3);
+													const applicationGroup = ren.g().translate(xPos, yPos).add(mainGroup);
+													ren.rect(0, 0, xUnits, yLevelHeight, lineHeight).attr('fill', colors[7]).attr('fill-opacity', '0.25').attr('stroke-width', 3).attr('stroke', colors[7]).add(applicationGroup);
+													ren.text(vertex.name, lineHeight * .75, lineHeight * 1.5).attr('text-anchor', 'start').attr('font-weight', 'bold').add(applicationGroup);
+													const childWith = xUnits / vertex.children.length;
+													const yOffset = yLevelHeight / 2 + halfEventSize;
+													$.each(vertex.children, function (childIx, childVertex) {
+														const itemXPos = childWith * (childIx + .5);
+														const itemYPos = yOffset - eventSize - halfEventSize;
+														ren.image('../images/chain/message.svg', -halfEventSize + itemXPos, itemYPos, eventSize, eventSize)
+															.addClass('etm-gen-drawing-message')
+															.attr({
+																'data-event-id': childVertex.event_id,
+																'data-transaction-id': childVertex.transaction_id,
+																'data-endpoint': childVertex.endpoint,
+																'data-name': childVertex.name,
+																'data-time': childVertex.event_start_time,
+																'data-end-time': childVertex.event_end_time ? childVertex.event_end_time : false
+															})
+															.add(applicationGroup);
+														ren.text(childVertex.name, childWith * (childIx + .5), yOffset).add(applicationGroup);
+														calculatedPositions[childVertex.vertex_id] = {
+															x: xPos + itemXPos,
+															y: yPos + itemYPos + halfEventSize,
+															r: halfEventSize
+														};
+													});
+												} else if ('event' === vertex.type) {
+													const xPos = xUnits * (vertexIx + 1);
+													const yPos = yTop + (layerIx * yLevelHeight);
+													const vertexGroup = ren.g().addClass('event').translate(xPos, yPos).add(mainGroup);
+													ren.image('../images/chain/message.svg', -halfEndpointSize, 0, endpointSize, endpointSize)
+														.addClass('etm-gen-drawing-message')
+														.attr({
+															'data-event-id': vertex.event_id,
+															'data-transaction-id': vertex.transaction_id,
+															'data-endpoint': vertex.endpoint,
+															'data-name': vertex.name,
+															'data-time': vertex.event_start_time,
+															'data-end-time': vertex.event_end_time ? vertex.event_end_time : false
+														})
+														.add(vertexGroup);
+													ren.text(vertex.name, 0, endpointSize + lineHeight).add(vertexGroup);
+													calculatedPositions[vertex.vertex_id] = {
+														x: xPos,
+														y: yPos + halfEventSize,
+														r: halfEndpointSize
+													};
+												}
+											});
+										});
+
+										$.each(response.edges, function (edgeIx, edge) {
+											const from = calculatedPositions[edge.from];
+											const to = calculatedPositions[edge.to];
+											if (from === undefined || to === undefined) {
+												return;
+											}
+											let fromX = from.x;
+											let fromY = from.y;
+											let toX = to.x;
+											let toY = to.y;
+											if (from.y < to.y) {
+												// From top to bottom.
+												fromY += from.r + lineHeight + flowOffset;
+												toY -= (to.r + flowOffset);
+											} else if (from.y > to.y) {
+												// From bottom to top.
+												fromY -= (from.r + flowOffset);
+												toY += to.r + lineHeight + flowOffset;
+											} else if (from.x < to.x) {
+												// From left to right.
+												fromX += from.r + flowOffset;
+												toX -= (to.r + flowOffset)
+											} else if (from.x > to.x) {
+												// From right to left.
+												fromX -= (from.r + flowOffset);
+												toX += to.r + flowOffset;
+											}
+											let color = colors[1];
+											if (edge.transition_time_percentage) {
+												const labelPosX = fromX + ((toX - fromX) / 2);
+												const labelPosy = fromY + ((toY - fromY) / 2) - lineHeight;
+												const percentage = (Number(edge.transition_time_percentage) * 100).toFixed(2) + '%';
+												ren.text(percentage, labelPosX, labelPosy)
+													.attr({
+														'data-percentage': percentage,
+														'data-duration': edge.transition_time
+													})
+													.addClass('etm-gen-drawing-edge')
+													.add(mainGroup);
+												const redColor = Math.round(255 * Number(edge.transition_time_percentage));
+												color = '#' + (redColor < 10 ? ('0' + redColor.toString(16)) : (redColor.toString(16))) + '0000';
+											}
+											ren.path(['M', fromX, fromY, 'C', fromX, toY, toX, fromY, toX, toY])
+												.attr({'stroke-width': 2, stroke: color})
+												.addClass('moving-path')
+												.add(mainGroup);
+
+										});
+									}
+								}
+							},
+							title: {
+								text: '',
+							}
+						});
+						svgPanZoom($('#endpoint-overview > div > svg')[0], {
+							viewportSelector: '.highcharts-mainGroup',
+							panEnabled: true,
+							zoomEnabled: true
+						});
+						$('.etm-gen-drawing-edge').tooltip({
+							placement: 'auto',
+							html: true,
+							title: function () {
+								return 'Duration: ' + $(this).attr('data-duration') + 'ms<br />Percentage of total: ' + $(this).attr('data-percentage');
+							}
+						});
+						$('.etm-gen-drawing-message').on('click', function () {
+							const eventData = loadEventData($(this).attr('data-event-id'));
+							if ("" === eventData) {
+								return;
+							}
+							const endpointName = $(this).attr('data-endpoint');
+							const transactionId = $(this).attr('data-transaction-id');
+							$.each(eventData.source.endpoints, function (index, endpoint) {
+								if (endpointName === endpoint.name) {
+									const writingEndpointHandler = getWritingEndpointHandler(endpoint.endpoint_handlers);
+									if (writingEndpointHandler) {
+										displayWritingEndpointHandler('endpoint-node-detail', 'endpoint-node-transaction-detail', writingEndpointHandler, response.locale.timezone, endpoint.name);
+										return false;
+									}
+									const readingEndpointHandlers = getReadingEndpointHandlers(endpoint.endpoint_handlers);
+									if (readingEndpointHandlers) {
+										$.each(readingEndpointHandlers, function (index, eh) {
+											if (transactionId === eh.transaction_id || readingEndpointHandlers.length === 0) {
+												displayReadingEndpointHandler('endpoint-node-detail', 'endpoint-node-transaction-detail', eh, response.locale.timezone, endpoint.name);
+												return false;
+											}
+										});
+									}
+								}
+							});
+						}).tooltip({
+							placement: 'auto',
+							html: true,
+							title: function () {
+								const startTime = Number($(this).attr('data-time'));
+								let text = 'Name: ' + $(this).attr('data-name') + '<br />Event time: ' + moment.tz(startTime, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
+								if ('false' !== $(this).attr('data-end-time')) {
+									const endTime = Number($(this).attr('data-end-time'));
+									text += '<br />Response time: ' + (endTime - startTime) + 'ms';
+								}
+								return text;
+							}
+						});
+
+						$('.etm-gen-drawing-endpoint').on('click', function () {
+							const eventData = loadEventData($(this).attr('data-event-id'));
+							if ("" === eventData) {
+								return;
+							}
+							const endpointName = $(this).attr('data-endpoint');
+							$.each(eventData.source.endpoints, function (index, endpoint) {
+								if (endpointName === endpoint.name) {
+									displayEndpoint('endpoint-node-detail', 'endpoint-node-transaction-detail', endpoint, response.locale.timezone);
+									return false;
+								}
+							});
+						});
+					}
 				});
+
 			}
 		});
 	}
 
-    function displayWritingEndpointHandler(nodeDetailContainerId, transactionDetailContainerId, endpoint_handler, timeZone, endpointName) {
-        const $transactionDetails = $('#' + transactionDetailContainerId);
-		$transactionDetails.fadeOut('fast', function() {
+	function loadEventData(eventId) {
+		let eventData = eventMap[eventId];
+		if ("undefined" == typeof eventData) {
+			$.ajax({
+				type: 'GET',
+				contentType: 'application/json',
+				async: false,
+				url: '../rest/search/event/' + encodeURIComponent(eventId) + '/endpoints',
+				cache: false,
+				success: function (data) {
+					if (!data || !data.event || !data.event.source) {
+						eventMap[eventId] = "";
+						return;
+					}
+					eventMap[eventId] = eventData = data.event;
+				}
+			});
+		}
+		return eventData;
+	}
+
+	function displayEndpoint(nodeDetailContainerId, transactionDetailContainerId, endpoint, timeZone) {
+		$('#' + nodeDetailContainerId).fadeOut('fast', function () {
+			$(this).empty();
+			if (endpoint) {
+				const writingEndpointHandler = getWritingEndpointHandler(endpoint.endpoint_handlers);
+				if (writingEndpointHandler && writingEndpointHandler.handling_time) {
+					appendToContainerInRow($(this), 'Write time', moment.tz(writingEndpointHandler.handling_time, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+				}
+				const readingEndpointHandlers = getReadingEndpointHandlers(endpoint.endpoint_handlers);
+				const times = $(readingEndpointHandlers).map(function () {
+					return this.handling_time;
+				}).get();
+				if (times.length !== 0) {
+					appendToContainerInRow($(this), 'First read time', moment.tz(Math.min.apply(Math, times), timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+				}
+			}
+			appendToContainerInRow($(this), 'Endpoint name', endpoint.name);
+			$(this).append('<br>');
+			$(this).fadeIn('fast');
+		});
+		$('#' + transactionDetailContainerId).fadeOut('fast', function () {
+			$('#transaction-detail-table').detach();
+			$(this).empty();
+		});
+	}
+
+	function displayWritingEndpointHandler(nodeDetailContainerId, transactionDetailContainerId, endpoint_handler, timeZone, endpointName) {
+		const $transactionDetails = $('#' + transactionDetailContainerId);
+		$transactionDetails.fadeOut('fast', function () {
 			$('#transaction-detail-table').detach();
 			$(this).empty();
 		});
 		$('#' + nodeDetailContainerId).fadeOut('fast', function () {
 			$(this).empty();
-            const eh = formatEndpointHandler(endpoint_handler, timeZone);
-            if (endpointName) {
-                appendToContainerInRow($(this), 'Endpoint', endpointName);
-            }
+			const eh = formatEndpointHandler(endpoint_handler, timeZone);
+			if (endpointName) {
+				appendToContainerInRow($(this), 'Endpoint', endpointName);
+			}
 			appendToContainerInRow($(this), 'Write time', eh.handling_time);
 			appendToContainerInRow($(this), 'Response time', eh.response_time);
 			appendToContainerInRow($(this), 'Transaction id', eh.transaction_id);
@@ -682,37 +877,18 @@ function showEvent(scrollTo, id) {
 		});
 	}
 	
-	function displayEndpoint(nodeDetailContainerId, transactionDetailContainerId, endpoint, timeZone) {
-		$('#' + nodeDetailContainerId).fadeOut('fast', function () {
-			$(this).empty();
-			if (endpoint) {
-                const writingEndpointHandler = getWritingEndpointHandler(endpoint.endpoint_handlers);
-			    if (writingEndpointHandler && writingEndpointHandler.handling_time) {
-			        appendToContainerInRow($(this), 'Write time', moment.tz(writingEndpointHandler.handling_time, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
-			    }
-			}
-			appendToContainerInRow($(this), 'Endpoint name', endpoint.name);
-			$(this).append('<br>');
-			$(this).fadeIn('fast');
-		});
-		$('#' + transactionDetailContainerId).fadeOut('fast', function() {
-			$('#transaction-detail-table').detach();
-			$(this).empty();
-		});
-	}
-
     function displayReadingEndpointHandler(nodeDetailContainerId, transactionDetailContainerId, endpoint_handler, timeZone, endpointName) {
-		var $transactionDetails = $('#' + transactionDetailContainerId);
-		$transactionDetails.fadeOut('fast', function() {
+		const $transactionDetails = $('#' + transactionDetailContainerId);
+		$transactionDetails.fadeOut('fast', function () {
 			$('#transaction-detail-table').detach();
 			$(this).empty();
 		});
 		$('#' + nodeDetailContainerId).fadeOut('fast', function () {
 			$(this).empty();
-            const eh = formatEndpointHandler(endpoint_handler, timeZone);
-            if (endpointName) {
-                appendToContainerInRow($(this), 'Endpoint', endpointName);
-            }
+			const eh = formatEndpointHandler(endpoint_handler, timeZone);
+			if (endpointName) {
+				appendToContainerInRow($(this), 'Endpoint', endpointName);
+			}
 			appendToContainerInRow($(this), 'Read time', eh.handling_time);
 			appendToContainerInRow($(this), 'Response time', eh.response_time);
 			appendToContainerInRow($(this), 'Transaction id', eh.transaction_id);
@@ -878,7 +1054,7 @@ function showEvent(scrollTo, id) {
 	function createAuditLogsTab(auditLogs, timeZone) {
 		$('#event-tabs').append(
 				$('<li>').addClass('nav-item').append(
-						$('<a>').attr('id', 'audit-log-tab-header')
+					$('<a>').attr('id', 'audit-log-tab-header')
 						.attr('data-toggle', 'tab')
 						.attr('href', '#audit-log-tab')
 						.attr('role', 'tab')
@@ -888,33 +1064,33 @@ function showEvent(scrollTo, id) {
 						.text('Audit logs')
 				)
 		);
-		
-		var $auditTable = $('<table id="correlation-table">').addClass('table table-hover table-sm').append(
-        	$('<thead>').append(
-        		$('<tr>').append(
-        			$('<th>').attr('style' ,'padding: 0.1rem;').text('Handling time'),
-	        		$('<th>').attr('style' ,'padding: 0.1rem;').text('Principal id'),
-                    $('<th>').attr('style', 'padding: 0.1rem;').text('Direct'),
-                    $('<th>').attr('style', 'padding: 0.1rem;').text('Payload visible'),
-                    $('<th>').attr('style', 'padding: 0.1rem;').text('Downloaded')
-	        	)
-	        )
-	    ).append(function () {
-	        var $tbody = $('<tbody>');
-	        $.each(auditLogs, function(index, auditLog) {
-	        	$tbody.append(
-	        		$('<tr>').append(
-	        			$('<td>').attr('style' ,'padding: 0.1rem;').text(moment.tz(auditLog.handling_time, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ')),
-	        			$('<td>').attr('style' ,'padding: 0.1rem;').text(auditLog.principal_id),
-                        $('<td>').attr('style', 'padding: 0.1rem;').text(auditLog.direct ? 'Yes' : 'No'),
-                        $('<td>').attr('style', 'padding: 0.1rem;').text(auditLog.payload_visible ? 'Yes' : 'No'),
-                        $('<td>').attr('style', 'padding: 0.1rem;').text(auditLog.downloaded ? 'Yes' : 'No')
-	        		)
-	        	);	
-	        });
-	        return $tbody;
-	    });
-		
+
+		const $auditTable = $('<table id="correlation-table">').addClass('table table-hover table-sm').append(
+			$('<thead>').append(
+				$('<tr>').append(
+					$('<th>').attr('style', 'padding: 0.1rem;').text('Handling time'),
+					$('<th>').attr('style', 'padding: 0.1rem;').text('Principal id'),
+					$('<th>').attr('style', 'padding: 0.1rem;').text('Direct'),
+					$('<th>').attr('style', 'padding: 0.1rem;').text('Payload visible'),
+					$('<th>').attr('style', 'padding: 0.1rem;').text('Downloaded')
+				)
+			)
+		).append(function () {
+			const $tbody = $('<tbody>');
+			$.each(auditLogs, function (index, auditLog) {
+				$tbody.append(
+					$('<tr>').append(
+						$('<td>').attr('style', 'padding: 0.1rem;').text(moment.tz(auditLog.handling_time, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ')),
+						$('<td>').attr('style', 'padding: 0.1rem;').text(auditLog.principal_id),
+						$('<td>').attr('style', 'padding: 0.1rem;').text(auditLog.direct ? 'Yes' : 'No'),
+						$('<td>').attr('style', 'padding: 0.1rem;').text(auditLog.payload_visible ? 'Yes' : 'No'),
+						$('<td>').attr('style', 'padding: 0.1rem;').text(auditLog.downloaded ? 'Yes' : 'No')
+					)
+				);
+			});
+			return $tbody;
+		});
+
 		$('#tabcontents').append(
 			$('<div>').attr('id', 'audit-log-tab')
 				.attr('role', 'tabpanel')
@@ -928,14 +1104,14 @@ function showEvent(scrollTo, id) {
     function createEventChainTab(id) {
 		$('#event-tabs').append(
 			$('<li>').addClass('nav-item').append(
-					$('<a>').attr('id', 'event-chain-tab-header')
-						.attr('data-toggle', 'tab')
-						.attr('href', '#event-chain-tab')
-						.attr('role', 'tab')
-						.attr('aria-controls', 'event-chain-tab')
-						.attr('aria-selected', 'fals')
-						.addClass('nav-link')
-						.text('Event chain')
+				$('<a>').attr('id', 'event-chain-tab-header')
+					.attr('data-toggle', 'tab')
+					.attr('href', '#event-chain-tab')
+					.attr('role', 'tab')
+					.attr('aria-controls', 'event-chain-tab')
+					.attr('aria-selected', 'fals')
+					.addClass('nav-link')
+					.text('Chain times')
 			)
 		);
 	
@@ -1040,31 +1216,21 @@ function showEvent(scrollTo, id) {
                                     }
                                 }
                             }
-                        };
-                        // Calculate the height of the chain graph.
-                        const rowInPixels = 16 + 8; //16 pixels for the event line + 8 pixels for the horizontal line delimiter
-                        const $scopeTest = $('<div style="display: none; font-size: 1em; margin: 0; padding:0; height: auto; line-height: 1; border:0;">&nbsp;</div>').appendTo('body');
-                        const scopeVal = $scopeTest.height();
-                        $scopeTest.remove();
-                        const emPerLine = (rowInPixels / scopeVal).toFixed(8);
+						};
+						// Calculate the height of the chain graph.
+						const rowInPixels = 16 + 8; //16 pixels for the event line + 8 pixels for the horizontal line delimiter
+						const $scopeTest = $('<div style="display: none; font-size: 1em; margin: 0; padding:0; height: auto; line-height: 1; border:0;">&nbsp;</div>').appendTo('body');
+						const scopeVal = $scopeTest.height();
+						$scopeTest.remove();
+						const emPerLine = (rowInPixels / scopeVal).toFixed(8);
 
-                        $('#event-chain').attr('style', 'height: ' + ((chartConfig.yAxis.categories.length * emPerLine) + 5.5) + 'em; width: 100%;');
+						$('#event-chain').attr('style', 'height: ' + ((chartConfig.yAxis.categories.length * emPerLine) + 5.5) + 'em; width: 100%;');
 
 						eventChainChart = Highcharts.chart('event-chain', chartConfig);
-				    }
+					}
                 });
-
-
-
 			}
-		});				
-	}
-
-	function getEarliestEndpointTime(endpointHandlers) {
-        endpointHandlers.sort(function (eh1, eh2) {
-            return eh1.handling_time - eh2.handling_time;
         });
-        return endpointHandlers[0].handling_time;
     }
 
     function getWritingEndpointHandler(endpointHandlers) {

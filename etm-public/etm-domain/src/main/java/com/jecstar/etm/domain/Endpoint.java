@@ -3,10 +3,26 @@ package com.jecstar.etm.domain;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class Endpoint {
+
+    public enum ProtocolType {
+        HTTP, HTTPS, MQ, KAFKA;
+
+        public static Endpoint.ProtocolType safeValueOf(String value) {
+            if (value == null) {
+                return null;
+            }
+            try {
+                return ProtocolType.valueOf(value.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
+        }
+    }
 
     /**
      * The name of the endpoint
@@ -14,18 +30,24 @@ public class Endpoint {
     public String name;
 
     /**
+     * The protocol that is used to serve the endpoint.
+     */
+    public ProtocolType protocolType;
+
+    /**
      * The handlers that were reading or writing the event. Each event can have a single writing event handler at most.
      */
     private final List<EndpointHandler> endpointHandlers = new ArrayList<>();
 
-
     public void initialize() {
         this.name = null;
+        this.protocolType = null;
         this.endpointHandlers.clear();
     }
 
     public void initialize(Endpoint copy) {
         this.name = copy.name;
+        this.protocolType = copy.protocolType;
         this.endpointHandlers.clear();
         for (EndpointHandler endpointHandler : copy.endpointHandlers) {
             EndpointHandler copyEndpointHandler = new EndpointHandler();
@@ -98,22 +120,15 @@ public class Endpoint {
     public boolean equals(Object obj) {
         if (obj instanceof Endpoint) {
             Endpoint other = (Endpoint) obj;
-            if (this.name == null ^ other.name == null) {
-                return false;
-            } else if (this.name == null && other.name == null) {
-                return true;
-            }
-            return this.name.equals(other.name);
+            return Objects.equals(this.name, other.name) &&
+                    Objects.equals(this.protocolType, other.protocolType);
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        if (this.name == null) {
-            return 1;
-        }
-        return this.name.hashCode();
+        return Objects.hash(this.name, this.protocolType);
     }
 
     public long getCalculatedHash() {
@@ -121,6 +136,11 @@ public class Endpoint {
         if (this.name != null) {
             for (int i = 0; i < this.name.length(); i++) {
                 hash = hash * 31 + this.name.charAt(i);
+            }
+        }
+        if (this.protocolType != null) {
+            for (int i = 0; i < this.protocolType.name().length(); i++) {
+                hash = hash * 31 + this.protocolType.name().charAt(i);
             }
         }
         for (EndpointHandler endpointHandler : this.endpointHandlers) {

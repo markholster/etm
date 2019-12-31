@@ -25,7 +25,7 @@ function buildNotifiersPage() {
 
     $('#sel-notifier').change(function(event) {
         event.preventDefault();
-        var notifierData = notifierMap[$(this).val()];
+        const notifierData = notifierMap[$(this).val()];
         resetValues();
         if ('undefined' == typeof notifierData) {
             return;

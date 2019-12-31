@@ -4,9 +4,8 @@ import com.jecstar.etm.server.core.domain.QueryOccurrence;
 
 import java.io.Serializable;
 import java.security.Principal;
-import java.text.DateFormat;
 import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class EtmPrincipal implements EtmSecurityEntity, Principal, Serializable {
@@ -336,16 +335,12 @@ public class EtmPrincipal implements EtmSecurityEntity, Principal, Serializable 
         return NumberFormat.getInstance(getLocale());
     }
 
-    public DateFormat getISO8601DateFormat() {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", getLocale());
-        dateFormat.setTimeZone(getTimeZone());
-        return dateFormat;
+    public DateTimeFormatter getISO8601DateFormat() {
+        return getDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
     }
 
-    public DateFormat getDateFormat(String format) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat(format, getLocale());
-        dateFormat.setTimeZone(getTimeZone());
-        return dateFormat;
+    public DateTimeFormatter getDateFormat(String format) {
+        return DateTimeFormatter.ofPattern(format).withLocale(getLocale()).withZone(getTimeZone().toZoneId());
     }
 
 }

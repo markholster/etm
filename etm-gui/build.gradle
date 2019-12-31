@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    compile project(":etm-server-core"), project(":etm-signaler"), dep_elasticsearchClient, dep_poiOoxml, dep_resteasyJaxrs, dep_jaxb
-    compile files('../lib/com.ibm.mq.allclient.jar', '../lib/integration-api-10.0.0.0.jar', '../lib/ibmjsseprovider2.jar')
-    runtime files('../lib/jetty-io.jar', '../lib/jetty-util.jar', '../lib/websocket-api.jar', '../lib/websocket-client.jar', '../lib/websocket-common.jar')
+    implementation project(":etm-server-core"), project(":etm-signaler"), project(":etm-public:etm-domain"), dep_elasticsearchClient, dep_poiOoxml, dep_resteasyJaxrs, dep_jaxb
+    implementation files('../lib/com.ibm.mq.allclient.jar', '../lib/integration-api-10.0.0.0.jar', '../lib/ibmjsseprovider2.jar')
+    runtimeOnly files('../lib/jetty-io.jar', '../lib/jetty-util.jar', '../lib/websocket-api.jar', '../lib/websocket-client.jar', '../lib/websocket-common.jar')
 }

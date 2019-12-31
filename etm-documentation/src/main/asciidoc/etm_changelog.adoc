@@ -1,5 +1,6 @@
 == Changelog
 === Version 4.0.0
+
 * [ETM-18] Allow/Deny server certificates.
 * [ETM-23] Remove all api references to event type.
 * [ETM-103] Change gui to themekita.
@@ -7,6 +8,7 @@
 * [ETM-106] Upgrade to elasticsearch 7.x
 * [ETM-107] Add a quicksearch bar.
 * [ETM-108] Replace endpoint configuration with import profiles.
+* [ETM-109] Endpoints tab should show all endpoints in chain.
 * [ETM-110] Ldap groups never reloaded.
 * [ETM-113] Email recipients disappeared after saving signal.
 * [ETM-114] java.lang.IllegalArgumentException during migration of version 3.5.2.
@@ -15,6 +17,7 @@
 * [ETM-117] Legend not correct in Pie charts.
 
 === Version 3.5.2
+
 * [ETM-112] Note that auto scaling to maxNrOfListeners only works on local queues.
 * [ETM-111] ETM stops reading messages after 5 minutes.
 

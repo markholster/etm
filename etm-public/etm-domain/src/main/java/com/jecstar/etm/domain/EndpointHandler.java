@@ -3,6 +3,7 @@ package com.jecstar.etm.domain;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class EndpointHandler {
 
@@ -116,28 +117,8 @@ public class EndpointHandler {
         return this.type != null && (this.handlingTime != null || this.transactionId != null || this.location.isSet() || this.application.isSet());
     }
 
-    public long getCalculatedHash() {
-        long hash = 7;
-        if (this.type != null) {
-            hash = hash * 31 + this.type.name().hashCode();
-        }
-        if (this.handlingTime != null) {
-            hash = hash * 31 + this.handlingTime.toEpochMilli();
-        }
-        if (this.transactionId != null) {
-            for (int i = 0; i < this.transactionId.length(); i++) {
-                hash = hash * 31 + this.transactionId.charAt(i);
-            }
-        }
-        if (this.sequenceNumber != null) {
-            hash = hash * 31 + sequenceNumber;
-        }
-        if (this.application.name != null) {
-            for (int i = 0; i < this.application.name.length(); i++) {
-                hash = hash * 31 + this.application.name.charAt(i);
-            }
-        }
-        return hash;
+    public int getCalculatedHash() {
+        return Objects.hash(this.type, this.handlingTime, this.transactionId, this.sequenceNumber, this.application);
     }
 
 }

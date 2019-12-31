@@ -3,5 +3,5 @@ plugins {
 }
 
 dependencies {
-    compile project(":etm-processor"), dep_kafka
+    implementation project(":etm-processor"), project(":etm-server-core"), dep_kafka, dep_metricsCore
 }

@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    compile project(":etm-launcher")
+    implementation project(":etm-launcher")
 }
 
 
@@ -12,7 +12,7 @@ applicationName = 'etm'
 
 distributions {
     main {
-        baseName 'etm'
+        distributionBaseName = 'etm'
         contents {
             exclude '**/com.ibm.mq.allclient.jar'
             exclude '**/config-manager-proxy-S900-FP03.jar'

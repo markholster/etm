@@ -213,7 +213,7 @@ public class SearchIntegrationTest extends AbstractCitrusSeleniumTest {
         //  There should be 8 rows in the transaction detail table.
         assertEquals(8, browser.getWebDriver().findElement(By.id("transaction-detail-table")).findElements(By.tagName("tr")).size());
         // Now check the event chain tab
-        runner.selenium(action -> action.click().element(By.xpath("//ul[@id='event-tabs']/li/a[text()='Event chain']")));
+        runner.selenium(action -> action.click().element(By.xpath("//ul[@id='event-tabs']/li/a[text()='Chain times']")));
         runner.selenium(action -> action.waitUntil().visible().element(By.id("event-chain")));
         sleep(1000);
         nodeElements = browser.getWebDriver().findElement(By.id("event-chain")).findElements(By.cssSelector("g.highcharts-point"));
@@ -258,6 +258,7 @@ public class SearchIntegrationTest extends AbstractCitrusSeleniumTest {
         guiEndpointHandler
                 .addMetadata("User-Agent", "Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:46.0) Gecko/20100101 Firefox/46.0")
                 .addMetadata("Pragma", "no-cache");
+
         assertTrue(sendEventToEtm("http", null, this.httpEventWriter.write(new HttpTelemetryEventBuilder()
                 .setId(eventId)
                 .setPayload("GET http://www.my-company.com/shopping-card.html")
@@ -267,7 +268,10 @@ public class SearchIntegrationTest extends AbstractCitrusSeleniumTest {
                 .setExpiry(timestamp.plusSeconds(30))
                 .addMetadata("BusinessProcess", "User views shopping card")
                 .addOrMergeEndpoint(new EndpointBuilder()
-                        .setName("/shopping-card.html")
+                        .setName("http://www.my-company.com/shopping-card.html")
+                        .addEndpointHandler(new EndpointHandlerBuilder().setHandlingTime(timestamp).setType(EndpointHandler.EndpointHandlerType.WRITER))
+                ).addOrMergeEndpoint(new EndpointBuilder()
+                        .setName("http://instserv0001.my.corp/shopping-card.html")
                         .addEndpointHandler(guiEndpointHandler.setType(EndpointHandler.EndpointHandlerType.READER))
                 )
                 .build()), apiKey));
@@ -327,7 +331,7 @@ public class SearchIntegrationTest extends AbstractCitrusSeleniumTest {
                 .setName("ShoppingCardRequest")
                 .setExpiry(timestamp.plusSeconds(30))
                 .addOrMergeEndpoint(new EndpointBuilder()
-                        .setName("BACKEND.QUEUE.1")
+                        .setName("wmq://BACKEND.QUEUE.1")
                         .addEndpointHandler(guiEndpointHandler.setType(EndpointHandler.EndpointHandlerType.WRITER))
                         .addEndpointHandler(backendEndpointHandler.setType(EndpointHandler.EndpointHandlerType.READER))
                 )
@@ -389,7 +393,7 @@ public class SearchIntegrationTest extends AbstractCitrusSeleniumTest {
                 .setMessagingEventType(MessagingTelemetryEvent.MessagingEventType.RESPONSE)
                 .setExpiry(timestamp.plusSeconds(30))
                 .addOrMergeEndpoint(new EndpointBuilder()
-                        .setName("FRONTEND.QUEUE.1")
+                        .setName("wmq://FRONTEND.QUEUE.1")
                         .addEndpointHandler(backendEndpointHandler.setType(EndpointHandler.EndpointHandlerType.WRITER))
                         .addEndpointHandler(guiEndpointHandler.setType(EndpointHandler.EndpointHandlerType.READER))
                 )
@@ -407,6 +411,10 @@ public class SearchIntegrationTest extends AbstractCitrusSeleniumTest {
                 .setHttpEventType(HttpTelemetryEvent.HttpEventType.RESPONSE)
                 .setStatusCode(200)
                 .addOrMergeEndpoint(new EndpointBuilder()
+                        .setName("http://www.my-company.com/shopping-card.html")
+                        .addEndpointHandler(new EndpointHandlerBuilder().setHandlingTime(timestamp).setType(EndpointHandler.EndpointHandlerType.READER))
+                ).addOrMergeEndpoint(new EndpointBuilder()
+                        .setName("http://instserv0001.my.corp/shopping-card.html")
                         .addEndpointHandler(guiEndpointHandler.setType(EndpointHandler.EndpointHandlerType.WRITER))
                 )
                 .build()), apiKey));

@@ -102,6 +102,9 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
         }
         buffer.append("{");
         boolean added = this.jsonWriter.addStringElementToJsonBuffer(tags.getEndpointNameTag(), endpoint.name, buffer, true);
+        if (endpoint.protocolType != null) {
+            added = this.jsonWriter.addStringElementToJsonBuffer(tags.getEndpointProtocolTag(), endpoint.protocolType.name(), buffer, !added) || added;
+        }
         if (endpointHandlerSet) {
             if (added) {
                 buffer.append(", ");

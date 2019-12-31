@@ -1,6 +1,7 @@
 package com.jecstar.etm.domain;
 
 import java.net.InetAddress;
+import java.util.Objects;
 
 public class Application {
 
@@ -55,4 +56,18 @@ public class Application {
         return this.name != null || this.instance != null || this.principal != null || this.version != null || this.hostAddress != null;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Application that = (Application) o;
+        return Objects.equals(this.name, that.name) &&
+                Objects.equals(this.instance, that.instance) &&
+                Objects.equals(this.version, that.version);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.name, this.instance, this.version);
+    }
 }

@@ -67,7 +67,7 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
                     errorMessage.setMessage("Invalid json path expression");
                     break;
                 case EtmException.INVALID_REGULAR_EXPRESSION:
-                    errorMessage.setMessage("Invalid json path expression");
+                    errorMessage.setMessage("Invalid regular expression");
                     break;
                 case EtmException.INVALID_EXPRESSION_PARSER_TYPE:
                     errorMessage.setMessage("Invalid expression parser type");

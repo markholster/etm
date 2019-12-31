@@ -45,6 +45,11 @@ public class TelemetryEventTagsJsonImpl implements TelemetryEventTags {
     }
 
     @Override
+    public String getEndpointProtocolTag() {
+        return "protocol";
+    }
+
+    @Override
     public String getEventHashesTag() {
         return "event_hashes";
     }

@@ -5,7 +5,7 @@ ext {
     version_elasticsearch = version_elasticsearch_major + ".0"
     version_junit = "5.4.0"
     version_resteasy = "3.6.3.Final"
-    version_slf4j = "1.7.26"
+    version_slf4j = "1.7.29"
 
     dep_apacheDs = "org.apache.directory.server:apacheds-all:2.0.0-M24"
     dep_artemisJmsClient = "org.apache.activemq:artemis-jms-client:" + version_artemis
@@ -59,6 +59,11 @@ allprojects {
             targetCompatibility = '11'
             options.encoding = 'UTF-8'
             options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+            doFirst {
+                options.compilerArgs.addAll([
+                        '--module-path', classpath.asPath,
+                ])
+            }
         }
 
         compileTestJava {
@@ -68,27 +73,35 @@ allprojects {
             options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
         }
 
-
         dependencies {
-            testCompile 'org.junit.jupiter:junit-jupiter-api:' + version_junit
             testImplementation 'org.junit.jupiter:junit-jupiter-api:' + version_junit
             testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:' + version_junit
             testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:' + version_junit
         }
 
+        test {
+            useJUnitPlatform()
+        }
+
         sourceSets.whenObjectAdded {
             if ('integrationTest'.equals(it.name)) {
                 dependencies {
-                    integrationTestCompile 'org.junit.jupiter:junit-jupiter-api:' + version_junit
                     integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api:' + version_junit
                     integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:' + version_junit
                     integrationTestRuntimeOnly 'org.junit.vintage:junit-vintage-engine:' + version_junit
                 }
+
+                project.task('integrationTest', type: Test).configure {
+                    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+                    classpath = sourceSets.integrationTest.runtimeClasspath
+                }
+                project.integrationTest {
+                    useJUnitPlatform()
+                }
             }
+
         }
 
-        test {
-            useJUnitPlatform()
-        }
+
     }
 }
