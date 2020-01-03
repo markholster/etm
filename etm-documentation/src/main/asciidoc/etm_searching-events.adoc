@@ -184,19 +184,47 @@ By default all provided terms are optional unless they are quoted. This behavior
 name: My +name -must not be +empty
 ----
 
-states that we are searching for an event with a name that must contain the terms ''name'' and ''empty'', must not contain the term ''must'' and may contain the terms ''My'', ''not'' and ''be''. 
+states that we are searching for an event with a name that must contain the terms ''name'' and ''empty'', must not contain the term ''must'' and may contain the terms ''My'', ''not'' and ''be''.
 
 ==== Grouping
-Terms can be grouped by using parentheses. This is in particular useful if you want to combine multiple ''AND'' and ''OR'' operators
+
+Terms can be grouped by using parentheses.
+This is in particular useful if you want to combine multiple ''AND'' and ''OR'' operators
+
 ----
 name: (My AND name) OR (must AND be) OR empty
 ----
 
+==== Joins
+
+{etm} supports a limited sets of joins.
+Requests and responses can be joined into a single query using the ''WITH <REQUEST|RESPONSE>'' statement.
+If you, for example, need all the request messages with a response payload length > 100 you could use the following query
+
+----
+* WITH RESPONSE payload_length:> 100
+----
+
+Vice versa you could do the same to list all responses with a certain name of which the request payload length was greater that a certain amount
+
+----
+name: MyResponseName WITH REQUEST payload_length:> 100
+----
+
+WARNING: Under the hood {etm} will execute multiple queries to make these joins possible.
+The query after the ''WITH <REQUEST|RESPONSE>'' statement may never result in more than 65536 matches otherwise an error will be thrown.
+To scope this query to a minimum of results the Start date and End date also taken into account during execution.
+This means that both the request and response should be within the given date/time range.
+
 ==== Reserved characters
-The reserved characters are: + - = && || > < ! ( ) { } [ ] ^ " ~ * ? : \ /
-If you want to use any of these characters in your term(s) you have to escape them by a leading backslash. For example
+
+The reserved characters are: + - = && || > < !
+( ) { } [ ] ^ " ~ * ?
+: \ / If you want to use any of these characters in your term(s) you have to escape them by a leading backslash.
+For example
+
 ----
 name: \(DemoName\) 
 ----
-searches for an event with the name ''(DemoName)''.
 
+searches for an event with the name ''(DemoName)''.

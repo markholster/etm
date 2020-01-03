@@ -63,6 +63,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -76,6 +77,11 @@ public class SearchService extends AbstractIndexMetadataService {
     private static final LogWrapper log = LogFactory.getLogger(SearchService.class);
 
     private static final DateTimeFormatter dateTimeFormatterIndexPerDay = DateUtils.getIndexPerDayFormatter();
+    private static final String JOIN_KEYWORD = "WITH";
+    private static final String JOIN_ELEMENT_REQUEST = "REQUEST";
+    private static final String JOIN_ELEMENT_RESPONSE = "RESPONSE";
+    private static final List<String> JOIN_ELEMENTS = Arrays.asList(JOIN_ELEMENT_REQUEST, JOIN_ELEMENT_RESPONSE);
+
     private static DataRepository dataRepository;
     private static EtmConfiguration etmConfiguration;
 
@@ -83,6 +89,7 @@ public class SearchService extends AbstractIndexMetadataService {
     private final EtmConfigurationTags configurationTags = new EtmConfigurationTagsJsonImpl();
     private final QueryAuditLogConverter queryAuditLogConverter = new QueryAuditLogConverter();
     private final GetEventAuditLogConverter getEventAuditLogConverter = new GetEventAuditLogConverter();
+    private final Pattern queryParserPattern = Pattern.compile("[^\\s\"]+|\"(?:[^\"\\\\]|\\\\.)*\"");
 
     public static void initialize(DataRepository dataRepository, EtmConfiguration etmConfiguration) {
         SearchService.dataRepository = dataRepository;
@@ -263,23 +270,50 @@ public class SearchService extends AbstractIndexMetadataService {
             parameters.addField(this.eventTags.getEndpointsTag() + "." + this.eventTags.getEndpointHandlersTag() + "." + this.eventTags.getEndpointHandlerHandlingTimeTag());
             parameters.addField(this.eventTags.getNameTag());
         }
-        QueryStringQueryBuilder queryStringBuilder = new QueryStringQueryBuilder(parameters.getQueryString())
-                .allowLeadingWildcard(true)
+        QueryStringQueryBuilder queryStringBuilder = null;
+        BoolQueryBuilder joinQueryBuilder = null;
+        String joinElement = null;
+        if (parameters.getQueryString().contains(JOIN_KEYWORD)) {
+            var elements = new ArrayList<String>();
+            var matcher = queryParserPattern.matcher(parameters.getQueryString());
+            while (matcher.find()) {
+                elements.add(matcher.group());
+            }
+            var joinIx = elements.indexOf(JOIN_KEYWORD);
+            if (joinIx == -1 || elements.size() <= joinIx + 1 || JOIN_ELEMENTS.indexOf(elements.get(joinIx + 1)) == -1) {
+                queryStringBuilder = new QueryStringQueryBuilder(parameters.getQueryString());
+            } else {
+                queryStringBuilder = new QueryStringQueryBuilder(elements.stream().limit(joinIx).collect(Collectors.joining(" ")));
+                joinQueryBuilder = new BoolQueryBuilder();
+                joinQueryBuilder.must(new QueryStringQueryBuilder(elements.stream().skip(joinIx + 2).collect(Collectors.joining(" "))));
+                joinElement = JOIN_ELEMENTS.get(JOIN_ELEMENTS.indexOf(elements.get(joinIx + 1)));
+                var joinObjectTypes = new ArrayList<String>();
+                if (parameters.getTypes().indexOf(TelemetryEventTags.EVENT_OBJECT_TYPE_HTTP) != -1) {
+                    joinObjectTypes.add(TelemetryEventTags.EVENT_OBJECT_TYPE_HTTP);
+                }
+                if (parameters.getTypes().indexOf(TelemetryEventTags.EVENT_OBJECT_TYPE_MESSAGING) != -1) {
+                    joinObjectTypes.add(TelemetryEventTags.EVENT_OBJECT_TYPE_MESSAGING);
+                }
+                joinQueryBuilder.filter(QueryBuilders.termsQuery(this.eventTags.getObjectTypeTag(), parameters.getTypes().toArray()));
+            }
+        } else {
+            queryStringBuilder = new QueryStringQueryBuilder(parameters.getQueryString());
+        }
+        queryStringBuilder.allowLeadingWildcard(true)
                 .analyzeWildcard(true)
                 .defaultField(ElasticsearchLayout.ETM_ALL_FIELDS_ATTRIBUTE_NAME)
                 .timeZone(etmPrincipal.getTimeZone().getID());
-        BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
+        var boolQueryBuilder = new BoolQueryBuilder();
         boolQueryBuilder.must(queryStringBuilder);
 
-
-        boolean notAfterFilterNecessary = true;
-        boolean needsUtcZone = false;
+        var notAfterFilterNecessary = true;
+        var needsUtcZone = false;
         if (parameters.getEndTime() != null || parameters.getStartTime() != null) {
-            RangeQueryBuilder timestampFilter = new RangeQueryBuilder(parameters.getTimeFilterField());
+            var timestampFilter = new RangeQueryBuilder(parameters.getTimeFilterField());
             if (parameters.getEndTime() != null) {
                 try {
                     // Check if the endtime is given as an exact timestamp or an elasticsearch date math.
-                    long endTime = Long.parseLong(parameters.getEndTime());
+                    var endTime = Long.parseLong(parameters.getEndTime());
                     timestampFilter.lte(endTime < parameters.getNotAfterTimestamp() ? endTime : parameters.getNotAfterTimestamp());
                     notAfterFilterNecessary = false;
                     needsUtcZone = true;
@@ -301,7 +335,7 @@ public class SearchService extends AbstractIndexMetadataService {
             if (parameters.getStartTime() != null) {
                 try {
                     // Check if the start time is given as an exact timestamp or an elasticsearch date math.
-                    long endTime = Long.parseLong(parameters.getStartTime());
+                    var endTime = Long.parseLong(parameters.getStartTime());
                     timestampFilter.gte(endTime);
                     needsUtcZone = true;
                 } catch (NumberFormatException e) {
@@ -312,15 +346,38 @@ public class SearchService extends AbstractIndexMetadataService {
                 timestampFilter.timeZone(etmPrincipal.getTimeZone().getID());
             }
             boolQueryBuilder.filter(timestampFilter);
+            if (joinQueryBuilder != null) {
+                joinQueryBuilder.filter(timestampFilter);
+            }
         }
         if (notAfterFilterNecessary) {
             // the given parameters.getStartTime() & parameters.getEndTime() were zero or an elasticsearch math date. We have to apply the notAfterTime filter as well.
             boolQueryBuilder.filter(new RangeQueryBuilder("timestamp").lte(parameters.getNotAfterTimestamp()));
+            if (joinQueryBuilder != null) {
+                joinQueryBuilder.filter(new RangeQueryBuilder("timestamp").lte(parameters.getNotAfterTimestamp()));
+            }
         }
         if (parameters.getTypes().size() != 5) {
             boolQueryBuilder.filter(QueryBuilders.termsQuery(this.eventTags.getObjectTypeTag(), parameters.getTypes().toArray()));
         }
-        SearchRequestBuilder requestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL), etmConfiguration)
+        if (joinQueryBuilder != null) {
+            SearchRequestBuilder joinRequestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL), etmConfiguration)
+                    .setQuery(joinQueryBuilder)
+                    .setFetchSource(false);
+            ScrollableSearch searchHits = new ScrollableSearch(dataRepository, joinRequestBuilder);
+            var ids = new ArrayList<String>();
+            for (var searchHit : searchHits) {
+                ids.add(searchHit.getId());
+            }
+            if (!ids.isEmpty()) {
+                if (JOIN_ELEMENT_REQUEST.equals(joinElement)) {
+                    boolQueryBuilder.filter(new TermsQueryBuilder(this.eventTags.getCorrelationIdTag() + KEYWORD_SUFFIX, ids));
+                } else if (JOIN_ELEMENT_RESPONSE.equals(joinElement)) {
+                    boolQueryBuilder.filter(new TermsQueryBuilder(this.eventTags.getCorrelationsTag() + KEYWORD_SUFFIX, ids));
+                }
+            }
+        }
+        var requestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL), etmConfiguration)
                 .setQuery(addFilterQuery(getEtmPrincipal(), boolQueryBuilder))
                 .setFetchSource(parameters.getFields().toArray(new String[0]), null)
                 .setFrom(parameters.getStartIndex())
@@ -335,8 +392,8 @@ public class SearchService extends AbstractIndexMetadataService {
     }
 
     private void writeQueryHistory(long timestamp, SearchRequestParameters parameters, EtmPrincipal etmPrincipal, int history_size) {
-        Map<String, Object> scriptParams = new HashMap<>();
-        Map<String, Object> query = new HashMap<>();
+        var scriptParams = new HashMap<String, Object>();
+        var query = new HashMap<String, Object>();
         query.put(this.configurationTags.getTimestampTag(), timestamp);
         query.put(this.configurationTags.getQueryTag(), parameters.getQueryString());
         query.put(this.configurationTags.getTypesTag(), parameters.getTypes());
@@ -348,14 +405,12 @@ public class SearchService extends AbstractIndexMetadataService {
         query.put(this.configurationTags.getEndTimeTag(), parameters.getEndTime());
         query.put(this.configurationTags.getTimeFilterFieldTag(), parameters.getTimeFilterField());
 
-
         scriptParams.put("query", query);
         scriptParams.put("history_size", history_size);
-        UpdateRequestBuilder builder = enhanceRequest(
+        var builder = enhanceRequest(
                 new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + etmPrincipal.getId()),
                 etmConfiguration
-        )
-                .setScript(new Script(ScriptType.STORED, null, "etm_update-search-history", scriptParams));
+        ).setScript(new Script(ScriptType.STORED, null, "etm_update-search-history", scriptParams));
         dataRepository.updateAsync(builder, DataRepository.noopActionListener());
     }
 

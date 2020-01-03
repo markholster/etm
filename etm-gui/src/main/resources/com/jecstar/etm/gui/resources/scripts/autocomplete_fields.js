@@ -1,95 +1,124 @@
 (function ($) {
-	// TODO! Autocomplete on mobile devices.
 	$.fn.autocompleteFieldQuery = function(options) {
 
-        const queryOperators = ['AND', 'AND NOT', 'OR'];
+        const queryOperators = ['AND NOT', 'AND', 'OR'];
+        const joinOperators = ['WITH REQUEST', 'WITH RESPONSE'];
         const queryForFields = ['_exists_'];
 
+        const queryRegexp = new RegExp(queryOperators.join("|").replace(' ', '\\s') + '|[^\\s"]+|"([^"]*)"', 'g');
+        const queryAndJoinRegexp = new RegExp(queryOperators.join("|").replace(' ', '\\s') + '|' + joinOperators.join("|").replace(' ', '\\s') + '|[^\\s"]+|"([^"]*)"', 'g');
+
         const settings = $.extend({
-            keywordIndexFilter: function(index) {
-            	return false;
+            keywordIndexFilter: function (index) {
+                return false;
             },
-            keywordGroupFilter: function(index, group) {
-            	return false;
+            keywordGroupFilter: function (index, group) {
+                return false;
             },
-            keywordFilter: function(index, group, keyword) {
-            	return false;
-            },            
-            filter: function(keywords) {
-            	if (keywords == null) {
-            		return null;
-            	}
-	            var values = [];
-	            
-            	$.each(keywords, function(ix, keywordGroup) {
-            		if (settings.keywordIndexFilter(keywordGroup.index)) {
-            			return true;
-            		}
-            		if (settings.keywordGroupFilter(keywordGroup.index, keywordGroup.type)) {
-            			return true;
-            		}
-            		$.each(keywordGroup.keywords, function(ix2, keyword) {
-            			if (settings.keywordFilter(keywordGroup.index, keywordGroup.type, keyword)) {
-            				return true;
-            			}
-            			values.push(keyword.name);
-            		});
-	            })
-	            if ('field' === settings.mode) {
-	            	$.each(queryForFields, function(index, fieldName) {
-	            		 while ((ix = $.inArray(fieldName, values)) !== -1) {
-	            			 values.splice(ix,1);
-	                     }
-	                })
-	            }
-	            return $.uniqueSort(values.sort());	            
+            keywordFilter: function (index, group, keyword) {
+                return false;
+            },
+            filter: function (keywords) {
+                if (keywords == null) {
+                    return null;
+                }
+                const values = [];
+
+                $.each(keywords, function (ix, keywordGroup) {
+                    if (settings.keywordIndexFilter(keywordGroup.index)) {
+                        return true;
+                    }
+                    if (settings.keywordGroupFilter(keywordGroup.index, keywordGroup.type)) {
+                        return true;
+                    }
+                    $.each(keywordGroup.keywords, function (ix2, keyword) {
+                        if (settings.keywordFilter(keywordGroup.index, keywordGroup.type, keyword)) {
+                            return true;
+                        }
+                        values.push(keyword.name);
+                    });
+                });
+                if ('field' === settings.mode) {
+                    $.each(queryForFields, function (index, fieldName) {
+                        let ix;
+                        while ((ix = $.inArray(fieldName, values)) !== -1) {
+                            values.splice(ix, 1);
+                        }
+                    })
+                }
+                return $.uniqueSort(values.sort());
             },
             mode: 'query',
-            queryKeywords : null	
-        }, options );
+            allowJoins: false,
+            queryKeywords: null
+        }, options);
 
-        
+
         function getCurrentKeywords() {
-        	return settings.filter(settings.queryKeywords);
+            return settings.filter(settings.queryKeywords);
         }
-        
-        
+
         function extractAutocompleteTerm(query) {
             if (!query) {
-                return { "queryTerm": '', "queryType": "field"};
-            } 
+                return {"queryTerm": '', "queryType": "field"};
+            }
             if ('field' === settings.mode) {
-            	return { "queryTerm": query, "queryType": "field"};
+                return {"queryTerm": query, "queryType": "field"};
             }
-            var terms = query.match(/AND\sNOT|AND|OR|[^\s"]+|"([^"]*)"/g);
+            const terms = query.match(settings.allowJoins ? queryAndJoinRegexp : queryRegexp);
             if (!terms) {
-                return { "queryTerm": query, "queryType": "field"};
+                return {"queryTerm": query, "queryType": "field"};
             }
-            if (terms.length == 1) {
+            if (terms.length === 1) {
                 if (isQueryForFieldTerm(terms[0]) && endsWith(query, ' ')) {
-                    return { "queryTerm": '', "queryType": "fieldTermValue"};
+                    return {"queryTerm": '', "queryType": "fieldTermValue"};
                 }
-                return { "queryTerm": query, "queryType": "field"};
+                return {"queryTerm": query, "queryType": "field"};
             } else {
                 const lastTerm = terms[terms.length - 1];
                 const secondLastTerm = terms[terms.length - 2].trim();
                 if (isQueryForFieldTerm(secondLastTerm) && !endsWith(query, ' ')) {
-                    return { "queryTerm": lastTerm, "queryType": "fieldTermValue"};
+                    return {"queryTerm": lastTerm, "queryType": "fieldTermValue"};
                 }
                 if (isQueryForFieldTerm(lastTerm) && endsWith(query, ' ')) {
-                    return { "queryTerm": '', "queryType": "fieldTermValue"};
+                    return {"queryTerm": '', "queryType": "fieldTermValue"};
                 }
                 if (endsWith(secondLastTerm, ':')) {
-                    return { "queryTerm": null};
+                    return {"queryTerm": null};
                 }
                 if (queryOperators.indexOf(secondLastTerm) !== -1) {
-                    return { "queryTerm": lastTerm, "queryType": "field"};
+                    return {"queryTerm": lastTerm, "queryType": "field"};
                 }
                 if (queryOperators.indexOf(lastTerm) !== -1 && endsWith(query, ' ')) {
-                    return { "queryTerm": '', "queryType": "field"};
+                    return {"queryTerm": '', "queryType": "field"};
+                }
+                if (settings.allowJoins) {
+                    // Joins only allowed a single time, so the check is the other way around...
+                    let returnValue;
+                    const joinIndices = [];
+                    $.each(joinOperators, function (ix, operator) {
+                        const termIx = terms.indexOf(operator);
+                        if (termIx !== -1) {
+                            joinIndices.push(termIx);
+                        }
+                    });
+                    joinIndices.sort();
+                    $.each(joinIndices, function (ix, termIx) {
+                        if (termIx === terms.length - 2) {
+                            returnValue = {"queryTerm": lastTerm, "queryType": "field"};
+                        } else if (termIx === terms.length - 1 && endsWith(query, ' ')) {
+                            returnValue = {"queryTerm": '', "queryType": "field"};
+                        } else {
+                            return false;
+                        }
+                    });
+
+                    if (undefined !== returnValue) {
+                        return returnValue;
+                    }
                 }
             }
-            return { "queryTerm": null};
+            return {"queryTerm": null};
         }
         
         function isQueryForFieldTerm(term) {
@@ -149,8 +178,8 @@
 	};
 	
 	function endsWith(value, valueToTest) {
-		var d = value.length - valueToTest.length;
-		return d >= 0 && value.lastIndexOf(valueToTest) === d;
-	}
+        const d = value.length - valueToTest.length;
+        return d >= 0 && value.lastIndexOf(valueToTest) === d;
+    }
 	
 }(jQuery));
