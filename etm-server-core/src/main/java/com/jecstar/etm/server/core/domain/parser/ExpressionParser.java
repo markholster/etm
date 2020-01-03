@@ -6,7 +6,7 @@ package com.jecstar.etm.server.core.domain.parser;
  * An <code>ExpressionParser</code> is capable of extracting data from an <code>TelemetryEvent</code> before it is stored
  * to Elasticsearch. Some <code>ExpressionParser</code>s are capable of replacing content as well.
  */
-public interface ExpressionParser {
+public interface ExpressionParser extends AutoCloseable {
 
     /**
      * Gives the name of the <code>ExpressionParser</code>.

@@ -69,6 +69,9 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
                 case EtmException.INVALID_REGULAR_EXPRESSION:
                     errorMessage.setMessage("Invalid regular expression");
                     break;
+                case EtmException.INVALID_JAVASCRIPT_EXPRESSION:
+                    errorMessage.setMessage("Invalid javascript expression");
+                    break;
                 case EtmException.INVALID_EXPRESSION_PARSER_TYPE:
                     errorMessage.setMessage("Invalid expression parser type");
                     break;

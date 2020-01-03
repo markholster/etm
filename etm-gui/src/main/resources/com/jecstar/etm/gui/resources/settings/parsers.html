@@ -108,6 +108,7 @@
                                                         <option value="copy_value">Copy value</option>
                                                         <option value="fixed_position">Fixed position</option>
                                                         <option value="fixed_value">Fixed value</option>
+                                                        <option value="javascript">Javascript</option>
                                                         <option value="jsonpath">JsonPath</option>
                                                         <option value="regex">Regular expression</option>
                                                         <option value="xpath">XPath</option>
@@ -153,6 +154,25 @@
                                                         <input id="input-fixed-value" type="text" class="form-control"
                                                                required="required" disabled="disabled"/>
                                                     </div>
+                                                </div>
+                                            </div>
+                                            <div id="grp-javascript" style="display: none;">
+                                                <div class="form-group row">
+                                                    <label for="input-javascript-main_function"
+                                                           class="col-sm-3 col-form-label">Function</label>
+                                                    <div class="col-sm-9">
+                                                        <input id="input-javascript-main_function" type="text"
+                                                               class="form-control"
+                                                               required="required" disabled="disabled" value="main"/>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group row">
+                                                    <label for="input-javascript-script">Script</label>
+                                                    <textarea id="input-javascript-script" class="form-control"
+                                                              rows="10"
+                                                              required="required" disabled="disabled">function main(content, replacement) {
+  return content;
+}</textarea>
                                                 </div>
                                             </div>
                                             <div id="grp-jsonpath" style="display: none;">

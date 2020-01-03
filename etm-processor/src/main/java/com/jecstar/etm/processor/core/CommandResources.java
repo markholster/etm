@@ -9,6 +9,6 @@ public interface CommandResources extends Closeable {
 
     <T> T getPersister(CommandType commandType);
 
-    void loadImportProfile(String importProfileName, ImportProfile importProfile);
+    ImportProfile loadImportProfile(String importProfileName);
 
 }

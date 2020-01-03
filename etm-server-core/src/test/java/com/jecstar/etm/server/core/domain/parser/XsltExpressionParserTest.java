@@ -6,13 +6,14 @@ import javax.xml.transform.ErrorListener;
 import javax.xml.transform.TransformerException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
 public class XsltExpressionParserTest {
 
     @Test
-    public void testMultiThreading() {
+    public void testMultiThreading() throws InterruptedException {
         ErrorListener errorListener = new ErrorListener() {
             @Override
             public void warning(TransformerException exception) {
@@ -80,5 +81,7 @@ public class XsltExpressionParserTest {
                         "</world>", null, false);
             });
         }
+        executorService.shutdown();
+        executorService.awaitTermination(1, TimeUnit.MINUTES);
     }
 }

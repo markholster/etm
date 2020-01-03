@@ -17,6 +17,7 @@ ext {
     dep_disruptor = "com.lmax:disruptor:3.4.2"
     dep_elasticsearchClient = "org.elasticsearch.client:elasticsearch-rest-high-level-client:" + version_elasticsearch
     dep_elasticsearchClientSniffer = "org.elasticsearch.client:elasticsearch-rest-client-sniffer:" + version_elasticsearch
+    dep_graaljs = "org.graalvm.js:js:19.3.0.2"
     dep_jacksonDatabind = "com.fasterxml.jackson.core:jackson-databind:2.9.8"
     dep_jms = "javax.jms:javax.jms-api:2.0.1"
     dep_jaxb = "javax.xml.bind:jaxb-api:2.3.1"

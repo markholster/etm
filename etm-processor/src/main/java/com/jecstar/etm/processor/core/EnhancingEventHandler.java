@@ -6,7 +6,6 @@ import com.codahale.metrics.Timer.Context;
 import com.jecstar.etm.domain.TelemetryEvent;
 import com.jecstar.etm.processor.TelemetryCommand;
 import com.jecstar.etm.processor.TelemetryCommand.CommandType;
-import com.jecstar.etm.server.core.domain.ImportProfile;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.enhancers.DefaultTelemetryEventEnhancer;
 import com.lmax.disruptor.EventHandler;
@@ -20,8 +19,6 @@ class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
     private final long numberOfConsumers;
     private final CommandResources commandResources;
 
-    private final ImportProfile importProfile;
-
     private final DefaultTelemetryEventEnhancer defaultTelemetryEventEnhancer = new DefaultTelemetryEventEnhancer();
     private final CustomAchmeaEnhancements achmeaEnhancements;
     private final Timer timer;
@@ -30,7 +27,6 @@ class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
         this.ordinal = ordinal;
         this.numberOfConsumers = numberOfConsumers;
         this.commandResources = commandResources;
-        this.importProfile = new ImportProfile();
         this.achmeaEnhancements = new CustomAchmeaEnhancements(etmConfiguration);
         this.timer = metricRegistry.timer("event-processor.enhancing");
     }
@@ -65,10 +61,10 @@ class EnhancingEventHandler implements EventHandler<TelemetryCommand> {
     private void enhanceTelemetryEvent(TelemetryEvent<?> event, String importProfileName) {
         final Context timerContext = this.timer.time();
         try {
-            final ZonedDateTime now = ZonedDateTime.now();
-            this.commandResources.loadImportProfile(importProfileName, this.importProfile);
-            if (this.importProfile.eventEnhancer != null) {
-                this.importProfile.eventEnhancer.enhance(event, now);
+            final var now = ZonedDateTime.now();
+            final var importProfile = this.commandResources.loadImportProfile(importProfileName);
+            if (importProfile.eventEnhancer != null) {
+                importProfile.eventEnhancer.enhance(event, now);
             } else {
                 this.defaultTelemetryEventEnhancer.enhance(event, now);
             }

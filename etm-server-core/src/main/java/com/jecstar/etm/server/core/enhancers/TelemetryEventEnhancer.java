@@ -11,7 +11,7 @@ import java.time.ZonedDateTime;
  *
  * @author Mark Holster
  */
-public interface TelemetryEventEnhancer {
+public interface TelemetryEventEnhancer extends AutoCloseable {
 
     /**
      * Enhance the <code>TelemetryEvent</code>.

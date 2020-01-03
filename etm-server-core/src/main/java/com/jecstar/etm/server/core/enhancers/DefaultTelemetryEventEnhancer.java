@@ -9,6 +9,8 @@ import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
 import com.jecstar.etm.server.core.domain.parser.ExpressionParser;
 import com.jecstar.etm.server.core.domain.parser.ExpressionParserField;
 import com.jecstar.etm.server.core.enhancers.DefaultField.WritePolicy;
+import com.jecstar.etm.server.core.logging.LogFactory;
+import com.jecstar.etm.server.core.logging.LogWrapper;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -18,6 +20,11 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
+
+    /**
+     * The <code>LogWrapper</code> for this class.
+     */
+    private static final LogWrapper log = LogFactory.getLogger(DefaultTelemetryEventEnhancer.class);
 
     private boolean enhancePayloadFormat = true;
     private final TelemetryEventTags tags = new TelemetryEventTagsJsonImpl();
@@ -62,33 +69,6 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
         boolean expressionParserPresent = this.transformations.stream().anyMatch(p -> p.getExpressionParser().getName().equals(transformation.getExpressionParser().getName()));
         if (!expressionParserPresent) {
             this.transformations.add(transformation);
-        }
-    }
-
-    /**
-     * Merge the field & transformation <code>ExpressionParsers</code> of another <code>DefaultTelemetryEventEnhancer</code> to this one.
-     *
-     * @param other The other <code>DefaultTelemetryEventEnhancer</code> to merge into this one.
-     */
-    public void mergeExpressionParsers(DefaultTelemetryEventEnhancer other) {
-        if (!other.fields.isEmpty() && !this.fields.isEmpty()) {
-            for (DefaultField field : other.getFields()) {
-                Optional<DefaultField> optional = this.fields.stream().filter(p -> p.getName().equals(field.getName())).findFirst();
-                if (optional.isPresent()) {
-                    // Both enhancers contain the same key. Append the "other" parsers to the current ones.
-                    optional.get().addParsers(field.getParsers());
-                } else {
-                    this.fields.add(field);
-                }
-            }
-        } else if (!other.fields.isEmpty() && this.fields.isEmpty()) {
-            // Current parsers is empty, just overwrite with other.
-            this.fields.addAll(other.fields);
-        }
-        if (other.transformations.isEmpty()) {
-            for (DefaultTransformation transformation : other.transformations) {
-                addTransformation(transformation);
-            }
         }
     }
 
@@ -335,4 +315,27 @@ public class DefaultTelemetryEventEnhancer implements TelemetryEventEnhancer {
         return null;
     }
 
+    @Override
+    public void close() {
+        for (var transformation : this.transformations) {
+            try {
+                transformation.getExpressionParser().close();
+            } catch (Exception e) {
+                if (log.isDebugLevelEnabled()) {
+                    log.logDebugMessage(e.getMessage(), e);
+                }
+            }
+        }
+        for (var field : this.fields) {
+            for (var parser : field.getParsers()) {
+                try {
+                    parser.close();
+                } catch (Exception e) {
+                    if (log.isDebugLevelEnabled()) {
+                        log.logDebugMessage(e.getMessage(), e);
+                    }
+                }
+            }
+        }
+    }
 }

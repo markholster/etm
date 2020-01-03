@@ -24,6 +24,7 @@ public class EtmException extends RuntimeException {
     public static final int INVALID_XSLT_TEMPLATE = 201_012;
     public static final int INVALID_JSON_EXPRESSION = 201_013;
     public static final int INVALID_REGULAR_EXPRESSION = 201_014;
+    public static final int INVALID_JAVASCRIPT_EXPRESSION = 201_015;
     public static final int INVALID_EXPRESSION_PARSER_TYPE = 201_029;
     // 201_030 till ... reserved for users & groups
     public static final int NO_MORE_USER_ADMINS_LEFT = 201_030;

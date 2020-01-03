@@ -22,4 +22,8 @@ abstract class AbstractExpressionParser implements ExpressionParser {
     public String replace(String content, String replacement, boolean allValues) {
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public void close() {
+    }
 }

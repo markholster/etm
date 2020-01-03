@@ -35,4 +35,6 @@ public interface ExpressionParserTags {
     String getUnicodeCharacterClassTag();
 
     String getUnixLinesTag();
+
+    String getMainFunctionTag();
 }

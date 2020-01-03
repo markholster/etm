@@ -88,4 +88,9 @@ public class ExpressionParserTagsJsonImpl implements ExpressionParserTags {
     public String getUnixLinesTag() {
         return "unix_lines";
     }
+
+    @Override
+    public String getMainFunctionTag() {
+        return "main_function";
+    }
 }

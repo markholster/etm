@@ -22,6 +22,7 @@ dependencies {
             dep_jacksonDatabind,
             dep_ldaptive,
             dep_saxonHE,
+            dep_graaljs,
             dep_slf4jApi,
             dep_mailApi
     implementation(dep_jsonPath) {

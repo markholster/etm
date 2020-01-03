@@ -64,16 +64,16 @@ public class ExpressionParserConverterJsonImpl implements ExpressionParserConver
         } else if ("copy_value".equals(type)) {
             return new CopyValueExpressionParser(name);
         } else if ("regex".equals(type)) {
-            String expression = this.converter.getString(this.tags.getExpressionTag(), valueMap);
-            int group = this.converter.getInteger(this.tags.getGroupTag(), valueMap, 1);
-            boolean canonicalEquivalence = this.converter.getBoolean(this.tags.getCanonicalEquivalenceTag(), valueMap, false);
-            boolean caseInsensitive = this.converter.getBoolean(this.tags.getCaseInsensitiveTag(), valueMap, false);
-            boolean dotAll = this.converter.getBoolean(this.tags.getDotallTag(), valueMap, false);
-            boolean literal = this.converter.getBoolean(this.tags.getLiteralTag(), valueMap, false);
-            boolean multiLine = this.converter.getBoolean(this.tags.getMultilineTag(), valueMap, false);
-            boolean unicodeCase = this.converter.getBoolean(this.tags.getUnicodeCaseTag(), valueMap, false);
-            boolean unicodeCharacterClass = this.converter.getBoolean(this.tags.getUnicodeCharacterClassTag(), valueMap, false);
-            boolean unixLines = this.converter.getBoolean(this.tags.getUnixLinesTag(), valueMap, false);
+            var expression = this.converter.getString(this.tags.getExpressionTag(), valueMap);
+            var group = this.converter.getInteger(this.tags.getGroupTag(), valueMap, 1);
+            var canonicalEquivalence = this.converter.getBoolean(this.tags.getCanonicalEquivalenceTag(), valueMap, false);
+            var caseInsensitive = this.converter.getBoolean(this.tags.getCaseInsensitiveTag(), valueMap, false);
+            var dotAll = this.converter.getBoolean(this.tags.getDotallTag(), valueMap, false);
+            var literal = this.converter.getBoolean(this.tags.getLiteralTag(), valueMap, false);
+            var multiLine = this.converter.getBoolean(this.tags.getMultilineTag(), valueMap, false);
+            var unicodeCase = this.converter.getBoolean(this.tags.getUnicodeCaseTag(), valueMap, false);
+            var unicodeCharacterClass = this.converter.getBoolean(this.tags.getUnicodeCharacterClassTag(), valueMap, false);
+            var unixLines = this.converter.getBoolean(this.tags.getUnixLinesTag(), valueMap, false);
             return new RegexExpressionParser(name, expression, group,
                     canonicalEquivalence,
                     caseInsensitive,
@@ -83,6 +83,10 @@ public class ExpressionParserConverterJsonImpl implements ExpressionParserConver
                     unicodeCase,
                     unicodeCharacterClass,
                     unixLines);
+        } else if ("javascript".equals(type)) {
+            String script = this.converter.getString(this.tags.getExpressionTag(), valueMap);
+            String mainFunction = this.converter.getString(this.tags.getMainFunctionTag(), valueMap);
+            return new JavascriptExpressionParser(name, script, mainFunction);
         }
         if (log.isErrorLevelEnabled()) {
             log.logErrorMessage("Unknown expression parser type: '" + type + "'.");
@@ -92,37 +96,37 @@ public class ExpressionParserConverterJsonImpl implements ExpressionParserConver
 
     @Override
     public String write(ExpressionParser expressionParser) {
-        StringBuilder result = new StringBuilder();
+        var result = new StringBuilder();
         result.append("{");
         this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER, result, true);
         result.append(", " + this.converter.escapeToJson(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER, true) + ": {");
         boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), expressionParser.getName(), result, true);
         if (expressionParser instanceof FixedPositionExpressionParser) {
-            FixedPositionExpressionParser parser = (FixedPositionExpressionParser) expressionParser;
+            var parser = (FixedPositionExpressionParser) expressionParser;
             added = this.converter.addStringElementToJsonBuffer(this.tags.getTypeTag(), "fixed_position", result, !added) || added;
             added = this.converter.addIntegerElementToJsonBuffer(this.tags.getLineTag(), parser.getLine(), result, !added) || added;
             added = this.converter.addIntegerElementToJsonBuffer(this.tags.getStartIndexTag(), parser.getStartIx(), result, !added) || added;
             added = this.converter.addIntegerElementToJsonBuffer(this.tags.getEndIndexTag(), parser.getEndIx(), result, !added) || added;
         } else if (expressionParser instanceof FixedValueExpressionParser) {
-            FixedValueExpressionParser parser = (FixedValueExpressionParser) expressionParser;
+            var parser = (FixedValueExpressionParser) expressionParser;
             added = this.converter.addStringElementToJsonBuffer(this.tags.getTypeTag(), "fixed_value", result, !added) || added;
             added = this.converter.addStringElementToJsonBuffer(this.tags.getValueTag(), parser.getValue(), result, !added) || added;
         } else if (expressionParser instanceof JsonPathExpressionParser) {
-            JsonPathExpressionParser parser = (JsonPathExpressionParser) expressionParser;
+            var parser = (JsonPathExpressionParser) expressionParser;
             added = this.converter.addStringElementToJsonBuffer(this.tags.getTypeTag(), "jsonpath", result, !added) || added;
             added = this.converter.addStringElementToJsonBuffer(this.tags.getExpressionTag(), parser.getExpression(), result, !added) || added;
         } else if (expressionParser instanceof XPathExpressionParser) {
-            XPathExpressionParser parser = (XPathExpressionParser) expressionParser;
+            var parser = (XPathExpressionParser) expressionParser;
             added = this.converter.addStringElementToJsonBuffer(this.tags.getTypeTag(), "xpath", result, !added) || added;
             added = this.converter.addStringElementToJsonBuffer(this.tags.getExpressionTag(), parser.getExpression(), result, !added) || added;
         } else if (expressionParser instanceof XsltExpressionParser) {
-            XsltExpressionParser parser = (XsltExpressionParser) expressionParser;
+            var parser = (XsltExpressionParser) expressionParser;
             added = this.converter.addStringElementToJsonBuffer(this.tags.getTypeTag(), "xslt", result, !added) || added;
             added = this.converter.addStringElementToJsonBuffer(this.tags.getTemplateTag(), parser.getTemplate(), result, !added) || added;
         } else if (expressionParser instanceof CopyValueExpressionParser) {
             added = this.converter.addStringElementToJsonBuffer(this.tags.getTypeTag(), "copy_value", result, !added) || added;
         } else if (expressionParser instanceof RegexExpressionParser) {
-            RegexExpressionParser parser = (RegexExpressionParser) expressionParser;
+            var parser = (RegexExpressionParser) expressionParser;
             added = this.converter.addStringElementToJsonBuffer(this.tags.getTypeTag(), "regex", result, !added) || added;
             added = this.converter.addStringElementToJsonBuffer(this.tags.getExpressionTag(), parser.getExpression(), result, !added) || added;
             added = this.converter.addIntegerElementToJsonBuffer(this.tags.getGroupTag(), parser.getGroup(), result, !added) || added;
@@ -134,6 +138,11 @@ public class ExpressionParserConverterJsonImpl implements ExpressionParserConver
             added = this.converter.addBooleanElementToJsonBuffer(this.tags.getUnicodeCaseTag(), parser.isUnicodeCase(), result, !added) || added;
             added = this.converter.addBooleanElementToJsonBuffer(this.tags.getUnicodeCharacterClassTag(), parser.isUnicodeCharacterClass(), result, !added) || added;
             added = this.converter.addBooleanElementToJsonBuffer(this.tags.getUnixLinesTag(), parser.isUnixLines(), result, !added) || added;
+        } else if (expressionParser instanceof JavascriptExpressionParser) {
+            var parser = (JavascriptExpressionParser) expressionParser;
+            added = this.converter.addStringElementToJsonBuffer(this.tags.getTypeTag(), "javascript", result, !added) || added;
+            added = this.converter.addStringElementToJsonBuffer(this.tags.getExpressionTag(), parser.getScript(), result, !added) || added;
+            added = this.converter.addStringElementToJsonBuffer(this.tags.getMainFunctionTag(), parser.getMainFunction(), result, !added) || added;
         } else {
             if (log.isErrorLevelEnabled()) {
                 log.logErrorMessage("Unknown expression parser type: '" + expressionParser.getClass().getName() + "'.");

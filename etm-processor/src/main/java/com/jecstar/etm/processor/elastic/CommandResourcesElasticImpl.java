@@ -11,7 +11,6 @@ import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.converter.json.ImportProfileConverterJsonImpl;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.elasticsearch.builder.GetRequestBuilder;
-import com.jecstar.etm.server.core.enhancers.DefaultTelemetryEventEnhancer;
 import com.jecstar.etm.server.core.persisting.TelemetryEventPersister;
 import com.jecstar.etm.server.core.persisting.elastic.*;
 import com.jecstar.etm.server.core.util.LruCache;
@@ -67,13 +66,8 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
         return (T) persisters.get(commandType);
     }
 
-    @Override
-    public void loadImportProfile(String importProfileName, ImportProfile importProfile) {
-        importProfile.initialize();
-        mergeImportProfiles(importProfile, retrieveImportProfile(importProfileName));
-    }
 
-    private ImportProfile retrieveImportProfile(String importProfileName) {
+    public ImportProfile loadImportProfile(String importProfileName) {
         if (importProfileName == null) {
             importProfileName = ElasticsearchLayout.CONFIGURATION_OBJECT_ID_IMPORT_PROFILE_DEFAULT;
         }
@@ -94,23 +88,9 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
             this.importProfileCache.put(importProfileName, loadedProfile);
             return loadedProfile;
         } else {
-            NonExsistentImportProfile importProfile = new NonExsistentImportProfile();
+            NonExistentImportProfile importProfile = new NonExistentImportProfile();
             this.importProfileCache.put(importProfileName, importProfile);
             return importProfile;
-        }
-    }
-
-    private void mergeImportProfiles(ImportProfile importProfile, ImportProfile importProfileToMerge) {
-        if (importProfileToMerge instanceof NonExsistentImportProfile) {
-            return;
-        }
-        if (importProfile.eventEnhancer == null) {
-            importProfile.eventEnhancer = importProfileToMerge.eventEnhancer;
-            return;
-        }
-        if (importProfile.eventEnhancer instanceof DefaultTelemetryEventEnhancer &&
-                importProfileToMerge.eventEnhancer instanceof DefaultTelemetryEventEnhancer) {
-            ((DefaultTelemetryEventEnhancer) importProfile.eventEnhancer).mergeExpressionParsers((DefaultTelemetryEventEnhancer) importProfileToMerge.eventEnhancer);
         }
     }
 
@@ -152,7 +132,7 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
      *
      * @author Mark Holster
      */
-    private class NonExsistentImportProfile extends ImportProfile {
+    private static class NonExistentImportProfile extends ImportProfile {
     }
 
 

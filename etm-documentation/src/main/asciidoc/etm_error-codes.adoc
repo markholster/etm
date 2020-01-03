@@ -19,6 +19,7 @@ During execution {etm} can run into an error. These may be shown to the end user
 |201012|Invalid xslt template. The provided input is an invalid XSLT template.|Change your input to a valid XSLT template.
 |201013|Invalid json path expression. The provided input is an invalid JSON path expression or is not definite.|Change your input to a valid definite JSON path expression.
 |201014|Invalid regular expression. The provided input is an invalid regular expression or is not definite.|Change your input to a valid regular expression.
+|201015|Invalid javascript expression. The provided input is invalid javascript.|Correct the script to be a valid ECMAScript. See the
 |201029|Invalid expression parser type.|
 |201030|No user admins left. You are trying to change a user that will result in a system without any users with Read & write access to the User settings.|Make sure you will have an user with Read & write access to the User settings left when the change is applied.
 |201031|Invalid or unknown LDAP user.|Check your LDAP connection or the state of your LDAP server.

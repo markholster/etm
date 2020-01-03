@@ -1,8 +1,6 @@
 package com.jecstar.etm.server.core.util;
 
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -13,7 +11,9 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class LruCache<K, V> extends LinkedHashMap<K, V> {
 
-    private static final long serialVersionUID = 4586456566155987636L;
+    /**
+     * A <code>Map</code> that holds the item keys combined with the epoch time the item was added.
+     */
     private final Map<K, Long> expiryMap;
     private final long expiry;
 
@@ -28,7 +28,7 @@ public class LruCache<K, V> extends LinkedHashMap<K, V> {
         this.maxSize = maxSize;
         this.expiry = expiry;
         if (this.expiry > -1) {
-            this.expiryMap = new LinkedHashMap<K, Long>() {
+            this.expiryMap = new LinkedHashMap<>() {
                 @Override
                 protected boolean removeEldestEntry(Map.Entry eldest) {
                     return size() > LruCache.this.maxSize;
@@ -56,7 +56,7 @@ public class LruCache<K, V> extends LinkedHashMap<K, V> {
         if (maxSize < 0) {
             throw new IllegalArgumentException();
         }
-        boolean needToEmptyCache = maxSize < this.maxSize;
+        var needToEmptyCache = maxSize < this.maxSize;
         this.maxSize = maxSize;
         if (needToEmptyCache) {
             clear();
@@ -70,7 +70,18 @@ public class LruCache<K, V> extends LinkedHashMap<K, V> {
             if (this.expiryMap != null) {
                 this.expiryMap.clear();
             }
+            Set<V> values = null;
+            if (size() > 0) {
+                values = new HashSet<>(super.values());
+            }
             super.clear();
+            if (values != null) {
+                for (var value : values) {
+                    if (value instanceof LruCacheCallback) {
+                        ((LruCacheCallback) value).removedFromCache();
+                    }
+                }
+            }
         } finally {
             this.lock.unlock();
         }
@@ -97,7 +108,11 @@ public class LruCache<K, V> extends LinkedHashMap<K, V> {
             if (this.expiryMap != null) {
                 this.expiryMap.put(key, System.currentTimeMillis());
             }
-            return super.put(key, value);
+            var oldValue = super.put(key, value);
+            if (oldValue instanceof LruCacheCallback && value != oldValue) {
+                ((LruCacheCallback) oldValue).removedFromCache();
+            }
+            return oldValue;
         } finally {
             this.lock.unlock();
         }
@@ -107,11 +122,16 @@ public class LruCache<K, V> extends LinkedHashMap<K, V> {
     public void putAll(Map<? extends K, ? extends V> m) {
         this.lock.lock();
         try {
-            if (this.expiryMap != null) {
-                long time = System.currentTimeMillis();
-                m.forEach((k, v) -> this.expiryMap.put(k, time));
+            long time = System.currentTimeMillis();
+            for (var entry : m.entrySet()) {
+                if (this.expiryMap != null) {
+                    this.expiryMap.put(entry.getKey(), time);
+                }
+                var oldValue = super.put(entry.getKey(), entry.getValue());
+                if (oldValue instanceof LruCacheCallback && entry.getValue() != oldValue) {
+                    ((LruCacheCallback) oldValue).removedFromCache();
+                }
             }
-            super.putAll(m);
         } finally {
             this.lock.unlock();
         }
@@ -137,6 +157,9 @@ public class LruCache<K, V> extends LinkedHashMap<K, V> {
             if (removed && this.expiryMap != null) {
                 this.expiryMap.remove(key);
             }
+            if (value instanceof LruCacheCallback) {
+                ((LruCacheCallback) value).removedFromCache();
+            }
             return removed;
         } finally {
             this.lock.unlock();
@@ -150,7 +173,11 @@ public class LruCache<K, V> extends LinkedHashMap<K, V> {
             if (this.expiryMap != null) {
                 this.expiryMap.remove(key);
             }
-            return super.remove(key);
+            var value = super.remove(key);
+            if (value instanceof LruCacheCallback) {
+                ((LruCacheCallback) value).removedFromCache();
+            }
+            return value;
         } finally {
             this.lock.unlock();
         }
@@ -163,7 +190,11 @@ public class LruCache<K, V> extends LinkedHashMap<K, V> {
             if (this.expiryMap != null) {
                 this.expiryMap.replace(key, System.currentTimeMillis());
             }
-            return super.replace(key, value);
+            var oldValue = super.replace(key, value);
+            if (oldValue instanceof LruCacheCallback && value != oldValue) {
+                ((LruCacheCallback) oldValue).removedFromCache();
+            }
+            return oldValue;
         } finally {
             this.lock.unlock();
         }
@@ -174,8 +205,13 @@ public class LruCache<K, V> extends LinkedHashMap<K, V> {
         this.lock.lock();
         try {
             boolean replaced = super.replace(key, oldValue, newValue);
-            if (replaced && this.expiryMap != null) {
-                this.expiryMap.replace(key, System.currentTimeMillis());
+            if (replaced) {
+                if (this.expiryMap != null) {
+                    this.expiryMap.replace(key, System.currentTimeMillis());
+                }
+                if (oldValue instanceof LruCacheCallback && oldValue != newValue) {
+                    ((LruCacheCallback) oldValue).removedFromCache();
+                }
             }
             return replaced;
         } finally {
@@ -215,12 +251,22 @@ public class LruCache<K, V> extends LinkedHashMap<K, V> {
                     if (insertAt != null && System.currentTimeMillis() - insertAt > this.expiry) {
                         iterator.remove();
                         this.expiryMap.remove(entry.getKey());
+                        if (entry.getValue() instanceof LruCacheCallback) {
+                            ((LruCacheCallback) entry.getValue()).removedFromCache();
+                        }
                     }
                 }
             } finally {
                 this.lock.unlock();
             }
         }
+    }
+
+    public interface LruCacheCallback {
+        /**
+         * Method called after an object is removed from the cache.
+         */
+        void removedFromCache();
     }
 
 }
