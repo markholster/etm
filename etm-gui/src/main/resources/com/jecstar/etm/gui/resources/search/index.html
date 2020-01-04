@@ -187,21 +187,100 @@
                                         <div class="card-text">
                                             <p>
                                                 Please enter your search string in the field below and press the
-                                                'Search' button. Specific fields can be searched in the format
-                                                <mark>fieldname:&lt;value&gt;</mark>
-                                                . For example, if you want to search for all event generated from
-                                                application "My Application" the search string will be
-                                                <mark>endpoints.endpoint_handlers.application.name:"My
-                                                    application"
-                                                </mark>
-                                                . Multiple field can be combined by using the
-                                                <mark>AND</mark>
-                                                or
-                                                <mark>OR</mark>
-                                                operator. Range values can be used by applying the format
-                                                <mark>[&lt;start&gt; TO &lt;end&gt;]</mark>
-                                                to the field value.
+                                                'Search' button. <a data-toggle="collapse"
+                                                                    href="#search-example-collapse" role="button"
+                                                                    aria-expanded="false"
+                                                                    aria-controls="search-example-collapse">Show some
+                                                examples!</a>
                                             </p>
+                                            <div class="collapse" id="search-example-collapse">
+                                                <div class="card card-body">
+                                                    <div class="row">
+                                                        <div class="col-4">Find specific field:</div>
+                                                        <div class="col">
+                                                            <mark>&lt;fieldname&gt;: &lt;value&gt;</mark>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-4">Find specific field with exact match:</div>
+                                                        <div class="col">
+                                                            <mark>&lt;fieldname&gt;: "&lt;value&gt;"</mark>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-4">Find application by name:</div>
+                                                        <div class="col">
+                                                            <mark>endpoints.endpoint_handlers.application.name:"&lt;application
+                                                                name&gt;"
+                                                            </mark>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-4">Find OK http responses:</div>
+                                                        <div class="col">
+                                                            <mark>status_code: 200</mark>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-4">Find error http responses:</div>
+                                                        <div class="col">
+                                                            <mark>status_code:>=400</mark>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-4">Combine fields with AND &amp; OR:</div>
+                                                        <div class="col">
+                                                            <mark>&lt;fieldnam1e&gt;: &lt;value1&gt; AND &lt;fieldname2&gt;:
+                                                                (&lt;value2&gt; OR &lt;value3&gt;)
+                                                            </mark>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-4">Join request with response:</div>
+                                                        <div class="col">
+                                                            <mark>&lt;request query parameters&gt; WITH RESPONSE &lt;response
+                                                                query parameters&gt;
+                                                            </mark>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-4">Join response with request:</div>
+                                                        <div class="col">
+                                                            <mark>&lt;response query parameters&gt; WITH REQUEST &lt;request
+                                                                query parameters&gt;
+                                                            </mark>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-4">Find requests with error responses:</div>
+                                                        <div class="col">
+                                                            <mark>* WITH RESPONSE status_code:>=400</mark>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-4">Find requests with >100ms response time with
+                                                            error responses:
+                                                        </div>
+                                                        <div class="col">
+                                                            <mark>endpoints.endpoint_handlers.response_time:>100 WITH
+                                                                RESPONSE status_code:>=400
+                                                            </mark>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-4">Use wildcards:</div>
+                                                        <div class="col">
+                                                            <mark>name: GetSh?pp?ngCardReq*</mark>
+                                                        </div>
+                                                    </div>
+                                                    <p>
+                                                        For more options like <b>Fuzziness</b>, <b>Ranges</b>, <b>Boolean
+                                                        operators</b>, <b>Proximity searches</b> etc etc see the
+                                                        documentation at <a href="https://www.jecstar.com"
+                                                                            target="_blank">https://www.jecstar.com</a>.
+                                                    </p>
+                                                </div>
+                                            </div>
                                             <div class="custom-control custom-checkbox custom-control-inline">
                                                 <input type="checkbox" id="check-type-business" value="business"
                                                        checked="checked"
