@@ -1,0 +1,4 @@
+# Setup
+This section explains in detail the steps to download, configure and run an Enterprise Telemetry Monitor installation. Because Enterprise Telemetry Monitor is a pure Java application it should be able to run on any machine with a proper Java runtime installed. At a minimum a [Java 11](https://jdk.java.net/java-se-ri/11) runtime should be available. It is recommended to install JDK that comes with your default package manager, but Enterprise Telemetry Monitor might run with other JDK suppliers as well.
+
+For the storage of the events Enterprise Telemetry Monitor relies on an [Elasticsearch 7](https://www.elastic.co/downloads/elasticsearch-oss) or compatible cluster. Both the Java runtime, and Elasticsearch cluster are not part of Enterprise Telemetry Monitor and need to be installed, configured and managed separately.
