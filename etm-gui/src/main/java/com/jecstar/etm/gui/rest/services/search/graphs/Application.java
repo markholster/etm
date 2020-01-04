@@ -33,6 +33,7 @@ public class Application extends AbstractVertex {
     @Override
     protected void doWriteToJson(StringBuilder buffer) {
         jsonWriter.addStringElementToJsonBuffer("name", getName(), buffer, false);
+        jsonWriter.addStringElementToJsonBuffer("instance", getInstance(), buffer, false);
     }
 
     @Override

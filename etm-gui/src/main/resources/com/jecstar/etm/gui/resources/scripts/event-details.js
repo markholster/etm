@@ -623,7 +623,8 @@ function showEvent(scrollTo, id) {
 													const yPos = yTop + (layerIx * yLevelHeight) - (yLevelHeight / 3);
 													const applicationGroup = ren.g().translate(xPos, yPos).add(mainGroup);
 													ren.rect(0, 0, xUnits, yLevelHeight, lineHeight).attr('fill', colors[7]).attr('fill-opacity', '0.25').attr('stroke-width', 3).attr('stroke', colors[7]).add(applicationGroup);
-													ren.text(vertex.name, lineHeight * .75, lineHeight * 1.5).attr('text-anchor', 'start').attr('font-weight', 'bold').add(applicationGroup);
+													const appName = vertex.instance ? vertex.name + ' (' + vertex.instance + ')' : vertex.name;
+													ren.text(appName, lineHeight * .75, lineHeight * 1.5).attr('text-anchor', 'start').attr('font-weight', 'bold').add(applicationGroup);
 													const childWith = xUnits / vertex.children.length;
 													const yOffset = yLevelHeight / 2 + halfEventSize;
 													$.each(vertex.children, function (childIx, childVertex) {
