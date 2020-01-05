@@ -1,0 +1,16 @@
+# Import profiles
+To add, modify or delete an import profile browse to <http://localhost:8080/gui/settings/import_profiles.html> or select the menu option *Settings -> Import profiles*. 
+
+Import profiles can be used to enhance events before they are stored on disk. The import profile to use can be set on the event itself, on a Kafka, JMS or MQ destination/topic or globally in Enterprise Telemetry Monitor.
+
+To create a new import profile just give it a name that must match the profile name in your events or destinations. Enterprise Telemetry Monitor is provided with a simple payload format detection algorithm which is capable of detecting the most basic payload formats. If you want to apply this algorithm to the events set the option *Detect payload format* to *Yes*.
+
+Before the event is stored to the database you can modify its payload by adding one or more transformations. This might be convenient in case the payload contains sensitive data like passwords. You may want to remove/change this data before it is stored. To do so, click on the *Add transformation* link and select the Parser that is capable of selecting the data you want to replace. Not all Parsers are capable of transforming content! In case of a [Regular expression parser](parsers.md#regular-expression-parser) you can give an optional replacement, or leave the replacement field blank if you want to remove the content entirely. If you want all occurrences to be replaced select *Yes* in the *Replace all occurrences* field.
+
+If you want additional fields to be enhanced click on the *Add field* link. Then select the field you want to enhance. If the field is a collection, you should provide a key for the field. Then select the write policy. The write policy *Always overwrite* will always overwrite an existing value with the result of the first parser that does return a value. If non of the parsers returns a value, the field will be emptied. The write policy *Overwrite when found* will overwrite an existing value with the result of the first parser that does return a value. If non of the parsers returns a value the field will not be overwritten. The write policy *When empty* only write the result of the first parser that does return a value only when the field is empty.
+
+After that you need to select the field that is the source for the parsers in the *Parsers source* field.
+
+Finally add one ore more [Parsers](parsers.md) to apply to the content of the field given in *Parsers source*. The order of the parsers is the order in which the are executed. If a parser doesn't have a result, or cannot be applied the next parser is tried. This will be repeated until a parser has a result. That result will be added to the event, and further processing of other parser for that field is stopped.
+
+When you want to enter a global enhancement configuration you can select the import profile with the name * (an asterisk). This import profile is the only configuration that cannot be deleted. When changing an import profile it will be unavailable within 60 seconds.

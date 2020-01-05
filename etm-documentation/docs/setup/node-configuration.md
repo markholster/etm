@@ -1,9 +1,9 @@
-### Node configuration
-Each Enterprise Telemetry Monitor Node has its own configuration file. The file can be found at <INSTALL_DIR>/config/etm.yml. When playing around with Enterprise Telemetry Monitor the defaults will be sufficient, but when you configure a production instance you probably need to tune some configuration options. The configuration file is split into 5 main sections: general, elasticsearch, http, ibm mq and logging.
+# Node configuration
+Each Enterprise Telemetry Monitor Node has its own configuration file. The file can be found at <INSTALL_DIR>/config/etm.yml. When playing around with Enterprise Telemetry Monitor the defaults will be sufficient, but when you configure a production instance you probably need to tune some configuration options. The configuration file is split into 8 main sections: general, elasticsearch, http, ibm mq, jms, kafka, signaler and logging.
 
 Indentation in the etm.yml configuration file is necessary to create nested properties. See the following example for an explanation on how to create lists an key-value mappings.
 
-````yaml
+```yaml
 property1: value1 #This is just a general property with the name *property1* and a value of *value1*.
 object1: #A new object with the name *object1* is created. An object itself has no direct value, but has (sub)properties with an indentation of 2 spaces.
   sub-property1: value2 #The property *sub-poroperty1* is added to the object *object1*
@@ -15,15 +15,15 @@ list1:
 map1:
   key1: value1 #A new map is created. Just like the list, a map is actually an object. In this case the map contains of simple key/value string pairs.
   key2: value2  
-````
+```
 
 A detailed specification of the yaml syntax can be found on the [yaml website](http://yaml.org/).
 
 ::: danger Important
-When storing passwords in the etm.yml file, make sure the file is only readable by the Enterprise Telemetry Monitor administrators.
+When storing passwords in the etm.yml file, make sure the file is only readable by the Enterprise Telemetry Monitor administrators and the user/group that runs Enterprise Telemetry Monitor. 
 :::
 
-#### General configuration in etm.yml
+## General configuration in etm.yml
 General configuration options have no indentation in the etm.yml file. The following options are available:
 
 **General configuration options**
@@ -42,21 +42,21 @@ logging | | The logging configuration. See [Logging section in etm.yml](#logging
 
 All other configuration sections are identified with the name of the section without indentation. Configuration options in that section have an indentation of 2 spaces.
 
-#### Elasticsearch section in etm.yml
+## Elasticsearch section in etm.yml
 The *elasticsearch* section contains all options that are necessary to connect to an Elasticsearch cluster:
 
 **Elasticsearch configuration options**
 Name | Default value | Description
 --- | --- | ---
 clusterName | elasticsearch | The name of the Elasticsearch cluster to connect to.
-connectAddresses | 127.0.0.1:9200 | A list of Elasticsearch nodes to connect to. When high availability is a demand of your production environment you should provide at least 2 addresses. The servers must be added in the format ````<servername_or_ip>:<port>````.
+connectAddresses | 127.0.0.1:9200 | A list of Elasticsearch nodes to connect to. When high availability is a demand of your production environment you should provide at least 2 addresses. The servers must be added in the format ```<servername_or_ip>:<port>```.
 waitForConnectionOnStartup | false | Wait for any of the connections supplied in the *connectAddresses* to be established before fully starting Enterprise Telemetry Monitor. This option is useful when Enterprise Telemetry Monitor is started before any of the Elasticsearch nodes is started.
 username | | The username used to connect to a secured Elasticsearch cluster.
 password | | The password used to connect to a secured Elasticsearch cluster.
 sslTrustStoreLocation | | A full path to the jks truststore. Enable this option when you want to make use of a ssl connection to Elasticsearch.
 sslTrustStorePassword | | The password of the jks truststore.
 
-#### Http section in etm.yml
+## Http section in etm.yml
 The *http* section contains all options that are necessary to start the gui and REST processor:
 
 **Http configuration options**
@@ -67,10 +67,10 @@ httpsPort | 8443| The port to bind the secure https listener to. The listener wi
 contextRoot | / | The context root under which the gui and REST processor will be available.
 ioThreads | 2 | The number of IO threads. IO threads handle all non-blocking calls to the web server. One thread per cpu core should be more than sufficient.
 workerThreads | 16 | The number of worker threads to handle all blocking calls to the web server. Around 10 threads per cpu cure should be a good starting point for servers under a high load.
-guiEnabled | true | Should the GUI be enabled? Set this value to false if you don't want users to use the gui on this node. The gui is bound to the */gui* context on your server and can be accessed by browsing to ````http://<bindingAddress>:<httpPort>/gui/````
+guiEnabled | true | Should the GUI be enabled? Set this value to false if you don't want users to use the gui on this node. The gui is bound to the */gui* context on your server and can be accessed by browsing to ```http://<bindingAddress>:<httpPort>/gui/```
 guiMaxConcurrentRequests | 50 | The maximum number of request that can be processed in parallel at any given moment by the GUI. If the number exceeds the maximum, the requests will be queued.
 guiMaxQueuedRequests | 50 | The maximum number of requests that can be queued by the GUI. If a request needs to be queued and the maximum number of queued requests exceeds this maximum the request will be rejected.
-restProcessorEnabled | true | Should the REST processor be enabled? Set this value to false if you don't want this node to act as a processor that can process events with a REST api. The REST api is bound to the */rest/processor/* context and can be access from ````http://<bindingAddress>:<httpPort>/rest/processor/````
+restProcessorEnabled | true | Should the REST processor be enabled? Set this value to false if you don't want this node to act as a processor that can process events with a REST api. The REST api is bound to the */rest/processor/* context and can be access from ```http://<bindingAddress>:<httpPort>/rest/processor/```
 restProcessorMaxConcurrentRequests | 50 | The maximum number of request that can be processed in parallel at any given moment by the REST processor. If the number exceeds the maximum, the requests will be queued.
 restProcessorMaxQueuedRequests | 50 | The maximum number of requests that can be queued by the REST processor. If a request needs to be queued and the maximum number of queued requests exceeds this maximum the request will be rejected.
 sslProtocol | TLSv1.2 | The ssl protocol that needs to be used on the secure https listener. The allowed values are depending on your Java installation, but unless you have specific demands the default will be sufficient secure.
@@ -82,8 +82,8 @@ sslTruststorePassword | | The password of the ssl truststore.
 sslTruststoreType | JSK | The ssl truststore type.
 secureCookies | false | Should the secure flag be set on the session cookies? Set this value to true when your Enterprise Telemetry Monitor instance is accessed via https.
 
-#### IBM MQ section in etm.yml
-The *ibmMq* section contains all options that are necessary to process Enterprise Telemetry Monitor events from a IBM MQ queue or topic. Make sure to add the MQ libraries to the classpath of the Node. See the [Integration with IBM MQ and/or IBM Integration Bus](integration-with-ibm.md) section.
+## IBM MQ section in etm.yml
+The *ibmMq* section contains all options that are necessary to process Enterprise Telemetry Monitor events from a IBM MQ queue or topic. Make sure to add the MQ libraries to the classpath of the Node. See the [Integration with IBM MQ and/or IBM Integration Bus](../integration-with-ibm.md) section.
 
 **IBM MQ configuration options**
 Name | Default value | Description
@@ -116,19 +116,19 @@ Name | Default value | Description
 --- | --- | ---
 name | | The name of the Queue or Topic to connect to.
 type | queue | The destination type. Can be one of *queue* or *topic*.
-defaultImportProfile | | The default [Import profiles,import profile] to use on this destination if no import profile is provided within the processing events.
+defaultImportProfile | | The default [import profile](../administrating/import-profiles.md) to use on this destination if no import profile is provided within the processing events.
 minNrOfListeners | 1 | The minimum number of listeners to connect to the destination. Not that auto scaling to maxNrOfListeners only works on local queues.
 maxNrOfListeners | 5 | The maximum number of listeners to connect to the destination. Not that auto scaling to maxNrOfListeners only works on local queues.
 channel | | The channel to use to setup the connection to the QueueManager.
-messagesType | auto | Can be one of *auto* which auto detect the message type but is the slowest, *iibevent* which is capable of handling [IIB Monitoring Events](http://www.ibm.com/support/knowledgecenter/SSMKHH_9.0.0/com.ibm.etools.mft.doc/ac60386_.htm), *etmevent* which is capable of handling events in the Enterprise Telemetry Monitor json format or *clone* which assumes the message read is a clone of the original message. See the section [Event layout] for a description of the Enterprise Telemetry Monitor json format.
+messagesType | auto | Can be one of *auto* which auto detect the message type but is the slowest, *iibevent* which is capable of handling [IIB Monitoring Events](http://www.ibm.com/support/knowledgecenter/SSMKHH_9.0.0/com.ibm.etools.mft.doc/ac60386_.htm), *etmevent* which is capable of handling events in the Enterprise Telemetry Monitor json format or *clone* which assumes the message read is a clone of the original message. See the section [Event layout](../event-layout) for a description of the Enterprise Telemetry Monitor json format.
 maxMessageSize | 4194304 | The maximum message size in bytes that can be read. Depending on the get options the message will be ignored or truncated.
 commitSize | 500 | The maximum number of messages processed before a MQCMIT is executed.
 commitInterval | 10000 | The maximum number of milliseconds the processor can read messages without executing a MQCMIT.
 destinationGetOptions | MQGMO_WAIT + MQGMO_SYNCPOINT + MQGMO_ACCEPT_TRUNCATED_MSG + MQGMO_FAIL_IF_QUIESCING + MQGMO_LOGICAL_ORDER + MQGMO_COMPLETE_MSG + MQGMO_ALL_SEGMENTS_AVAILABLE | The MQ Get options.
 destinationOpenOptions | MQOO_INQUIRE + MQOO_FAIL_IF_QUIESCING + MQOO_INPUT_SHARED | The MQ Open options.
 
-#### JMS section in etm.yml
-The *jms* section contains all options that are necessary to process Enterprise Telemetry Monitor events from a JMS queue or topic. Make sure to add the required JMS libraries to the classpath of the Node. See the [Integration with JMS](integration-with-jms.md) section.
+## JMS section in etm.yml
+The *jms* section contains all options that are necessary to process Enterprise Telemetry Monitor events from a JMS queue or topic. Make sure to add the required JMS libraries to the classpath of the Node. See the [Integration with JMS](../integration-with-jms.md) section for more information.
 
 **JMS configuration options**
 Name | Default value | Description
@@ -167,10 +167,10 @@ name | | The name of the Queue or Topic to connect to.
 type | queue | The destination type. *queue* is the only supported option.
 minNrOfListeners | 1 | The minimum number of listeners to connect to the destination.
 maxNrOfListeners | 5 | The maximum number of listeners to connect to the destination.
-messagesType | auto | Can be one of *auto* which auto detect the message type but is the slowest, *etmevent* which is capable of handling events in the Enterprise Telemetry Monitor json format or *clone* which assumes the message read is a clone of the original message. See the section [Event layout] for a description of the Enterprise Telemetry Monitor json format.
-defaultImportProfile | | The default [Import profiles,import profile] to use on this destination if no import profile is provided within the processing events.
+messagesType | auto | Can be one of *auto* which auto detect the message type but is the slowest, *etmevent* which is capable of handling events in the Enterprise Telemetry Monitor json format or *clone* which assumes the message read is a clone of the original message. See the section [Event layout](../event-layout) for a description of the Enterprise Telemetry Monitor json format.
+defaultImportProfile | | The default [import profile](../administrating/import-profiles.md) to use on this destination if no import profile is provided within the processing events.
 
-#### Kafka section in etm.yml
+## Kafka section in etm.yml
 The *kafka* section contains all options that are necessary to process Enterprise Telemetry Monitor events from a [Kafka](https://kafka.apache.org/) topic.
 
 **Kafka configuration options**
@@ -183,11 +183,11 @@ topics | | A list of topics to read from. See [Topic options](#kafka-topic-optio
 Name | Default value | Description
 --- | --- | ---
 name | | The name of the topic to connect to.
-bootstrapServers | | A list of bootstrap servers to connect to. The servers must be added in the format ````<servername_or_ip>:<port>````.
+bootstrapServers | | A list of bootstrap servers to connect to. The servers must be added in the format ```<servername_or_ip>:<port>```.
 nrOfListeners | 1 | The number of listeners to connect to read from the topic. This number should never be higher that the number of partitions in your topic.
 groupId | Enterprise Telemetry Monitor | The name of the group id to connect to the topic. All Enterprise Telemetry Monitor Nodes should have the same group id.
 startFrom | | Set to *beginning* to start processing from the begin of the topic instead of the saved offset.
-defaultImportProfile | | The default [Import profiles,import profile] to use on this destination if no import profile is provided within the processing events.
+defaultImportProfile | | The default [import profile](../administrating/import-profiles.md) to use on this destination if no import profile is provided within the processing events.
 maxPollRecords | | The maximum number of records to retrieve in a single call to the topic.
 maxPollInterval | | The maximum number of milliseconds allowed between two retrieval calls to the topic. If the processing took longer the Node will be considered failed and the topic will be rebalanced.
 sessionTimeout | | The timeout used to detect consumer failures. If this Node will not send a heartbeat within this interval the Node will be considered failed and the topic will be rebalanced.
@@ -201,7 +201,7 @@ sslTruststoreLocation | | The location of you ssl truststore. The trust store co
 sslTruststorePassword | | The password of the ssl truststore.
 sslTruststoreType | JSK | The ssl truststore type.
 
-#### Signaler section in etm.yml
+## Signaler section in etm.yml
 The *signaler* section contains all options to configure the signaler.
 
 **Signaler configuration options**
@@ -209,7 +209,7 @@ Name | Default value | Description
 --- | --- | ---
 enabled | true | Should the signaler be enabled? Set this value to true to let this node send signals to end users/systems.
 
-#### Logging section in etm.yml
+## Logging section in etm.yml
 The *logging* section contains all options to configure the loggers and log levels. Log levels can be one of TRACE, DEBUG, INFO, WARNING or ERROR.
 
 **Logging configuration options**

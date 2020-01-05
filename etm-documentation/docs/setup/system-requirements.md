@@ -1,4 +1,4 @@
-### System requirements
+# System requirements
 Enterprise Telemetry Monitor works best on machines that are equipped with 8 to 64 GiB of RAM. More than 64 GiB makes the Java garbage collections run so long that it has an overall negative impact on the performance. In most situations 8 GiB is more than sufficient, but when you need to process a lot of big events you might need some more memory.
 
 If your system is running on spinning disk you might consider upgrade to SSD or even NVME disks. This is in particular important for your Elasticsearch nodes! Elasticsearch will store and retrieve all the event data, so make sure your disks at these nodes are as fast as possible. They will be most likely the bottleneck of your Enterprise Telemetry Monitor cluster setup.

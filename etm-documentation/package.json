@@ -1,5 +1,10 @@
 {
+  "license": "UNLICENSED",
   "devDependencies": {
     "vuepress": "^1.2.0"
+  },
+  "scripts": {
+    "docs:dev": "vuepress dev -p 9080 docs",
+    "docs:build": "vuepress build docs"
   }
 }

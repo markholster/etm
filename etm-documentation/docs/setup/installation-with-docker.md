@@ -1,4 +1,4 @@
-### Installation with Docker
+# Installation with Docker
 Enterprise Telemetry Monitor is also available as a Docker image. This image is based on the openjdk11:alpine-slim image. To retrieve the image run the following command:
 
 ```bash
@@ -11,7 +11,7 @@ To run the Docker image Enterprise Telemetry Monitor needs to know where to find
 docker run -p 8080:8080 -e "elasticsearch_connectAddresses=<my-elasticsearch-host>:<my-elasticsearch-port>" -e "elasticsearch_clusterName=elasticsearch" docker.jecstar.com/etm:4.0.0
 ```
 
-Most of the properties mentioned in the [Node configuration](node-configuration.md) chapter can be passed as environment variables to the Docker container. Properties not mentioned in the [General configuration in etm.yml](node-configuration.md#general-configuration-in-etm-yml) but is a separate section of the configuration should be prefixed by their section names. For example, the properties *elasticsearch.clusterName* in the configuration file should be passed as environment variable *elasticsearch_clusterName*. In short, the 'dot' in the configuration file should be replaced with an 'underscore' in the environment variable name.
+Most of the properties mentioned in the [Node configuration](node-configuration.md) chapter can be passed as environment variables to the Docker container. Properties not mentioned in the [General configuration in etm.yml](node-configuration/general-configuration.md) but is a separate section of the configuration should be prefixed by their section names. For example, the properties *elasticsearch.clusterName* in the configuration file should be passed as environment variable *elasticsearch_clusterName*. In short, the 'dot' in the configuration file should be replaced with an 'underscore' in the environment variable name.
 
 Another option of configuring the Docker image is by mounting a custom configuration file from from host system to the location the image is expecting the configuration file. This can be done by adding
 

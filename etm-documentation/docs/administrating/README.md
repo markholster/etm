@@ -1,0 +1,2 @@
+# Administrating
+Apart from the [Node configuration](../setup/node-configuration.md) Enterprise Telemetry Monitor can be configured with a browser. At least one Node should be configured with the *guiEnabled* option set to *true* to configure Enterprise Telemetry Monitor with a browser.

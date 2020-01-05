@@ -1,4 +1,4 @@
-### Integration with IBM MQ and/or IBM Integration Bus
+# Integration with IBM MQ and/or IBM Integration Bus
 Enterprise Telemetry Monitor is capable of providing deep integration with IBM MQ and or IBM Integration Bus. To make use of any of these integrations the classpath of Enterprise Telemetry Monitor needs to be extended. Due to the MQ license Jecstar is not allowed to provide this specific library with Enterprise Telemetry Monitor. 
 
 To make use of the IBM MQ integration you need to copy a file named *com.ibm.mq.allclient.jar* from your MQ installation to the <INSTALL_DIR>/lib/ext directory. This integration makes it possible to process events from any IBM MQ Destination. For further configuration see the [IBM MQ section in etm.yml](node-configuration.md#ibm-mq-section-in-etm-yml).

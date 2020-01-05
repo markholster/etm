@@ -1,0 +1,4 @@
+# Index statistics
+To view some basic index statistics browse to <http://localhost:8080/gui/settings/indexstats.html> or select the menu option *Settings -> Index statistics*. 
+
+This page shows the total number of events and the disk space those events take. Also an graph is showing those numbers per index. Note that the x-axis of the graphs is showing an index name, not a date! Indices are created at the start of every day in the UTC time zone. This means that if you are not located in the UTC time zone a new index can be created in the middle of the day. The performance statistics will be reset when your Elasticsearch cluster is restarted.

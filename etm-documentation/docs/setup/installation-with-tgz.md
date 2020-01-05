@@ -1,7 +1,7 @@
-### Installation with .tgz
+# Installation with .tgz
 The .tgz archive for Enterprise Telemetry Monitor can be downloaded and installed as follow:
 
-```bash{3,4,7,8}
+```bash
 wget https://www.jecstar.com/assets/downloads/etm/etm-4.0.0.tgz
 wget https://www.jecstar.com/assets/downloads/etm/etm-4.0.0.tgz.sha512
 cat etm-{project-version}.tgz.sha512 | sha512sum -c ## Checks the sha512 hash 

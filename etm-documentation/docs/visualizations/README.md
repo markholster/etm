@@ -1,0 +1,2 @@
+# Visualizations
+Besides searching for data Enterprise Telemetry Monitor provides a way to visualize statistics on any of the attributes your stored in the [Event layout](../event-layout). Combined with event [Parsers](../administrating/parsers.md) you can extract the specific part of the event payload you are interested in and show statistical information of these parts on a realtime dashboard.

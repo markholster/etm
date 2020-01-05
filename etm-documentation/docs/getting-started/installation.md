@@ -1,4 +1,4 @@
-### Installation
+# Installation
 Enterprise Telemetry Monitor is written in Java and needs a Java 11 or higher runtime installed on your machine. The installation of the Java runtime is not covered in this manual and may differ from platform to platform.
 Before you proceed, please check if a correct version of the Java runtime is installed by running:
 
@@ -6,8 +6,8 @@ Before you proceed, please check if a correct version of the Java runtime is ins
 java -version
 ```
 
-If your organization not already has an Elasticsearch cluster installed it is time to install it now. Enterprise Telemetry Monitor needs an Elasticsearch cluster formed of nodes with version {elasticsearch-major-version} or compatible. The installation of Elasticsearch is covert at the [Elastic.co\'s website](https://www.elastic.co/guide/en/elasticsearch/reference/7.0.0/install-elasticsearch.html).
-Don\'t forget to read the [important configurations](https://www.elastic.co/guide/en/elasticsearch/reference/7.0.0/important-settings.html) and [important system configurations](https://www.elastic.co/guide/en/elasticsearch/reference/7.0.0/system-config.html) pages!
+If your organization not already has an Elasticsearch cluster installed it is time to install it now. Enterprise Telemetry Monitor needs an Elasticsearch cluster formed of nodes with version 7.0 or compatible. The installation of Elasticsearch is covert at the [Elastic.co\'s website](https://www.elastic.co/guide/en/elasticsearch/reference/7.x/install-elasticsearch.html).
+Don\'t forget to read the [important configurations](https://www.elastic.co/guide/en/elasticsearch/reference/7.x/important-settings.html) and [important system configurations](https://www.elastic.co/guide/en/elasticsearch/reference/7.x/system-config.html) pages!
 Enterprise Telemetry Monitor does not require a specific Elasticsearch cluster name and can join any Elasticsearch cluster, but out of the box it is trying to connect to a cluster with the name 'elasticsearch'. Enterprise Telemetry Monitor indici and aliases will be prefixed with abbreviation *etm_*.
 
 ::: tip Note
@@ -41,7 +41,7 @@ You are now ready to start Enterprise Telemetry Monitor with the following comma
 ```
 
 ::: warning Important
-By default Enterprise Telemetry Monitor tries to connect to an Elasticsearch cluster with the name *elasticsearch* and a node at 127.0.0.1:9200. If you have changed your Elasticsearch cluster name to something else you should change the Enterprise Telemetry Monitor configuration to match the Elasticsearch configuration. How to change the cluster name can be found in the [Node configuration](../setup/node-configuration.md#elasticsearch-section-in-etm-yml) section.
+By default Enterprise Telemetry Monitor tries to connect to an Elasticsearch cluster with the name *elasticsearch* and a node at 127.0.0.1:9200. If you have changed your Elasticsearch cluster name to something else you should change the Enterprise Telemetry Monitor configuration to match the Elasticsearch configuration. How to change the cluster name can be found in the [Node configuration](../setup/node-configuration.md#elasticsearch-section-in-etm-yml) chapter.
 :::
 
 If everything goes well the console will output the following:

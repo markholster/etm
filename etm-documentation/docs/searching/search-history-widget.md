@@ -1,0 +1,4 @@
+# Search history widget
+Under the [Search template widget](search-template-widget.md) you'll find the Search history widget. This widget is a read-only widget and stores your last executed queries. By default your last 5 queries will be stored, but this value can be adjusted in your [User preferences](../user-preferences) screen. Keep in mind that an Enterprise Telemetry Monitor administrator is capable of setting a maximum number of queries that can be visible in your Search history widget.
+
+The content of this widget is not bound to any session, so if you login via any other machine you will always see the same history. 

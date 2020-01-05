@@ -149,7 +149,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
                 .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout())));
         if (this.etmConfiguration.getMaxSearchTemplateCount() >= 3) {
             this.dataRepository.update(new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + principal.getId())
-                    .setDoc(new DefaultSearchTemplates().toJson(), XContentType.JSON)
+                    .setDoc(new DefaultSearchTemplates().toJson(principal), XContentType.JSON)
                     .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
                     .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
                     .setRetryOnConflict(etmConfiguration.getRetryOnConflictCount()));

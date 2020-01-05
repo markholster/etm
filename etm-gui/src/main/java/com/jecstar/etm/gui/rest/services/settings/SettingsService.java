@@ -1126,7 +1126,7 @@ public class SettingsService extends AbstractGuiService {
             builder = enhanceRequest(
                     new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId),
                     etmConfiguration
-            ).setDoc(new DefaultSearchTemplates().toJson(), XContentType.JSON);
+            ).setDoc(new DefaultSearchTemplates().toJson(newPrincipal), XContentType.JSON);
             dataRepository.update(builder);
         }
         if (userId.equals(getEtmPrincipal().getId())) {
