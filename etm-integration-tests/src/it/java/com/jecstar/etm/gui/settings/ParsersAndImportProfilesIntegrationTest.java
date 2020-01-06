@@ -65,7 +65,7 @@ public class ParsersAndImportProfilesIntegrationTest extends AbstractCitrusSelen
         final var importProfileName = "Integration Test Import Profile";
 
         login(runner, browser);
-        var apiKey = getApiKey(runner, browser);
+        var apiKey = getApiKeys(runner, browser);
         runner.selenium(action -> action.navigate(getEtmUrl() + parsersPath));
         runner.selenium(action -> action.waitUntil().visible().element(By.id("parsers_box")));
         waitForAjaxToComplete(runner);

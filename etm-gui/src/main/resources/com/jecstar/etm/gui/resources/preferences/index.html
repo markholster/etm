@@ -101,10 +101,21 @@
                                 <div class="form-group row">
                                     <label for="input-user-api-key" class="col-sm-3 col-form-label">Api key</label>
                                     <div class="col-sm-7">
-                                        <code id="input-user-api-key" class="col-sm-3 col-form-label"></code>
+                                        <code id="input-user-api-key" class="col-form-label"></code>
                                     </div>
                                     <div class="col-sm-2">
-                                        <a id="lnk-refresh-api-key" class="float-right" href="#">Refresh api key</a>
+                                        <a id="lnk-rotate-api-key" class="float-right" href="#">Rotate api key</a>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="input-user-secondary-api-key" class="col-sm-3 col-form-label">Secondary
+                                        api key</label>
+                                    <div class="col-sm-7">
+                                        <code id="input-user-secondary-api-key" class="col-form-label"></code>
+                                    </div>
+                                    <div class="col-sm-2">
+                                        <a id="lnk-rotate-secondary-api-key" class="float-right" href="#">Rotate api
+                                            key</a>
                                     </div>
                                 </div>
                                 <div class="form-group row">
@@ -203,7 +214,7 @@
                 </button>
             </div>
             <div class="modal-body">
-                Are you sure you want update your api key'?<br/>
+                Are you sure you want to rotate your <i id="update-api-key-type"></i> api key?<br/>
                 The new api key will not be activated until you save your preferences.
             </div>
             <div class="modal-footer">
@@ -262,7 +273,7 @@
                    if (!data || !data.locales) {
                        return;
                    }
-                   var $locales = $('#input-locale');
+                   const $locales = $('#input-locale');
                    $(data.locales).each(function (index, locale) {
                        $locales.append($('<option>').attr('value', locale.value).text(locale.name))
                    }); 
@@ -282,6 +293,7 @@
                 $('#input-user-name').val(data.name);
                 $('#input-user-email').val(data.email);
                 $('#input-user-api-key').text(data.api_key ? data.api_key : '');
+                $('#input-user-secondary-api-key').text(data.secondary_api_key ? data.secondary_api_key : '');
                 $('#input-locale').val(data.locale);
                 $('#input-time-zone').val(data.time_zone);
                 $('#input-search-history-size').val(data.search_history_size);
@@ -313,7 +325,7 @@
                 dataType: 'json',
                 success: function(jqXHR) {
                     commons.showNotification('Preferences saved.', 'success');
-                    $('html,body').animate({scrollTop: 0},'fast');
+                    $('html,body').animate({scrollTop: 0}, 'fast');
                 },
                 error: function (jqXHR, settings, thrownError) {
                     if ("undefined" != typeof jqXHR.responseJSON) {
@@ -322,25 +334,38 @@
                         commons.showNotification('Error saving preferences: ' + thrownError, 'danger');
                     }
                 }
-             });
+            });
         });
     });
 
-    $('#lnk-refresh-api-key').on('click', function (event) {
+    $('#lnk-rotate-api-key').on('click', function (event) {
         event.preventDefault();
+        const keyType = 'primary';
         if (!$('#input-user-api-key').text()) {
-            updateApiKey();
+            rotateApiKey(keyType);
         } else {
+            $('#update-api-key-type').text(keyType);
+            $('#modal-update-user-api-key').modal();
+        }
+    });
+
+    $('#lnk-rotate-secondary-api-key').on('click', function (event) {
+        event.preventDefault();
+        const keyType = 'secondary';
+        if (!$('#input-user-secondary-api-key').text()) {
+            rotateApiKey(keyType);
+        } else {
+            $('#update-api-key-type').text(keyType);
             $('#modal-update-user-api-key').modal();
         }
     });
 
     $('#btn-update-api-key').on('click', function (event) {
         event.preventDefault();
-        updateApiKey($('#input-user-id').val());
+        rotateApiKey($('#update-api-key-type').text());
     });
 
-    function updateApiKey() {
+    function rotateApiKey(keyType) {
         $.ajax({
             type: 'GET',
             contentType: 'application/json',
@@ -350,7 +375,11 @@
                 if (!data) {
                     return;
                 }
-                $('#input-user-api-key').text(data.api_key);
+                if ('primary' === keyType) {
+                    $('#input-user-api-key').text(data.api_key);
+                } else {
+                    $('#input-user-secondary-api-key').text(data.api_key);
+                }
             }
         }).always(function () {
             commons.hideModals($('#modal-update-user-api-key'));
@@ -400,12 +429,12 @@
          });
     });
 
-    
     function createUserSettings() {
         const userSettings = {
             name: $('#input-user-name').val() ? $('#input-user-name').val() : null,
             email: $('#input-user-email').val() ? $('#input-user-email').val() : null,
             api_key: $('#input-user-api-key').text() ? $('#input-user-api-key').text() : null,
+            secondary_api_key: $('#input-user-secondary-api-key').text() ? $('#input-user-secondary-api-key').text() : null,
             locale: $('#input-locale').val(),
             time_zone: $('#input-time-zone').val(),
             search_history_size: $('#input-search-history-size').val() ? Number($('#input-search-history-size').val()) : 0,
@@ -413,8 +442,6 @@
         };
         return userSettings;
     }
-
-
 </script>
 
 </body>

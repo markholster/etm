@@ -8,6 +8,8 @@ public interface EtmPrincipalTags {
 
     String getApiKeyTag();
 
+    String getSecondaryApiKeyTag();
+
     String getFilterQueryTag();
 
     String getFilterQueryOccurrenceTag();
@@ -51,5 +53,4 @@ public interface EtmPrincipalTags {
     String getSignalDatasourcesTag();
 
     String getNotifiersTag();
-
 }

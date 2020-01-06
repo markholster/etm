@@ -16,7 +16,9 @@
 * [ETM-116](https://jecstar.atlassian.net/browse/ETM-116) Show stacktrace in console and tail commands.
 * [ETM-117](https://jecstar.atlassian.net/browse/ETM-117) Legend not correct in Pie charts.
 * [ETM-122](https://jecstar.atlassian.net/browse/ETM-122) Add Javascript parser.
+* [ETM-123](https://jecstar.atlassian.net/browse/ETM-123) Api key rotation.
 * [ETM-124](https://jecstar.atlassian.net/browse/ETM-124) Better documentation of search options in gui.
+* [ETM-125](https://jecstar.atlassian.net/browse/ETM-125) Apikey reused when creating a new user.
 
 ## Version 3.5.2
 

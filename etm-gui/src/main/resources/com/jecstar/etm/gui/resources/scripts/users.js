@@ -154,6 +154,7 @@ function buildUserPage() {
         $('#input-user-name').val(userData.name);
         $('#input-user-email').val(userData.email);
         $('#input-user-api-key').text(userData.api_key ? userData.api_key : '');
+        $('#input-user-secondary-api-key').text(userData.secondary_api_key ? userData.secondary_api_key : '');
         $('#input-filter-query').val(userData.filter_query);
         $('#sel-filter-query-occurrence').val(userData.filter_query_occurrence);
         $('#sel-always-show-correlated-events').val(userData.always_show_correlated_events ? 'true' : 'false');
@@ -336,12 +337,27 @@ function buildUserPage() {
         $('#list-notifiers').append(createNotifierRow());
     });
 
-    $('#lnk-refresh-api-key').on('click', function (event) {
+    $('#lnk-rotate-api-key').on('click', function (event) {
         event.preventDefault();
         const userId = $('#input-user-id').val();
+        const keyType = 'primary';
         if (!$('#input-user-api-key').text() || !userId) {
-            updateApiKey();
+            rotateApiKey(keyType);
         } else {
+            $('#update-api-key-type').text(keyType);
+            $('#update-api-key-user-id').text(userId);
+            $('#modal-update-user-api-key').modal();
+        }
+    });
+
+    $('#lnk-rotate-secondary-api-key').on('click', function (event) {
+        event.preventDefault();
+        const userId = $('#input-user-id').val();
+        const keyType = 'secondary';
+        if (!$('#input-user-secondary-api-key').text() || !userId) {
+            rotateApiKey(keyType);
+        } else {
+            $('#update-api-key-type').text(keyType);
             $('#update-api-key-user-id').text(userId);
             $('#modal-update-user-api-key').modal();
         }
@@ -349,7 +365,7 @@ function buildUserPage() {
 
     $('#btn-update-api-key').on('click', function (event) {
         event.preventDefault();
-        updateApiKey($('#input-user-id').val());
+        rotateApiKey($('#update-api-key-type').text());
     });
 
     $('#input-user-id').on('input', enableOrDisableButtons);
@@ -448,7 +464,7 @@ function buildUserPage() {
         });
     }
 
-    function updateApiKey() {
+    function rotateApiKey(keyType) {
         $.ajax({
             type: 'GET',
             contentType: 'application/json',
@@ -458,7 +474,11 @@ function buildUserPage() {
                 if (!data) {
                     return;
                 }
-                $('#input-user-api-key').text(data.api_key);
+                if ('primary' === keyType) {
+                    $('#input-user-api-key').text(data.api_key);
+                } else {
+                    $('#input-user-secondary-api-key').text(data.api_key);
+                }
             }
         }).always(function () {
             commons.hideModals($('#modal-update-user-api-key'));
@@ -503,6 +523,7 @@ function buildUserPage() {
             name: $('#input-user-name').val() ? $('#input-user-name').val() : null,
             email: $('#input-user-email').val() ? $('#input-user-email').val() : null,
             api_key: $('#input-user-api-key').text() ? $('#input-user-api-key').text() : null,
+            secondary_api_key: $('#input-user-secondary-api-key').text() ? $('#input-user-secondary-api-key').text() : null,
             filter_query: $('#input-filter-query').val() ? $('#input-filter-query').val() : null,
             filter_query_occurrence: $('#sel-filter-query-occurrence').val(),
             always_show_correlated_events: $('#sel-always-show-correlated-events').val() == 'true' ? true : false,

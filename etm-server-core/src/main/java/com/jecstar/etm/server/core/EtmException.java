@@ -30,6 +30,7 @@ public class EtmException extends RuntimeException {
     public static final int NO_MORE_USER_ADMINS_LEFT = 201_030;
     public static final int INVALID_LDAP_USER = 201_031;
     public static final int INVALID_LDAP_GROUP = 201_032;
+    public static final int API_KEY_NOT_UNIQUE = 201_033;
 
     // 202_* reserved for login errors
     public static final int INVALID_PASSWORD = 202_001;

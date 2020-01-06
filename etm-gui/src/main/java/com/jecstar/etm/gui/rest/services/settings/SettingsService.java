@@ -1094,15 +1094,14 @@ public class SettingsService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.USER_SETTINGS_READ_WRITE)
     public String addUser(@PathParam("userId") String userId, String json) {
-        // TODO pagina geeft geen error als een nieuwe gebruiker wordt opgevoerd en geen wachtwoorden worden in gegeven.
         // Do a read and write of the user to make sure it's valid.
-        Map<String, Object> valueMap = toMap(json);
-        EtmPrincipal newPrincipal = loadPrincipal(toMapWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER));
-        String newPassword = getString("new_password", valueMap);
+        var valueMap = toMap(json);
+        var newPrincipal = loadPrincipal(toMapWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER));
+        var newPassword = getString("new_password", valueMap);
         if (newPassword != null) {
             newPrincipal.setPasswordHash(BCrypt.hashpw(newPassword, BCrypt.gensalt()));
         }
-        EtmPrincipal currentPrincipal = loadPrincipal(userId);
+        var currentPrincipal = loadPrincipal(userId);
         if (currentPrincipal != null && currentPrincipal.isInRole(SecurityRoles.USER_SETTINGS_READ_WRITE) && !newPrincipal.isInRole(SecurityRoles.USER_SETTINGS_READ_WRITE)) {
             // The user was admin, but that role is revoked. Check if he/she is the latest admin. If so, block this operation because we don't want a user without the admin role.
             // This check should be skipped/changed when LDAP is supported.
@@ -1114,7 +1113,16 @@ public class SettingsService extends AbstractGuiService {
             // Copy the ldap base of the original user because it may never be overwritten.
             newPrincipal.setLdapBase(currentPrincipal.isLdapBase());
         }
-        UpdateRequestBuilder builder = enhanceRequest(
+        if (currentPrincipal == null && (newPrincipal.getApiKey() != null || newPrincipal.getSecondaryApiKey() != null)) {
+            // New user, check if the api key is unique.
+            if (newPrincipal.getApiKey() != null && !isApiKeyUnique(newPrincipal.getApiKey())) {
+                throw new EtmException(EtmException.API_KEY_NOT_UNIQUE);
+            }
+            if (newPrincipal.getSecondaryApiKey() != null && !isApiKeyUnique(newPrincipal.getSecondaryApiKey())) {
+                throw new EtmException(EtmException.API_KEY_NOT_UNIQUE);
+            }
+        }
+        var builder = enhanceRequest(
                 new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId),
                 etmConfiguration
         ).setDoc(this.etmPrincipalConverter.writePrincipal(newPrincipal), XContentType.JSON)
@@ -1133,6 +1141,20 @@ public class SettingsService extends AbstractGuiService {
             getEtmPrincipal().forceReload = true;
         }
         return "{ \"status\": \"success\" }";
+    }
+
+    private boolean isApiKeyUnique(String apiKey) {
+        var searchResponse = dataRepository.search(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+                .setFetchSource(false)
+                .setQuery(
+                        new BoolQueryBuilder()
+                                .should(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.principalTags.getApiKeyTag(), apiKey))
+                                .should(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.principalTags.getSecondaryApiKeyTag(), apiKey))
+                                .minimumShouldMatch(1)
+                )
+                .setSize(1)
+        );
+        return searchResponse.getHits().getHits().length == 0;
     }
 
     @GET

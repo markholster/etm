@@ -19,7 +19,10 @@ import java.nio.charset.Charset;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
@@ -187,18 +190,26 @@ public abstract class AbstractCitrusSeleniumTest {
     }
 
     /**
-     * Method to retrieve the api key of the integration test user from the preferences page.
+     * Method to retrieve the api key(s) of the integration test user from the preferences page.
      *
      * @param runner  The Citrus <code>TestRunner</code>.
      * @param browser The Citrus <code>SeleniumBrowser</code>.
      * @return The api key of the user.
      */
-    protected String getApiKey(TestRunner runner, SeleniumBrowser browser) {
+    protected List<String> getApiKeys(TestRunner runner, SeleniumBrowser browser) {
         runner.selenium(action -> action.navigate(getEtmUrl() + "/gui/preferences/"));
         waitForAjaxToComplete(runner);
         final String apiKey = browser.getWebDriver().findElement(By.id("input-user-api-key")).getText();
-        assertFalse(apiKey == null || apiKey.trim().length() == 0, "Apikey of user " + this.username + " must be set.");
-        return apiKey;
+        final String secondaryApiKey = browser.getWebDriver().findElement(By.id("input-user-secondary-api-key")).getText();
+        var keys = new ArrayList<String>();
+        if (apiKey != null) {
+            keys.add(apiKey);
+        }
+        if (secondaryApiKey != null) {
+            keys.add(secondaryApiKey);
+        }
+        assertFalse(keys.size() < 1, "Api key of user " + this.username + " must be set.");
+        return keys;
     }
 
     /**
@@ -230,14 +241,14 @@ public abstract class AbstractCitrusSeleniumTest {
     /**
      * Send an event to Enterprise Telemetry Monitor.
      *
-     * @param type The event type.
+     * @param type          The event type.
      * @param importProfile The import profule.
-     * @param data The data that belongs to the event type.
-     * @param apiKey The api key to use for authentication on the rest processor.
+     * @param data          The data that belongs to the event type.
+     * @param apiKeys       The api keys to use for authentication on the rest processor.
      * @return <code>true</code> when the event is acknowledges, <code>false</code> otherwise.
      * @throws IOException If the connection to Enterprise Telemetry Monitor fails for some reason.
      */
-    protected boolean sendEventToEtm(String type, String importProfile, String data, String apiKey) throws IOException {
+    protected boolean sendEventToEtm(String type, String importProfile, String data, List<String> apiKeys) throws IOException {
         HttpURLConnection con = null;
         DataOutputStream stream = null;
         BufferedReader in = null;
@@ -247,7 +258,7 @@ public abstract class AbstractCitrusSeleniumTest {
             con.setConnectTimeout(1000);
             con.setRequestMethod("POST");
             con.setRequestProperty("Content-Type", "application/json; charset=utf-8");
-            con.setRequestProperty("apikey", apiKey);
+            con.setRequestProperty("apikey", apiKeys.stream().collect(Collectors.joining(",")));
             con.setDoOutput(true);
             stream = new DataOutputStream(con.getOutputStream());
             stream.write(("{\"type\": \"" + type + (importProfile != null ? "\", \"import_profile\": \"" + importProfile + "\"" : "\"") + ", \"data\": " + data + "}").getBytes(Charset.forName("utf-8")));

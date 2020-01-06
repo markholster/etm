@@ -28,6 +28,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
         boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getIdTag(), etmPrincipal.getId(), sb, true);
         added = this.converter.addStringElementToJsonBuffer(this.tags.getEmailTag(), etmPrincipal.getEmailAddress(), true, sb, !added) || added;
         added = this.converter.addStringElementToJsonBuffer(this.tags.getApiKeyTag(), etmPrincipal.getApiKey(), true, sb, !added) || added;
+        added = this.converter.addStringElementToJsonBuffer(this.tags.getSecondaryApiKeyTag(), etmPrincipal.getSecondaryApiKey(), true, sb, !added) || added;
         added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryTag(), etmPrincipal.getFilterQuery(), true, sb, !added) || added;
         added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryOccurrenceTag(), etmPrincipal.getFilterQueryOccurrence().name(), true, sb, !added) || added;
         added = this.converter.addBooleanElementToJsonBuffer(this.tags.getAlwaysShowCorrelatedEventsTag(), etmPrincipal.isAlwaysShowCorrelatedEvents(), sb, !added) || added;
@@ -85,6 +86,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
         principal.setName(this.converter.getString(this.tags.getNameTag(), valueMap));
         principal.setEmailAddress(this.converter.getString(this.tags.getEmailTag(), valueMap));
         principal.setApiKey(this.converter.getString(this.tags.getApiKeyTag(), valueMap));
+        principal.setSecondaryApiKey(this.converter.getString(this.tags.getSecondaryApiKeyTag(), valueMap));
         principal.setFilterQuery(this.converter.getString(this.tags.getFilterQueryTag(), valueMap));
         principal.setFilterQueryOccurrence(QueryOccurrence.valueOf(this.converter.getString(this.tags.getFilterQueryOccurrenceTag(), valueMap)));
         principal.setAlwaysShowCorrelatedEvents(this.converter.getBoolean(this.tags.getAlwaysShowCorrelatedEventsTag(), valueMap));

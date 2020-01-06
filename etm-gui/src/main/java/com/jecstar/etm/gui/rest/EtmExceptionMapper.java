@@ -43,8 +43,6 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
                     errorMessage.setMessage("License expired");
                     break;
                 case EtmException.LICENSE_MESSAGE_COUNT_EXCEEDED:
-                    errorMessage.setMessage("Your license does not permit more messages to be stored");
-                    break;
                 case EtmException.LICENSE_MESSAGE_SIZE_EXCEEDED:
                     errorMessage.setMessage("Your license does not permit more messages to be stored");
                     break;
@@ -80,6 +78,9 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
                     break;
                 case EtmException.INVALID_LDAP_USER:
                     errorMessage.setMessage("Invalid LDAP user");
+                    break;
+                case EtmException.API_KEY_NOT_UNIQUE:
+                    errorMessage.setMessage("Api key or secondary api key not unique");
                     break;
                 case EtmException.INVALID_LDAP_GROUP:
                     errorMessage.setMessage("Invalid LDAP group");

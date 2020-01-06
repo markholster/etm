@@ -23,14 +23,13 @@ import io.undertow.security.idm.*;
 import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ElasticsearchIdentityManager implements IdentityManager {
 
@@ -164,12 +163,23 @@ public class ElasticsearchIdentityManager implements IdentityManager {
             if (etmAccount != null) {
                 return etmAccount;
             }
+            var apiKeyMatch = new BoolQueryBuilder()
+                    .minimumShouldMatch(1);
+            // Limit to a max of 2 api keys to narrow down the brute force attack vector.
+            List<String> keys = apiKeyCredentials.getApiKeys().stream().limit(2).collect(Collectors.toList());
+            for (var key : keys) {
+                apiKeyMatch
+                        .should(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getApiKeyTag(), key))
+                        .should(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getSecondaryApiKeyTag(), key));
+            }
+
             var searchResponse = this.dataRepository.search(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
                     .setFetchSource(false)
-                    .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getApiKeyTag(), apiKeyCredentials.getApiKey()))
+                    .setQuery(apiKeyMatch)
                     .setSize(1)
             );
-            if (searchResponse.getHits().getTotalHits().value == 0) {
+            if (searchResponse.getHits().getTotalHits().value != 1) {
+                log.logErrorMessage("Found " + searchResponse.getHits().getTotalHits().value + " users with api keys " + apiKeyCredentials.getApiKeys().stream().collect(Collectors.joining(", ")) + ". Api key must be unique!");
                 return null;
             }
             var docId = searchResponse.getHits().getAt(0).getId();

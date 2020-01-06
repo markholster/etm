@@ -22,6 +22,7 @@ Code | Reason | Solution
 201030 | No user admins left. You are trying to change a user that will result in a system without any users with [Read & write access to the User settings](../administrating/users.md#user-roles). | Make sure you will have an user with Read & write access to the User settings left when the change is applied.
 201031 | Invalid or unknown LDAP user. | Check your LDAP connection or the state of your LDAP server.
 201032 | Invalid or unknown LDAP group. | Check your LDAP connection or the state of your LDAP server.
+201033 | The api key or secondary api key is not unique. | Rotate your api keys.
 202001 | Invalid password. | Retype your password and try again.
 202002 | The new password may not be the same as the old password. | Choose a new password that is not the same as the current password.
 300000 | Unable to connect to IIB node. | Check your connection parameters and make sure the IIB Node is running.

@@ -11,7 +11,8 @@ Name | Description
 Id | The unique id of the user. This id is also used for logging in to the Enterprise Telemetry Monitor Gui.
 Name | The (full) name of the user.
 Email address | The email address of the user.
-Api key | The api key that must be added as http header when making calls to the [Rest processor](../processing-events/rest-processor.md).
+Api key | The api key that may be added as http header when making calls to the [Rest processor](../processing-events/rest-processor.md).
+Secondary api key | The secondary api key that may be added as http header when making calls to the [Rest processor](../processing-events/rest-processor.md).
 Groups | The groups the user belongs to. This field will only be available if at least one group is created or when a ldap connection is setup. When the user is synchronized with a ldap server only the membership of imported ldap groups are shown. See [Groups](groups.md) for more information.
 Filter query | The filter query that needs to be applied to the user. See [Filter query](#filter-query) for more information.
 Filter query occurrence | The occurrence of the filter query. See [Filter query](#filter-query) for more information.
