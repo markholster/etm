@@ -19,6 +19,8 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -343,7 +345,9 @@ public class MenuAwareURLResource extends URLResource {
                     }
                     html.append("<li><a class=\"collapsed\" data-toggle=\"collapse\" href=\"#sub_vis_grp_" + group.hashCode() + "\" aria-expanded=\"false\"><i class=\"fa fa-users\"></i><p>" + StringUtils.escapeToHtml(group.getMostSpecificName()) + "</p><span class=\"caret\"></span></a>");
                     html.append("<div id=\"sub_vis_grp_" + group.hashCode() + "\" class=\"collapse\"><ul class=\"nav nav-collapse subnav\">");
-                    for (String dashboard : group.getDashboards()) {
+                    var dashboards = new ArrayList<>(group.getDashboards());
+                    Collections.sort(dashboards);
+                    for (String dashboard : dashboards) {
                         appendMenuOption(html, dashboard, "dashboard/dashboards.html?name=" + StringUtils.urlEncode(dashboard) + "&group=" + StringUtils.urlEncode(group.getName()), !principal.isInRole(SecurityRoles.GROUP_DASHBOARD_READ_WRITE));
                     }
                     if (principal.isInRole(SecurityRoles.GROUP_DASHBOARD_READ_WRITE)) {
@@ -364,7 +368,9 @@ public class MenuAwareURLResource extends URLResource {
                     html.append("<li><a class=\"collapsed\" data-toggle=\"collapse\" href=\"#sub_vis_user\" aria-expanded=\"false\"><p>" + StringUtils.escapeToHtml(principal.getName()) + "</p><span class=\"caret\"></span></a>");
                     html.append("<div id=\"sub_vis_user\" class=\"collapse\"><ul class=\"nav nav-collapse subnav\">");
                 }
-                for (String dashboard : principal.getDashboards()) {
+                var dashboards = new ArrayList<>(principal.getDashboards());
+                Collections.sort(dashboards);
+                for (String dashboard : dashboards) {
                     appendMenuOption(html, dashboard, "dashboard/dashboards.html?name=" + StringUtils.urlEncode(dashboard), false);
                 }
                 if (principal.getDashboards().size() > 0) {
