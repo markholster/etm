@@ -10,12 +10,12 @@ import com.jecstar.etm.server.core.elasticsearch.builder.DeleteRequestBuilder;
 import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
+import com.jecstar.etm.server.core.persisting.RequestEnhancer;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
-import com.jecstar.etm.server.core.rest.AbstractJsonService;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 
-public class HttpSessionCleaner extends AbstractJsonService implements Runnable {
+public class HttpSessionCleaner implements Runnable {
 
     /**
      * The <code>LogWrapper</code> for this class.
@@ -25,11 +25,13 @@ public class HttpSessionCleaner extends AbstractJsonService implements Runnable 
     private final EtmConfiguration etmConfiguration;
     private final DataRepository dataRepository;
     private final ElasticsearchSessionTags tags = new ElasticsearchSessionTagsJsonImpl();
+    private final RequestEnhancer requestEnhancer;
 
 
     public HttpSessionCleaner(final EtmConfiguration etmConfiguration, final DataRepository dataRepository) {
         this.etmConfiguration = etmConfiguration;
         this.dataRepository = dataRepository;
+        this.requestEnhancer = new RequestEnhancer(etmConfiguration);
     }
 
     @Override
@@ -39,9 +41,8 @@ public class HttpSessionCleaner extends AbstractJsonService implements Runnable 
         }
         try {
             // Not using a delete by query because it isn't able to delete in a certain type (by the Java api) and cannot delete documents with version equals to zero.
-            SearchRequestBuilder searchRequestBuilder = enhanceRequest(
-                    new SearchRequestBuilder().setIndices(ElasticsearchLayout.STATE_INDEX_NAME),
-                    etmConfiguration
+            SearchRequestBuilder searchRequestBuilder = this.requestEnhancer.enhance(
+                    new SearchRequestBuilder().setIndices(ElasticsearchLayout.STATE_INDEX_NAME)
             )
                     .setFetchSource(false)
                     .setQuery(
@@ -56,20 +57,19 @@ public class HttpSessionCleaner extends AbstractJsonService implements Runnable 
             if (log.isInfoLevelEnabled()) {
                 log.logInfoMessage("Found " + scrollableSearch.getNumberOfHits() + " expired http sessions marked for deletion.");
             }
-            BulkRequestBuilder bulkRequestBuilder = enhanceRequest(new BulkRequestBuilder(), etmConfiguration);
+            BulkRequestBuilder bulkRequestBuilder = this.requestEnhancer.enhance(new BulkRequestBuilder());
             for (SearchHit searchHit : scrollableSearch) {
                 if (Thread.currentThread().isInterrupted()) {
                     return;
                 }
                 bulkRequestBuilder.add(
-                        enhanceRequest(
-                                new DeleteRequestBuilder(searchHit.getIndex(), searchHit.getId()),
-                                etmConfiguration
+                        this.requestEnhancer.enhance(
+                                new DeleteRequestBuilder(searchHit.getIndex(), searchHit.getId())
                         ).build()
                 );
                 if (bulkRequestBuilder.getNumberOfActions() >= 50) {
                     this.dataRepository.bulk(bulkRequestBuilder);
-                    bulkRequestBuilder = enhanceRequest(new BulkRequestBuilder(), etmConfiguration);
+                    bulkRequestBuilder = this.requestEnhancer.enhance(new BulkRequestBuilder());
                 }
             }
             if (bulkRequestBuilder.getNumberOfActions() > 0) {

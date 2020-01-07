@@ -19,6 +19,7 @@
 * [ETM-123](https://jecstar.atlassian.net/browse/ETM-123) Api key rotation.
 * [ETM-124](https://jecstar.atlassian.net/browse/ETM-124) Better documentation of search options in gui.
 * [ETM-125](https://jecstar.atlassian.net/browse/ETM-125) Apikey reused when creating a new user.
+* [ETM-126](https://jecstar.atlassian.net/browse/ETM-126) Allow WITH REQUEST|RESPONSE joins in Signals and Graphs.
 
 ## Version 3.5.2
 
@@ -155,7 +156,7 @@ Additional labels for pre-release and build metadata are available as extensions
 1. Check if any of the [Version specific changes] applies to your situation.
 1. Start your Enterprise Telemetry Monitor nodes.
 
-## Upgrade from version 3.5.0 to 4.x
+## Upgrade from version 3.5.x to 4.x
 1. Your data will be converted during the upgrade so as always make sure you have a backup of all Elasticsearch data!
 1. Make sure you have a non-ldap (local) admin account! Enterprise Telemetry Monitor requires the import of server certificates starting with release 4.x so you wont be able to login using an LDAP account configured on an LDAP server connected over TLS.
 1. Enterprise Telemetry Monitor requires Java 11. Download and install Java 11 when necessary.

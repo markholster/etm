@@ -32,12 +32,12 @@ public class DateHistogramBucketAggregator extends BucketAggregator {
         setBucketAggregatorType(TYPE);
     }
 
-    public String getInterval() {
-        return this.interval;
-    }
-
     public Long getMinDocCount() {
         return this.minDocCount;
+    }
+
+    public String getInterval() {
+        return this.interval;
     }
 
     public DateHistogramBucketAggregator setInterval(String interval) {
@@ -58,6 +58,14 @@ public class DateHistogramBucketAggregator extends BucketAggregator {
         return this.dateInterval;
     }
 
+    public DateHistogramInterval getDateHistogramInterval() {
+        var dateInterval = getDateInterval();
+        if (dateInterval != null) {
+            return dateInterval.getDateHistogramInterval();
+        }
+        return new DateHistogramInterval(this.interval);
+    }
+
     @Override
     public DateHistogramBucketAggregator clone() {
         DateHistogramBucketAggregator clone = new DateHistogramBucketAggregator();
@@ -73,6 +81,8 @@ public class DateHistogramBucketAggregator extends BucketAggregator {
         DateHistogramInterval interval;
         if (getDateInterval() != null) {
             interval = getDateInterval().getDateHistogramInterval();
+        } else if (getDateHistogramInterval() != null) {
+            interval = getDateHistogramInterval();
         } else {
             interval = this.autoInterval;
         }

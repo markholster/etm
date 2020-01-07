@@ -4,11 +4,12 @@ import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.configuration.License;
 import com.jecstar.etm.server.core.domain.configuration.converter.json.EtmConfigurationConverterJsonImpl;
+import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.elasticsearch.builder.UpdateRequestBuilder;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
-import com.jecstar.etm.server.core.rest.AbstractJsonService;
+import com.jecstar.etm.server.core.persisting.RequestEnhancer;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,7 +20,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 
-public class LicenseUpdater extends AbstractJsonService implements Runnable {
+public class LicenseUpdater implements Runnable {
 
     /**
      * The <code>LogWrapper</code> for this class.
@@ -29,12 +30,15 @@ public class LicenseUpdater extends AbstractJsonService implements Runnable {
 
     private final EtmConfiguration etmConfiguration;
     private final DataRepository dataRepository;
+    private final RequestEnhancer requestEnhancer;
     private final EtmConfigurationConverterJsonImpl etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
     private final String licenseUpdateUrl;
+    private final JsonConverter jsonConverter = new JsonConverter();
 
     public LicenseUpdater(final EtmConfiguration etmConfiguration, final DataRepository dataRepository, final String licenseUpdateUrl) {
         this.etmConfiguration = etmConfiguration;
         this.dataRepository = dataRepository;
+        this.requestEnhancer = new RequestEnhancer(etmConfiguration);
         this.licenseUpdateUrl = licenseUpdateUrl != null ? licenseUpdateUrl : "https://www.jecstar.com/rest/license/v2/etm/free/Jecstar%20Free%20License";
     }
 
@@ -59,9 +63,8 @@ public class LicenseUpdater extends AbstractJsonService implements Runnable {
                     Map<String, Object> licenseObject = new HashMap<>();
                     licenseObject.put(this.etmConfigurationConverter.getTags().getLicenseTag(), licenseKey);
                     values.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LICENSE, licenseObject);
-                    UpdateRequestBuilder builder = enhanceRequest(
-                            new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LICENSE_DEFAULT),
-                            etmConfiguration
+                    UpdateRequestBuilder builder = this.requestEnhancer.enhance(
+                            new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LICENSE_DEFAULT)
                     )
                             .setDoc(values)
                             .setDocAsUpsert(true);
@@ -89,8 +92,8 @@ public class LicenseUpdater extends AbstractJsonService implements Runnable {
             while ((inputLine = in.readLine()) != null) {
                 result.append(inputLine);
             }
-            Map<String, Object> valueMap = toMap(result.toString());
-            return getString("key", valueMap);
+            Map<String, Object> valueMap = this.jsonConverter.toMap(result.toString());
+            return this.jsonConverter.getString("key", valueMap);
         } catch (IOException e) {
             if (log.isDebugLevelEnabled()) {
                 log.logDebugMessage("Unable to retrieve license.", e);

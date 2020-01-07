@@ -16,6 +16,7 @@ import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
 import com.jecstar.etm.server.core.elasticsearch.builder.UpdateRequestBuilder;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
+import com.jecstar.etm.server.core.persisting.RequestEnhancer;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.common.xcontent.XContentType;
@@ -43,13 +44,13 @@ public class IIBService extends AbstractGuiService {
     private static final String PROFILE_PROPERTIES = "profileProperties";
 
     private static DataRepository dataRepository;
-    private static EtmConfiguration etmConfiguration;
+    private static RequestEnhancer requestEnhancer;
 
     private final NodeConverterJsonImpl nodeConverter = new NodeConverterJsonImpl();
 
     public static void initialize(DataRepository dataRepository, EtmConfiguration etmConfiguration) {
         IIBService.dataRepository = dataRepository;
-        IIBService.etmConfiguration = etmConfiguration;
+        IIBService.requestEnhancer = new RequestEnhancer(etmConfiguration);
     }
 
     @GET
@@ -57,7 +58,7 @@ public class IIBService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.IIB_NODE_READ, SecurityRoles.IIB_NODE_READ_WRITE})
     public String getNodes() {
-        SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
+        SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE));
         ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
@@ -83,9 +84,8 @@ public class IIBService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.IIB_NODE_READ_WRITE)
     public String deleteNode(@PathParam("nodeName") String nodeName) {
-        DeleteRequestBuilder builder = enhanceRequest(
-                new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName),
-                etmConfiguration
+        DeleteRequestBuilder builder = requestEnhancer.enhance(
+                new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName)
         );
         dataRepository.delete(builder);
         return "{\"status\":\"success\"}";
@@ -100,9 +100,8 @@ public class IIBService extends AbstractGuiService {
         try (IIBNodeConnection nodeConnection = createIIBConnectionInstance(node)) {
             nodeConnection.connect();
         }
-        UpdateRequestBuilder builder = enhanceRequest(
-                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName),
-                etmConfiguration
+        UpdateRequestBuilder builder = requestEnhancer.enhance(
+                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName)
         )
                 .setDoc(this.nodeConverter.write(node), XContentType.JSON)
                 .setDocAsUpsert(true)

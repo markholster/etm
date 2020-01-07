@@ -105,13 +105,15 @@ public abstract class BucketAggregator extends Aggregator {
     @Override
     public final AggregationBuilder toAggregationBuilder() {
         AggregationBuilder aggregationBuilder = createAggregationBuilder();
-        for (Aggregator aggregator : this.aggregators) {
-            if (aggregator instanceof BucketAggregator) {
-                aggregationBuilder.subAggregation(((BucketAggregator) aggregator).toAggregationBuilder());
-            } else if (aggregator instanceof MetricsAggregator) {
-                aggregationBuilder.subAggregation(((MetricsAggregator) aggregator).toAggregationBuilder());
-            } else if (aggregator instanceof PipelineAggregator) {
-                aggregationBuilder.subAggregation(((PipelineAggregator) aggregator).toAggregationBuilder());
+        if (this.aggregators != null) {
+            for (Aggregator aggregator : this.aggregators) {
+                if (aggregator instanceof BucketAggregator) {
+                    aggregationBuilder.subAggregation(((BucketAggregator) aggregator).toAggregationBuilder());
+                } else if (aggregator instanceof MetricsAggregator) {
+                    aggregationBuilder.subAggregation(((MetricsAggregator) aggregator).toAggregationBuilder());
+                } else if (aggregator instanceof PipelineAggregator) {
+                    aggregationBuilder.subAggregation(((PipelineAggregator) aggregator).toAggregationBuilder());
+                }
             }
         }
         return aggregationBuilder;

@@ -18,6 +18,7 @@ import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
 import com.jecstar.etm.server.core.elasticsearch.builder.UpdateRequestBuilder;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
+import com.jecstar.etm.server.core.persisting.RequestEnhancer;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import com.jecstar.etm.server.core.persisting.internal.BusinessEventLogger;
 import com.jecstar.etm.server.core.rest.AbstractJsonService;
@@ -64,11 +65,13 @@ public class Signaler extends AbstractJsonService implements Runnable {
     private final EtmPrincipalTags etmPrincipalTags = etmPrincipalConverter.getTags();
     private final SignalConverter signalConverter = new SignalConverter();
     private final NotifierConverter notifierConverter = new NotifierConverter();
+    private final RequestEnhancer requestEnhancer;
     private final byte[] snmpEngineId;
 
     public Signaler(String clusterName, EtmConfiguration etmConfiguration, DataRepository dataRepository) {
         this.clusterName = clusterName;
         this.etmConfiguration = etmConfiguration;
+        this.requestEnhancer = new RequestEnhancer(etmConfiguration);
         this.dataRepository = dataRepository;
         OctetString engineId = createSnmpEngineId();
         this.snmpEngineId = engineId.getValue();
@@ -118,9 +121,8 @@ public class Signaler extends AbstractJsonService implements Runnable {
 
             ScrollableSearch scrollableSearch = new ScrollableSearch(
                     dataRepository,
-                    enhanceRequest(
-                            new SearchRequestBuilder(),
-                            this.etmConfiguration
+                    this.requestEnhancer.enhance(
+                            new SearchRequestBuilder()
                     ).setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
                             .setFetchSource(false)
                             .setQuery(boolQueryBuilder)
@@ -228,9 +230,8 @@ public class Signaler extends AbstractJsonService implements Runnable {
             return true;
         }
         try {
-            UpdateRequestBuilder updateRequestBuilder = enhanceRequest(
-                    new UpdateRequestBuilder().setIndex(index).setId(id),
-                    this.etmConfiguration
+            UpdateRequestBuilder updateRequestBuilder = this.requestEnhancer.enhance(
+                    new UpdateRequestBuilder().setIndex(index).setId(id)
             )
                     .setIfSeqNo(getResponse.getSeqNo())
                     .setIfPrimaryTerm(getResponse.getPrimaryTerm())

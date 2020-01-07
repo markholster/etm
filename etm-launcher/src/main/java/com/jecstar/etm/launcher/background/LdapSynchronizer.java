@@ -12,6 +12,7 @@ import com.jecstar.etm.server.core.elasticsearch.builder.UpdateRequestBuilder;
 import com.jecstar.etm.server.core.ldap.Directory;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
+import com.jecstar.etm.server.core.persisting.RequestEnhancer;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import com.jecstar.etm.server.core.rest.AbstractJsonService;
 import com.jecstar.etm.server.core.util.ObjectUtils;
@@ -37,10 +38,12 @@ public class LdapSynchronizer extends AbstractJsonService implements Runnable {
     private final EtmConfiguration etmConfiguration;
     private final DataRepository dataRepository;
     private final EtmPrincipalTags tags = new EtmPrincipalTagsJsonImpl();
+    private final RequestEnhancer requestEnhancer;
 
     public LdapSynchronizer(final EtmConfiguration etmConfiguration, final DataRepository dataRepository) {
         this.etmConfiguration = etmConfiguration;
         this.dataRepository = dataRepository;
+        this.requestEnhancer = new RequestEnhancer(etmConfiguration);
     }
 
     @Override
@@ -56,7 +59,7 @@ public class LdapSynchronizer extends AbstractJsonService implements Runnable {
             log.logDebugMessage("Start synchronizing LDAP directory.");
         }
         try {
-            SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
+            SearchRequestBuilder searchRequestBuilder = this.requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
                     .setFetchSource(new String[]{
                             ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.tags.getIdTag(),
                             ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.tags.getNameTag(),
@@ -85,9 +88,8 @@ public class LdapSynchronizer extends AbstractJsonService implements Runnable {
                     if (log.isInfoLevelEnabled()) {
                         log.logInfoMessage("User with id '" + userId + "' no longer found in LDAP directory. Removing user.");
                     }
-                    this.dataRepository.delete(enhanceRequest(
-                            new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId),
-                            etmConfiguration
+                    this.dataRepository.delete(this.requestEnhancer.enhance(
+                            new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId)
                     ));
                 } else {
                     updateLdapPrincipalWhenChanged(values, principal);
@@ -123,12 +125,11 @@ public class LdapSynchronizer extends AbstractJsonService implements Runnable {
             userObject.put(this.tags.getNameTag(), ldapPrincipal.getName());
             userObject.put(this.tags.getEmailTag(), ldapPrincipal.getEmailAddress());
             updateMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, userObject);
-            this.dataRepository.update(enhanceRequest(
-                    new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + ldapPrincipal.getId()),
-                    etmConfiguration
+            this.dataRepository.update(this.requestEnhancer.enhance(
+                    new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + ldapPrincipal.getId())
                     )
-                    .setDoc(updateMap)
-                    .setDetectNoop(true)
+                            .setDoc(updateMap)
+                            .setDetectNoop(true)
             );
         }
 

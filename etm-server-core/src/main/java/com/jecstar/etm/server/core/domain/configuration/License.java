@@ -122,7 +122,7 @@ public class License {
     public boolean isValidAt(Instant moment) {
         var valid = !moment.isAfter(getExpiryDate());
         if (getStartDate() != null) {
-            valid = valid && !moment.isBefore(getExpiryDate());
+            valid = valid && !moment.isBefore(getStartDate());
         }
         return valid;
     }

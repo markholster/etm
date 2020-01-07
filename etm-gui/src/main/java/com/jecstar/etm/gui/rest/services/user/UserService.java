@@ -12,6 +12,7 @@ import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.elasticsearch.builder.GetRequestBuilder;
 import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
 import com.jecstar.etm.server.core.elasticsearch.builder.UpdateRequestBuilder;
+import com.jecstar.etm.server.core.persisting.RequestEnhancer;
 import com.jecstar.etm.server.core.util.BCrypt;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchResponse;
@@ -34,6 +35,7 @@ public class UserService extends AbstractGuiService {
 
     private static DataRepository dataRepository;
     private static EtmConfiguration etmConfiguration;
+    private static RequestEnhancer requestEnhancer;
     private final String timezoneResponse;
     private final EtmPrincipalTags tags = new EtmPrincipalTagsJsonImpl();
 
@@ -41,6 +43,7 @@ public class UserService extends AbstractGuiService {
     public static void initialize(DataRepository dataRepository, EtmConfiguration etmConfiguration) {
         UserService.dataRepository = dataRepository;
         UserService.etmConfiguration = etmConfiguration;
+        UserService.requestEnhancer = new RequestEnhancer(etmConfiguration);
     }
 
     public UserService() {
@@ -93,9 +96,8 @@ public class UserService extends AbstractGuiService {
         userObject.put(this.tags.getSecondaryApiKeyTag(), valueMap.get(this.tags.getSecondaryApiKeyTag()));
 
         updateMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, userObject);
-        UpdateRequestBuilder builder = enhanceRequest(
-                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + etmPrincipal.getId()),
-                etmConfiguration
+        UpdateRequestBuilder builder = requestEnhancer.enhance(
+                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + etmPrincipal.getId())
         )
                 .setDoc(updateMap)
                 .setDetectNoop(true);
@@ -105,9 +107,8 @@ public class UserService extends AbstractGuiService {
             // History size is smaller. Make sure the stored queries are sliced to the new size.
             Map<String, Object> scriptParams = new HashMap<>();
             scriptParams.put("history_size", newHistorySize);
-            dataRepository.updateAsync(enhanceRequest(
-                    new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId()),
-                    etmConfiguration
+            dataRepository.updateAsync(requestEnhancer.enhance(
+                    new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId())
                     )
                             .setScript(new Script(ScriptType.STORED, null, "etm_update-search-history", scriptParams)),
                     DataRepository.noopActionListener());
@@ -151,9 +152,8 @@ public class UserService extends AbstractGuiService {
         userObject.put(this.tags.getChangePasswordOnLogonTag(), false);
 
         updateMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, userObject);
-        UpdateRequestBuilder builder = enhanceRequest(
-                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId()),
-                etmConfiguration
+        UpdateRequestBuilder builder = requestEnhancer.enhance(
+                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId())
         )
                 .setDoc(updateMap)
                 .setDetectNoop(true);
@@ -185,7 +185,7 @@ public class UserService extends AbstractGuiService {
     public String getEvents() {
         StringBuilder result = new StringBuilder();
         NumberFormat numberFormat = NumberFormat.getInstance(getEtmPrincipal().getLocale());
-        SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL), etmConfiguration)
+        SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL))
                 .setSize(0).trackTotalHits(true).setQuery(QueryBuilders.matchAllQuery());
         SearchResponse searchResponse = dataRepository.search(searchRequestBuilder);
         result.append("{");

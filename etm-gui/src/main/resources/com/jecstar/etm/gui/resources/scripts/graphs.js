@@ -269,7 +269,8 @@ function buildGraphsPage(groupName) {
                 queryKeywords: keywords,
                 keywordIndexFilter: function (index) {
                     return index !== $('#sel-data-source').val();
-                }
+                },
+                allowJoins: true
             }
         );
         $('#input-graph-time-filter-field').on('keydown', function (event) {

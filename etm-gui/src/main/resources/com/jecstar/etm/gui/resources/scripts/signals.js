@@ -125,9 +125,10 @@ function buildSignalsPage(groupName) {
         }).autocompleteFieldQuery(
             {
                 queryKeywords: keywords,
-                keywordIndexFilter: function(index) {
+                keywordIndexFilter: function (index) {
                     return index !== $('#sel-data-source').val();
-                }
+                },
+                allowJoins: true
             }
         );
     });

@@ -24,10 +24,10 @@ import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalTagsJsonImpl;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
+import com.jecstar.etm.server.core.persisting.EtmQueryBuilder;
+import com.jecstar.etm.server.core.persisting.RequestEnhancer;
 import com.jecstar.etm.server.core.util.DateUtils;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.HasAggregations;
@@ -53,6 +53,7 @@ public class DashboardService extends AbstractUserAttributeService {
 
     private static DataRepository dataRepository;
     private static EtmConfiguration etmConfiguration;
+    private static RequestEnhancer requestEnhancer;
     private final EtmPrincipalTags principalTags = new EtmPrincipalTagsJsonImpl();
     private final GraphContainerConverter graphContainerConverter = new GraphContainerConverter();
     private final DashboardConverter dashboardConverter = new DashboardConverter();
@@ -60,6 +61,7 @@ public class DashboardService extends AbstractUserAttributeService {
     public static void initialize(DataRepository dataRepository, EtmConfiguration etmConfiguration) {
         DashboardService.dataRepository = dataRepository;
         DashboardService.etmConfiguration = etmConfiguration;
+        DashboardService.requestEnhancer = new RequestEnhancer(etmConfiguration);
     }
 
     @GET
@@ -843,17 +845,11 @@ public class DashboardService extends AbstractUserAttributeService {
 
     private SearchRequestBuilder createGraphSearchRequest(EtmPrincipal etmPrincipal, GraphContainer graphContainer) {
         Data data = graphContainer.getData();
-        SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(data.getDataSource()), etmConfiguration)
+        SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder()).setIndices(data.getDataSource())
                 .setFetchSource(false)
                 .setSize(0);
-        QueryStringQueryBuilder queryStringBuilder = new QueryStringQueryBuilder(data.getQuery())
-                .allowLeadingWildcard(true)
-                .analyzeWildcard(true)
-                .timeZone(etmPrincipal.getTimeZone().getID());
-        queryStringBuilder.defaultField(ElasticsearchLayout.ETM_ALL_FIELDS_ATTRIBUTE_NAME);
+        var etmQueryBuilder = new EtmQueryBuilder(data.getQuery(), null, dataRepository, requestEnhancer).setTimeZone(etmPrincipal.getTimeZone().getID());
 
-        BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
-        boolQueryBuilder.must(queryStringBuilder);
         if (data.getFrom() != null || data.getTill() != null) {
             RangeQueryBuilder timestampFilter = new RangeQueryBuilder(data.getTimeFilterField() != null ? data.getTimeFilterField() : "timestamp");
             boolean needsUtcZone = false;
@@ -878,13 +874,13 @@ public class DashboardService extends AbstractUserAttributeService {
             if (!needsUtcZone) {
                 timestampFilter.timeZone(etmPrincipal.getTimeZone().getID());
             }
-            boolQueryBuilder.filter(timestampFilter);
+            etmQueryBuilder.filterRoot(timestampFilter).filterJoin(timestampFilter);
         }
 
         if (ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL.equals(data.getDataSource())) {
-            searchRequestBuilder.setQuery(addFilterQuery(getEtmPrincipal(), boolQueryBuilder));
+            searchRequestBuilder.setQuery(addFilterQuery(getEtmPrincipal(), etmQueryBuilder.buildRootQuery()));
         } else {
-            searchRequestBuilder.setQuery(boolQueryBuilder);
+            searchRequestBuilder.setQuery(etmQueryBuilder.buildRootQuery());
         }
         graphContainer.getGraph().prepareForSearch(dataRepository, searchRequestBuilder);
         graphContainer.getGraph().addAggregators(searchRequestBuilder);

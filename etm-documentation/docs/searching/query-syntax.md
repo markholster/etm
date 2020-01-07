@@ -120,9 +120,9 @@ name: MyResponseName WITH REQUEST payload_length:> 100
 ```
 
 WARNING: Under the hood Enterprise Telemetry Monitor will execute multiple queries to make these joins possible.
-The query after the `WITH <REQUEST|RESPONSE>` statement may never result in more than 65536 matches otherwise an error will be thrown.
-To scope this query to a minimum of results the Start date and End date also taken into account during execution.
-This means that both the request and response should be within the given date/time range.
+Each sub query after the `WITH <REQUEST|RESPONSE>` statement may never result in more than 65536 matches otherwise an error will be thrown.
+To scope this query to a minimum of results the *Start date* and *End date* are also taken into account during execution.
+This means that both the requests and responses should be within the given date/time range.
 
 ## Reserved characters
 

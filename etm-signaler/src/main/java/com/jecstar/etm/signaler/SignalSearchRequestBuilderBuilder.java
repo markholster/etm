@@ -2,24 +2,22 @@ package com.jecstar.etm.signaler;
 
 import com.jecstar.etm.server.core.domain.aggregator.Aggregator;
 import com.jecstar.etm.server.core.domain.aggregator.bucket.BucketAggregator;
+import com.jecstar.etm.server.core.domain.aggregator.bucket.DateHistogramBucketAggregator;
 import com.jecstar.etm.server.core.domain.aggregator.metric.MetricsAggregator;
 import com.jecstar.etm.server.core.domain.aggregator.pipeline.PipelineAggregator;
-import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
+import com.jecstar.etm.server.core.persisting.EtmQueryBuilder;
+import com.jecstar.etm.server.core.persisting.RequestEnhancer;
 import com.jecstar.etm.server.core.util.DateUtils;
-import com.jecstar.etm.signaler.domain.Data;
 import com.jecstar.etm.signaler.domain.Signal;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.index.query.RangeQueryBuilder;
-import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramAggregationBuilder;
-import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
 
 import java.time.Instant;
 import java.util.function.Function;
@@ -49,20 +47,19 @@ public class SignalSearchRequestBuilderBuilder {
     }
 
     private SearchRequestBuilder createAggregatedSearchRequest(Function<BoolQueryBuilder, QueryBuilder> enhanceCallback, EtmPrincipal etmPrincipal) {
-        final Data data = this.signal.getData();
-        SearchRequestBuilder searchRequestBuilder = new SearchRequestBuilder()
+        final var data = this.signal.getData();
+        final var requestEnhancer = new RequestEnhancer(this.etmConfiguration);
+        SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder())
                 .setIndices(data.getDataSource())
                 .setFetchSource(false)
                 .setTimeout(TimeValue.timeValueMillis(this.etmConfiguration.getQueryTimeout()))
                 .setSize(0);
-        QueryStringQueryBuilder queryStringBuilder = new QueryStringQueryBuilder(data.getQuery())
-                .allowLeadingWildcard(true)
-                .analyzeWildcard(true);
+
+        var etmQueryBuilder = new EtmQueryBuilder(data.getQuery(), null, dataRepository, requestEnhancer);
+
         if (etmPrincipal != null) {
-            queryStringBuilder.timeZone(etmPrincipal.getTimeZone().getID());
+            etmQueryBuilder.setTimeZone(etmPrincipal.getTimeZone().getID());
         }
-        queryStringBuilder.defaultField(ElasticsearchLayout.ETM_ALL_FIELDS_ATTRIBUTE_NAME);
-        BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder().must(queryStringBuilder);
         if (data.getFrom() != null || data.getTill() != null) {
             RangeQueryBuilder timestampFilter = new RangeQueryBuilder(data.getTimeFilterField());
             boolean needsUtcZone = false;
@@ -87,13 +84,18 @@ public class SignalSearchRequestBuilderBuilder {
             if (!needsUtcZone && etmPrincipal != null) {
                 timestampFilter.timeZone(etmPrincipal.getTimeZone().getID());
             }
-            boolQueryBuilder.filter(timestampFilter);
+            etmQueryBuilder.filterRoot(timestampFilter).filterJoin(timestampFilter);
         }
-        QueryBuilder queryBuilder = enhanceCallback.apply(boolQueryBuilder);
+        QueryBuilder queryBuilder = enhanceCallback.apply(etmQueryBuilder.buildRootQuery());
         searchRequestBuilder.setQuery(queryBuilder);
 
-        DateHistogramAggregationBuilder aggregationBuilder = AggregationBuilders.dateHistogram(CARDINALITY_AGGREGATION_KEY).field(data.getTimeFilterField());
-        aggregationBuilder.dateHistogramInterval(new DateHistogramInterval(this.signal.getThreshold().getCardinalityUnit().toTimestampExpression(this.signal.getThreshold().getCardinality())));
+        var aggregationBuilder = (DateHistogramAggregationBuilder) new DateHistogramBucketAggregator()
+                .setInterval(this.signal.getThreshold().getCardinalityUnit().toTimestampExpression(this.signal.getThreshold().getCardinality()))
+                .setField(data.getTimeFilterField())
+                .setName(CARDINALITY_AGGREGATION_KEY)
+                .setId(CARDINALITY_AGGREGATION_KEY)
+                .setShowOnGraph(Boolean.TRUE)
+                .toAggregationBuilder();
 
         for (Aggregator aggregator : this.signal.getThreshold().getAggregators()) {
             if (aggregator instanceof BucketAggregator) {

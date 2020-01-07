@@ -6,6 +6,7 @@ import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.elasticsearch.builder.GetRequestBuilder;
 import com.jecstar.etm.server.core.elasticsearch.builder.UpdateRequestBuilder;
+import com.jecstar.etm.server.core.persisting.RequestEnhancer;
 import org.elasticsearch.action.get.GetResponse;
 
 import java.util.Collection;
@@ -16,14 +17,14 @@ import java.util.Map;
  * Abstract superclass for services that store their context state in a group or user. For example all dashboards and
  * signals are stored within the user or group entity.
  */
-public class AbstractUserAttributeService extends AbstractIndexMetadataService {
+public abstract class AbstractUserAttributeService extends AbstractIndexMetadataService {
 
     /**
      * Loads the given attributes from an entity.
      *
-     * @param dataRepository    The <code>DataRepository</code>.
-     * @param groupName         The name of the group to load the attributes from. If <code>null</code> the attributes of the current user will be loaded.
-     * @param attributes        The attributes to return.
+     * @param dataRepository The <code>DataRepository</code>.
+     * @param groupName      The name of the group to load the attributes from. If <code>null</code> the attributes of the current user will be loaded.
+     * @param attributes     The attributes to return.
      * @return A <code>Map</code> with attributes from the given entity.
      */
     protected Map<String, Object> getEntity(DataRepository dataRepository, String groupName, String... attributes) {
@@ -84,7 +85,7 @@ public class AbstractUserAttributeService extends AbstractIndexMetadataService {
                     .setId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId());
             objectMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, source);
         }
-        enhanceRequest(builder, etmConfiguration)
+        new RequestEnhancer(etmConfiguration).enhance(builder)
                 .setDoc(objectMap)
                 .setDocAsUpsert(true);
         dataRepository.update(builder);

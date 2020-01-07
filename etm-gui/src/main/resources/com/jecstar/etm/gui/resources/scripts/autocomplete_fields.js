@@ -93,7 +93,6 @@
                     return {"queryTerm": '', "queryType": "field"};
                 }
                 if (settings.allowJoins) {
-                    // Joins only allowed a single time, so the check is the other way around...
                     let returnValue;
                     const joinIndices = [];
                     $.each(joinOperators, function (ix, operator) {
@@ -102,7 +101,7 @@
                             joinIndices.push(termIx);
                         }
                     });
-                    joinIndices.sort();
+                    joinIndices.sort().reverse();
                     $.each(joinIndices, function (ix, termIx) {
                         if (termIx === terms.length - 2) {
                             returnValue = {"queryTerm": lastTerm, "queryType": "field"};

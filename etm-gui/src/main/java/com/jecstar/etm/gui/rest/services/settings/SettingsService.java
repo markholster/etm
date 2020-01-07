@@ -36,6 +36,7 @@ import com.jecstar.etm.server.core.enhancers.DefaultTransformation;
 import com.jecstar.etm.server.core.ldap.Directory;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
+import com.jecstar.etm.server.core.persisting.RequestEnhancer;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import com.jecstar.etm.server.core.tls.TrustAllTrustManager;
 import com.jecstar.etm.server.core.util.BCrypt;
@@ -104,10 +105,12 @@ public class SettingsService extends AbstractGuiService {
 
     private static DataRepository dataRepository;
     private static EtmConfiguration etmConfiguration;
+    private static RequestEnhancer requestEnhancer;
 
     public static void initialize(DataRepository dataRepository, EtmConfiguration etmConfiguration) {
         SettingsService.dataRepository = dataRepository;
         SettingsService.etmConfiguration = etmConfiguration;
+        SettingsService.requestEnhancer = new RequestEnhancer(etmConfiguration);
     }
 
     @GET
@@ -136,9 +139,8 @@ public class SettingsService extends AbstractGuiService {
         Map<String, Object> values = new HashMap<>();
         values.put(this.etmConfigurationConverter.getTags().getLicenseTag(), licenseKey);
         licenseObject.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LICENSE, values);
-        UpdateRequestBuilder updateRequestBuilder = enhanceRequest(
-                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LICENSE_DEFAULT),
-                etmConfiguration
+        UpdateRequestBuilder updateRequestBuilder = requestEnhancer.enhance(
+                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LICENSE_DEFAULT)
         )
                 .setDoc(licenseObject)
                 .setDocAsUpsert(true);
@@ -204,9 +206,8 @@ public class SettingsService extends AbstractGuiService {
         currentValues.putAll(toMap(json));
         EtmConfiguration defaultConfig = this.etmConfigurationConverter.read(null, currentNodeObject, null);
 
-        UpdateRequestBuilder builder = enhanceRequest(
-                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_NODE_DEFAULT),
-                etmConfiguration
+        UpdateRequestBuilder builder = requestEnhancer.enhance(
+                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_NODE_DEFAULT)
         )
                 .setDoc(this.etmConfigurationConverter.write(null, defaultConfig), XContentType.JSON)
                 .setDocAsUpsert(true)
@@ -237,9 +238,8 @@ public class SettingsService extends AbstractGuiService {
     public String setLdapConfiguration(String json) {
         LdapConfiguration config = this.ldapConfigurationConverter.read(toStringWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LDAP));
         testLdapConnection(config);
-        IndexRequestBuilder indexRequestBuilder = enhanceRequest(
-                new IndexRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LDAP_DEFAULT),
-                etmConfiguration
+        IndexRequestBuilder indexRequestBuilder = requestEnhancer.enhance(
+                new IndexRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LDAP_DEFAULT)
         ).setSource(this.ldapConfigurationConverter.write(config), XContentType.JSON);
         dataRepository.index(indexRequestBuilder);
         if (etmConfiguration.getDirectory() != null) {
@@ -266,9 +266,8 @@ public class SettingsService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.CLUSTER_SETTINGS_READ_WRITE)
     public String deleteLdapConfiguration() {
-        DeleteRequestBuilder builder = enhanceRequest(
-                new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LDAP_DEFAULT),
-                etmConfiguration
+        DeleteRequestBuilder builder = requestEnhancer.enhance(
+                new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LDAP_DEFAULT)
         );
         dataRepository.delete(builder);
         etmConfiguration.setDirectory(null);
@@ -291,7 +290,7 @@ public class SettingsService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.NODE_SETTINGS_READ, SecurityRoles.NODE_SETTINGS_READ_WRITE})
     public String getNodes() {
-        SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
+        SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE));
         ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
@@ -326,9 +325,8 @@ public class SettingsService extends AbstractGuiService {
         );
         EtmConfiguration defaultConfig = this.etmConfigurationConverter.read(null, defaultSettingsResponse.getSourceAsString(), null);
         EtmConfiguration nodeConfig = this.etmConfigurationConverter.read(toStringWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE), defaultSettingsResponse.getSourceAsString(), nodeName);
-        IndexRequestBuilder builder = enhanceRequest(
-                new IndexRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE_ID_PREFIX + nodeName),
-                etmConfiguration
+        IndexRequestBuilder builder = requestEnhancer.enhance(
+                new IndexRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE_ID_PREFIX + nodeName)
         ).setSource(this.etmConfigurationConverter.write(nodeConfig, defaultConfig), XContentType.JSON);
         dataRepository.index(builder);
         return "{ \"status\": \"success\" }";
@@ -342,9 +340,8 @@ public class SettingsService extends AbstractGuiService {
         if (ElasticsearchLayout.ETM_OBJECT_NAME_DEFAULT.equalsIgnoreCase(nodeName)) {
             return "{\"status\":\"failed\"}";
         }
-        DeleteRequestBuilder builder = enhanceRequest(
-                new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE_ID_PREFIX + nodeName),
-                etmConfiguration
+        DeleteRequestBuilder builder = requestEnhancer.enhance(
+                new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE_ID_PREFIX + nodeName)
         );
         dataRepository.delete(builder);
         return "{\"status\":\"success\"}";
@@ -414,7 +411,7 @@ public class SettingsService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.PARSER_SETTINGS_READ, SecurityRoles.PARSER_SETTINGS_READ_WRITE, SecurityRoles.IMPORT_PROFILES_READ, SecurityRoles.IMPORT_PROFILES_READ_WRITE})
     public String getParsers() {
-        SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
+        SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER));
         ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
@@ -465,11 +462,10 @@ public class SettingsService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.PARSER_SETTINGS_READ_WRITE)
     public String deleteParser(@PathParam("parserName") String parserName) {
-        BulkRequestBuilder bulkRequestBuilder = enhanceRequest(new BulkRequestBuilder(), etmConfiguration);
+        BulkRequestBuilder bulkRequestBuilder = requestEnhancer.enhance(new BulkRequestBuilder());
         bulkRequestBuilder.add(
-                enhanceRequest(
-                        new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER_ID_PREFIX + parserName),
-                        etmConfiguration
+                requestEnhancer.enhance(
+                        new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER_ID_PREFIX + parserName)
                 ).build()
         );
         removeParserFromImportProfiles(bulkRequestBuilder, parserName);
@@ -478,7 +474,7 @@ public class SettingsService extends AbstractGuiService {
     }
 
     private void removeParserFromImportProfiles(BulkRequestBuilder bulkRequestBuilder, String parserName) {
-        SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
+        SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.boolQuery()
                         .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE))
@@ -522,18 +518,17 @@ public class SettingsService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.PARSER_SETTINGS_READ_WRITE)
     public String addParser(@PathParam("parserName") String parserName, String json) {
-        BulkRequestBuilder bulkRequestBuilder = enhanceRequest(new BulkRequestBuilder(), etmConfiguration);
+        BulkRequestBuilder bulkRequestBuilder = requestEnhancer.enhance(new BulkRequestBuilder());
         // Do a read and write of the parser to make sure it's valid.
         ExpressionParser expressionParser = this.expressionParserConverter.read(toStringWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER));
 
         bulkRequestBuilder.add(
-                enhanceRequest(
-                        new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER_ID_PREFIX + parserName),
-                        etmConfiguration
+                requestEnhancer.enhance(
+                        new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER_ID_PREFIX + parserName)
                 )
-                .setDoc(this.expressionParserConverter.write(expressionParser), XContentType.JSON)
-                .setDocAsUpsert(true)
-                .setDetectNoop(true)
+                        .setDoc(this.expressionParserConverter.write(expressionParser), XContentType.JSON)
+                        .setDocAsUpsert(true)
+                        .setDetectNoop(true)
                         .build()
         );
         updateParserInImportProfiles(bulkRequestBuilder, expressionParser);
@@ -542,7 +537,7 @@ public class SettingsService extends AbstractGuiService {
     }
 
     private void updateParserInImportProfiles(BulkRequestBuilder bulkRequestBuilder, ExpressionParser expressionParser) {
-        SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
+        SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.boolQuery()
                         .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE))
@@ -584,7 +579,7 @@ public class SettingsService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.IMPORT_PROFILES_READ, SecurityRoles.IMPORT_PROFILES_READ_WRITE})
     public String getImportProfiles() {
-        SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
+        SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE));
         ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
@@ -622,9 +617,8 @@ public class SettingsService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.IMPORT_PROFILES_READ_WRITE)
     public String deleteImportProfile(@PathParam("importProfileName") String importProfileName) {
-        DeleteRequestBuilder builder = enhanceRequest(
-                new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE_ID_PREFIX + importProfileName),
-                etmConfiguration
+        DeleteRequestBuilder builder = requestEnhancer.enhance(
+                new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE_ID_PREFIX + importProfileName)
         );
         dataRepository.delete(builder);
         return "{\"status\":\"success\"}";
@@ -642,8 +636,7 @@ public class SettingsService extends AbstractGuiService {
     }
 
     private UpdateRequestBuilder createImportProfileUpdateRequest(ImportProfile importProfile) {
-        return enhanceRequest(new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE_ID_PREFIX + importProfile.name),
-                etmConfiguration
+        return requestEnhancer.enhance(new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE_ID_PREFIX + importProfile.name)
         )
                 .setDoc(this.importProfileConverter.write(importProfile), XContentType.JSON)
                 .setDocAsUpsert(true)
@@ -655,7 +648,7 @@ public class SettingsService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.USER_SETTINGS_READ, SecurityRoles.USER_SETTINGS_READ_WRITE})
     public String getUsers() {
-        SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
+        SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
                 .setFetchSource(new String[]{"*"}, new String[]{this.principalTags.getPasswordHashTag(), this.principalTags.getSearchTemplatesTag(), this.principalTags.getSearchHistoryTag()})
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER));
         ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
@@ -683,7 +676,7 @@ public class SettingsService extends AbstractGuiService {
     public Response getDownloadUsers(@QueryParam("q") String json) {
         EtmPrincipal etmPrincipal = getEtmPrincipal();
         Map<String, Object> valueMap = toMap(json);
-        SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
+        SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
                 .setFetchSource(this.exportPrincipalFields.stream().map(FieldLayout::getField).toArray(String[]::new), null)
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER));
         ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
@@ -788,9 +781,8 @@ public class SettingsService extends AbstractGuiService {
             principal = currentPrincipal;
         }
         principal.setLdapBase(true);
-        IndexRequestBuilder builder = enhanceRequest(
-                new IndexRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + principal.getId()),
-                etmConfiguration
+        IndexRequestBuilder builder = requestEnhancer.enhance(
+                new IndexRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + principal.getId())
         )
                 .setSource(this.etmPrincipalConverter.writePrincipal(principal), XContentType.JSON);
         dataRepository.index(builder);
@@ -802,7 +794,7 @@ public class SettingsService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.CLUSTER_SETTINGS_READ_WRITE)
     public String getCertificates() {
-        SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
+        SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE));
         ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
@@ -891,10 +883,10 @@ public class SettingsService extends AbstractGuiService {
             var certificate = new com.jecstar.etm.server.core.domain.cluster.certificate.Certificate((X509Certificate) c);
             Map<String, Object> values = toMap(this.certificateConverter.write(certificate));
             values.put(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE);
-            IndexRequestBuilder indexRequestBuilder = enhanceRequest(new IndexRequestBuilder()
+            IndexRequestBuilder indexRequestBuilder = requestEnhancer.enhance(new IndexRequestBuilder()
                     .setIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
                     .setId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE_ID_PREFIX + certificate.getSerial())
-                    .setSource(values), etmConfiguration);
+                    .setSource(values));
             dataRepository.index(indexRequestBuilder);
             if (result.toString().endsWith("}")) {
                 result.append(",");
@@ -919,9 +911,8 @@ public class SettingsService extends AbstractGuiService {
         Map<String, Object> certMap = getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE, sourceMap);
         certMap.put("trust_anchor", getBoolean("trust_anchor", inputMap));
         certMap.put("usage", getArray("usage", inputMap));
-        UpdateRequestBuilder builder = enhanceRequest(
-                new UpdateRequestBuilder().setIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME).setId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE_ID_PREFIX + id).setDoc(sourceMap),
-                etmConfiguration
+        UpdateRequestBuilder builder = requestEnhancer.enhance(
+                new UpdateRequestBuilder().setIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME).setId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE_ID_PREFIX + id).setDoc(sourceMap)
         );
         dataRepository.update(builder);
         return Response.ok("{\"status\":\"success\"}", MediaType.APPLICATION_JSON).build();
@@ -932,9 +923,8 @@ public class SettingsService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.CLUSTER_SETTINGS_READ_WRITE)
     public String deleteCertificate(@PathParam("id") String id) {
-        DeleteRequestBuilder builder = enhanceRequest(
-                new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE_ID_PREFIX + id),
-                etmConfiguration
+        DeleteRequestBuilder builder = requestEnhancer.enhance(
+                new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE_ID_PREFIX + id)
         );
         dataRepository.delete(builder);
         return "{\"status\":\"success\"}";
@@ -1081,9 +1071,8 @@ public class SettingsService extends AbstractGuiService {
                 throw new EtmException(EtmException.NO_MORE_USER_ADMINS_LEFT);
             }
         }
-        DeleteRequestBuilder builder = enhanceRequest(
-                new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId),
-                etmConfiguration
+        DeleteRequestBuilder builder = requestEnhancer.enhance(
+                new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId)
         );
         dataRepository.delete(builder);
         return "{\"status\":\"success\"}";
@@ -1122,18 +1111,16 @@ public class SettingsService extends AbstractGuiService {
                 throw new EtmException(EtmException.API_KEY_NOT_UNIQUE);
             }
         }
-        var builder = enhanceRequest(
-                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId),
-                etmConfiguration
+        var builder = requestEnhancer.enhance(
+                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId)
         ).setDoc(this.etmPrincipalConverter.writePrincipal(newPrincipal), XContentType.JSON)
                 .setDocAsUpsert(true)
                 .setDetectNoop(true);
         dataRepository.update(builder);
         if (currentPrincipal == null && etmConfiguration.getMaxSearchTemplateCount() >= 3) {
             // Add some default templates to the user if he/she is able to search.
-            builder = enhanceRequest(
-                    new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId),
-                    etmConfiguration
+            builder = requestEnhancer.enhance(
+                    new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId)
             ).setDoc(new DefaultSearchTemplates().toJson(newPrincipal), XContentType.JSON);
             dataRepository.update(builder);
         }
@@ -1170,7 +1157,7 @@ public class SettingsService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.GROUP_SETTINGS_READ, SecurityRoles.GROUP_SETTINGS_READ_WRITE, SecurityRoles.USER_SETTINGS_READ, SecurityRoles.USER_SETTINGS_READ_WRITE})
     public String getGroups() {
-        SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
+        SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP));
         ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
@@ -1246,9 +1233,8 @@ public class SettingsService extends AbstractGuiService {
             group = currentGroup;
         }
         group.setLdapBase(true);
-        IndexRequestBuilder builder = enhanceRequest(
-                new IndexRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName),
-                etmConfiguration
+        IndexRequestBuilder builder = requestEnhancer.enhance(
+                new IndexRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName)
         )
                 .setSource(this.etmPrincipalConverter.writeGroup(group), XContentType.JSON);
         dataRepository.index(builder);
@@ -1275,9 +1261,8 @@ public class SettingsService extends AbstractGuiService {
             // Copy the ldap base of the original group because it may never be overwritten.
             newGroup.setLdapBase(currentGroup.isLdapBase());
         }
-        UpdateRequestBuilder builder = enhanceRequest(
-                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName),
-                etmConfiguration
+        UpdateRequestBuilder builder = requestEnhancer.enhance(
+                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName)
         )
                 .setDoc(this.etmPrincipalConverter.writeGroup(newGroup), XContentType.JSON)
                 .setDocAsUpsert(true)
@@ -1305,11 +1290,10 @@ public class SettingsService extends AbstractGuiService {
                 throw new EtmException(EtmException.NO_MORE_USER_ADMINS_LEFT);
             }
         }
-        BulkRequestBuilder bulkRequestBuilder = enhanceRequest(new BulkRequestBuilder(), etmConfiguration);
+        BulkRequestBuilder bulkRequestBuilder = requestEnhancer.enhance(new BulkRequestBuilder());
         bulkRequestBuilder.add(
-                enhanceRequest(
-                        new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName),
-                        etmConfiguration
+                requestEnhancer.enhance(
+                        new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName)
                 ).build()
         );
         removeGroupFromPrincipal(bulkRequestBuilder, groupName);
@@ -1329,7 +1313,7 @@ public class SettingsService extends AbstractGuiService {
             SecurityRoles.NOTIFIERS_READ,
             SecurityRoles.NOTIFIERS_READ_WRITE})
     public String getNotifiers() {
-        SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
+        SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER));
         ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
@@ -1345,7 +1329,7 @@ public class SettingsService extends AbstractGuiService {
             SecurityRoles.GROUP_SETTINGS_READ,
             SecurityRoles.GROUP_SETTINGS_READ_WRITE})
     public String getNotifiersBasics() {
-        SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
+        SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
                 .setFetchSource(new String[]{
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER + "." + Notifier.NAME,
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER + "." + Notifier.NOTIFIER_TYPE
@@ -1387,9 +1371,8 @@ public class SettingsService extends AbstractGuiService {
             }
         }
 
-        IndexRequestBuilder builder = enhanceRequest(
-                new IndexRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER_ID_PREFIX + notifier.getName()),
-                etmConfiguration
+        IndexRequestBuilder builder = requestEnhancer.enhance(
+                new IndexRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER_ID_PREFIX + notifier.getName())
         )
                 .setSource(this.notifierConverter.write(notifier), XContentType.JSON);
         dataRepository.index(builder);
@@ -1401,11 +1384,10 @@ public class SettingsService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.NOTIFIERS_READ_WRITE)
     public String deleteNotifier(@PathParam("notifierName") String notifierName) {
-        BulkRequestBuilder bulkRequestBuilder = enhanceRequest(new BulkRequestBuilder(), etmConfiguration);
+        BulkRequestBuilder bulkRequestBuilder = requestEnhancer.enhance(new BulkRequestBuilder());
         bulkRequestBuilder.add(
-                enhanceRequest(
-                        new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER_ID_PREFIX + notifierName),
-                        etmConfiguration
+                requestEnhancer.enhance(
+                        new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER_ID_PREFIX + notifierName)
                 ).build()
         );
         removeNotifierFromSignalsAndPrincipals(bulkRequestBuilder, notifierName);
@@ -1414,7 +1396,7 @@ public class SettingsService extends AbstractGuiService {
     }
 
     private void removeNotifierFromSignalsAndPrincipals(BulkRequestBuilder bulkRequestBuilder, String notifierName) {
-        SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
+        SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.boolQuery()
                         .should(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.principalTags.getNotifiersTag(), notifierName))
@@ -1462,7 +1444,7 @@ public class SettingsService extends AbstractGuiService {
             }
             if (updated) {
                 bulkRequestBuilder.add(
-                        enhanceRequest(new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, searchHit.getId()), etmConfiguration)
+                        requestEnhancer.enhance(new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, searchHit.getId()))
                                 .setDoc(valueMap)
                                 .setDocAsUpsert(true)
                                 .setDetectNoop(true)
@@ -1474,7 +1456,7 @@ public class SettingsService extends AbstractGuiService {
 
 
     private void removeGroupFromPrincipal(BulkRequestBuilder bulkRequestBuilder, String groupName) {
-        SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
+        SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
                 .setFetchSource(false)
                 .setQuery(QueryBuilders.boolQuery()
                         .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP))
@@ -1501,9 +1483,8 @@ public class SettingsService extends AbstractGuiService {
     }
 
     private UpdateRequestBuilder createPrincipalUpdateRequest(EtmPrincipal principal) {
-        return enhanceRequest(
-                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + principal.getId()),
-                etmConfiguration
+        return requestEnhancer.enhance(
+                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + principal.getId())
         )
                 .setDoc(this.etmPrincipalConverter.writePrincipal(principal), XContentType.JSON)
                 .setDocAsUpsert(true)
@@ -1571,7 +1552,7 @@ public class SettingsService extends AbstractGuiService {
      * empty list if non of the groups has any of the given roles.
      */
     private List<String> getGroupsWithRole(String... roles) {
-        SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
+        SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.boolQuery()
                         .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP))
@@ -1618,7 +1599,7 @@ public class SettingsService extends AbstractGuiService {
                     .should(QueryBuilders.termsQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.principalTags.getGroupsTag(), adminGroups))
                     .minimumShouldMatch(1);
         }
-        SearchRequestBuilder builder = enhanceRequest(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME), etmConfiguration)
+        SearchRequestBuilder builder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
                 .setFetchSource(false)
                 .setSize(0)
                 .trackTotalHits(true)

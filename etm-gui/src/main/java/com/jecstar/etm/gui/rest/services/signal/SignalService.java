@@ -19,6 +19,7 @@ import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalC
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.elasticsearch.builder.GetRequestBuilder;
 import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
+import com.jecstar.etm.server.core.persisting.RequestEnhancer;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import com.jecstar.etm.signaler.SignalSearchRequestBuilderBuilder;
 import com.jecstar.etm.signaler.domain.Signal;
@@ -49,6 +50,7 @@ public class SignalService extends AbstractUserAttributeService {
 
     private static DataRepository dataRepository;
     private static EtmConfiguration etmConfiguration;
+    private static RequestEnhancer requestEnhancer;
     private final EtmPrincipalConverterJsonImpl etmPrincipalConverter = new EtmPrincipalConverterJsonImpl();
     private final EtmPrincipalTags etmPrincipalTags = etmPrincipalConverter.getTags();
     private final SignalConverter signalConverter = new SignalConverter();
@@ -56,6 +58,7 @@ public class SignalService extends AbstractUserAttributeService {
     public static void initialize(DataRepository dataRepository, EtmConfiguration etmConfiguration) {
         SignalService.dataRepository = dataRepository;
         SignalService.etmConfiguration = etmConfiguration;
+        SignalService.requestEnhancer = new RequestEnhancer(etmConfiguration);
     }
 
     @GET
@@ -177,7 +180,7 @@ public class SignalService extends AbstractUserAttributeService {
             objectMap.put(this.etmPrincipalTags.getNotifiersTag(), notifiersList);
 
 
-            SearchRequestBuilder searchRequestBuilder = enhanceRequest(new SearchRequestBuilder(), etmConfiguration)
+            SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder())
                     .setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
                     .setFetchSource(new String[]{
                             ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER + "." + Notifier.NAME,
