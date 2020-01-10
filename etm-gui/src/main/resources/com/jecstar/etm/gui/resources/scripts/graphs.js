@@ -371,11 +371,11 @@ function buildGraphsPage(groupName) {
         commons.hideModals($('#modal-graph-import'));
     });
 
-    $('#link-export-graph').on('click', function (event) {
+    $('#lnk-export-graph').on('click', function (event) {
         event.preventDefault();
         const anchor = document.createElement('a');
         const graphData = createGraphData();
-        const blob = new Blob([JSON.stringify(graphData)], {'type':'application/json'});
+        const blob = new Blob([JSON.stringify(graphData)], {'type': 'application/json'});
         anchor.href = window.URL.createObjectURL(blob);
         anchor.download = graphData.name + '.json';
         document.body.appendChild(anchor);
@@ -422,10 +422,10 @@ function buildGraphsPage(groupName) {
         valid = valid && $graphName[0].checkValidity();
         if (valid) {
             $('#btn-confirm-save-graph').removeAttr('disabled');
-            $('#link-export-graph').show();
+            $('#lnk-export-graph').show();
         } else {
             $('#btn-confirm-save-graph').attr('disabled', 'disabled');
-            $('#link-export-graph').hide();
+            $('#lnk-export-graph').hide();
         }
 
         const graphName = $graphName.val();

@@ -20,6 +20,7 @@
 * [ETM-124](https://jecstar.atlassian.net/browse/ETM-124) Better documentation of search options in gui.
 * [ETM-125](https://jecstar.atlassian.net/browse/ETM-125) Apikey reused when creating a new user.
 * [ETM-126](https://jecstar.atlassian.net/browse/ETM-126) Allow WITH REQUEST|RESPONSE joins in Signals and Graphs.
+* [ETM-127](https://jecstar.atlassian.net/browse/ETM-127) Export/import queries.
 
 ## Version 3.5.2
 

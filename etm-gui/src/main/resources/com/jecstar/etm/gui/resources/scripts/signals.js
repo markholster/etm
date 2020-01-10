@@ -263,11 +263,11 @@ function buildSignalsPage(groupName) {
         commons.hideModals($('#modal-signal-import'));
     });
 
-    $('#link-export-signal').on('click', function (event) {
+    $('#lnk-export-signal').on('click', function (event) {
         event.preventDefault();
         const anchor = document.createElement('a');
         const signalData = createSignalData();
-        const blob = new Blob([JSON.stringify(signalData)], {'type':'application/json'});
+        const blob = new Blob([JSON.stringify(signalData)], {'type': 'application/json'});
         anchor.href = window.URL.createObjectURL(blob);
         anchor.download = signalData.name + '.json';
         document.body.appendChild(anchor);
@@ -379,10 +379,10 @@ function buildSignalsPage(groupName) {
 
         if (notifierCount >= 1 && valid) {
             $('#btn-confirm-save-signal').removeAttr('disabled');
-            $('#link-export-signal').show();
+            $('#lnk-export-signal').show();
         } else {
             $('#btn-confirm-save-signal').attr('disabled', 'disabled');
-            $('#link-export-signal').hide();
+            $('#lnk-export-signal').hide();
         }
         if ($signalName.val() && isSignalExistent($signalName.val())) {
             $('#btn-confirm-remove-signal').removeAttr('disabled');

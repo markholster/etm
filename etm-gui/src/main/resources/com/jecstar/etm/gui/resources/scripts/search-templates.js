@@ -1,5 +1,6 @@
 let max_search_templates;
 let timeZone;
+let currentSelectedFile;
 
 $('#template-name').on('input', function() {
     if (!$(this).val()) {
@@ -245,3 +246,48 @@ function askRemoveTemplate(template) {
     $('#remove-template-name').text(template.name);
     $('#modal-template-remove').modal();
 }
+
+$('#lnk-export-query').on('click', function (event) {
+    event.preventDefault();
+    const anchor = document.createElement('a');
+    const queryData = createTemplate();
+    queryData.name = '';
+    const blob = new Blob([JSON.stringify(queryData)], {'type': 'application/json'});
+    anchor.href = window.URL.createObjectURL(blob);
+    anchor.download = 'query-export.json';
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+});
+
+$('#btn-select-import-file').on('click', function (event) {
+    event.preventDefault();
+    $('#modal-query-import').modal();
+});
+
+$('#query-import-file').on('change', function (event) {
+    const files = event.target.files;
+    if (files.length > 0) {
+        currentSelectedFile = files[0];
+    } else {
+        currentSelectedFile = null;
+    }
+});
+
+$('#btn-import-query').on('click', function (event) {
+    event.preventDefault();
+    if (currentSelectedFile) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const contents = e.target.result;
+            const queryData = JSON.parse(contents);
+            if ('undefined' == typeof queryData) {
+                return;
+            }
+            setValuesFromTemplate(queryData);
+            enableOrDisableButtons();
+        };
+        reader.readAsText(currentSelectedFile);
+    }
+    commons.hideModals($('#modal-query-import'));
+});

@@ -18,6 +18,7 @@ public class DateHistogramBucketAggregator extends BucketAggregator {
 
     private static final String INTERVAL = "interval";
     private static final String MIN_DOC_COUNT = "min_doc_count";
+    private static final String KEY_AUTO_INTERVAL = "auto";
 
     @JsonField(INTERVAL)
     private String interval;
@@ -52,6 +53,9 @@ public class DateHistogramBucketAggregator extends BucketAggregator {
 
 
     public DateInterval getDateInterval() {
+        if (getInterval() == null || isAutoInterval()) {
+            return null;
+        }
         if (this.dateInterval == null) {
             this.dateInterval = DateInterval.safeValueOf(getInterval());
         }
@@ -59,11 +63,18 @@ public class DateHistogramBucketAggregator extends BucketAggregator {
     }
 
     public DateHistogramInterval getDateHistogramInterval() {
+        if (getInterval() == null || isAutoInterval()) {
+            return null;
+        }
         var dateInterval = getDateInterval();
         if (dateInterval != null) {
             return dateInterval.getDateHistogramInterval();
         }
-        return new DateHistogramInterval(this.interval);
+        return new DateHistogramInterval(getInterval());
+    }
+
+    private boolean isAutoInterval() {
+        return KEY_AUTO_INTERVAL.equals(getInterval());
     }
 
     @Override

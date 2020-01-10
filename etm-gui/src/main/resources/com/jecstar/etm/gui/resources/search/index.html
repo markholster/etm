@@ -183,7 +183,13 @@
                             <div class="col-md">
                                 <div id="search-card" class="card card-block">
                                     <div class="card-body">
-                                        <h3 class="card-title">Search</h3>
+                                        <h3 class="card-title">Search
+                                            <small>
+                                                <a id="lnk-export-query" href="#"
+                                                   class="mr-1 fa fa-file-export float-right"
+                                                   title="Export query" style="display: none;"></a>
+                                            </small>
+                                        </h3>
                                         <div class="card-text">
                                             <p>
                                                 Please enter your search string in the field below and press the
@@ -365,6 +371,9 @@
                                             </div>
                                             <br/>
                                             <div class="modal-footer">
+                                                <button id="btn-select-import-file"
+                                                        class="btn btn-secondary">Import
+                                                </button>
                                                 <button id="btn-search" class="btn btn-primary" type="button"
                                                         disabled="disabled">
                                                     Search
@@ -608,6 +617,31 @@
         </div>
     </div>
 </div>
+<div class="modal fade" id="modal-query-import">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="query-import-modal-label">Select a file</h2>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Please select a file to import. Note that the file to be imported should have been exported from an
+                    ETM instance of exactly the same version as this ETM version.</p>
+                <div class="form-group row">
+                    <div class="col">
+                        <input type="file" id="query-import-file" name="files" required="required"/>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button id="btn-import-query" type="button" class="btn btn-primary">Import</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script src="../scripts/jquery.min.js"></script>
 <script src="../scripts/popper.min.js"></script>
@@ -786,7 +820,7 @@
 
     $('#result_card').on('click', '#search_result_table tfoot a', function (event) {
         event.preventDefault();
-        var query = createQuery(true);
+        const query = createQuery(true);
         query.start_ix = tableLayout.current_ix + tableLayout.results_per_page;
         executeQuery(query, true);
     });
@@ -889,6 +923,7 @@
                 if (!data) {
                     return;
                 }
+                $('#lnk-export-query').show();
                 maxDownloads = data.max_downloads;
                 if (maxDownloads > 0) {
                     $('#link-request-download').show();
@@ -901,9 +936,9 @@
                 }
                 tableLayout.current_ix = data.start_ix;
                 if (appendToCurrent) {
-                    var endIx = $('#search-stats').text().lastIndexOf(' ');
+                    const endIx = $('#search-stats').text().lastIndexOf(' ');
                     $('#search-stats').text($('#search-stats').text().substring(0, endIx + 1) + (data.end_ix + 1) + '.');
-                    var $body = $('#search_result_table > tbody')
+                    const $body = $('#search_result_table > tbody')
                     $(data.results).each(function (index, searchResult) {
                         $body.append(function () {
                             return createResultTableRow(searchResult, data.time_zone);
@@ -924,9 +959,9 @@
                             .addClass('table table-hover table-sm')
                             .append($('<thead>')
                                 .append(function () {
-                                    var $tr = $('<tr>');
+                                    const $tr = $('<tr>');
                                     $(tableLayout.fields).each(function (index, tableColumn) {
-                                        var $th = $('<th style="padding: 0.1rem; cursor: pointer;">').text(tableColumn.name).attr('data-event-field', tableColumn.field)
+                                        const $th = $('<th style="padding: 0.1rem; cursor: pointer;">').text(tableColumn.name).attr('data-event-field', tableColumn.field)
                                         if (tableColumn.field === tableLayout.sort_field) {
                                             if ('asc' === tableLayout.sort_order) {
                                                 $th.addClass('headerSortAsc')
@@ -1050,7 +1085,6 @@
         executeQuery(createQuery(false));
         enableOrDisableSearchButton();
     }
-
 </script>
 
 </body>
