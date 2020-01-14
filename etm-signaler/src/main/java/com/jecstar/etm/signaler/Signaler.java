@@ -127,7 +127,7 @@ public class Signaler extends AbstractJsonService implements Runnable {
                             .setFetchSource(false)
                             .setQuery(boolQueryBuilder)
             );
-            for (SearchHit searchHit : scrollableSearch)
+            for (SearchHit searchHit : scrollableSearch) {
                 for (int i = 0; i < MAX_RETRIES; i++) {
                     if (Thread.currentThread().isInterrupted()) {
                         if (log.isInfoLevelEnabled()) {
@@ -135,10 +135,18 @@ public class Signaler extends AbstractJsonService implements Runnable {
                         }
                         return;
                     }
-                    if (handleEntity(batchStart, thresholdExceededNotifier, searchHit.getIndex(), searchHit.getId())) {
+                    try {
+                        if (handleEntity(batchStart, thresholdExceededNotifier, searchHit.getIndex(), searchHit.getId())) {
+                            break;
+                        }
+                    } catch (Exception e) {
+                        if (log.isErrorLevelEnabled()) {
+                            log.logErrorMessage("Failed to handle signal with id '" + searchHit.getId() + "'", e);
+                        }
                         break;
                     }
                 }
+            }
         } catch (Exception e) {
             if (log.isErrorLevelEnabled()) {
                 log.logErrorMessage("Failed to handle signals", e);
