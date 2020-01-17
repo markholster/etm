@@ -90,14 +90,20 @@ public class EtmConfiguration {
 
     private final List<ConfigurationChangeListener> changeListeners = new ArrayList<>();
 
+    private final LicenseRateLimiter licenseRateLimiter;
+
     public EtmConfiguration(String nodeName) {
         this.nodeName = nodeName;
+        this.licenseRateLimiter = new LicenseRateLimiter(this);
     }
 
     // Etm license configuration
-
     public License getLicense() {
         return this.license;
+    }
+
+    public LicenseRateLimiter getLicenseRateLimiter() {
+        return this.licenseRateLimiter;
     }
 
     public void setLicenseKey(String licenseKey) {
@@ -436,12 +442,17 @@ public class EtmConfiguration {
         return this.license != null && this.license.isValidAt(Instant.now());
     }
 
-    public Boolean isLicenseCountExceeded() {
+    public Boolean isLicenseSizeExceeded() {
         return this.license == null;
     }
 
-    public Boolean isLicenseSizeExceeded() {
-        return this.license == null;
+    /**
+     * Gives the number of active nodes within the cluster.
+     *
+     * @return The number of active nodes.
+     */
+    public Integer getActiveNodeCount() {
+        return 1;
     }
 
     /**

@@ -49,16 +49,14 @@ class LicenseGenerator {
         calendar.set(Calendar.MILLISECOND, 999)
         ;
         final var company = "Jecstar Innovation V.O.F.";
-        final var maxEventsPerDay = -1L;
-        final var maxSizePerDay = -1L;
+        final var maxRequestUnitsPerSecond = -1L;
         final long expiry = calendar.getTimeInMillis();
 
         final String licenseKey = "{"
                 + "\"owner\":" + escapeToJson(company, true)
                 + ",\"start_date\":" + Instant.now().toEpochMilli()
                 + ",\"expiry_date\":" + expiry
-                + ",\"max_events_per_day\":" + maxEventsPerDay
-                + ",\"max_size_per_day\":" + maxSizePerDay
+                + ",\"max_request_units_per_second\":" + maxRequestUnitsPerSecond
                 + ",\"license_type\":\"ON_PREM\""
                 + "}";
 

@@ -18,6 +18,7 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.unit.ByteSizeUnit;
 import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.XContentType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,10 +50,24 @@ public class InternalBulkProcessorWrapper implements AutoCloseable {
         this.configuration = configuration;
         if (this.bulkProcessor != null) {
             if (this.logPersister == null) {
-                this.logPersister = new LogTelemetryEventPersister(this.bulkProcessor, this.configuration);
+                this.logPersister = new LogTelemetryEventPersister(this.bulkProcessor, this.configuration) {
+                    @Override
+                    public void persist(LogTelemetryEvent event, LogTelemetryEventConverterJsonImpl converter) {
+                        var indexRequest = createIndexRequest(event.id).setSource(converter.write(event, false, false), XContentType.JSON);
+                        bulkProcessor.add(indexRequest.build());
+                        setCorrelationOnParent(event);
+                    }
+                };
             }
             if (this.businessPersister == null) {
-                this.businessPersister = new BusinessTelemetryEventPersister(this.bulkProcessor, this.configuration);
+                this.businessPersister = new BusinessTelemetryEventPersister(this.bulkProcessor, this.configuration) {
+                    @Override
+                    public void persist(BusinessTelemetryEvent event, BusinessTelemetryEventConverterJsonImpl converter) {
+                        var indexRequestBuilder = createIndexRequest(event.id).setSource(converter.write(event, false, false), XContentType.JSON);
+                        bulkProcessor.add(indexRequestBuilder.build());
+                        setCorrelationOnParent(event);
+                    }
+                };
             }
             flushStartupBuffer();
         }

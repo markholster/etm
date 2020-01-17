@@ -5,7 +5,6 @@ import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.converter.json.BusinessTelemetryEventConverterJsonImpl;
 import com.jecstar.etm.server.core.persisting.TelemetryEventPersister;
 import org.elasticsearch.action.bulk.BulkProcessor;
-import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.common.xcontent.XContentType;
 
 public class BusinessTelemetryEventPersister extends AbstractElasticTelemetryEventPersister
@@ -17,8 +16,9 @@ public class BusinessTelemetryEventPersister extends AbstractElasticTelemetryEve
 
     @Override
     public void persist(BusinessTelemetryEvent event, BusinessTelemetryEventConverterJsonImpl converter) {
-        IndexRequest indexRequest = createIndexRequest(event.id).source(converter.write(event, false, false), XContentType.JSON);
-        bulkProcessor.add(indexRequest);
+        var indexRequestBuilder = createIndexRequest(event.id).setSource(converter.write(event, false, false), XContentType.JSON);
+        bulkProcessor.add(indexRequestBuilder.build());
         setCorrelationOnParent(event);
+        licenseRateLimiter.addRequestUnits(indexRequestBuilder.calculateIndexRequestUnits()).throttle();
     }
 }

@@ -26,9 +26,21 @@ public class License {
     public static final String OWNER = "owner";
     public static final String START_DATE = "start_date";
     public static final String EXPIRY_DATE = "expiry_date";
-    public static final String MAX_EVENTS_PER_DAY = "max_events_per_day";
-    public static final String MAX_SIZE_PER_DAY = "max_size_per_day";
+    public static final String MAX_REQUEST_UNITS_PER_SECOND = "max_request_units_per_second";
     public static final String LICENSE_TYPE = "license_type";
+    public static final Long UNLIMITED = -1L;
+    /**
+     * The number of bytes that make up 1 RU.
+     */
+    public static final long BYTES_PER_RU = 1024;
+    /**
+     * The number of request units per second you may consume when no license is installed.
+     */
+    public static final Long UNLICENSED_REQUEST_UNITS_PER_SECOND = 10L;
+    /**
+     * The number of bytes storage based on the license. For every request unit 10 MiB is assigned.
+     */
+    private static final long STORAGE_BYTES_PER_RU = 1024 * 1024 * 10;
 
     public enum LicenseType {
         CLOUD, ON_PREM;
@@ -45,18 +57,18 @@ public class License {
         }
 
     }
+
     @JsonField(OWNER)
     private String owner;
     @JsonField(START_DATE)
     private Instant startDate;
     @JsonField(EXPIRY_DATE)
     private Instant expiryDate;
-    @JsonField(MAX_EVENTS_PER_DAY)
-    private Long maxEventsPerDay;
-    @JsonField(MAX_SIZE_PER_DAY)
-    private Long maxSizePerDay;
+    @JsonField(MAX_REQUEST_UNITS_PER_SECOND)
+    private Long maxRequestUnitsPerSecond;
     @JsonField(value = LICENSE_TYPE, converterClass = EnumConverter.class)
     private LicenseType licenseType = LicenseType.ON_PREM;
+
     public License(String licenseKey) {
         try {
             KeyFactory keyFactory = KeyFactory.getInstance("RSA");
@@ -68,28 +80,13 @@ public class License {
 
             byte[] decryptedBytes = decrpyptCipher.doFinal(Base64.getDecoder().decode(licenseKey.getBytes()));
             String license = new String(decryptedBytes);
-            if (license.startsWith("{") && license.endsWith("}")) {
-                JsonEntityConverter<License> converter = new JsonEntityConverter<>(f -> this) {
-                };
-                converter.read(license);
-            } else {
-                handleLicenseOldFormat(license);
-            }
+            JsonEntityConverter<License> converter = new JsonEntityConverter<>(f -> this) {
+            };
+            converter.read(license);
         } catch (NoSuchAlgorithmException | InvalidKeySpecException | NoSuchPaddingException | InvalidKeyException
                 | IllegalBlockSizeException | BadPaddingException | IllegalArgumentException e) {
             throw new EtmException(EtmException.INVALID_LICENSE_KEY, e);
         }
-    }
-
-    private void handleLicenseOldFormat(String license) {
-        String[] split = license.split("_:_");
-        if (split.length != 4) {
-            throw new EtmException(EtmException.INVALID_LICENSE_KEY);
-        }
-        this.owner = split[0];
-        this.expiryDate = Instant.ofEpochMilli(Long.valueOf(split[1]));
-        this.maxEventsPerDay = Long.valueOf(split[2]);
-        this.maxSizePerDay = Long.valueOf(split[3]);
     }
 
     public String getOwner() {
@@ -103,12 +100,16 @@ public class License {
     public Instant getExpiryDate() {
         return this.expiryDate;
     }
-    public Long getMaxEventsPerDay() {
-        return this.maxEventsPerDay;
+
+    public Long getMaxRequestUnitsPerSecond() {
+        return this.maxRequestUnitsPerSecond;
     }
 
-    public Long getMaxSizePerDay() {
-        return this.maxSizePerDay;
+    public Long getMaxDatabaseSize() {
+        if (getMaxRequestUnitsPerSecond().equals(UNLIMITED)) {
+            return UNLIMITED;
+        }
+        return this.maxRequestUnitsPerSecond * STORAGE_BYTES_PER_RU;
     }
 
     public LicenseType getLicenseType() {
@@ -134,15 +135,14 @@ public class License {
             return Objects.equals(other.owner, this.owner)
                     && Objects.equals(other.startDate, this.startDate)
                     && Objects.equals(other.expiryDate, this.expiryDate)
-                    && Objects.equals(other.maxEventsPerDay, this.maxEventsPerDay)
-                    && Objects.equals(other.maxSizePerDay, this.maxSizePerDay);
+                    && Objects.equals(other.maxRequestUnitsPerSecond, this.maxRequestUnitsPerSecond);
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.owner, this.startDate, this.expiryDate, this.maxEventsPerDay, this.maxSizePerDay);
+        return Objects.hash(this.owner, this.startDate, this.expiryDate, this.maxRequestUnitsPerSecond);
     }
 }
 

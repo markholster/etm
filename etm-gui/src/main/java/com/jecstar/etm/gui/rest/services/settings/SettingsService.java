@@ -118,13 +118,16 @@ public class SettingsService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.LICENSE_READ, SecurityRoles.LICENSE_READ_WRITE})
     public String getLicense() {
+        EtmPrincipal etmPrincipal = getEtmPrincipal();
         License license = etmConfiguration.getLicense();
         if (license == null) {
             return null;
         }
         StringBuilder result = new StringBuilder();
         result.append("{");
-        return addLicenseData(license, result, true).toString();
+        addLongElementToJsonBuffer("max_database_size_in_bytes", license.getMaxDatabaseSize(), result, true);
+        addStringElementToJsonBuffer("max_database_size_in_bytes_as_text", etmPrincipal.getNumberFormat().format(license.getMaxDatabaseSize()), result, false);
+        return addLicenseData(license, result, false, etmPrincipal).toString();
     }
 
     @PUT
@@ -132,6 +135,7 @@ public class SettingsService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.LICENSE_READ_WRITE)
     public String setLicense(String json) {
+        EtmPrincipal etmPrincipal = getEtmPrincipal();
         Map<String, Object> requestValues = toMap(json);
         String licenseKey = getString("key", requestValues);
         etmConfiguration.setLicenseKey(licenseKey);
@@ -152,8 +156,10 @@ public class SettingsService extends AbstractGuiService {
         License license = etmConfiguration.getLicense();
         StringBuilder result = new StringBuilder();
         result.append("{");
-        boolean added = addStringElementToJsonBuffer("status", "success", result, true);
-        return addLicenseData(license, result, !added).toString();
+        addStringElementToJsonBuffer("status", "success", result, true);
+        addLongElementToJsonBuffer("max_database_size_in_bytes", license.getMaxDatabaseSize(), result, false);
+        addStringElementToJsonBuffer("max_database_size_in_bytes_as_text", etmPrincipal.getNumberFormat().format(license.getMaxDatabaseSize()), result, false);
+        return addLicenseData(license, result, false, etmPrincipal).toString();
     }
 
     /**
@@ -162,19 +168,17 @@ public class SettingsService extends AbstractGuiService {
      * @param license      The <code>License</code> to add the data from.
      * @param buffer       The buffer to add the data to.
      * @param firstElement Is this the first json element?
+     * @param firstElement The <code>EtmPrincipal</code>?
      * @return The buffer with the license data added.
      */
-    private StringBuilder addLicenseData(License license, StringBuilder buffer, boolean firstElement) {
-        EtmPrincipal etmPrincipal = getEtmPrincipal();
+    private StringBuilder addLicenseData(License license, StringBuilder buffer, boolean firstElement, EtmPrincipal etmPrincipal) {
         boolean added = !firstElement;
-        added = addStringElementToJsonBuffer("owner", license.getOwner(), buffer, !added) || added;
-        added = addLongElementToJsonBuffer("start_date", license.getStartDate() != null ? license.getStartDate().toEpochMilli() : null, buffer, !added) || added;
-        added = addLongElementToJsonBuffer("expiration_date", license.getExpiryDate().toEpochMilli(), buffer, !added) || added;
+        added = addStringElementToJsonBuffer(License.OWNER, license.getOwner(), buffer, !added) || added;
+        added = addLongElementToJsonBuffer(License.START_DATE, license.getStartDate() != null ? license.getStartDate().toEpochMilli() : null, buffer, !added) || added;
+        added = addLongElementToJsonBuffer(License.EXPIRY_DATE, license.getExpiryDate().toEpochMilli(), buffer, !added) || added;
         added = addStringElementToJsonBuffer("time_zone", etmPrincipal.getTimeZone().getID(), buffer, !added) || added;
-        added = addLongElementToJsonBuffer("max_events_per_day", license.getMaxEventsPerDay(), buffer, !added) || added;
-        added = addStringElementToJsonBuffer("max_events_per_day_as_text", etmPrincipal.getNumberFormat().format(license.getMaxEventsPerDay()), buffer, !added) || added;
-        added = addLongElementToJsonBuffer("max_size_per_day", license.getMaxSizePerDay(), buffer, !added) || added;
-        addStringElementToJsonBuffer("max_size_per_day_as_text", etmPrincipal.getNumberFormat().format(license.getMaxSizePerDay()), buffer, !added);
+        added = addLongElementToJsonBuffer(License.MAX_REQUEST_UNITS_PER_SECOND, license.getMaxRequestUnitsPerSecond(), buffer, !added) || added;
+        added = addStringElementToJsonBuffer(License.MAX_REQUEST_UNITS_PER_SECOND + "_as_text", etmPrincipal.getNumberFormat().format(license.getMaxRequestUnitsPerSecond()), buffer, !added) || added;
         buffer.append("}");
         return buffer;
     }
@@ -353,7 +357,14 @@ public class SettingsService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.INDEX_STATISTICS_READ)
     public String getIndexStatistics() {
-        IndicesStatsResponse indicesStatsResponse = dataRepository.indicesGetStats(new IndicesStatsRequestBuilder().setIndices("etm_event_*")
+        IndicesStatsResponse allIndicesStatsResponse = dataRepository.indicesGetStats(new IndicesStatsRequestBuilder()
+                .clear()
+                .setStore(true)
+                .setDocs(true)
+                .setIndexing(true)
+                .setSearch(true)
+                .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout())));
+        IndicesStatsResponse eventIndicesStatsResponse = dataRepository.indicesGetStats(new IndicesStatsRequestBuilder().setIndices("etm_event_*")
                 .clear()
                 .setStore(true)
                 .setDocs(true)
@@ -365,13 +376,13 @@ public class SettingsService extends AbstractGuiService {
         result.append("{");
         result.append("\"locale\": ").append(getLocalFormatting(getEtmPrincipal()));
         result.append(",\"totals\": {");
-        final long totalCount = indicesStatsResponse.getPrimaries().getDocs().getCount() - indicesStatsResponse.getPrimaries().getDocs().getDeleted();
+        final long totalCount = eventIndicesStatsResponse.getPrimaries().getDocs().getCount() - eventIndicesStatsResponse.getPrimaries().getDocs().getDeleted();
         addLongElementToJsonBuffer("document_count", totalCount, result, true);
         addStringElementToJsonBuffer("document_count_as_string", numberFormat.format(totalCount), result, false);
-        addLongElementToJsonBuffer("size_in_bytes", indicesStatsResponse.getTotal().getStore().getSizeInBytes(), result, false);
-        addStringElementToJsonBuffer("size_in_bytes_as_string", numberFormat.format(indicesStatsResponse.getTotal().getStore().getSizeInBytes()), result, false);
+        addLongElementToJsonBuffer("size_in_bytes", allIndicesStatsResponse.getTotal().getStore().getSizeInBytes(), result, false);
+        addStringElementToJsonBuffer("size_in_bytes_as_string", numberFormat.format(allIndicesStatsResponse.getTotal().getStore().getSizeInBytes()), result, false);
         result.append("}, \"indices\": [");
-        Map<String, IndexStats> indices = indicesStatsResponse.getIndices();
+        Map<String, IndexStats> indices = eventIndicesStatsResponse.getIndices();
         boolean firstEntry = true;
         for (Entry<String, IndexStats> entry : indices.entrySet()) {
             if (!firstEntry) {

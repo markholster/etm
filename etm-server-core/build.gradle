@@ -29,11 +29,12 @@ dependencies {
         exclude module: "json-smart"
         exclude module: "gson"
     }
-    integrationTestImplementation project(":etm-server-core"), project(":etm-public:etm-domain"),
+    integrationTestImplementation project(":etm-server-core"), project(":etm-public:etm-domain"), project(":etm-integration-test-core"),
             dep_metricsCore,
             dep_disruptor,
-            dep_elasticsearchClient
-    integrationTestRuntimeOnly dep_log4jToSlf4j
+            dep_elasticsearchClient,
+            dep_apacheDs
+    integrationTestRuntimeOnly dep_slf4jSimple, dep_log4jToSlf4j
 }
 
 

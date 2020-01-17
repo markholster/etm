@@ -30,6 +30,7 @@ public class ElasticBackedEtmConfigurationTest {
                 , "public void addConfigurationChangeListener(com.jecstar.etm.server.core.domain.configuration.ConfigurationChangeListener)"
                 , "public void removeConfigurationChangeListener(com.jecstar.etm.server.core.domain.configuration.ConfigurationChangeListener)"
                 , "public synchronized boolean mergeAndNotify(com.jecstar.etm.server.core.domain.configuration.EtmConfiguration)"
+                , "public com.jecstar.etm.server.core.domain.configuration.LicenseRateLimiter getLicenseRateLimiter()"
         );
 
         Method[] declaredMethods = EtmConfiguration.class.getDeclaredMethods();

@@ -421,22 +421,22 @@ public class BCrypt {
      * byte array. Note that this is *not* compatible with
      * the standard MIME-base64 encoding.
      *
-     * @param s       the string to decode
-     * @param maxolen the maximum number of bytes to decode
-     * @throws IllegalArgumentException if maxolen is invalid
+     * @param s      the string to decode
+     * @param maxlen the maximum number of bytes to decode
      * @return an array containing the decoded bytes
+     * @throws IllegalArgumentException if maxlen is invalid
      */
-    private static byte[] decode_base64(String s, int maxolen)
+    private static byte[] decode_base64(String s, int maxlen)
             throws IllegalArgumentException {
         StringBuilder rs = new StringBuilder();
         int off = 0, slen = s.length(), olen = 0;
         byte ret[];
         byte c1, c2, c3, c4, o;
 
-        if (maxolen <= 0)
-            throw new IllegalArgumentException("Invalid maxolen");
+        if (maxlen <= 0)
+            throw new IllegalArgumentException("Invalid maxlen");
 
-        while (off < slen - 1 && olen < maxolen) {
+        while (off < slen - 1 && olen < maxlen) {
             c1 = char64(s.charAt(off++));
             c2 = char64(s.charAt(off++));
             if (c1 == -1 || c2 == -1)
@@ -444,7 +444,7 @@ public class BCrypt {
             o = (byte) (c1 << 2);
             o |= (c2 & 0x30) >> 4;
             rs.append((char) o);
-            if (++olen >= maxolen || off >= slen)
+            if (++olen >= maxlen || off >= slen)
                 break;
             c3 = char64(s.charAt(off++));
             if (c3 == -1)
@@ -452,7 +452,7 @@ public class BCrypt {
             o = (byte) ((c2 & 0x0f) << 4);
             o |= (c3 & 0x3c) >> 2;
             rs.append((char) o);
-            if (++olen >= maxolen || off >= slen)
+            if (++olen >= maxlen || off >= slen)
                 break;
             c4 = char64(s.charAt(off++));
             o = (byte) ((c3 & 0x03) << 6);

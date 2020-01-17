@@ -5,6 +5,9 @@ import com.jecstar.etm.processor.jms.configuration.Jms;
 import com.jecstar.etm.processor.kafka.configuration.Kafka;
 import com.jecstar.etm.signaler.configuration.Signaler;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
 public class Configuration {
 
     public String clusterName = "Enterprise Telemetry Monitor";
@@ -27,4 +30,17 @@ public class Configuration {
         return this.http.restProcessorEnabled || this.http.guiEnabled;
     }
 
+    public int calculateInstanceHash() {
+        int hash = 0;
+        hash += this.clusterName == null ? 0 : this.clusterName.hashCode();
+        hash += this.instanceName == null ? 0 : this.instanceName.hashCode();
+        try {
+            hash += this.bindingAddress == null ? 0 : InetAddress.getByName(this.bindingAddress).hashCode();
+        } catch (UnknownHostException e) {
+            hash += this.bindingAddress == null ? 0 : this.bindingAddress.hashCode();
+        }
+        hash += this.elasticsearch.calculateInstanceHash();
+        hash += this.http.calculateInstanceHash();
+        return hash;
+    }
 }

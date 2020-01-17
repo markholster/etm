@@ -156,7 +156,7 @@ public class DirectedGraph {
         var cycleFinder = new CycleFinder(this);
         if (cycleFinder.hasCycle()) {
             // TODO dit moet nog opgelost worden. Op zoek naar de kortste cycle en deze negeren o.i.d.
-            throw new IllegalStateException("Found a cycle in the event order. It is impossible to dispay the endpoints overview.");
+            throw new IllegalStateException("Found a cycle in the event order. It is impossible to display the endpoints overview.");
         }
         var depthFirstOrder = new DepthFirstOrder(this);
         return depthFirstOrder.reversePostOrder();

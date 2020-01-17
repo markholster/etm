@@ -2,8 +2,29 @@ plugins {
     id 'java'
 }
 
+sourceSets {
+    integrationTest {
+        java {
+            srcDir 'src/it/java'
+        }
+        resources {
+            srcDir 'src/it/resources'
+        }
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+
 dependencies {
     implementation project(":etm-server-core"), project(":etm-signaler"), project(":etm-public:etm-domain"), dep_elasticsearchClient, dep_poiOoxml, dep_resteasyJaxrs, dep_jaxb
     implementation files('../lib/com.ibm.mq.allclient.jar', '../lib/integration-api-10.0.0.0.jar', '../lib/ibmjsseprovider2.jar')
     runtimeOnly files('../lib/jetty-io.jar', '../lib/jetty-util.jar', '../lib/websocket-api.jar', '../lib/websocket-client.jar', '../lib/websocket-common.jar')
+    integrationTestImplementation project(":etm-integration-test-core"), project(":etm-server-core"), project(":etm-public:etm-domain"), dep_citrus, dep_citrusSelenium, dep_slf4jSimple, dep_snmp4j
+}
+
+eclipse {
+    classpath {
+        plusConfigurations += [configurations.integrationTestCompile, configurations.integrationTestRuntime]
+    }
 }

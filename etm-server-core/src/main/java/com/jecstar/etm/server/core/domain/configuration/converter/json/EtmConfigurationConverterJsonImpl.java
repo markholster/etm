@@ -7,6 +7,9 @@ import com.jecstar.etm.server.core.domain.configuration.converter.EtmConfigurati
 import com.jecstar.etm.server.core.domain.configuration.converter.EtmConfigurationTags;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -119,6 +122,24 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
         etmConfiguration.setQueryTimeout(getLongValue(this.tags.getQueryTimeoutTag(), defaultMap, nodeMap));
         etmConfiguration.setRetryOnConflictCount(getIntValue(this.tags.getRetryOnConflictCountTag(), defaultMap, nodeMap));
         return etmConfiguration;
+    }
+
+    @Override
+    public int getActiveNodeCount(String json) {
+        var nodeMap = this.converter.toMap(json);
+        nodeMap = this.converter.getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE, nodeMap);
+        List<Map<String, Object>> instances = this.converter.getArray(this.tags.getInstancesTag(), nodeMap);
+        if (instances == null) {
+            return 0;
+        }
+        int count = 0;
+        for (var instance : instances) {
+            var lastSeen = this.converter.getInstant(this.tags.getLastSeenTag(), instance);
+            if (!lastSeen.plus(5, ChronoUnit.MINUTES).isBefore(Instant.now())) {
+                count++;
+            }
+        }
+        return count;
     }
 
     private Integer getIntValue(String tag, Map<String, Object> defaultMap, Map<String, Object> nodeMap) {

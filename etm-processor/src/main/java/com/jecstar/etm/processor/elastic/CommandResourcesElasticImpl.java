@@ -18,7 +18,6 @@ import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.common.unit.ByteSizeUnit;
 import org.elasticsearch.common.unit.ByteSizeValue;
@@ -71,11 +70,11 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
         if (importProfileName == null) {
             importProfileName = ElasticsearchLayout.CONFIGURATION_OBJECT_ID_IMPORT_PROFILE_DEFAULT;
         }
-        ImportProfile cachedItem = importProfileCache.get(importProfileName);
+        var cachedItem = importProfileCache.get(importProfileName);
         if (cachedItem != null) {
             return cachedItem;
         }
-        GetResponse getResponse = this.dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
+        var getResponse = this.dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 ElasticsearchLayout.CONFIGURATION_OBJECT_ID_IMPORT_PROFILE_DEFAULT.equals(importProfileName) ? ElasticsearchLayout.CONFIGURATION_OBJECT_ID_IMPORT_PROFILE_DEFAULT : ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE_ID_PREFIX + importProfileName)
                 .setFetchSource(true));
         if (!getResponse.isExists()) {
@@ -84,11 +83,11 @@ public class CommandResourcesElasticImpl implements CommandResources, Configurat
                     .setFetchSource(true));
         }
         if (getResponse.isExists() && !getResponse.isSourceEmpty()) {
-            ImportProfile loadedProfile = this.importProfileConverter.read(getResponse.getSourceAsMap());
+            var loadedProfile = this.importProfileConverter.read(getResponse.getSourceAsMap());
             this.importProfileCache.put(importProfileName, loadedProfile);
             return loadedProfile;
         } else {
-            NonExistentImportProfile importProfile = new NonExistentImportProfile();
+            var importProfile = new NonExistentImportProfile();
             this.importProfileCache.put(importProfileName, importProfile);
             return importProfile;
         }

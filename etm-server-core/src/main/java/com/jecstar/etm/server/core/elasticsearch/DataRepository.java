@@ -1,14 +1,18 @@
 package com.jecstar.etm.server.core.elasticsearch;
 
 import com.jecstar.etm.server.core.EtmException;
+import com.jecstar.etm.server.core.domain.configuration.LicenseRateLimiter;
 import com.jecstar.etm.server.core.elasticsearch.builder.*;
 import com.jecstar.etm.server.core.elasticsearch.domain.IndicesStatsResponse;
 import com.jecstar.etm.server.core.elasticsearch.domain.converter.IndicesStatsResponseConverter;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
+import com.jecstar.etm.server.core.persisting.elastic.RequestUnitCalculatingOutputStream;
+import com.jecstar.etm.server.core.persisting.elastic.RequestUnitCalculatingStreamOutput;
 import org.apache.http.util.EntityUtils;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.cluster.storedscripts.GetStoredScriptResponse;
 import org.elasticsearch.action.admin.indices.flush.FlushResponse;
@@ -25,6 +29,9 @@ import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.*;
 import org.elasticsearch.client.indices.*;
 import org.elasticsearch.client.sniff.Sniffer;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
@@ -52,6 +59,7 @@ public class DataRepository {
     };
 
     private final Sniffer sniffer;
+    private LicenseRateLimiter licenseRateLimiter = new LicenseRateLimiter(null);
 
     public DataRepository(RestHighLevelClient client) {
         this.client = client;
@@ -74,9 +82,16 @@ public class DataRepository {
         return this.client;
     }
 
+    public void setLicenseRateLimiter(LicenseRateLimiter licenseRateLimiter) {
+        this.licenseRateLimiter = licenseRateLimiter;
+    }
+
     public IndexResponse index(IndexRequestBuilder builder) {
         try {
-            return this.client.index(builder.build(), RequestOptions.DEFAULT);
+            long startTime = System.currentTimeMillis();
+            var response = this.client.index(builder.build(), RequestOptions.DEFAULT);
+            this.licenseRateLimiter.addRequestUnitsAndShape(builder.calculateIndexRequestUnits(), System.currentTimeMillis() - startTime);
+            return response;
         } catch (IOException e) {
             throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
         }
@@ -88,7 +103,10 @@ public class DataRepository {
 
     public GetResponse get(GetRequestBuilder builder) {
         try {
-            return this.client.get(builder.build(), RequestOptions.DEFAULT);
+            long startTime = System.currentTimeMillis();
+            var response = this.client.get(builder.build(), RequestOptions.DEFAULT);
+            shapeRequest(calculateIndexRequestUnits(response), System.currentTimeMillis() - startTime);
+            return response;
         } catch (IOException e) {
             throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
         }
@@ -96,7 +114,10 @@ public class DataRepository {
 
     public MultiGetResponse get(MultiGetRequestBuilder builder) {
         try {
-            return this.client.mget(builder.build(), RequestOptions.DEFAULT);
+            long startTime = System.currentTimeMillis();
+            var response = this.client.mget(builder.build(), RequestOptions.DEFAULT);
+            shapeRequest(calculateIndexRequestUnits(response), System.currentTimeMillis() - startTime);
+            return response;
         } catch (IOException e) {
             throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
         }
@@ -108,7 +129,10 @@ public class DataRepository {
 
     public SearchResponse search(SearchRequestBuilder builder) {
         try {
-            return this.client.search(builder.build(), RequestOptions.DEFAULT);
+            long startTime = System.currentTimeMillis();
+            var response = this.client.search(builder.build(), RequestOptions.DEFAULT);
+            shapeRequest(calculateIndexRequestUnits(response), System.currentTimeMillis() - startTime);
+            return response;
         } catch (IOException e) {
             throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
         }
@@ -120,7 +144,10 @@ public class DataRepository {
 
     public UpdateResponse update(UpdateRequestBuilder builder) {
         try {
-            return this.client.update(builder.build(), RequestOptions.DEFAULT);
+            long startTime = System.currentTimeMillis();
+            var response = this.client.update(builder.build(), RequestOptions.DEFAULT);
+            shapeRequest(builder.calculateIndexRequestUnits() + calculateIndexRequestUnits(response), System.currentTimeMillis() - startTime);
+            return response;
         } catch (IOException e) {
             throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
         }
@@ -132,7 +159,10 @@ public class DataRepository {
 
     public DeleteResponse delete(DeleteRequestBuilder builder) {
         try {
-            return this.client.delete(builder.build(), RequestOptions.DEFAULT);
+            long startTime = System.currentTimeMillis();
+            var response = this.client.delete(builder.build(), RequestOptions.DEFAULT);
+            shapeRequest(calculateIndexRequestUnits(response), System.currentTimeMillis() - startTime);
+            return response;
         } catch (IOException e) {
             throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
         }
@@ -140,7 +170,10 @@ public class DataRepository {
 
     public SearchResponse scroll(SearchScrollRequestBuilder builder) {
         try {
-            return this.client.scroll(builder.build(), RequestOptions.DEFAULT);
+            long startTime = System.currentTimeMillis();
+            var response = this.client.scroll(builder.build(), RequestOptions.DEFAULT);
+            shapeRequest(calculateIndexRequestUnits(response), System.currentTimeMillis() - startTime);
+            return response;
         } catch (IOException e) {
             throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
         }
@@ -148,7 +181,10 @@ public class DataRepository {
 
     public ClearScrollResponse clearScroll(ClearScrollRequestBuilder builder) {
         try {
-            return this.client.clearScroll(builder.build(), RequestOptions.DEFAULT);
+            long startTime = System.currentTimeMillis();
+            var response = this.client.clearScroll(builder.build(), RequestOptions.DEFAULT);
+            shapeRequest(calculateIndexRequestUnits(response), System.currentTimeMillis() - startTime);
+            return response;
         } catch (IOException e) {
             throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
         }
@@ -164,7 +200,10 @@ public class DataRepository {
 
     public GetIndexResponse indicesGet(GetIndexRequestBuilder builder) {
         try {
-            return this.client.indices().get(builder.build(), RequestOptions.DEFAULT);
+            long startTime = System.currentTimeMillis();
+            var response = this.client.indices().get(builder.build(), RequestOptions.DEFAULT);
+//            shapeRequest(calculateIndexRequestUnits(response), System.currentTimeMillis() - startTime);
+            return response;
         } catch (ElasticsearchStatusException e) {
             if (RestStatus.NOT_FOUND.equals(e.status())) {
                 return null;
@@ -177,7 +216,10 @@ public class DataRepository {
 
     public AcknowledgedResponse indicesDelete(DeleteIndexRequestBuilder builder) {
         try {
-            return this.client.indices().delete(builder.build(), RequestOptions.DEFAULT);
+            long startTime = System.currentTimeMillis();
+            var response = this.client.indices().delete(builder.build(), RequestOptions.DEFAULT);
+            shapeRequest(calculateIndexRequestUnits(builder.build()), System.currentTimeMillis() - startTime);
+            return response;
         } catch (IOException e) {
             throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
         }
@@ -185,7 +227,10 @@ public class DataRepository {
 
     public FlushResponse indicesFlush(FlushIndexRequestBuilder builder) {
         try {
-            return this.client.indices().flush(builder.build(), RequestOptions.DEFAULT);
+            long startTime = System.currentTimeMillis();
+            var response = this.client.indices().flush(builder.build(), RequestOptions.DEFAULT);
+            shapeRequest(calculateIndexRequestUnits(response), System.currentTimeMillis() - startTime);
+            return response;
         } catch (IOException e) {
             throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
         }
@@ -193,7 +238,10 @@ public class DataRepository {
 
     public CreateIndexResponse indicesCreate(CreateIndexRequestBuilder builder) {
         try {
-            return this.client.indices().create(builder.build(), RequestOptions.DEFAULT);
+            long startTime = System.currentTimeMillis();
+            var response = this.client.indices().create(builder.build(), RequestOptions.DEFAULT);
+            shapeRequest(calculateIndexRequestUnits(response), System.currentTimeMillis() - startTime);
+            return response;
         } catch (IOException e) {
             throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
         }
@@ -201,7 +249,10 @@ public class DataRepository {
 
     public AcknowledgedResponse indicesPutTemplate(PutIndexTemplateRequestBuilder requestBuilder) {
         try {
-            return this.client.indices().putTemplate(requestBuilder.build(), RequestOptions.DEFAULT);
+            long startTime = System.currentTimeMillis();
+            var response = this.client.indices().putTemplate(requestBuilder.build(), RequestOptions.DEFAULT);
+            shapeRequest(calculateIndexRequestUnits((ActionRequest) requestBuilder.build()), System.currentTimeMillis() - startTime);
+            return response;
         } catch (IOException e) {
             throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
         }
@@ -217,7 +268,10 @@ public class DataRepository {
 
     public GetIndexTemplatesResponse indicesGetTemplate(GetIndexTemplateRequestBuilder builder) {
         try {
-            return this.client.indices().getIndexTemplate(builder.build(), RequestOptions.DEFAULT);
+            long startTime = System.currentTimeMillis();
+            var response = this.client.indices().getIndexTemplate(builder.build(), RequestOptions.DEFAULT);
+//            shapeRequest(calculateIndexRequestUnits(response), System.currentTimeMillis() - startTime);
+            return response;
         } catch (IOException e) {
             throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
         }
@@ -225,7 +279,10 @@ public class DataRepository {
 
     public AcknowledgedResponse indicesDeleteTemplate(DeleteIndexTemplateRequestBuilder builder) {
         try {
-            return this.client.indices().deleteTemplate(builder.build(), RequestOptions.DEFAULT);
+            long startTime = System.currentTimeMillis();
+            var response = this.client.indices().deleteTemplate(builder.build(), RequestOptions.DEFAULT);
+            shapeRequest(calculateIndexRequestUnits(builder.build()), System.currentTimeMillis() - startTime);
+            return response;
         } catch (IOException e) {
             throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
         }
@@ -233,7 +290,10 @@ public class DataRepository {
 
     public GetMappingsResponse indicesGetMappings(GetMappingsRequestBuilder builder) {
         try {
-            return this.client.indices().getMapping(builder.build(), RequestOptions.DEFAULT);
+            long startTime = System.currentTimeMillis();
+            var response = this.client.indices().getMapping(builder.build(), RequestOptions.DEFAULT);
+//            shapeRequest(calculateIndexRequestUnits(response), System.currentTimeMillis() - startTime);
+            return response;
         } catch (IOException e) {
             throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
         }
@@ -241,7 +301,10 @@ public class DataRepository {
 
     public AcknowledgedResponse indicesPutMapping(PutMappingRequestBuilder builder) {
         try {
-            return this.client.indices().putMapping(builder.build(), RequestOptions.DEFAULT);
+            long startTime = System.currentTimeMillis();
+            var response = this.client.indices().putMapping(builder.build(), RequestOptions.DEFAULT);
+//            shapeRequest(calculateIndexRequestUnits(builder.build()), System.currentTimeMillis() - startTime);
+            return response;
         } catch (IOException e) {
             throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
         }
@@ -249,7 +312,10 @@ public class DataRepository {
 
     public GetFieldMappingsResponse indicesGetFieldMappings(GetFieldMappingsRequestBuilder builder) {
         try {
-            return this.client.indices().getFieldMapping(builder.build(), RequestOptions.DEFAULT);
+            long startTime = System.currentTimeMillis();
+            var response = this.client.indices().getFieldMapping(builder.build(), RequestOptions.DEFAULT);
+//            shapeRequest(calculateIndexRequestUnits(response), System.currentTimeMillis() - startTime);
+            return response;
         } catch (IOException e) {
             throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
         }
@@ -257,7 +323,10 @@ public class DataRepository {
 
     public GetSettingsResponse indicesGetSettings(GetSettingsRequestBuilder builder) {
         try {
-            return this.client.indices().getSettings(builder.build(), RequestOptions.DEFAULT);
+            long startTime = System.currentTimeMillis();
+            var response = this.client.indices().getSettings(builder.build(), RequestOptions.DEFAULT);
+            shapeRequest(calculateIndexRequestUnits(response), System.currentTimeMillis() - startTime);
+            return response;
         } catch (IOException e) {
             throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
         }
@@ -265,7 +334,10 @@ public class DataRepository {
 
     public AcknowledgedResponse indicesUpdateSettings(UpdateIndexSettingsRequestBuilder builder) {
         try {
-            return this.client.indices().putSettings(builder.build(), RequestOptions.DEFAULT);
+            long startTime = System.currentTimeMillis();
+            var response = this.client.indices().putSettings(builder.build(), RequestOptions.DEFAULT);
+            shapeRequest(calculateIndexRequestUnits((ActionRequest) builder.build()), System.currentTimeMillis() - startTime);
+            return response;
         } catch (IOException e) {
             throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
         }
@@ -309,7 +381,10 @@ public class DataRepository {
 
     public GetAliasesResponse indicesGetAliases(GetAliasesRequestBuilder builder) {
         try {
-            return this.client.indices().getAlias(builder.build(), RequestOptions.DEFAULT);
+            long startTime = System.currentTimeMillis();
+            var response = this.client.indices().getAlias(builder.build(), RequestOptions.DEFAULT);
+            shapeRequest(calculateIndexRequestUnits(response), System.currentTimeMillis() - startTime);
+            return response;
         } catch (IOException e) {
             throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
         }
@@ -317,7 +392,10 @@ public class DataRepository {
 
     public BulkResponse bulk(BulkRequestBuilder builder) {
         try {
-            return this.client.bulk(builder.build(), RequestOptions.DEFAULT);
+            long startTime = System.currentTimeMillis();
+            var response = this.client.bulk(builder.build(), RequestOptions.DEFAULT);
+            shapeRequest(calculateIndexRequestUnits(builder.build()), System.currentTimeMillis() - startTime);
+            return response;
         } catch (IOException e) {
             throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
         }
@@ -325,7 +403,10 @@ public class DataRepository {
 
     public AcknowledgedResponse putStoredScript(PutStoredScriptRequestBuilder builder) {
         try {
-            return this.client.putScript(builder.build(), RequestOptions.DEFAULT);
+            long startTime = System.currentTimeMillis();
+            var response = this.client.putScript(builder.build(), RequestOptions.DEFAULT);
+            shapeRequest(calculateIndexRequestUnits((ActionRequest) builder.build()), System.currentTimeMillis() - startTime);
+            return response;
         } catch (IOException e) {
             throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
         }
@@ -333,7 +414,10 @@ public class DataRepository {
 
     public GetStoredScriptResponse getStoredScript(GetStoredScriptRequestBuilder builder) {
         try {
-            return this.client.getScript(builder.build(), RequestOptions.DEFAULT);
+            long startTime = System.currentTimeMillis();
+            var response = this.client.getScript(builder.build(), RequestOptions.DEFAULT);
+            shapeRequest(calculateIndexRequestUnits(response), System.currentTimeMillis() - startTime);
+            return response;
         } catch (IOException e) {
             throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
         } catch (ElasticsearchStatusException e) {
@@ -346,7 +430,10 @@ public class DataRepository {
 
     public ClusterHealthResponse clusterHealth(ClusterHealthRequestBuilder builder) {
         try {
-            return this.client.cluster().health(builder.build(), RequestOptions.DEFAULT);
+            long startTime = System.currentTimeMillis();
+            var response = this.client.cluster().health(builder.build(), RequestOptions.DEFAULT);
+            shapeRequest(calculateIndexRequestUnits(response), System.currentTimeMillis() - startTime);
+            return response;
         } catch (IOException e) {
             throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
         }
@@ -361,4 +448,50 @@ public class DataRepository {
     public static <T> SyncActionListener<T> syncActionListener(long timeout) {
         return (SyncActionListener<T>) new SyncActionListener<>(timeout);
     }
+
+    /**
+     * Calculates the request units of an <code>ActionResponse</code>.
+     *
+     * @param response The <code>ActionResponse</code> to calculate the amount of request units from.
+     * @return The amount of request units.
+     */
+    private double calculateIndexRequestUnits(ToXContent response) {
+        RequestUnitCalculatingOutputStream stream = new RequestUnitCalculatingOutputStream();
+        try {
+            response.toXContent(new XContentBuilder(JsonXContent.jsonXContent, stream), ToXContent.EMPTY_PARAMS);
+            return stream.getRequestUnits();
+        } catch (IOException e) {
+            throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+        }
+    }
+
+    /**
+     * Calculates the request units of an <code>ActionRequest</code>.
+     *
+     * @param request The <code>ActionRequest</code> to calculate the amount of request units from.
+     * @return The amount of request units.
+     */
+    private double calculateIndexRequestUnits(ActionRequest request) {
+        RequestUnitCalculatingStreamOutput streamOutput = new RequestUnitCalculatingStreamOutput();
+        try {
+            request.writeTo(streamOutput);
+            return streamOutput.getRequestUnits();
+        } catch (IOException e) {
+            throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);
+        }
+    }
+
+    /**
+     * Shape the request when a <code>LicenseRateLimiter</code> is set.
+     *
+     * @param requestUnits  The number of request units that were consumed.
+     * @param executionTime The time it took to consume those request units.
+     */
+    private void shapeRequest(double requestUnits, long executionTime) {
+        if (this.licenseRateLimiter == null) {
+            return;
+        }
+        this.licenseRateLimiter.addRequestUnitsAndShape(requestUnits, executionTime);
+    }
+
 }

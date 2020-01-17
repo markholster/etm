@@ -15,7 +15,7 @@ public class BusinessEventLogger {
     private static final String BUSINESS_EVENT_LICENSE_EXPIRED = "{\"component\": \"etm\", \"action\": \"license expired\"}";
     private static final String BUSINESS_EVENT_LICENSE_NOT_YET_VALID = "{\"component\": \"etm\", \"action\": \"license not yet valid\"}";
     private static final String BUSINESS_EVENT_LICENSE_COUNT_EXCEEDED = "{\"component\": \"etm\", \"action\": \"license count exceeded\"}";
-    private static final String BUSINESS_EVENT_LICENSE_SIZE_EXCEEDED = "{\"component\": \"etm\", \"action\": \"license size exceeded\"}";
+    private static final String BUSINESS_EVENT_LICENSE_STORAGE_SIZE_EXCEEDED = "{\"component\": \"etm\", \"action\": \"license storage size exceeded\"}";
     private static final String BUSINESS_EVENT_SNMP_ENGINE_ID_ASSIGNMENT = "{\"component\": \"signaler\", \"node\": {0}, \"action\": \"SNMP engine ID assignment\", \"engineId\" : {1}}";
     private static final String BUSINESS_EVENT_SIGNAL_THRESHOLD_EXCEEDED = "{\"component\": \"signaler\", \"action\": \"signal threshold exceeded\", \"details\" : {0}}";
     private static final String BUSINESS_EVENT_SIGNAL_THRESHOLD_NO_LONGER_EXCEEDED = "{\"component\": \"signaler\", \"action\": \"signal threshold no longer exceeded\", \"details\" : {0}}";
@@ -101,21 +101,11 @@ public class BusinessEventLogger {
         BusinessEventLogger.internalBulkProcessorWrapper.persist(businessEvent);
     }
 
-    public static void logLicenseCountExceeded() {
-        BusinessTelemetryEvent businessEvent = new BusinessTelemetryEventBuilder()
-                .setPayload(BUSINESS_EVENT_LICENSE_COUNT_EXCEEDED)
-                .setPayloadFormat(PayloadFormat.JSON)
-                .setName("License count exceeded")
-                .addOrMergeEndpoint(etmEndpoint.setWritingTimeToNow())
-                .build();
-        BusinessEventLogger.internalBulkProcessorWrapper.persist(businessEvent);
-    }
-
     public static void logLicenseSizeExceeded() {
         BusinessTelemetryEvent businessEvent = new BusinessTelemetryEventBuilder()
-                .setPayload(BUSINESS_EVENT_LICENSE_SIZE_EXCEEDED)
+                .setPayload(BUSINESS_EVENT_LICENSE_STORAGE_SIZE_EXCEEDED)
                 .setPayloadFormat(PayloadFormat.JSON)
-                .setName("License size exceeded")
+                .setName("License storage size exceeded")
                 .addOrMergeEndpoint(etmEndpoint.setWritingTimeToNow())
                 .build();
         BusinessEventLogger.internalBulkProcessorWrapper.persist(businessEvent);

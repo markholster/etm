@@ -60,8 +60,6 @@ public abstract class AbstractCommand {
         });
 
         RestHighLevelClient client = new RestHighLevelClient(restClientBuilder);
-
-
         if (configuration.elasticsearch.waitForConnectionOnStartup) {
             waitForActiveConnection(client);
         }

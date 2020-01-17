@@ -23,5 +23,4 @@ public class LogTelemetryEvent extends TelemetryEvent<LogTelemetryEvent> {
         this.stackTrace = copy.stackTrace;
         return this;
     }
-
 }

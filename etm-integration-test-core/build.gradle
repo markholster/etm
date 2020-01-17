@@ -1,0 +1,12 @@
+plugins {
+    id 'java'
+}
+
+dependencies {
+    implementation dep_citrus,
+            dep_citrusSelenium,
+            dep_apacheDs,
+            'org.junit.jupiter:junit-jupiter-api:' + version_junit,
+            dep_snmp4j,
+            dep_slf4jSimple
+}

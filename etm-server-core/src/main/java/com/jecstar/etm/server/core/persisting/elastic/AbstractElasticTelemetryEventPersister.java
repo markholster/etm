@@ -3,11 +3,12 @@ package com.jecstar.etm.server.core.persisting.elastic;
 import com.jecstar.etm.domain.TelemetryEvent;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.LicenseRateLimiter;
+import com.jecstar.etm.server.core.elasticsearch.builder.IndexRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.UpdateRequestBuilder;
+import com.jecstar.etm.server.core.persisting.RequestEnhancer;
 import com.jecstar.etm.server.core.util.DateUtils;
 import org.elasticsearch.action.bulk.BulkProcessor;
-import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.support.ActiveShardCount;
-import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
@@ -15,7 +16,6 @@ import org.elasticsearch.script.ScriptType;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Base class for <code>TelemetryEvent</code> persisters that store their data in elasticsearch.
@@ -24,14 +24,41 @@ import java.util.Map;
  */
 public abstract class AbstractElasticTelemetryEventPersister {
 
-    BulkProcessor bulkProcessor;
-
-    private final EtmConfiguration etmConfiguration;
+    /**
+     * The <code>DateTimeFormatter</code> instance that is used to distinguish the indices per timestamp.
+     */
     private static final DateTimeFormatter dateTimeFormatterIndexPerDay = DateUtils.getIndexPerDayFormatter();
 
+    /**
+     * The cost of correlating an event.
+     */
+    protected static final double correlation_request_units = 0.25;
+
+    /**
+     * The <code>BulkProcessor</code> that sends events in bulk to Elasticsearch
+     */
+    protected BulkProcessor bulkProcessor;
+
+    /**
+     * The <code>RequestEnhancer</code> that will initialize the elasticsearch requests.
+     */
+    private final RequestEnhancer requestEnhancer;
+
+    /**
+     * The <code>LicenseThrottler</code> that potentially throttles the throughput of persisting the events.
+     */
+    final LicenseRateLimiter licenseRateLimiter;
+
+    /**
+     * Constructs a new <code>AbstractElasticTelemetryEventPersister</code> instance.
+     *
+     * @param bulkProcessor    The <code>BulkProcessor</code> that is capable of sending bulk events to elasticsearch.
+     * @param etmConfiguration The <code>EtmConfiguration</code> used in the <code>RequestEnhancer</code> and <code>LicenseThrottler</code>.
+     */
     AbstractElasticTelemetryEventPersister(final BulkProcessor bulkProcessor, final EtmConfiguration etmConfiguration) {
         this.bulkProcessor = bulkProcessor;
-        this.etmConfiguration = etmConfiguration;
+        this.requestEnhancer = new RequestEnhancer(etmConfiguration);
+        this.licenseRateLimiter = etmConfiguration.getLicenseRateLimiter();
     }
 
     /**
@@ -48,40 +75,40 @@ public abstract class AbstractElasticTelemetryEventPersister {
         this.bulkProcessor = bulkProcessor;
     }
 
+    /**
+     * Get the Elasticsearch index name for the current time.
+     *
+     * @return The Elasticsearch index name.
+     */
     String getElasticIndexName() {
         return ElasticsearchLayout.EVENT_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now());
     }
 
-    IndexRequest createIndexRequest(String id) {
-        return new IndexRequest(getElasticIndexName()).id(id)
-                .waitForActiveShards(getActiveShardCount(this.etmConfiguration));
+    protected IndexRequestBuilder createIndexRequest(String id) {
+        return this.requestEnhancer.enhance(new IndexRequestBuilder()
+                .setIndex(getElasticIndexName())
+                .setId(id)
+        );
     }
 
-    UpdateRequest createUpdateRequest(String id) {
-        return new UpdateRequest(getElasticIndexName(), id)
-                .waitForActiveShards(getActiveShardCount(this.etmConfiguration))
-                .retryOnConflict(this.etmConfiguration.getRetryOnConflictCount());
-
+    protected UpdateRequestBuilder createUpdateRequest(String id) {
+        return this.requestEnhancer.enhance(new UpdateRequestBuilder()
+                .setIndex(getElasticIndexName())
+                .setId(id)
+        );
     }
 
-    private ActiveShardCount getActiveShardCount(EtmConfiguration etmConfiguration) {
-        if (-1 == etmConfiguration.getWaitForActiveShards()) {
-            return ActiveShardCount.ALL;
-        } else if (0 == etmConfiguration.getWaitForActiveShards()) {
-            return ActiveShardCount.NONE;
-        }
-        return ActiveShardCount.from(etmConfiguration.getWaitForActiveShards());
-    }
-
-    void setCorrelationOnParent(TelemetryEvent<?> event) {
+    protected void setCorrelationOnParent(TelemetryEvent<?> event) {
         if (event.correlationId == null || event.correlationId.equals(event.id)) {
             return;
         }
-        Map<String, Object> parameters = new HashMap<>();
+        var parameters = new HashMap<String, Object>();
         parameters.put("correlating_id", event.id);
         bulkProcessor.add(createUpdateRequest(event.correlationId)
-                .script(new Script(ScriptType.STORED, null, "etm_update-event-with-correlation", parameters))
-                .upsert("{}", XContentType.JSON)
-                .scriptedUpsert(true));
+                .setScript(new Script(ScriptType.STORED, null, "etm_update-event-with-correlation", parameters))
+                .setUpsert("{}", XContentType.JSON)
+                .setScriptedUpsert(true).build());
+        licenseRateLimiter.addRequestUnits(correlation_request_units);
     }
+
 }

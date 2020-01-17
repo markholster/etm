@@ -37,4 +37,11 @@ public class Http {
         }
         return contextRoot;
     }
+
+    public int calculateInstanceHash() {
+        int hash = 0;
+        hash += this.httpPort;
+        hash += this.httpsPort;
+        return hash;
+    }
 }

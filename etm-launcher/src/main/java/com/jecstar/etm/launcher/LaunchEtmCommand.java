@@ -2,10 +2,7 @@ package com.jecstar.etm.launcher;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
-import com.jecstar.etm.launcher.background.HttpSessionCleaner;
-import com.jecstar.etm.launcher.background.IndexCleaner;
-import com.jecstar.etm.launcher.background.LdapSynchronizer;
-import com.jecstar.etm.launcher.background.LicenseUpdater;
+import com.jecstar.etm.launcher.background.*;
 import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.launcher.http.ElasticsearchIdentityManager;
 import com.jecstar.etm.launcher.http.HttpServer;
@@ -65,6 +62,7 @@ class LaunchEtmCommand extends AbstractCommand {
             this.indexTemplateCreator.createTemplates();
             EtmConfiguration etmConfiguration = new ElasticBackedEtmConfiguration(configuration.instanceName, this.dataRepository);
             this.bulkProcessorWrapper.setConfiguration(etmConfiguration);
+            this.dataRepository.setLicenseRateLimiter(etmConfiguration.getLicenseRateLimiter());
             this.indexTemplateCreator.addConfigurationChangeNotificationListener(etmConfiguration);
             if (commandLineParameters.isReinitialize() || reinitializeTemplates) {
                 this.indexTemplateCreator.reinitialize();
@@ -189,7 +187,7 @@ class LaunchEtmCommand extends AbstractCommand {
 
 
     private void initializeBackgroundProcesses(final Configuration configuration, final EtmConfiguration etmConfiguration, final DataRepository dataRepository) {
-        int threadPoolSize = 2;
+        int threadPoolSize = 3;
         if (configuration.http.guiEnabled || configuration.http.restProcessorEnabled) {
             threadPoolSize += 2;
         }
@@ -197,6 +195,7 @@ class LaunchEtmCommand extends AbstractCommand {
             threadPoolSize++;
         }
         this.backgroundScheduler = new ScheduledThreadPoolExecutor(threadPoolSize, new NamedThreadFactory("etm_background_scheduler"));
+        this.backgroundScheduler.scheduleAtFixedRate(new InstanceBroadcaster(etmConfiguration, dataRepository, String.valueOf(configuration.calculateInstanceHash())), 0, 1, TimeUnit.MINUTES);
         this.backgroundScheduler.scheduleAtFixedRate(new LicenseUpdater(etmConfiguration, dataRepository, configuration.licenseUpdateUrl), 0, 6, TimeUnit.HOURS);
         this.backgroundScheduler.scheduleAtFixedRate(new IndexCleaner(etmConfiguration, dataRepository), 1, 15, TimeUnit.MINUTES);
         if (configuration.http.guiEnabled || configuration.http.restProcessorEnabled) {

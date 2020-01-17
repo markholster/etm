@@ -39,7 +39,7 @@ public class LicenseUpdater implements Runnable {
         this.etmConfiguration = etmConfiguration;
         this.dataRepository = dataRepository;
         this.requestEnhancer = new RequestEnhancer(etmConfiguration);
-        this.licenseUpdateUrl = licenseUpdateUrl != null ? licenseUpdateUrl : "https://www.jecstar.com/rest/license/v2/etm/free/Jecstar%20Free%20License";
+        this.licenseUpdateUrl = licenseUpdateUrl != null ? licenseUpdateUrl : "https://www.jecstar.com/rest/license/v3/etm/free/Jecstar%20Free%20License";
     }
 
     @Override

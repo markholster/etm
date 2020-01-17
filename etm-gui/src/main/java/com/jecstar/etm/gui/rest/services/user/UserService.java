@@ -105,7 +105,7 @@ public class UserService extends AbstractGuiService {
 
         if (newHistorySize < etmPrincipal.getHistorySize()) {
             // History size is smaller. Make sure the stored queries are sliced to the new size.
-            Map<String, Object> scriptParams = new HashMap<>();
+            var scriptParams = new HashMap<String, Object>();
             scriptParams.put("history_size", newHistorySize);
             dataRepository.updateAsync(requestEnhancer.enhance(
                     new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId())

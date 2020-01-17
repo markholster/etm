@@ -12,4 +12,4 @@
 **/*.iml
 /etm.ipr
 /etm.iws
-/etm-documentation/node_modules/
+/etm-public/etm-documentation/node_modules/

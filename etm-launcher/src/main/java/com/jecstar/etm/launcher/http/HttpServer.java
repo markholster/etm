@@ -80,6 +80,10 @@ public class HttpServer {
                 if (log.isWarningLevelEnabled()) {
                     log.logWarningMessage("SSL keystore not provided. Https listener not started.");
                 }
+            } else if (configuration.http.sslKeystorePassword == null) {
+                if (log.isWarningLevelEnabled()) {
+                    log.logWarningMessage("SSL keystore password provided. Https listener not started.");
+                }
             } else {
                 try {
                     SSLContext sslContext = new SSLContextBuilder().createSslContext(

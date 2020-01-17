@@ -41,7 +41,6 @@ public class TelemetryCommandProcessorImpl implements TelemetryCommandProcessor 
 
     private boolean licenseExpiredLogged = false;
     private boolean licenseNotYetValidLogged = false;
-    private boolean licenseCountExceededLogged = false;
     private boolean licenseSizeExceededLogged = false;
 
     public TelemetryCommandProcessorImpl(MetricRegistry metricRegistry) {
@@ -62,6 +61,9 @@ public class TelemetryCommandProcessorImpl implements TelemetryCommandProcessor 
         this.disruptorEnvironment = new DisruptorEnvironment(etmConfiguration, this.threadFactory, this.persistenceEnvironment, this.metricRegistry);
         this.ringBuffer = this.disruptorEnvironment.start();
         this.metricRegistry.register("event-processor.ringbuffer-capacity", (Gauge<Long>) () -> TelemetryCommandProcessorImpl.this.ringBuffer.remainingCapacity());
+        this.metricRegistry.register("event-processor.request-units-processed", (Gauge<Double>) () -> etmConfiguration.getLicenseRateLimiter().getProcessedRequestUnits());
+        this.metricRegistry.register("license.total-throttle-time", (Gauge<Long>) () -> etmConfiguration.getLicenseRateLimiter().getTotalThrottleTime());
+        this.metricRegistry.register("license.total-shape-time", (Gauge<Long>) () -> etmConfiguration.getLicenseRateLimiter().getTotalShapeTime());
         this.metricRegistry.registerAll(new GarbageCollectorMetricSet());
         this.metricRegistry.registerAll(new MemoryUsageMetricSet());
         this.metricRegistry.registerAll(new OperatingSystemMetricSet());
@@ -292,21 +294,12 @@ public class TelemetryCommandProcessorImpl implements TelemetryCommandProcessor 
         } else {
             this.licenseNotYetValidLogged = false;
         }
-        if (this.etmConfiguration.isLicenseCountExceeded()) {
-            if (!this.licenseCountExceededLogged) {
-                BusinessEventLogger.logLicenseCountExceeded();
-                this.licenseCountExceededLogged = true;
-            }
-            throw new EtmException(EtmException.LICENSE_MESSAGE_COUNT_EXCEEDED);
-        } else {
-            this.licenseCountExceededLogged = false;
-        }
         if (this.etmConfiguration.isLicenseSizeExceeded()) {
             if (!this.licenseSizeExceededLogged) {
                 BusinessEventLogger.logLicenseSizeExceeded();
                 this.licenseSizeExceededLogged = true;
             }
-            throw new EtmException(EtmException.LICENSE_MESSAGE_SIZE_EXCEEDED);
+            throw new EtmException(EtmException.LICENSE_STORAGE_SIZE_EXCEEDED);
         } else {
             this.licenseSizeExceededLogged = false;
         }

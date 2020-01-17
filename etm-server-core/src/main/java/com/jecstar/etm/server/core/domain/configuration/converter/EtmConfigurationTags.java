@@ -76,4 +76,9 @@ public interface EtmConfigurationTags {
     String getEndTimeTag();
 
     String getTimeFilterFieldTag();
+
+    // Node instances tags
+    String getInstancesTag();
+
+    String getLastSeenTag();
 }

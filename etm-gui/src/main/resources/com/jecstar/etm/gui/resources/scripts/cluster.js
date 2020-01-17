@@ -547,7 +547,7 @@ function buildClusterPage() {
 			return null;
 		}
         for (let i = 0; i < 7; i++) {
-            data = commons.base64Decode(data);
+            data = commons.base64Encode(data);
 		}
 		return data;
 	}

@@ -22,4 +22,9 @@ public class Elasticsearch {
         this.connectAddresses.add("127.0.0.1:9200");
     }
 
+    public int calculateInstanceHash() {
+        int hash = 0;
+        hash += this.clusterName == null ? 0 : this.clusterName.hashCode();
+        return hash;
+    }
 }

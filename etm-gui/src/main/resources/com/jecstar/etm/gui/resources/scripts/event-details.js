@@ -556,6 +556,7 @@ function showEvent(scrollTo, id) {
 						eventEndpointsChart = Highcharts.chart('endpoint-overview', {
 							credits: {enabled: false},
 							exporting: {
+								sourceWidth: 1600,
 								fallbackToExportServer: false,
 								buttons: {
 									contextButton: {
@@ -608,7 +609,8 @@ function showEvent(scrollTo, id) {
 													ren.image(image, -halfEndpointSize, 0, endpointSize, endpointSize)
 														.attr({
 															'data-event-id': vertex.event_id,
-															'data-endpoint': vertex.name
+															'data-endpoint': vertex.name,
+															'style': 'cursor: pointer;'
 														})
 														.addClass('etm-gen-drawing-endpoint')
 														.add(vertexGroup);
@@ -621,7 +623,7 @@ function showEvent(scrollTo, id) {
 												} else if ('application' === vertex.type) {
 													const xPos = (xUnits * (vertexIx + 1)) - xUnits / 2;
 													const yPos = yTop + (layerIx * yLevelHeight) - (yLevelHeight / 3);
-													const applicationGroup = ren.g().translate(xPos, yPos).add(mainGroup);
+													const applicationGroup = ren.g().addClass('application').translate(xPos, yPos).add(mainGroup);
 													ren.rect(0, 0, xUnits, yLevelHeight, lineHeight).attr('fill', colors[7]).attr('fill-opacity', '0.25').attr('stroke-width', 3).attr('stroke', colors[7]).add(applicationGroup);
 													const appName = vertex.instance ? vertex.name + ' (' + vertex.instance + ')' : vertex.name;
 													ren.text(appName, lineHeight * .75, lineHeight * 1.5).attr('text-anchor', 'start').attr('font-weight', 'bold').add(applicationGroup);
@@ -638,7 +640,8 @@ function showEvent(scrollTo, id) {
 																'data-endpoint': childVertex.endpoint,
 																'data-name': childVertex.name,
 																'data-time': childVertex.event_start_time,
-																'data-end-time': childVertex.event_end_time ? childVertex.event_end_time : false
+																'data-end-time': childVertex.event_end_time ? childVertex.event_end_time : false,
+																'style': 'cursor: pointer;'
 															})
 															.add(applicationGroup);
 														ren.text(childVertex.name, childWith * (childIx + .5), yOffset).add(applicationGroup);
@@ -660,7 +663,8 @@ function showEvent(scrollTo, id) {
 															'data-endpoint': vertex.endpoint,
 															'data-name': vertex.name,
 															'data-time': vertex.event_start_time,
-															'data-end-time': vertex.event_end_time ? vertex.event_end_time : false
+															'data-end-time': vertex.event_end_time ? vertex.event_end_time : false,
+															'style': 'cursor: pointer;'
 														})
 														.add(vertexGroup);
 													ren.text(vertex.name, 0, endpointSize + lineHeight).add(vertexGroup);
@@ -733,6 +737,12 @@ function showEvent(scrollTo, id) {
 							panEnabled: true,
 							zoomEnabled: true
 						});
+						// Fix some attributes to resizing work in chrome. Resize isn't working when a svg displayed behind the resize icon.
+						$('#endpoint-overview .highcharts-container').css('pointer-events', 'none');
+						$('#endpoint-overview .highcharts-mainGroup, #endpoint-overview .highcharts-exporting-group, #endpoint-overview .highcharts-background').css('pointer-events', 'auto');
+						const $hcbg = $('#endpoint-overview .highcharts-background');
+						$hcbg.attr('width', Number($hcbg.attr('width')) - 10);
+
 						$('.etm-gen-drawing-edge').tooltip({
 							placement: 'auto',
 							html: true,
@@ -750,7 +760,7 @@ function showEvent(scrollTo, id) {
 							$.each(eventData.source.endpoints, function (index, endpoint) {
 								if (endpointName === endpoint.name) {
 									const writingEndpointHandler = getWritingEndpointHandler(endpoint.endpoint_handlers);
-									if (writingEndpointHandler) {
+									if (writingEndpointHandler && transactionId === writingEndpointHandler.transaction_id) {
 										displayWritingEndpointHandler('endpoint-node-detail', 'endpoint-node-transaction-detail', writingEndpointHandler, response.locale.timezone, endpoint.name);
 										return false;
 									}
@@ -1145,78 +1155,80 @@ function showEvent(scrollTo, id) {
                     url: '../rest/search/event/' + encodeURIComponent(id) + '/chain',
 				    cache: false,
                     success: function (response) {
-                        if (!response) {
-                            return;
-                        }
-                        Highcharts.setOptions({
-                            lang: {
-                                decimalPoint: response.locale.decimal,
-                                thousandsSep: response.locale.thousands,
-                                timezone: response.locale.timezone
-                            }
-                        });
-                        d3.formatDefaultLocale({
-                            decimal: response.locale.decimal,
-                            thousands: response.locale.thousands,
-                            currency: response.locale.currency
+						if (!response) {
+							return;
+						}
+						Highcharts.setOptions({
+							lang: {
+								decimalPoint: response.locale.decimal,
+								thousandsSep: response.locale.thousands,
+								timezone: response.locale.timezone
+							}
 						});
-                        const chartConfig = response.chart_config;
-                        chartConfig.exporting = {
-                            fallbackToExportServer: false,
-                            buttons: {
-                                contextButton: {
-                                    menuItems: ['downloadPNG', 'downloadSVG', 'downloadCSV', 'downloadXLS']
-                                }
-                            }
-                        };
-                        chartConfig.plotOptions = {
-                            xrange: {
-                                cursor: 'pointer',
-                                events: {
-                                    click: function (event) {
-                                        let eventData = eventMap[event.point.event_id];
-                                        if ("undefined" == typeof eventData) {
-                                            $.ajax({
-                                                type: 'GET',
-                                                contentType: 'application/json',
-                                                async: false,
-                                                url: '../rest/search/event/' + encodeURIComponent(event.point.event_id) + '/endpoints',
-                                                cache: false,
-                                                success: function (data) {
-                                                    if (!data || !data.event || !data.event.source) {
-                                                        eventMap[event.point.event_id] = "";
-                                                        return;
-                                                    }
-                                                    eventMap[event.point.event_id] = eventData = data.event;
-                                                }
-                                            });
-                                        }
-                                        if ("" === eventData) {
-                                            return;
-                                        }
-                                        const endpointName = event.point.endpoint;
-                                        const transactionId = event.point.transaction_id;
-                                        $.each(eventData.source.endpoints, function (index, endpoint) {
-                                            if (endpointName === endpoint.name) {
-                                                const writingEndpointHandler = getWritingEndpointHandler(endpoint.endpoint_handlers);
-                                                if (writingEndpointHandler && transactionId === writingEndpointHandler.transaction_id) {
-                                                    displayWritingEndpointHandler('event-chain-node-detail', 'event-chain-node-transaction-detail', writingEndpointHandler, response.locale.timezone, endpoint.name);
-                                                    return false;
-                                                }
-                                                const readingEndpointHandlers = getReadingEndpointHandlers(endpoint.endpoint_handlers);
-                                                if (readingEndpointHandlers) {
-                                                    $.each(readingEndpointHandlers, function (index, eh) {
-                                                        if (transactionId === eh.transaction_id) {
-                                                            displayReadingEndpointHandler('event-chain-node-detail', 'event-chain-node-transaction-detail', eh, response.locale.timezone, endpoint.name);
-                                                            return false;
-                                                        }
-                                                    });
-                                                }
-                                            }
-                                        });
-                                    }
-                                }
-                            }
+						d3.formatDefaultLocale({
+							decimal: response.locale.decimal,
+							thousands: response.locale.thousands,
+							currency: response.locale.currency
+						});
+						const chartConfig = response.chart_config;
+						chartConfig.exporting = {
+							sourceWidth: 1600,
+							fallbackToExportServer: false,
+							buttons: {
+								contextButton: {
+									menuItems: ['downloadPNG', 'downloadSVG', 'downloadCSV', 'downloadXLS']
+								}
+							}
+						};
+						chartConfig.plotOptions = {
+							xrange: {
+								cursor: 'pointer',
+								events: {
+									click: function (event) {
+										let eventData = eventMap[event.point.event_id];
+										if ("undefined" == typeof eventData) {
+											$.ajax({
+												type: 'GET',
+												contentType: 'application/json',
+												async: false,
+												url: '../rest/search/event/' + encodeURIComponent(event.point.event_id) + '/endpoints',
+												cache: false,
+												success: function (data) {
+													if (!data || !data.event || !data.event.source) {
+														eventMap[event.point.event_id] = "";
+														return;
+													}
+													eventMap[event.point.event_id] = eventData = data.event;
+												}
+											});
+										}
+										$('#event-chain-node-detail, #event-chain-node-transaction-detail').fadeOut().empty();
+										if ("" === eventData) {
+											return;
+										}
+										const endpointName = event.point.endpoint;
+										const transactionId = event.point.transaction_id;
+										$.each(eventData.source.endpoints, function (index, endpoint) {
+											if (endpointName === endpoint.name) {
+												const writingEndpointHandler = getWritingEndpointHandler(endpoint.endpoint_handlers);
+												if (writingEndpointHandler && transactionId === writingEndpointHandler.transaction_id) {
+													displayWritingEndpointHandler('event-chain-node-detail', 'event-chain-node-transaction-detail', writingEndpointHandler, response.locale.timezone, endpoint.name);
+													return false;
+												}
+												const readingEndpointHandlers = getReadingEndpointHandlers(endpoint.endpoint_handlers);
+												if (readingEndpointHandlers) {
+													$.each(readingEndpointHandlers, function (index, eh) {
+														if (transactionId === eh.transaction_id) {
+															displayReadingEndpointHandler('event-chain-node-detail', 'event-chain-node-transaction-detail', eh, response.locale.timezone, endpoint.name);
+															return false;
+														}
+													});
+												}
+											}
+										});
+									}
+								}
+							}
 						};
 						// Calculate the height of the chain graph.
 						const rowInPixels = 16 + 8; //16 pixels for the event line + 8 pixels for the horizontal line delimiter

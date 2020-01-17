@@ -147,6 +147,5 @@ public class Endpoint {
             hash = hash * 31 + endpointHandler.getCalculatedHash();
         }
         return hash;
-
     }
 }

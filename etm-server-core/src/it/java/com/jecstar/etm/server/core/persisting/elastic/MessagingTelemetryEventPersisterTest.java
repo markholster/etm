@@ -10,7 +10,6 @@ import com.jecstar.etm.domain.builder.EndpointBuilder;
 import com.jecstar.etm.domain.builder.EndpointHandlerBuilder;
 import com.jecstar.etm.domain.builder.MessagingTelemetryEventBuilder;
 import com.jecstar.etm.server.core.AbstractIntegrationTest;
-import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.converter.json.MessagingTelemetryEventConverterJsonImpl;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkProcessor;
@@ -284,8 +283,6 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 
     /**
      * Test if the response data (correlation id, response time etc) is merged in the request when the response is added after the request.
-     *
-     * @throws InterruptedException
      */
     @Test
     public void testMergingOfResponseAfterRequest() throws InterruptedException {
@@ -349,8 +346,6 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 
     /**
      * Test if the response data (correlation id, response time etc) is merged in the request when the response is added after the request.
-     *
-     * @throws InterruptedException
      */
     @Test
     public void testMergingOfRequestAfterResponse() throws InterruptedException {
@@ -413,8 +408,6 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 
     /**
      * Test if persisting an event twice doesn't lead to merged endpoints etc. The hash of the events should be equals and hence the merging part in the scripts should be skipped.
-     *
-     * @throws InterruptedException
      */
     @Test
     public void testPersistMessageTwice() throws InterruptedException {
@@ -459,8 +452,6 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
     /**
      * Normally the response time is calculated based on the applications that read and/or write the requests and responses. If no applications are provided with an endpoint
      * in the request and reply messages the response time should also be set.
-     *
-     * @throws InterruptedException
      */
     @Test
     public void testSetResponseTimeWithoutApplicationsRequestBeforeResponse() throws InterruptedException {
@@ -498,8 +489,6 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
     /**
      * Normally the response time is calculated based on the applications that read and/or write the requests and responses. If no applications are provided with an endpoint
      * in the request and reply messages the response time should also be set.
-     *
-     * @throws InterruptedException
      */
     @Test
     public void testSetResponseTimeWithoutApplicationsResponseBeforeRequest() throws InterruptedException {
@@ -540,8 +529,6 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
      * be visible on both events. So the correlating event should have the
      * correlation id set and the correlated event should have the id of the
      * correlation event in it's correlations list.
-     *
-     * @throws InterruptedException
      */
     @Test
     public void testAlwaysCorrelateFirstBeforeSecond() throws InterruptedException {

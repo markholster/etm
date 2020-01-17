@@ -14,35 +14,29 @@ import com.jecstar.etm.server.core.elasticsearch.builder.IndicesStatsRequestBuil
 import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
 import com.jecstar.etm.server.core.elasticsearch.domain.IndicesStatsResponse;
 import com.jecstar.etm.server.core.ldap.Directory;
-import com.jecstar.etm.server.core.util.DateUtils;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryStringQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 
-    private static final DateTimeFormatter dateTimeFormatterIndexPerDay = DateUtils.getIndexPerDayFormatter();
     private final DataRepository dataRepository;
     private final String elasticsearchIndexName;
     private final EtmConfigurationConverter<String> etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
     private final LdapConfigurationConverter ldapConfigurationConverter = new LdapConfigurationConverter();
 
     private long lastCheckedForUpdates;
-
-    private long eventsPersistedToday = 0;
-    private long sizePersistedToday = 0;
+    private long sizePersisted = 0;
+    private int activeNodes;
 
     /**
      * Creates a new <code>ElasticBackedEtmConfiguration</code> instance.
      *
-     * @param nodeName          The name of the node this instance is running on.
-     * @param dataRepository    The <code>DataRepository</code>.
+     * @param nodeName       The name of the node this instance is running on.
+     * @param dataRepository The <code>DataRepository</code>.
      */
     ElasticBackedEtmConfiguration(String nodeName, final DataRepository dataRepository) {
         this(nodeName, dataRepository, ElasticsearchLayout.CONFIGURATION_INDEX_NAME);
@@ -233,29 +227,25 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
     }
 
     @Override
-    public Boolean isLicenseCountExceeded() {
-        reloadConfigurationWhenNecessary();
-        License license = getLicense();
-        if (license == null) {
-            return true;
-        }
-        return license.getMaxEventsPerDay() != -1 && this.eventsPersistedToday > license.getMaxEventsPerDay();
-    }
-
-    @Override
     public Boolean isLicenseSizeExceeded() {
         reloadConfigurationWhenNecessary();
         var license = getLicense();
         if (license == null) {
             return true;
         }
-        return license.getMaxSizePerDay() != -1 && this.sizePersistedToday > license.getMaxSizePerDay();
+        return !license.getMaxDatabaseSize().equals(License.UNLIMITED) && this.sizePersisted > license.getMaxDatabaseSize();
     }
 
     @Override
     public Directory getDirectory() {
         reloadConfigurationWhenNecessary();
         return super.getDirectory();
+    }
+
+    @Override
+    public Integer getActiveNodeCount() {
+        reloadConfigurationWhenNecessary();
+        return this.activeNodes;
     }
 
     @SuppressWarnings("unchecked")
@@ -265,42 +255,35 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
             return false;
         }
         this.lastCheckedForUpdates = System.currentTimeMillis();
-
-        var indexNameOfToday = ElasticsearchLayout.EVENT_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(ZonedDateTime.now());
         this.dataRepository.indicesGetStatsAsync(new IndicesStatsRequestBuilder()
-                        .setIndices(indexNameOfToday)
                         .clear()
                         .setStore(true),
                 new ActionListener<>() {
                     @Override
                     public void onResponse(IndicesStatsResponse response) {
-                        sizePersistedToday = response.getPrimaries().getStore().getSizeInBytes();
+                        sizePersisted = response.getTotal().getStore().getSizeInBytes();
                     }
 
                     @Override
                     public void onFailure(Exception e) {
                     }
                 });
-        this.dataRepository.searchAsync(
-                new SearchRequestBuilder().setIndices(indexNameOfToday).trackTotalHits(true).setQuery(new BoolQueryBuilder().mustNot(new QueryStringQueryBuilder("endpoints.endpoint_handlers.application.name: \"Enterprise Telemetry Monitor\""))),
-                new ActionListener<>() {
-                    @Override
-                    public void onResponse(SearchResponse response) {
-                        eventsPersistedToday = response.getHits().getTotalHits().value;
-                    }
-
-                    @Override
-                    public void onFailure(Exception e) {
-                    }
-                }
-        );
 
         SyncActionListener<GetResponse> licenseExecute = DataRepository.syncActionListener(30_000L);
         SyncActionListener<GetResponse> ldapExecute = DataRepository.syncActionListener(30_000L);
+        SyncActionListener<SearchResponse> nodesExecute = DataRepository.syncActionListener(30_000L);
         this.dataRepository.getAsync(new GetRequestBuilder(this.elasticsearchIndexName, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LICENSE_DEFAULT), licenseExecute);
         this.dataRepository.getAsync(new GetRequestBuilder(this.elasticsearchIndexName, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LDAP_DEFAULT), ldapExecute);
+        this.dataRepository.searchAsync(
+                new SearchRequestBuilder()
+                        .setIndices(this.elasticsearchIndexName)
+                        .setSize(500)
+                        .setFetchSource(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE + "." + etmConfigurationConverter.getTags().getInstancesTag(), null)
+                        .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE)),
+                nodesExecute
+        );
         var defaultResponse = this.dataRepository.get(new GetRequestBuilder(this.elasticsearchIndexName, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_NODE_DEFAULT));
-        var nodeResponse = this.dataRepository.get(new GetRequestBuilder(this.elasticsearchIndexName, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getNodeName()));
+        var nodeResponse = this.dataRepository.get(new GetRequestBuilder(this.elasticsearchIndexName, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE_ID_PREFIX + getNodeName()));
 
         var defaultContent = defaultResponse.getSourceAsString();
         String nodeContent = null;
@@ -329,6 +312,12 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
         } else {
             setDirectory(null);
         }
+        var searchResponse = nodesExecute.get();
+        int activeNodes = 0;
+        for (var searchHit : searchResponse.getHits().getHits()) {
+            activeNodes += this.etmConfigurationConverter.getActiveNodeCount(searchHit.getSourceAsString());
+        }
+        this.activeNodes = activeNodes > 0 ? activeNodes : 1;
         return this.mergeAndNotify(etmConfiguration);
     }
 }

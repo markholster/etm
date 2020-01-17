@@ -1,0 +1,31 @@
+String nodeName = (String)params.get("node_name");
+String instanceName = (String)params.get("instance");
+
+if (ctx._source.node == null) {
+    ctx._source.object_type = 'node';
+    ctx._source.node = new HashMap();
+    ctx._source.node.name = nodeName;
+}
+
+if (ctx._source.node.instances == null) {
+    ctx._source.node.instances = new ArrayList();
+}
+
+List instances = (List)ctx._source.node.instances;
+Optional optional = instances.stream().filter(i -> instanceName.equals(i.name)).findFirst();
+if (optional.isPresent()) {
+    optional.get().put('last_seen', System.currentTimeMillis());
+} else {
+    Map instance = new HashMap();
+    instance.put('name', instanceName);
+    instance.put('last_seen', System.currentTimeMillis());
+    instances.add(instance);
+}
+
+Iterator iterator = instances.iterator();
+while (iterator.hasNext()) {
+    Map instance = iterator.next();
+    if (instance.get('last_seen') < System.currentTimeMillis() - 3600000) {
+        iterator.remove();
+    }
+}

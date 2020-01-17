@@ -57,5 +57,4 @@ public class HttpTelemetryEvent extends TelemetryEvent<HttpTelemetryEvent> {
         this.statusCode = copy.statusCode;
         return this;
     }
-
 }

@@ -157,10 +157,18 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
         this.dataRepository.putStoredScript(builder);
         builder = new PutStoredScriptRequestBuilder()
                 .setId("etm_update-request-with-response").setContent(BytesReference.bytes(JsonXContent.contentBuilder().startObject()
-                .field("script").startObject()
-                .field("lang", "painless")
-                .field("source", createUpdateRequestWithResponseScript())
-                .endObject()
+                        .field("script").startObject()
+                        .field("lang", "painless")
+                        .field("source", createUpdateRequestWithResponseScript())
+                        .endObject()
+                        .endObject()), XContentType.JSON);
+        this.dataRepository.putStoredScript(builder);
+        builder = new PutStoredScriptRequestBuilder()
+                .setId("etm_update-node").setContent(BytesReference.bytes(JsonXContent.contentBuilder().startObject()
+                        .field("script").startObject()
+                        .field("lang", "painless")
+                        .field("source", createUpdateNodeScript())
+                        .endObject()
                         .endObject()), XContentType.JSON);
         this.dataRepository.putStoredScript(builder);
     }
@@ -826,6 +834,40 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
                 "    return true;\n" +
                 "}\n" +
                 "mainMethod(ctx, params);";
+    }
+
+    private String createUpdateNodeScript() {
+        return "String nodeName = (String)params.get(\"node_name\");\n" +
+                "String instanceName = (String)params.get(\"instance\");\n" +
+                "\n" +
+                "if (ctx._source.node == null) {\n" +
+                "    ctx._source.object_type = 'node';\n" +
+                "    ctx._source.node = new HashMap();\n" +
+                "    ctx._source.node.name = nodeName;\n" +
+                "}\n" +
+                "\n" +
+                "if (ctx._source.node.instances == null) {\n" +
+                "    ctx._source.node.instances = new ArrayList();\n" +
+                "}\n" +
+                "\n" +
+                "List instances = (List)ctx._source.node.instances;\n" +
+                "Optional optional = instances.stream().filter(i -> instanceName.equals(i.name)).findFirst();\n" +
+                "if (optional.isPresent()) {\n" +
+                "    optional.get().put('last_seen', System.currentTimeMillis());\n" +
+                "} else {\n" +
+                "    Map instance = new HashMap();\n" +
+                "    instance.put('name', instanceName);\n" +
+                "    instance.put('last_seen', System.currentTimeMillis());\n" +
+                "    instances.add(instance);\n" +
+                "}\n" +
+                "\n" +
+                "Iterator iterator = instances.iterator();\n" +
+                "while (iterator.hasNext()) {\n" +
+                "    Map instance = iterator.next();\n" +
+                "    if (instance.get('last_seen') < System.currentTimeMillis() - 3600000) {\n" +
+                "        iterator.remove();\n" +
+                "    }\n" +
+                "}";
     }
 
     public void addConfigurationChangeNotificationListener(EtmConfiguration etmConfiguration) {

@@ -120,5 +120,4 @@ public class EndpointHandler {
     public int getCalculatedHash() {
         return Objects.hash(this.type, this.handlingTime, this.transactionId, this.sequenceNumber, this.application);
     }
-
 }

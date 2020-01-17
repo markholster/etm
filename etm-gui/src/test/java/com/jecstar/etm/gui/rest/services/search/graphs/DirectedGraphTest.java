@@ -18,21 +18,31 @@ public class DirectedGraphTest {
         var directedGraph = new DirectedGraph();
         var frontendApp = new Application("app1", "Frontend app");
         var backendApp = new Application("app2", "Backend app");
-        directedGraph.addEdge(new Event("6", "getStockRequest", frontendApp), new Endpoint("7", "https://www.backend.com", com.jecstar.etm.domain.Endpoint.ProtocolType.HTTP));
-        directedGraph.addEdge(new Event("2", "getCustomerRequest", frontendApp), new Endpoint("3", "REQ.CUSTOMER", com.jecstar.etm.domain.Endpoint.ProtocolType.MQ));
-        directedGraph.addEdge(new Event("5", "getCustomerResponse", frontendApp), new Event("6", "getStock", frontendApp));
-        directedGraph.addEdge(new Endpoint("4", "RSP.CUSTOMER", com.jecstar.etm.domain.Endpoint.ProtocolType.MQ), new Event("5", "getCustomerResponse", frontendApp));
-        directedGraph.addEdge(new Event("12", "responseMessage", frontendApp), new Endpoint("13", "https://www.jecstar.com", com.jecstar.etm.domain.Endpoint.ProtocolType.HTTP));
-        directedGraph.addEdge(new Event("9", "getStockResponse", backendApp), new Endpoint("10", "https://www.backend.com", com.jecstar.etm.domain.Endpoint.ProtocolType.HTTP));
-        directedGraph.addEdge(new Endpoint("0", "https://www.jecstar.com", com.jecstar.etm.domain.Endpoint.ProtocolType.HTTP), new Event("1", "getMessage", frontendApp));
-        directedGraph.addEdge(new Endpoint("7", "https://www.backend.com", com.jecstar.etm.domain.Endpoint.ProtocolType.HTTP), new Event("8", "getStockRequest", backendApp));
-        directedGraph.addEdge(new Event("1", "getMessage", frontendApp), new Event("2", "getCustomerRequest", frontendApp));
-        directedGraph.addEdge(new Event("8", "getStockRequest", backendApp), new Event("9", "getStockResponse", backendApp));
-        directedGraph.addEdge(new Endpoint("3", "REQ.CUSTOMER", com.jecstar.etm.domain.Endpoint.ProtocolType.MQ), new Endpoint("3B", "RSP.CUSTOMER", com.jecstar.etm.domain.Endpoint.ProtocolType.MQ));
+
+        var event1 = new Event("1", "getMessage", frontendApp);
+        var event2 = new Event("2", "getCustomerRequest", frontendApp);
+        var event5 = new Event("5", "getCustomerResponse", frontendApp);
+        var event6 = new Event("6", "getStockRequest", frontendApp);
+        var event8 = new Event("8", "getStockRequest", backendApp);
+        var event9 = new Event("9", "getStockResponse", backendApp);
+        var event11 = new Event("11", "getStockResponse", frontendApp);
+        var event12 = new Event("12", "responseMessage", frontendApp);
+
+        directedGraph.addEdge(event6, new Endpoint("7", "https://www.backend.com", com.jecstar.etm.domain.Endpoint.ProtocolType.HTTP));
+        directedGraph.addEdge(event2, new Endpoint("3", "REQ.CUSTOMER", com.jecstar.etm.domain.Endpoint.ProtocolType.MQ));
+        directedGraph.addEdge(event5, event6);
+        directedGraph.addEdge(new Endpoint("4", "RSP.CUSTOMER", com.jecstar.etm.domain.Endpoint.ProtocolType.MQ), event5);
+        directedGraph.addEdge(event12, new Endpoint("13", "https://www.jecstar.com", com.jecstar.etm.domain.Endpoint.ProtocolType.HTTP));
+        directedGraph.addEdge(event9, new Endpoint("10", "https://www.backend.com", com.jecstar.etm.domain.Endpoint.ProtocolType.HTTP));
+        directedGraph.addEdge(new Endpoint("0", "https://www.jecstar.com", com.jecstar.etm.domain.Endpoint.ProtocolType.HTTP), event1);
+        directedGraph.addEdge(new Endpoint("7", "https://www.backend.com", com.jecstar.etm.domain.Endpoint.ProtocolType.HTTP), event8);
+        directedGraph.addEdge(event1, event2);
+        directedGraph.addEdge(event8, event9);
+        directedGraph.addEdge(new Endpoint("3", "REQ.CUSTOMER", com.jecstar.etm.domain.Endpoint.ProtocolType.MQ), new Endpoint("3B", "REQ.CUSTOMER", com.jecstar.etm.domain.Endpoint.ProtocolType.MQ));
         directedGraph.addEdge(new Endpoint("3B", "REQ.CUSTOMER", com.jecstar.etm.domain.Endpoint.ProtocolType.MQ), new Endpoint("4B", "RSP.CUSTOMER", com.jecstar.etm.domain.Endpoint.ProtocolType.MQ));
-        directedGraph.addEdge(new Endpoint("4B", "REQ.CUSTOMER", com.jecstar.etm.domain.Endpoint.ProtocolType.MQ), new Endpoint("4", "RSP.CUSTOMER", com.jecstar.etm.domain.Endpoint.ProtocolType.MQ));
-        directedGraph.addEdge(new Endpoint("10", "https://www.backend.com", com.jecstar.etm.domain.Endpoint.ProtocolType.HTTP), new Event("11", "getStockResponse", frontendApp));
-        directedGraph.addEdge(new Event("11", "getStockResponse", frontendApp), new Event("12", "responseMessage", frontendApp));
+        directedGraph.addEdge(new Endpoint("4B", "RSP.CUSTOMER", com.jecstar.etm.domain.Endpoint.ProtocolType.MQ), new Endpoint("4", "RSP.CUSTOMER", com.jecstar.etm.domain.Endpoint.ProtocolType.MQ));
+        directedGraph.addEdge(new Endpoint("10", "https://www.backend.com", com.jecstar.etm.domain.Endpoint.ProtocolType.HTTP), event11);
+        directedGraph.addEdge(event11, event12);
         var order = directedGraph.getDirectedAcyclicOrder();
         for (var vertex : order) {
             int vertexIx = order.indexOf(vertex);

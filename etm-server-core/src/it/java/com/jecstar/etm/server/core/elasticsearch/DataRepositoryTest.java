@@ -7,6 +7,7 @@ import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
@@ -32,9 +33,9 @@ public class DataRepositoryTest extends AbstractIntegrationTest {
 
 
         rc.index(new IndexRequest("test").id("id").source("{\"hello\": \"mark\"}", XContentType.JSON), RequestOptions.DEFAULT);
-        waitFor("test", "id");
+        GetResponse response = waitFor("test", "id");
         try {
-            rc.update(new UpdateRequest("test", "id").version(100).doc("{\"doc\": {\"hello\": \"mark2\"}}", XContentType.JSON), RequestOptions.DEFAULT);
+            rc.update(new UpdateRequest("test", "id").setIfSeqNo(response.getSeqNo() + 1).setIfPrimaryTerm(response.getPrimaryTerm()).doc("{\"doc\": {\"hello\": \"mark2\"}}", XContentType.JSON), RequestOptions.DEFAULT);
             fail("ElasticsearchStatusException not thrown. com.jecstar.etm.signaler.Signaler needs to be adjusted to this new exception.");
         } catch (ElasticsearchStatusException e) {
             assertEquals(RestStatus.CONFLICT, e.status());

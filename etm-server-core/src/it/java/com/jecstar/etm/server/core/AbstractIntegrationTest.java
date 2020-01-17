@@ -35,6 +35,7 @@ public abstract class AbstractIntegrationTest {
     @BeforeEach
     public void setup() {
         this.etmConfiguration.setEventBufferSize(1);
+        this.etmConfiguration.setLicenseKey("cqPQ3EgKLBGrYUJWZTyPVsFYCvlsvzWSr1oDqm8PV64AmtF7xshSDrnDUDgWG+0NCj9II5mzBp38ArEOPawJkU9evYUBkrBZqSCZAFdxMQRIb9kmJ/hOmxQOw1s3H92/cQ9hE3q+IxVV6WgaUoZ3OWnLJvTcOhWOqBCR4dwWbbEr43+0v0bQhEEPywP41htuWOjBFN3EY4dMELyoYM8U0qyibODlPNeMEpt/5a9+U2gU+CaVG/X8Ntr3i7CFijTXj4Smv71mhUxwjBC5+2JhXDvfEJ1OOP9CBN+XkcYVm51MVw6rZrovjHfxmlNly8hg9ZQ4r0ylG2QoAnNrZFE8+8vfkoDPQ6W7QympijK82srOyudm/NQ1geaLdfqxw5zmKYQOOZJG36bzXmJgfan61Oqv5NG46Got4Z5oVhBvbY6lDjofjGaFuYzwKnTiIDIyVxvlQo8ZIvCdtegw6fJRwDUtTiShptLS/pAsYA6PGjyrsjFro/n6om4gTk7fLeM9Z+0ulkMAFBIPoc2f+Im0c8BJ/cu9ZOy6jcv9o8kDQx3EJy6GUnsSBt0L2m7tQAanUFFBfpOn7S2iLbGXkESo9AjusuJV76hFZ25Zy/EvDYv7qR/qnf3rrLdnzjgz3QYQkMt3Az/UC5XsKT9qsQz3YrsIocMNmfHxsT3SukoTfsM=");
         RestHighLevelClient highLevelClient = new RestHighLevelClient(RestClient.builder(HttpHost.create("127.0.0.1:9200")));
         this.dataRepository = new DataRepository(highLevelClient);
 
