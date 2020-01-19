@@ -1,34 +1,68 @@
 package com.jecstar.etm.license;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import java.security.InvalidKeyException;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.*;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 class LicenseReader {
 
-    private static final String PUBLIC_KEY = "MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAtBCraSZNjqfqnDK/ESEqwZWZiDY6YRe72N8id//B5LHv7eO41cgRrKzAIn+WH10C3jOjGpJjF1RITKTJg1FM4CK+L66hYP3HQVX8ghtQT99TkHuTkTGxbbBMZd4VF77TR5mTa0LjMTGz7+r9q0PAQEGPol/WqaOTxGHiizh7/qmA0hvAA4Ff39T0CsFyWFpI4hmfS5JG/sLsG8WKd125A1VJFk76ZH7kWP1ysrzGzbR1vSQznQpzz7GPpbzFgjDWJpvQzLREv7qSn1z7MGD4YKlLpgaYxoPUsF2kg4N3YzvZw+RfMTFS2v689VmLccZbySXSoqXyssSq6oMlXIwDSus5qFaB1TeYFJWHZh/t6QHHYeyI0RW6pzIAAG/yGF9uX13uiIb9J9+Qu02XAPstl0ZsVfAVdbzV1AKFMPVOCzMHk6T8YcLsFKedigeH4K2vzdQyHC4L0oZ+2xYiDp904Y7A20HfTyBhVJmz7OIKLjJbnuCh8wP1g9VAR9NC468/nhEdCBxT2nHvvJMLzw2xUBYNIoSw5rWd5+nO9kiCWD7OoNpL5nTRRlX3jBpuqEJmszQo3wF0jZEqAi/pYn3c60iEljtx8m8K8EgjylS/C49qBDUfCQnwfNQxGjxzEzeFc9+mJRox87kxYMUsCyT5u46f8P1wfHOWxzubRgcr0hECAwEAAQ==";
+    private static final String PUBLIC_KEY = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEf3bVRVqMppp3yPpt2X7W5hojZ47fQhQ7Ii6QteeqOw2hHejVbhVoG0PMPeEYZAViEQ9eAoyc03imDukTkt9Z9g==";
 
-    public static void main(String[] args) throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
-        final String licenseKey = "LVp0yNJH3JvyDlzN1pwWSZnKAkpCGwoHLolwyYjPrW4+aip5DMMB2tOgMPozf3rect+qGie9aU7QRCYIHRv/2JyrrO10Aj+NJilmwPTSpO3LCA3w8a6KH72CEGH+xXaTFTxpSF1XGV1rmENXsFBtf8G1ekwcwmkv61wVdinneR/NeWJ7LEvA2N0SRRE3vwBZyGFBcomrqVlGWNrEHS12lOazkYmZGo5EyYLsZtrJJTsXJZgIfuc6b7jRd2ghA5j2l/hx7M8Lu8TuFTMmZ7i+ChTXukHWT1cdC3dx9XJF90npSi3a0wRYp5KO65DyAMZInh2a6ew/OAAHcQ6VKJVscBh4mFpTDB4hIhxEuH0/80tU3+KQs/Usng1KbDXrzUDk6lIcJf9JpDgH40y0km8R1sfrWtcpGEFiechtdApj1MgKe67TpMn0JKlVEO1C0/lRj9uclGoXNqYvzS0s4tSTZlPF3vy2TwwaZLIornBFNN34oVUby2gd2Lsa6u/3HbdBeqypHVo4M89KhCyYKxdEhkhMUxUoC5ZFxHMhFXknsX6S+MfPIkGBzm4kOQbEZokdRiK/u3/dJvXRuc6xDaz6m4sHv6+dktW9Hh9+pG48ypVsRQVZBz8W7W7vyE0X681isHFRHJdOg7lnOIIU94ZCIcj5l3K0xaikgEebMZSUzT0=";
+    @SuppressWarnings("unchecked")
+    public static void main(String[] args) throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException, InvalidParameterSpecException, IOException, SignatureException {
+        final String licenseKey = "eyJsaWNlbnNlIjp7Im93bmVyIjoiTWFya0hvbHN0ZXIgSXNDb29sIiwic3RhcnRfZGF0ZSI6MTU3OTQ3MzM4MDQ2OCwiZXhwaXJ5X2RhdGUiOjE1ODAwNzgxODA0NjgsIm1heF9yZXF1ZXN0X3VuaXRzX3Blcl9zZWNvbmQiOjEwLCJsaWNlbnNlX3R5cGUiOiJPTl9QUkVNIn0sImhhc2giOiIyKzM0bTY1V1V3SkYwOTBxUDh5YkgwM29qY1Z1bVdCejQydVpBS0FmdFFnNDZ6cDFxS3Vuc3lOMkpIaDNsVlIvbVlMWjRSamYzTjkyM3RFV0w3MVYwUT09Iiwic2lnbmF0dXJlIjoiLW5vY0pfYnJiM3FScHZSamJJakNSdjUxWDR3eDlDVkY2dGx5UDhGUzNocHcwSnhpRzRLVmJVNEowS0txNS10Y3NGdV9MSWJXb05vOGtXeG5DSUdrQVEifQ==";
+        byte[] decodedLicense = Base64.getDecoder().decode(licenseKey);
 
-        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-        X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(
-                Base64.getDecoder().decode(PUBLIC_KEY));
-        PublicKey publicKey = keyFactory.generatePublic(publicKeySpec);
+        final ObjectMapper objectMapper = new ObjectMapper();
+        var fullLicenseMap = objectMapper.readValue(new String(decodedLicense), HashMap.class);
 
-        Cipher decrpyptCipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-        decrpyptCipher.init(Cipher.DECRYPT_MODE, publicKey);
+        var licenseMap = (Map<String, Object>) fullLicenseMap.get("license");
+        var hash = (String) fullLicenseMap.get("hash");
+        var signature = Base64.getUrlDecoder().decode((String) fullLicenseMap.get("signature"));
 
-        byte[] decryptedBytes = decrpyptCipher.doFinal(Base64.getDecoder().decode(licenseKey));
-        String license = new String(decryptedBytes);
-        System.out.println(license);
+        var calculatedHash = calculateBase64Hash(objectMapper.writeValueAsString(licenseMap));
+        if (!calculatedHash.equals(hash)) {
+            throw new RuntimeException("Invalid hash");
+        }
+
+        Signature ecdsaVerify = Signature.getInstance("NonewithECDSAinP1363Format");
+        PublicKey publicKey = createPublicKey();
+        ecdsaVerify.initVerify(publicKey);
+        ecdsaVerify.update(Base64.getDecoder().decode(hash.getBytes()));
+        if (!ecdsaVerify.verify(signature)) {
+            throw new RuntimeException("Invalid signature");
+        }
+        System.out.println(objectMapper.writeValueAsString(fullLicenseMap));
+    }
+
+    private static PublicKey createPublicKey() throws NoSuchAlgorithmException, InvalidParameterSpecException, InvalidKeySpecException {
+        var keyFactory = KeyFactory.getInstance("EC");
+        var keySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(PUBLIC_KEY));
+
+        // Build a key from scratch.
+//        var parameters = AlgorithmParameters.getInstance("EC");
+//        var paramSpec = new ECGenParameterSpec("secp256r1");
+//        parameters.init(paramSpec);
+//        var ecParameterSpec = parameters.getParameterSpec(ECParameterSpec.class);
+//        var keySpec = new ECPublicKeySpec(new ECPoint(new BigInteger("57653691665462833728786391541206384446957054885608787839261144528773785991949"), new BigInteger("72875214145998715462716040894238225831315714718726867635759772266221281434102")), ecParameterSpec);
+        return keyFactory.generatePublic(keySpec);
+    }
+
+    private static String calculateBase64Hash(String data) throws NoSuchAlgorithmException, InvalidKeyException, UnsupportedEncodingException {
+        var mac = Mac.getInstance("HmacSHA512");
+        var secretkey = new SecretKeySpec("etm license".getBytes(), "HmacSHA512");
+        mac.init(secretkey);
+        byte[] mac_data = mac.doFinal(data.getBytes("UTF-8"));
+        return Base64.getEncoder().encodeToString(mac_data);
     }
 }
