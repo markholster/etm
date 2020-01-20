@@ -5,8 +5,10 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -14,6 +16,7 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.Calendar;
 import java.util.TimeZone;
+import java.util.stream.Collectors;
 
 class LicenseGenerator {
 
@@ -38,7 +41,7 @@ class LicenseGenerator {
     }
 
 
-    public static void main(String[] args) throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, UnsupportedEncodingException, FileNotFoundException, SignatureException {
+    public static void main(String[] args) throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, IOException, SignatureException {
         var calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
         calendar.set(Calendar.YEAR, 2020);
         calendar.set(Calendar.MONTH, Calendar.DECEMBER);
@@ -72,18 +75,13 @@ class LicenseGenerator {
         System.out.println("License key: " + Base64.getEncoder().encodeToString(license.getBytes()));
     }
 
-    private static byte[] sign(byte[] hash) throws NoSuchAlgorithmException, FileNotFoundException, InvalidKeySpecException, InvalidKeyException, SignatureException {
-        byte[] encoded = Base64.getDecoder().decode("MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgiU5HAtjlDpJ1Cn6tJDks7H/3EEtCpSSVhQI0MRi1h4ChRANCAAR/dtVFWoymmnfI+m3ZftbmGiNnjt9CFDsiLpC156o7DaEd6NVuFWgbQ8w94RhkBWIRD14CjJzTeKYO6ROS31n2");
-        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(encoded);
-        KeyFactory factory = KeyFactory.getInstance("EC");
-        var privKey = factory.generatePrivate(spec);
-//        return privKey;
-
-//        FileReader file = new FileReader("/home/mark/programming/jecstar-workdir/etm_pk_v3.key");
-
-
-        Signature ecdsaVerify = Signature.getInstance("NonewithECDSAinP1363Format");
-        ecdsaVerify.initSign(privKey);
+    private static byte[] sign(byte[] hash) throws NoSuchAlgorithmException, IOException, InvalidKeySpecException, InvalidKeyException, SignatureException {
+        String keyData = Files.lines(Path.of("/home/mark/programming/jecstar-workdir/etm_pk_v3.key")).filter(l -> !(l.equals("-----BEGIN EC PRIVATE KEY-----") || l.equals("-----END EC PRIVATE KEY-----"))).collect(Collectors.joining());
+        var spec = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(keyData));
+        var factory = KeyFactory.getInstance("EC");
+        var privateKey = factory.generatePrivate(spec);
+        var ecdsaVerify = Signature.getInstance("NonewithECDSAinP1363Format");
+        ecdsaVerify.initSign(privateKey);
         ecdsaVerify.update(hash);
         return ecdsaVerify.sign();
     }

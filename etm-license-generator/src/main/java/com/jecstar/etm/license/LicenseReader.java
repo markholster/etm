@@ -16,11 +16,11 @@ import java.util.Map;
 
 class LicenseReader {
 
-    private static final String PUBLIC_KEY = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEf3bVRVqMppp3yPpt2X7W5hojZ47fQhQ7Ii6QteeqOw2hHejVbhVoG0PMPeEYZAViEQ9eAoyc03imDukTkt9Z9g==";
+    private static final String PUBLIC_KEY = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEOJ1GA0fdjjCZKxaUwHidhu52fy3F9V+Ow3PxbVDmbk2EYtP2VBJNXZ/YRlW1gAid8v9GNexTRes4FU47L+kk8A==";
 
     @SuppressWarnings("unchecked")
     public static void main(String[] args) throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException, InvalidParameterSpecException, IOException, SignatureException {
-        final String licenseKey = "eyJsaWNlbnNlIjp7Im93bmVyIjoiSmVjc3RhciBJbm5vdmF0aW9uIFYuTy5GLiIsInN0YXJ0X2RhdGUiOjE1Nzk0NzcwMjc3MDQsImV4cGlyeV9kYXRlIjoxNjA5NDU5MTk5OTk5LCJtYXhfcmVxdWVzdF91bml0c19wZXJfc2Vjb25kIjotMSwibGljZW5zZV90eXBlIjoiT05fUFJFTSJ9LCJoYXNoIjoiUmMrcFBzSVF3YklNZHdYa2hmMVEwYkZLeUlUbTQwVHNYKzF2Z0F4RTFuV1BETUNVRGJtYmExeEdlbTZDK0J1aGp2Uzhja1d4UkhHSUdYMWRUMWVIZ1E9PSIsInNpZ25hdHVyZSI6InR6eTd2U2s4dFBIb0JoOFVmZnJ1ODlzU05VcWtweGtDb0p5amExSGhzOHp1alc5NkI2dUc3N1pPdjJVSVp3Tk4wRWQ1UUtLTFY3R0ZubnBVV0RqalF3PT0ifQ==";
+        final String licenseKey = "<ENTER_LICENSE_HERE>";
         byte[] decodedLicense = Base64.getDecoder().decode(licenseKey);
 
         final ObjectMapper objectMapper = new ObjectMapper();
@@ -54,8 +54,10 @@ class LicenseReader {
 //        var paramSpec = new ECGenParameterSpec("secp256r1");
 //        parameters.init(paramSpec);
 //        var ecParameterSpec = parameters.getParameterSpec(ECParameterSpec.class);
-//        var keySpec = new ECPublicKeySpec(new ECPoint(new BigInteger("57653691665462833728786391541206384446957054885608787839261144528773785991949"), new BigInteger("72875214145998715462716040894238225831315714718726867635759772266221281434102")), ecParameterSpec);
-        return keyFactory.generatePublic(keySpec);
+//        var keySpec = new ECPublicKeySpec(new ECPoint(new BigInteger("25607397720525554755086171574123621152492826433167876032144549549701908033101"), new BigInteger("59879909934819259450180492625915173288861052532058099988322409938911501034736")), ecParameterSpec);
+        var publicKey = keyFactory.generatePublic(keySpec);
+//        System.out.println(Base64.getEncoder().encodeToString(publicKey.getEncoded()));
+        return publicKey;
     }
 
     private static String calculateBase64Hash(String data) throws NoSuchAlgorithmException, InvalidKeyException, UnsupportedEncodingException {

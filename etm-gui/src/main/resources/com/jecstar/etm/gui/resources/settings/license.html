@@ -156,7 +156,7 @@
                 return;
             }
             $('#input-owner').val(data.owner);
-            $('#input-expiration-date').val(moment.tz(data.expiration_date, data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+            $('#input-expiration-date').val(moment.tz(data.expiry_date, data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
             $('#input-max-request-units').val(data.max_request_units_per_second == '-1' ? 'Unlimited' : data.max_request_units_per_second_as_text);
             $('#input-max-database-size').val(data.max_database_size_in_bytes == '-1' ? 'Unlimited' : data.max_database_size_in_bytes_as_text);
         }
@@ -178,7 +178,7 @@
                 }
                 commons.showNotification('License applied.', 'success');
                 $('#input-owner').val(data.owner);
-                $('#input-expiration-date').val(moment.tz(data.expiration_date, data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+                $('#input-expiration-date').val(moment.tz(data.expiry_date, data.time_zone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
                 $('#input-max-request-units').val(data.max_request_units_per_second === -1 ? 'Unlimited' : data.max_request_units_per_second_as_text);
                 $('#input-max-database-size').val(data.max_database_size_in_bytes === -1 ? 'Unlimited' : data.max_database_size_in_bytes_as_text);
                 $('#license-key').val('');
