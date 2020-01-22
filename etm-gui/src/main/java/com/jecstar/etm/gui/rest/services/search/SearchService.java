@@ -591,7 +591,7 @@ public class SearchService extends AbstractIndexMetadataService {
         var firstEdge = true;
         result.append(", \"edges\": [");
         Duration totalEventTime = directedGraph.getTotalEventTime();
-        if (totalEventTime.toMillis() <= 0) {
+        if (totalEventTime != null && totalEventTime.toMillis() <= 0) {
             totalEventTime = null;
         }
         for (var vertex : directedGraph.getVertices()) {

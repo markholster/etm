@@ -1202,7 +1202,7 @@ function showEvent(scrollTo, id) {
 												}
 											});
 										}
-										$('#event-chain-node-detail, #event-chain-node-transaction-detail').fadeOut().empty();
+										$('#event-chain-node-detail, #event-chain-node-transaction-detail').empty();
 										if ("" === eventData) {
 											return;
 										}
