@@ -1,4 +1,5 @@
 #!/bin/bash
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 VERSION=$(./gradlew properties | grep ^version: | sed 's/^.*: //')
 if [[ "$VERSION" == *SNAPSHOT ]]
 then
@@ -28,36 +29,22 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "Building the documentation"
-./gradlew -p etm-documentation clean asciidoctor
+cd "$SCRIPT_DIR"/etm-public/etm-documentation || exit
+yarn docs:build
 if [ $? -ne 0 ]; then
   echo "Generating documentation failed"
   exit 1
 fi
+cd "$SCRIPT_DIR" || exit
 
-echo "Publish the distribution to www.jecstar.com"
-scp etm-distribution/build/distributions/etm-$VERSION.* mark@www.jecstar.com:/home/mark
+echo "Generating OCI image"
+buildah unshare "$SCRIPT_DIR"/etm-public/etm-buildah/build-oci.sh $VERSION
 if [ $? -ne 0 ]; then
-  echo "Publishing distribution failed"
-  exit 1
-fi
-scp etm-documentation/build/asciidoc/html5/etm.html mark@www.jecstar.com:/home/mark/etm-$VERSION.html
-if [ $? -ne 0 ]; then
-  echo "Publishing documentation failed"
-  exit 1
-fi
-
-
-echo "Now make the distribution available on the website"
-read -n1 -r -p "Press any key when the distibution is available for download..." key
-
-echo "Generating docker image"
-cd etm-public/etm-docker/build/docker
-docker image build -t docker.jecstar.com/etm:$VERSION .
-if [ $? -ne 0 ]; then
-    echo "Generating docker image failed"
+    echo "Generating OCI image failed"
     exit 1
 fi
-#docker push docker.jecstar.com/etm:$VERSION
+echo "Pushing OCI image"
+podman push eu.gcr.io/virtual-ellipse-208415/etm:$VERSION
 
 
 #==== Push subtree

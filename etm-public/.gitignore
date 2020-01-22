@@ -8,3 +8,5 @@
 /.idea/
 **/*.iml
 **/*.ipr
+/etm-documentation/docs/.vuepress/dist/
+/etm-documentation/node_modules/
