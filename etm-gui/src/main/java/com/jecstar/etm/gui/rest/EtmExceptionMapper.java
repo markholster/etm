@@ -2,12 +2,15 @@ package com.jecstar.etm.gui.rest;
 
 
 import com.jecstar.etm.server.core.EtmException;
+import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 import java.util.ArrayList;
@@ -20,6 +23,13 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
      * The <code>LogWrapper</code> for this class.
      */
     private static final LogWrapper log = LogFactory.getLogger(EtmExceptionMapper.class);
+
+    @Context
+    protected SecurityContext securityContext;
+
+    private EtmPrincipal getEtmPrincipal() {
+        return (EtmPrincipal) this.securityContext.getUserPrincipal();
+    }
 
     @Override
     public Response toResponse(Throwable ex) {
@@ -123,7 +133,19 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
             errorMessage.setMessage(getRootCauseMessage(ex));
         }
         if (log.isErrorLevelEnabled()) {
-            log.logErrorMessage(errorMessage.getCode() + ": " + errorMessage.getMessage(), ex);
+            var message = new StringBuilder();
+            message.append(errorMessage.getCode());
+            var principal = getEtmPrincipal();
+            if (principal != null) {
+                message.append(" - ");
+                message.append(principal.getId());
+                if (principal.getName() != null) {
+                    message.append(" (" + principal.getName() + ")");
+                }
+            }
+            message.append(": ");
+            message.append(errorMessage.getMessage());
+            log.logErrorMessage(message.toString(), ex);
         }
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).entity(errorMessage).type(MediaType.APPLICATION_JSON).build();
     }

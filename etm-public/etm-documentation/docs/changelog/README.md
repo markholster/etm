@@ -24,6 +24,8 @@
 * [ETM-126](https://jecstar.atlassian.net/browse/ETM-126) Allow WITH REQUEST|RESPONSE joins in Signals and Graphs.
 * [ETM-127](https://jecstar.atlassian.net/browse/ETM-127) Export/import queries.
 * [ETM-128](https://jecstar.atlassian.net/browse/ETM-128) A signal that throws an exception kills al subsequent signals.
+* [ETM-129](https://jecstar.atlassian.net/browse/ETM-129) Error saving graph in ETM Acceptance environment.
+* [ETM-130](https://jecstar.atlassian.net/browse/ETM-130) Log username with errors.
 
 ## Version 3.5.2
 
