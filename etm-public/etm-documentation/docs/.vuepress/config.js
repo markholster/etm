@@ -3,7 +3,12 @@ module.exports = {
     title: 'Enterprise Telemetry Monitor - 4.0.x',
     description: 'Finding without searching',
     themeConfig: {
+        logo: '/jecstar-logo-512x512.png',
         smoothScroll: true,
+        nav: [
+            {text: 'Home', link: 'https://www.jecstar.com/'},
+            {text: 'Downloads', link: 'https://www.jecstar.com/downloads/'}
+        ],
         sidebarDepth: 2,
         sidebar: [
             '/',

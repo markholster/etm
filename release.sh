@@ -35,6 +35,8 @@ if [ $? -ne 0 ]; then
   echo "Generating documentation failed"
   exit 1
 fi
+echo "Uploading the documentation"
+scp -r docs/.vuepress/dist www.jecstar.com:/home/mark/etm-4.0.0-docs
 cd "$SCRIPT_DIR" || exit
 
 echo "Generating OCI image"

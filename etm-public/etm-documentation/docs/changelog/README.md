@@ -180,7 +180,7 @@ Additional labels for pre-release and build metadata are available as extensions
 1. [Import](../administrating/cluster.md#certificate-settings) your LDAP and/or SMTP certificates used to setup a secure connection.
 1. Validate everything is working fine. Stop the running Enterprise Telemetry Monitor node.  
 1. Enable all required processors when disabled in a previous step and restart the node.
-1. Start all other Enterprise Telemetry Monitor nodes.
+1. Start all Enterprise Telemetry Monitor nodes.
 
 ## Version specific changes
 Sometimes your Enterprise Telemetry Monitor configuration needs additional changes before it can be upgraded. This section describes these changes necessary before upgrading.
