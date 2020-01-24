@@ -6,13 +6,13 @@ dependencies {
     implementation project(":etm-launcher")
 }
 
-
 mainClassName = 'com.jecstar.etm.launcher.Startup'
 applicationName = 'etm'
+def javaVersion = '11'
 
 distributions {
     main {
-        distributionBaseName = 'etm'
+        distributionBaseName = "etm"
         contents {
             exclude '**/com.ibm.mq.allclient.jar'
             exclude '**/config-manager-proxy-S900-FP03.jar'
@@ -53,4 +53,98 @@ startScripts {
                 .replace('${applicationVersion}', version)
                 .replace('${mainClassName}', mainClassName)
     }
+}
+
+task createLinuxJreX64Dist {
+    dependsOn distTar
+    doLast {
+        def os = "linux"
+        def arch = "x64"
+
+        def archive = file("${buildDir}/distributions/" + distributions.main.distributionBaseName.get() + "-${project.version}.tgz")
+        def archiveTree = tarTree(resources.gzip(archive))
+
+        def workDir = "${buildDir}/${applicationName}-${os}-${arch}"
+        if (file(workDir).exists()) {
+            delete(file(workDir))
+        }
+        copy {
+            from archiveTree
+            into workDir
+        }
+        def jdkHome = getJavaJDK(javaVersion, os, arch).getAbsolutePath()
+        def jreDir = file("${workDir}/${applicationName}-${project.version}/jre")
+        createJre(jreDir, jdkHome)
+    }
+}
+
+task linuxJreX64DistTar(type: Tar, group: 'Distribution', description: 'Bundles the project with a linux x64 jre included as a distribution.') {
+    dependsOn createLinuxJreX64Dist
+    archiveClassifier = "linux-x86_64"
+    archiveBaseName = "etm"
+    from "${buildDir}/${applicationName}-linux-x64/"
+}
+
+def getJavaJDK(version, os, architecture) {
+    def root = project.getBuildDir()
+    if (!root.exists()) {
+        root.mkdirs()
+    }
+    def archive = new File(root, "jdk-${os}-${architecture}.tar.gz")
+    if (!archive.exists()) {
+        new URL("https://api.adoptopenjdk.net/v2/binary/releases/openjdk${version}?openjdk_impl=hotspot&os=${os}&arch=${architecture}&release=latest&type=jdk").withInputStream{ i -> archive.withOutputStream{ it << i }}
+    }
+    def archiveTree = tarTree(resources.gzip(archive))
+    def jdkHome
+    archiveTree.visit { FileVisitDetails details ->
+        jdkHome = details.getName()
+        details.stopVisiting()
+    }
+    if (new File(root, jdkHome).exists()) {
+        delete(new File(root, jdkHome))
+    }
+    copy {
+        from archiveTree
+        into getBuildDir()
+    }
+    return new File(root, jdkHome)
+}
+
+def createJre(File jreDir, String jdkHome) {
+    def options = ['--compress', '2', '--no-header-files', '--no-man-pages']
+    def modules = [
+            'java.base',
+            'java.desktop',
+            'java.logging',
+            'java.naming',
+            'java.management',
+            'java.sql',
+            'java.xml',
+
+            'jdk.unsupported', // sun.misc.Unsafe
+            'jdk.crypto.ec'
+    ]
+
+    project.delete(jreDir)
+    if(!project.file("$jdkHome/jmods").directory) {
+        throw new GradleException("Directory not found: $jdkHome/jmods")
+    }
+    def cmd = ["$jdkHome/bin/jlink",
+               '-v',
+               *options,
+               '--module-path',
+               "$jdkHome/jmods/",
+               '--add-modules', modules.join(','),
+               '--output', jreDir]
+    def result = project.exec {
+        ignoreExitValue = true
+        standardOutput = new ByteArrayOutputStream()
+        project.ext.jlinkOutput = {
+            return standardOutput.toString()
+        }
+        commandLine = cmd
+    }
+    result.exitValue
+    result.assertNormalExitValue()
+    result.rethrowFailure()
 }

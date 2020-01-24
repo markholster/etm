@@ -26,6 +26,7 @@
 * [ETM-128](https://jecstar.atlassian.net/browse/ETM-128) A signal that throws an exception kills al subsequent signals.
 * [ETM-129](https://jecstar.atlassian.net/browse/ETM-129) Error saving graph in ETM Acceptance environment.
 * [ETM-130](https://jecstar.atlassian.net/browse/ETM-130) Log username with errors.
+* [ETM-131](https://jecstar.atlassian.net/browse/ETM-131) Provide distribution with JRE included.
 
 ## Version 3.5.2
 

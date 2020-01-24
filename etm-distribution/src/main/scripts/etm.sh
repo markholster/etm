@@ -148,6 +148,23 @@ fi
 
 # If a specific java binary isn't specified search for the standard 'java' binary
 if [ -z "$JAVACMD" ] ; then
+  if [ -x "$BASEDIR/jre/bin/java" ] ; then
+    JAVACMD="$BASEDIR/jre/bin/java"
+  else
+    if [ -n "$JAVA_HOME"  ] ; then
+      if [ -x "$JAVA_HOME/jre/sh/java" ] ; then
+        # IBM's JDK on AIX uses strange locations for the executables
+        JAVACMD="$JAVA_HOME/jre/sh/java"
+      else
+        JAVACMD="$JAVA_HOME/bin/java"
+      fi
+    else
+      JAVACMD=`which java`
+    fi
+  fi
+fi
+
+if [ -z "$JAVACMD" ] ; then
   if [ -n "$JAVA_HOME"  ] ; then
     if [ -x "$JAVA_HOME/jre/sh/java" ] ; then
       # IBM's JDK on AIX uses strange locations for the executables

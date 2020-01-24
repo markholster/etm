@@ -16,6 +16,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.config.SslConfigs;
 import org.apache.kafka.common.config.types.Password;
+import org.apache.kafka.common.errors.InterruptException;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 
@@ -83,8 +84,14 @@ public class KafkaDestinationReader implements DestinationReader {
                     this.stop = true;
                 }
             }
-        } catch (WakeupException e) {
-
+        } catch (WakeupException | InterruptException e) {
+            if (log.isDebugLevelEnabled()) {
+                log.logDebugMessage(e.getMessage(), e);
+            }
+        } catch (Exception e) {
+            if (log.isErrorLevelEnabled()) {
+                log.logErrorMessage("Error processing Kafka messages.", e);
+            }
         } finally {
             this.consumer.close();
         }
