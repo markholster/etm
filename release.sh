@@ -34,6 +34,9 @@ if [ $? -ne 0 ]; then
   echo "Generating Linux x86_64 distribution failed"
   exit 1
 fi
+echo "Uploading distributions to www.jecstar.com"
+scp -r "$SCRIPT_DIR"/etm-distribution/build/distributions/* www.jecstar.com:/home/mark/etm-dist
+cd "$SCRIPT_DIR" || exit
 
 echo "Building the documentation"
 cd "$SCRIPT_DIR"/etm-public/etm-documentation || exit
@@ -42,8 +45,9 @@ if [ $? -ne 0 ]; then
   echo "Generating documentation failed"
   exit 1
 fi
-echo "Uploading the documentation"
-scp -r docs/.vuepress/dist www.jecstar.com:/home/mark/etm-4.0.0-docs
+
+echo "Uploading the documentation to www.jecstar.com"
+scp -r docs/.vuepress/dist www.jecstar.com:/home/mark/etm-docs
 cd "$SCRIPT_DIR" || exit
 
 echo "Generating OCI image"
@@ -52,7 +56,7 @@ if [ $? -ne 0 ]; then
     echo "Generating OCI image failed"
     exit 1
 fi
-echo "Pushing OCI image"
+echo "Pushing OCI image to Google Container Registry"
 podman push eu.gcr.io/virtual-ellipse-208415/etm:$VERSION
 
 
