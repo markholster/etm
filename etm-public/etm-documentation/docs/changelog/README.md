@@ -171,7 +171,7 @@ Additional labels for pre-release and build metadata are available as extensions
 1. Download and uncompress Elasticsearch 7.x to a new directory.
 1. Stop all Enterprise Telemetry Monitor nodes.
 1. Stop your current Elasticsearch nodes.
-1. Merge changes from the `config/jvm.options` and `config/log4j2.properties` files in your current Elasticsearch nodes to your new ones. Note that merging is only recommended when you have made changes to those files. When you've not changed anything in those files it is recommended to leave them untouched in your new Elasticsearch installation.
+1. Merge changes from the `config/elasticsearch.yml`, `config/jvm.options` and `config/log4j2.properties` files in your current Elasticsearch nodes to your new ones. Note that merging is only recommended when you have made changes to those files. When you've not changed anything in those files it is recommended to leave them untouched in your new Elasticsearch installation.
 1. If your Elasticsearch data resides in the same directory as your Elasticsearch installation make sure you copy the data to the new Elasticsearch installation.
 1. Start your new Elasticsearch nodes and wait for the message ```Cluster health status changed from [RED] to [GREEN]``` to appear.
 1. Download and uncompress Enterprise Telemetry Monitor 4.x to a new directory.
