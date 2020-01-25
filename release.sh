@@ -28,6 +28,13 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+echo "Generating Linux x86_64 distribution"
+./gradlew :etm-distribution:linuxJreX64DistTar
+if [ $? -ne 0 ]; then
+  echo "Generating Linux x86_64 distribution failed"
+  exit 1
+fi
+
 echo "Building the documentation"
 cd "$SCRIPT_DIR"/etm-public/etm-documentation || exit
 yarn docs:build
