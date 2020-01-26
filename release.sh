@@ -59,6 +59,7 @@ fi
 echo "Pushing OCI image to Google Container Registry"
 podman push eu.gcr.io/virtual-ellipse-208415/etm:$VERSION
 
+#Check release date in support matrix document!!
 
 #==== Push subtree
 #git subtree push --prefix=etm-public git@github.com:jecstarinnovations/etm.git develop

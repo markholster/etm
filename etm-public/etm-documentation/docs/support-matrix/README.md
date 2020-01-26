@@ -8,7 +8,7 @@ The End of Life policy defines how long a given release is considered supported,
 
 Version | Release date | Oracle/OpenJDK 1.8.0u111+ | Oracle/OpenJDK 11 | Elasticsearch | EOL | Maintained until
 --- | --- | --- | --- | --- | --- | ---
-ETM 4.0.x |            | :x:                | :white_check_mark: | 7.x   |            | 4.1.0
+ETM 4.0.x | 2020-01-25 | :x:                | :white_check_mark: | 7.x   | 2022-01-25 | 4.1.0
 ETM 3.5.x | 2019-03-19 | :white_check_mark: | :white_check_mark: | 6.6.x | 2021-03-19 | 5.0.0
 ETM 3.4.x | 2019-02-18 | :white_check_mark: | :white_check_mark: | 6.6.x | 2021-02-18 | 3.5.0
 ETM 3.3.x | 2018-11-09 | :white_check_mark: | :white_check_mark: | 6.4.x | 2020-11-09 | 3.4.0
