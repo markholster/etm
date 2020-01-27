@@ -1,6 +1,7 @@
 #!/bin/bash
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 VERSION=$(./gradlew properties | grep ^version: | sed 's/^.*: //')
+VERSION_WILDCARD_BUGFIX=$(echo $VERSION | sed 's/.$/x/')
 if [[ "$VERSION" == *SNAPSHOT ]]
 then
   echo "Version is still a SNAPSHOT"
@@ -17,6 +18,19 @@ ES_PUBLIC_VERSION=$(etm-public/gradlew properties -b etm-public/build.gradle | g
 if [[ "$ES_VERSION" != "$ES_PUBLIC_VERSION" ]]
 then
   echo "etm-public has a different elasticsearch version: $ES_PUBLIC_VERSION. Expected version $ES_VERSION."
+  exit 1
+fi
+
+RELEASE_DATE=$(cat "$SCRIPT_DIR"/etm-public/etm-documentation/docs/support-matrix/README.md | grep "ETM $VERSION_WILDCARD_BUGFIX" | cut -d'|' -f2)
+if [[ -z "${RELEASE_DATE// }" ]]
+then
+  echo "Release date in support matrix documentation is empty"
+  exit 1
+fi
+EOL_DATE=$(cat "$SCRIPT_DIR"/etm-public/etm-documentation/docs/support-matrix/README.md | grep "ETM $VERSION_WILDCARD_BUGFIX" | cut -d'|' -f6)
+if [[ -z "${EOL_DATE// }" ]]
+then
+  echo "End of life date in support matrix documentation is empty"
   exit 1
 fi
 echo "Releasing Enterprise Telemetry Monitor $VERSION"
@@ -37,6 +51,8 @@ fi
 echo "Uploading distributions to www.jecstar.com"
 scp -r "$SCRIPT_DIR"/etm-distribution/build/distributions/* www.jecstar.com:/home/mark/etm-dist
 cd "$SCRIPT_DIR" || exit
+
+echo "Checking for support matrix in documentation"
 
 echo "Building the documentation"
 cd "$SCRIPT_DIR"/etm-public/etm-documentation || exit
