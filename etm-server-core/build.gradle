@@ -21,6 +21,7 @@ dependencies {
             dep_elasticsearchClientSniffer,
             dep_jacksonDatabind,
             dep_ldaptive,
+            dep_ldaptive_unboundid,
             dep_saxonHE,
             dep_graaljs,
             dep_slf4jApi,

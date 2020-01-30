@@ -15,6 +15,7 @@ import org.ldaptive.auth.*;
 import org.ldaptive.auth.ext.PasswordPolicyAuthenticationResponseHandler;
 import org.ldaptive.control.PasswordPolicyControl;
 import org.ldaptive.pool.*;
+import org.ldaptive.provider.unboundid.UnboundIDProvider;
 import org.ldaptive.ssl.DefaultHostnameVerifier;
 import org.ldaptive.ssl.SslConfig;
 
@@ -295,7 +296,9 @@ public class Directory implements AutoCloseable {
             // connection is used.
             poolConfig.setValidateOnCheckIn(true);
         }
-        AbstractConnectionPool connectionPool = new BlockingConnectionPool(poolConfig, new DefaultConnectionFactory(connectionConfig));
+        DefaultConnectionFactory defaultConnectionFactory = new DefaultConnectionFactory(connectionConfig);
+        defaultConnectionFactory.setProvider(new UnboundIDProvider());
+        AbstractConnectionPool connectionPool = new BlockingConnectionPool(poolConfig, defaultConnectionFactory);
 
         if (ldapConfiguration.getConnectionTestSearchFilter() != null) {
             SearchRequest connectionSearchRequest = new SearchRequest();

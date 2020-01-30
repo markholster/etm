@@ -4,6 +4,7 @@ ext {
     version_elasticsearch_major = "7.0"
     version_elasticsearch = version_elasticsearch_major + ".0"
     version_junit = "5.4.0"
+    version_ldaptive = "1.2.4"
     version_resteasy = "3.6.3.Final"
     version_slf4j = "1.7.29"
 
@@ -24,7 +25,8 @@ ext {
     dep_jaxbRuntime = "org.glassfish.jaxb:jaxb-runtime:2.3.1"
     dep_jsonPath = "com.jayway.jsonpath:json-path:2.4.0"
     dep_kafka = "org.apache.kafka:kafka-clients:2.2.0"
-    dep_ldaptive = "org.ldaptive:ldaptive:1.2.4"
+    dep_ldaptive = "org.ldaptive:ldaptive:" + version_ldaptive
+    dep_ldaptive_unboundid = "org.ldaptive:ldaptive-unboundid:" + version_ldaptive
     dep_log4jToSlf4j = "org.apache.logging.log4j:log4j-to-slf4j:2.11.2"
     dep_log4jToLog4j2 = "org.apache.logging.log4j:log4j-1.2-api:2.11.2"
     dep_mailApi = "com.sun.mail:javax.mail:1.6.2"
@@ -44,7 +46,7 @@ ext {
 allprojects {
     apply plugin: "eclipse"
     apply plugin: "idea"
-    version "4.0.0"
+    version "4.0.1"
     group "com.jecstar.etm"
 
     repositories {
