@@ -230,13 +230,13 @@
                                                     <div class="row">
                                                         <div class="col-4">Find error http responses:</div>
                                                         <div class="col">
-                                                            <mark>status_code:>=400</mark>
+                                                            <mark>status_code:&gt;=400</mark>
                                                         </div>
                                                     </div>
                                                     <div class="row">
                                                         <div class="col-4">Combine fields with AND &amp; OR:</div>
                                                         <div class="col">
-                                                            <mark>&lt;fieldnam1e&gt;: &lt;value1&gt; AND &lt;fieldname2&gt;:
+                                                            <mark>&lt;fieldname1&gt;: &lt;value1&gt; AND &lt;fieldname2&gt;:
                                                                 (&lt;value2&gt; OR &lt;value3&gt;)
                                                             </mark>
                                                         </div>
@@ -260,16 +260,17 @@
                                                     <div class="row">
                                                         <div class="col-4">Find requests with error responses:</div>
                                                         <div class="col">
-                                                            <mark>* WITH RESPONSE status_code:>=400</mark>
+                                                            <mark>* WITH RESPONSE status_code:&gt;=400</mark>
                                                         </div>
                                                     </div>
                                                     <div class="row">
-                                                        <div class="col-4">Find requests with >100ms response time with
+                                                        <div class="col-4">Find requests with &gt;100ms response time
+                                                            with
                                                             error responses:
                                                         </div>
                                                         <div class="col">
-                                                            <mark>endpoints.endpoint_handlers.response_time:>100 WITH
-                                                                RESPONSE status_code:>=400
+                                                            <mark>endpoints.endpoint_handlers.response_time:&gt;100 WITH
+                                                                RESPONSE status_code:&gt;=400
                                                             </mark>
                                                         </div>
                                                     </div>

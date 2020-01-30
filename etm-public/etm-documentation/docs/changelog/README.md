@@ -2,7 +2,6 @@
 ## Version 4.0.1
 * [ETM-132](https://jecstar.atlassian.net/browse/ETM-132) Use UnboundID provider for LDAP connection.
 
-
 ## Version 4.0.0
 
 * [ETM-18](https://jecstar.atlassian.net/browse/ETM-18) Allow/Deny server certificates.
