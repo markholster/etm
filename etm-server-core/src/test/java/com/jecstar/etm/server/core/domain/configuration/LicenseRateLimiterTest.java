@@ -2,6 +2,8 @@ package com.jecstar.etm.server.core.domain.configuration;
 
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -22,6 +24,7 @@ public class LicenseRateLimiterTest {
      */
     @Test
     public void testThrottleWithLimitedLicense() throws InterruptedException {
+        final var finishWaitTime = 1000;
         var etmConfiguration = new EtmConfiguration(getClass().getName());
         etmConfiguration.setLicenseKey(this.limitedLicense);
         final var nrOfThreads = 2;
@@ -43,7 +46,7 @@ public class LicenseRateLimiterTest {
         for (int i = 0; i < nrOfThreads; i++) {
             executorService.submit(() -> {
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(finishWaitTime);
                 } catch (InterruptedException e) {
                     fail(e);
                 }
@@ -52,7 +55,8 @@ public class LicenseRateLimiterTest {
         }
         executorService.shutdown();
         executorService.awaitTermination(60, TimeUnit.SECONDS);
-        var totalTime = (System.currentTimeMillis() - startTime) / 1000;
+
+        var totalTime = new BigDecimal(System.currentTimeMillis() - startTime).divide(new BigDecimal(1000), RoundingMode.UP).intValue();
         var calculatedTime = totalRu / etmConfiguration.getLicense().getMaxRequestUnitsPerSecond();
         assertTrue(totalTime >= calculatedTime, "Expected totalTime to be bigger than calculated time. totalTime: " + totalTime + ", calculatedTime: " + calculatedTime);
     }
