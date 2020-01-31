@@ -1,5 +1,6 @@
 package com.jecstar.etm.launcher.http;
 
+import com.jecstar.etm.server.core.Etm;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import io.undertow.server.handlers.resource.ClassPathResourceManager;
 import io.undertow.server.handlers.resource.Resource;
@@ -7,9 +8,6 @@ import io.undertow.server.handlers.resource.Resource;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Collections;
-import java.util.Deque;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 class MenuAwareClassPathResourceManager extends ClassPathResourceManager {
 
@@ -37,9 +35,11 @@ class MenuAwareClassPathResourceManager extends ClassPathResourceManager {
                 return null;
             } else {
                 final int pathLevels = path.length() - path.replace("/", "").length();
-                final String pathPrefixToContextRoot = pathLevels <= 1 ? "./" : Collections.nCopies(pathLevels - 1, "../").stream().collect(Collectors.joining());
+                final String pathPrefixToContextRoot = pathLevels <= 1 ? "./" : String.join("", Collections.nCopies(pathLevels - 1, "../"));
                 return new MenuAwareURLResource(this.etmConfiguration, pathPrefixToContextRoot, resource, path);
             }
+        } else if (Etm.hasVersion() && path.toLowerCase().endsWith(".js")) {
+            return super.getResource(path.replace("/scripts/" + Etm.getVersion() + "/", "/scripts/"));
         }
         return super.getResource(path);
     }

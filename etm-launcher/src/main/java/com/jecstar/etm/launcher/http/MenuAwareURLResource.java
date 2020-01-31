@@ -1,6 +1,7 @@
 package com.jecstar.etm.launcher.http;
 
 import com.jecstar.etm.gui.rest.IIBApi;
+import com.jecstar.etm.server.core.Etm;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.principal.EtmGroup;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
@@ -146,6 +147,11 @@ public class MenuAwareURLResource extends URLResource {
                 if (inputStream == null) {
                     try (BufferedReader buffer = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
                         String htmlContent = buffer.lines().collect(Collectors.joining("\n"));
+                        if (Etm.hasVersion()) {
+                            // Appversion is only set when started from the start script. We add the version to the scripts path to make sure the browser cache isn't
+                            // preventing the new functionality from being loaded.
+                            htmlContent = htmlContent.replaceAll("/scripts/", "/scripts/" + Etm.getVersion() + "/");
+                        }
                         int ix = htmlContent.indexOf(NAVBAR_COLOR_PLACEHOLDER);
                         if (ix != -1) {
                             htmlContent = htmlContent.replaceAll(NAVBAR_COLOR_PLACEHOLDER, "dark");

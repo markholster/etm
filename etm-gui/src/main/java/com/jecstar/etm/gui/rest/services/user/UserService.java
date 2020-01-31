@@ -1,6 +1,7 @@
 package com.jecstar.etm.gui.rest.services.user;
 
 import com.jecstar.etm.gui.rest.AbstractGuiService;
+import com.jecstar.etm.server.core.Etm;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
@@ -191,7 +192,7 @@ public class UserService extends AbstractGuiService {
         result.append("{");
         addLongElementToJsonBuffer("event_count", searchResponse.getHits().getTotalHits().value, result, true);
         addStringElementToJsonBuffer("event_count_as_string", numberFormat.format(searchResponse.getHits().getTotalHits().value), result, false);
-        addStringElementToJsonBuffer("etm_version", System.getProperty("app.version"), result, false);
+        addStringElementToJsonBuffer("etm_version", Etm.getVersion(), result, false);
         result.append("}");
         return result.toString();
     }
