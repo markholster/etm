@@ -122,6 +122,17 @@ public class JsonConverter extends JsonWriter {
         return defaultValue;
     }
 
+    public Float getFloat(String tag, Map<String, Object> valueMap) {
+        return getFloat(tag, valueMap, null);
+    }
+
+    public Float getFloat(String tag, Map<String, Object> valueMap, Float defaultValue) {
+        if (valueMap != null && valueMap.get(tag) != null) {
+            return ((Number) valueMap.get(tag)).floatValue();
+        }
+        return defaultValue;
+    }
+
     public Instant getInstant(String tag, Map<String, Object> valueMap) {
         Long epochTime = getLong(tag, valueMap);
         if (epochTime == null) {

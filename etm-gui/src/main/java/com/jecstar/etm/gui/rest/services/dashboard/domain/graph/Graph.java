@@ -39,22 +39,24 @@ public abstract class Graph<T extends Graph> {
     /**
      * Gives the D3 format of the values in the graph.
      *
-     * @return The format of the values in the graph.
+     * @return The format of the values in the graph.6
      */
     public abstract String getValueFormat();
 
     /**
-     * Merge an other <code>Graph</code> instance configured at a <code>Dasboards</code>'s <code>Column</code>.
+     * Merge an other <code>Graph</code> instance configured at a <code>Dashboard</code>'s <code>Column</code>.
      *
      * @param graph The <code>Graph</code> to merge from.
      */
     public abstract void mergeFromColumn(T graph);
 
     /**
-     * Prepares the <code>Graph</code> for the search to be executed. This gives <code>Aggregator</code>s the option to configure themselves in the context of the search to be executed. As an example <code>Aggregator</code>s with an automatic range can determine their range by inspecting the range configured in the query.
+     * Prepares the <code>Graph</code> for the search to be executed. This gives <code>Aggregator</code>s the option
+     * to configure themselves in the context of the search to be executed. As an example <code>Aggregator</code>s
+     * with an automatic range can determine their range by inspecting the range configured in the query.
      *
-     * @param dataRepository        The <code>DataRepository</code>.
-     * @param searchRequestBuilder  The <code>SearchRequestBuilder</code> to be executed in the next step.
+     * @param dataRepository       The <code>DataRepository</code>.
+     * @param searchRequestBuilder The <code>SearchRequestBuilder</code> to be executed in the next step.
      */
     public abstract void prepareForSearch(DataRepository dataRepository, SearchRequestBuilder searchRequestBuilder);
 }

@@ -85,6 +85,25 @@ public class JsonWriter {
         return true;
     }
 
+    public boolean addFloatElementToJsonBuffer(String elementName, Float elementValue, StringBuilder buffer, boolean firstElement) {
+        return addFloatElementToJsonBuffer(elementName, elementValue, false, buffer, firstElement);
+    }
+
+    public boolean addFloatElementToJsonBuffer(String elementName, Float elementValue, boolean writeWhenNull, StringBuilder buffer, boolean firstElement) {
+        if ((elementValue == null || elementValue.isNaN()) && !writeWhenNull) {
+            return false;
+        }
+        if (!firstElement) {
+            buffer.append(", ");
+        }
+        if (elementName == null) {
+            buffer.append(elementValue != null && elementValue.isNaN() ? null : elementValue);
+        } else {
+            buffer.append(escapeToJson(elementName, true)).append(": ").append(elementValue != null && elementValue.isNaN() ? null : elementValue);
+        }
+        return true;
+    }
+
     public boolean addIntegerElementToJsonBuffer(String elementName, Integer elementValue, StringBuilder buffer, boolean firstElement) {
         return addIntegerElementToJsonBuffer(elementName, elementValue, false, buffer, firstElement);
     }
@@ -261,6 +280,4 @@ public class JsonWriter {
         }
         return escapeToJson(name, true) + ": " + escapeToJson(value.toString(), true);
     }
-
-
 }

@@ -447,6 +447,7 @@ function addListeners(readonly) {
             if (!valid) {
                 return;
             }
+            const graphContainer = graphContainerMap[$('#sel-graph').val()];
 
             let column;
             for (let rowIx = 0; rowIx < dashboardData.rows.length; rowIx++) {
@@ -479,6 +480,10 @@ function addListeners(readonly) {
             if ($('#grp-graph-subtype:hidden').length === 0) {
                 column.graph.sub_type = $('#sel-graph-subtype').val();
             }
+            if ($('#grp-graph-font-size:hidden').length === 0) {
+                const $fontSize = $('#input-graph-font-size');
+                column.graph.font_size = $fontSize.val() ? Number($fontSize.val()) : graphContainer.graph.font_size;
+            }
             if ($('#grp-graph-line-type:hidden').length === 0) {
                 column.graph.line_type = $('#sel-graph-line-type').val();
             }
@@ -509,6 +514,7 @@ function addListeners(readonly) {
                 $('#input-graph-query').val(graphContainer.data.query);
                 $('#btn-apply-graph-settings').removeAttr('disabled');
                 showOrHideGraphSubType(graphContainer, graphContainer.graph.sub_type);
+                showOrHideGraphFontSize(graphContainer, graphContainer.graph.font_size);
                 showOrHideGraphLineType(graphContainer, graphContainer.graph.line_type);
                 showOrHideGraphOrientation(graphContainer, graphContainer.graph.orientation);
                 showOrHideGraphShowMarkers(graphContainer, graphContainer.graph.show_markers);
@@ -632,6 +638,9 @@ function editGraph(cellId) {
         if (!column.graph.type) {
             column.graph.type = graphContainer.graph.type;
         }
+        if (!column.graph.font_size) {
+            column.graph.font_size = graphContainer.graph.font_size;
+        }
         if (!column.graph.line_type) {
             column.graph.line_type = graphContainer.graph.line_type;
         }
@@ -649,6 +658,7 @@ function editGraph(cellId) {
         }
     }
     showOrHideGraphSubType(graphContainer, column.graph.sub_type);
+    showOrHideGraphFontSize(graphContainer, column.graph.font_size);
     showOrHideGraphLineType(graphContainer, column.graph.line_type);
     showOrHideGraphOrientation(graphContainer, column.graph.orientation);
     showOrHideGraphShowMarkers(graphContainer, column.graph.show_markers);
@@ -680,6 +690,16 @@ function showOrHideGraphSubType(graphContainer, graphSubtype) {
             }
             $graphSubtype.val(graphSubtype ? graphSubtype : graphContainer.graph.sub_type);
             $grpGraphSubtype.show();
+        }
+    }
+}
+
+function showOrHideGraphFontSize(graphContainer, graphFontSize) {
+    const $grpGraphFontSize = $('#grp-graph-font-size').hide();
+    if ('undefined' !== typeof graphContainer) {
+        if ('number' === graphContainer.graph.type) {
+            $("#input-graph-font-size").val(graphFontSize !== undefined ? graphFontSize : graphContainer.graph.line_type);
+            $grpGraphFontSize.show();
         }
     }
 }
@@ -925,7 +945,7 @@ function updateChart(graph, $container, readonly) {
                             }
                             this.textBox = this.renderer.text(formatLabel(response.valueFormat, response.value), this.chartWidth / 2, this.chartHeight / 2)
                                 .css({
-                                    fontSize: '4em',
+                                    fontSize: response.chart_config.font_size,
                                 })
                                 .attr('text-anchor', 'middle')
                                 .add();

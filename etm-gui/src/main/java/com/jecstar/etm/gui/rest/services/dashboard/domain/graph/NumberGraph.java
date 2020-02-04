@@ -14,9 +14,13 @@ public class NumberGraph extends Graph<NumberGraph> {
 
     public static final String TYPE = "number";
     public static final String Y_AXIS = "y_axis";
+    public static final String FONT_SIZE = "font_size";
 
     @JsonField(value = Y_AXIS, converterClass = YAxisConverter.class)
     private YAxis yAxis;
+
+    @JsonField(value = FONT_SIZE)
+    private float fontSize = 4;
 
     public NumberGraph() {
         super();
@@ -29,6 +33,15 @@ public class NumberGraph extends Graph<NumberGraph> {
 
     public NumberGraph setyAxis(YAxis yAxis) {
         this.yAxis = yAxis;
+        return this;
+    }
+
+    public float getFontSize() {
+        return this.fontSize;
+    }
+
+    public NumberGraph setFontSize(float fontSize) {
+        this.fontSize = fontSize;
         return this;
     }
 
@@ -48,6 +61,7 @@ public class NumberGraph extends Graph<NumberGraph> {
 
     @Override
     public void appendHighchartsConfig(StringBuilder config) {
+        config.append(", \"font_size\": \"" + getFontSize() + "em\"");
     }
 
     @Override
@@ -57,6 +71,7 @@ public class NumberGraph extends Graph<NumberGraph> {
 
     @Override
     public void mergeFromColumn(NumberGraph graph) {
+        this.fontSize = graph.getFontSize();
     }
 
     @Override

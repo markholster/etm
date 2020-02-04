@@ -100,6 +100,15 @@ public class JsonEntityConverter<T> implements EntityConverter<T, String> {
                     } else {
                         field.setDouble(entity, value);
                     }
+                } else if (fieldType.equals(Float.class) || fieldType.equals(float.class)) {
+                    Float value = this.jsonConverter.getFloat(jsonKey, valueMap);
+                    if (fieldType.equals(Float.class)) {
+                        field.set(entity, value);
+                    } else if (value == null) {
+                        field.setFloat(entity, 0f);
+                    } else {
+                        field.setFloat(entity, value);
+                    }
                 } else if (fieldType.equals(Integer.class) || fieldType.equals(int.class)) {
                     Integer value = this.jsonConverter.getInteger(jsonKey, valueMap);
                     if (fieldType.equals(Integer.class)) {
@@ -220,6 +229,8 @@ public class JsonEntityConverter<T> implements EntityConverter<T, String> {
             added = this.jsonConverter.addLongElementToJsonBuffer(jsonKey, (Long) value, writeWhenNull, buffer, !added) || added;
         } else if (entityClass.equals(Double.class) || entityClass.equals(double.class)) {
             added = this.jsonConverter.addDoubleElementToJsonBuffer(jsonKey, (Double) value, writeWhenNull, buffer, !added) || added;
+        } else if (entityClass.equals(Float.class) || entityClass.equals(float.class)) {
+            added = this.jsonConverter.addFloatElementToJsonBuffer(jsonKey, (Float) value, writeWhenNull, buffer, !added) || added;
         } else if (entityClass.equals(Integer.class) || entityClass.equals(int.class)) {
             added = this.jsonConverter.addIntegerElementToJsonBuffer(jsonKey, (Integer) value, writeWhenNull, buffer, !added) || added;
         } else if (entityClass.equals(Boolean.class) || entityClass.equals(boolean.class)) {

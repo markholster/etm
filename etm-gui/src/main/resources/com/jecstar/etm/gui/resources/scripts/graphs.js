@@ -31,6 +31,7 @@ function buildGraphsPage(groupName) {
                 yAxis: true,
                 category: false,
                 parts: false,
+                'font-size': false,
                 lineType: true,
                 orientation: true,
                 markers: true,
@@ -50,6 +51,7 @@ function buildGraphsPage(groupName) {
                 yAxis: true,
                 category: false,
                 parts: false,
+                'font-size': false,
                 lineType: false,
                 orientation: true,
                 markers: false,
@@ -65,6 +67,7 @@ function buildGraphsPage(groupName) {
                 yAxis: true,
                 category: false,
                 parts: false,
+                'font-size': false,
                 lineType: true,
                 orientation: true,
                 markers: true,
@@ -80,6 +83,7 @@ function buildGraphsPage(groupName) {
                 yAxis: false,
                 category: false,
                 parts: true,
+                'font-size': true,
                 lineType: false,
                 orientation: false,
                 markers: false,
@@ -99,6 +103,7 @@ function buildGraphsPage(groupName) {
                 yAxis: false,
                 category: true,
                 parts: true,
+                'font-size': false,
                 lineType: false,
                 orientation: false,
                 markers: false,
@@ -114,6 +119,7 @@ function buildGraphsPage(groupName) {
                 yAxis: true,
                 category: false,
                 parts: false,
+                'font-size': false,
                 lineType: false,
                 orientation: true,
                 markers: false,
@@ -137,6 +143,7 @@ function buildGraphsPage(groupName) {
             $('#card-parts').toggle(config.elements.parts);
 
             const $subTypeGroup = $('#grp-graph-subtype').toggle(config.subTypes.length > 0);
+            $('#grp-graph-font-size').toggle(config.elements["font-size"]);
             $('#grp-graph-line-type').toggle(config.elements.lineType);
             $('#grp-graph-orientation').toggle(config.elements.orientation);
             $('#grp-graph-show-markers').toggle(config.elements.markers);
@@ -516,6 +523,9 @@ function buildGraphsPage(groupName) {
         if ($('#grp-graph-subtype').css('display') !== 'none') {
             graphData.graph.sub_type = $('#sel-graph-subtype').val();
         }
+        if ($('#grp-graph-font-size').css('display') !== 'none') {
+            graphData.graph.font_size = Number($('#input-graph-font-size').val());
+        }
         if ($('#grp-graph-line-type').css('display') !== 'none') {
             graphData.graph.line_type = $('#sel-graph-line-type').val();
         }
@@ -657,7 +667,7 @@ function buildGraphsPage(groupName) {
                             load: function () {
                                 this.renderer.text(formatLabel(response.valueFormat, response.value), this.chartWidth / 2, this.chartHeight / 2)
                                     .css({
-                                        fontSize: '4em',
+                                        fontSize: chartConfig.font_size,
                                     })
                                     .attr('text-anchor', 'middle')
                                     .add();
@@ -711,6 +721,9 @@ function buildGraphsPage(groupName) {
         $('#sel-graph-type').val(graphContainer.graph.type).trigger('change');
         if (graphContainer.graph.sub_type) {
             $('#sel-graph-subtype').val(graphContainer.graph.sub_type);
+        }
+        if (graphContainer.graph.font_size) {
+            $('#input-graph-font-size').val(graphContainer.graph.font_size);
         }
         if (graphContainer.graph.line_type) {
             $('#sel-graph-line-type').val(graphContainer.graph.line_type);
