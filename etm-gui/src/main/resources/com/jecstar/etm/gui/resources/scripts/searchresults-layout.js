@@ -65,7 +65,7 @@ var tableLayout = {
                     });
                 } else {
                     currentObject = container;
-                    if (index + 1 == fields.length) {
+                    if (index + 1 === fields.length) {
                         values.push(container);
                     }
                 }
@@ -208,12 +208,12 @@ $('#link-edit-table').on('click', function (event) {
     function updateRowActions() {
         $('#table-settings-columns .actionRow').each(function (index, row) {
             if ($('#table-settings-columns').children().length > 2) {
-                if (index == 0) {
+                if (index === 0) {
                     $(row).find('.fa-arrow-up').hide();
                 } else {
                     $(row).find('.fa-arrow-up').show();
                 }
-                if (index >= $('#table-settings-columns').children().length -2) {
+                if (index >= $('#table-settings-columns').children().length - 2) {
                     $(row).find('.fa-arrow-down').hide();
                 } else {
                     $(row).find('.fa-arrow-down').show();
@@ -226,7 +226,7 @@ $('#link-edit-table').on('click', function (event) {
     }
 });
 
-$('#btn-apply-table-settings').click(function () {
+$('#btn-apply-table-settings').on('click', function () {
     let changed = false;
     if (tableLayout.sort_field !== $('#table-settings-sort-field').val()) {
         changed = true;

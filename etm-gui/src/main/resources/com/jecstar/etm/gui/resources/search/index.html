@@ -768,7 +768,7 @@
     let maxDownloads;
     $('[id^=check-type-]').on('change', function () {
         enableOrDisableSearchButton();
-        if ($('[id^=check-type-]:checked').length == 0) {
+        if ($('[id^=check-type-]:checked').length === 0) {
             $('#query-string').attr('disabled', 'disabled');
         } else {
             $('#query-string').removeAttr('disabled');
@@ -791,7 +791,7 @@
         q.start_ix = Number($('#input-download-start-row').val()) - 1;
         q.max_results = Number($('#input-download-number-of-rows').val());
         q.fileType = $('#sel-download-type').val();
-        q.includePayload = $('#sel-download-include-payload').val() == 'true' ? true : false;
+        q.includePayload = $('#sel-download-include-payload').val() === 'true';
         window.location.href = '../rest/search/download?q=' + encodeURIComponent(JSON.stringify(q));
     });
 
@@ -808,18 +808,12 @@
             const value = $(this).parent().children(":first").text();
             $('#query-string-till').val(value);
         }
-    });
-
-    $('#result_card').on('mouseenter mouseleave', '#search_result_table tbody tr td', function () {
+    }).on('mouseenter mouseleave', '#search_result_table tbody tr td', function () {
         $(this).children("[data-link-type='set-as-start-for-query'], [data-link-type='set-as-end-for-query']").toggleClass('invisible');
-    });
-
-    $('#result_card').on('click', '#search_result_table thead th', function (event) {
+    }).on('click', '#search_result_table thead th', function (event) {
         event.preventDefault();
         sortResultTable($(this).attr('data-event-field'));
-    });
-
-    $('#result_card').on('click', '#search_result_table tfoot a', function (event) {
+    }).on('click', '#search_result_table tfoot a', function (event) {
         event.preventDefault();
         const query = createQuery(true);
         query.start_ix = tableLayout.current_ix + tableLayout.results_per_page;
@@ -831,14 +825,10 @@
         $('#event-container').hide();
         $('#search-container').show();
         $('html,body').animate({scrollTop: Number($(this).attr('data-scroll-to'))}, 'fast');
-    });
-
-    $('#event-container').on('click', "a[data-link-type='show-event']", function (event) {
+    }).on('click', "a[data-link-type='show-event']", function (event) {
         event.preventDefault();
         showEvent(Number($(this).attr('data-scroll-to')), $(this).attr('data-event-id'))
-    });
-
-    $('#event-container').on('click', "a[data-link-type='toggle-detail-map']", function (event) {
+    }).on('click', "a[data-link-type='toggle-detail-map']", function (event) {
         event.preventDefault();
         $('#' + $(this).attr('data-panel-id')).collapse('toggle');
     });
@@ -939,7 +929,7 @@
                 if (appendToCurrent) {
                     const endIx = $('#search-stats').text().lastIndexOf(' ');
                     $('#search-stats').text($('#search-stats').text().substring(0, endIx + 1) + (data.end_ix + 1) + '.');
-                    const $body = $('#search_result_table > tbody')
+                    const $body = $('#search_result_table > tbody');
                     $(data.results).each(function (index, searchResult) {
                         $body.append(function () {
                             return createResultTableRow(searchResult, data.time_zone);
@@ -962,7 +952,7 @@
                                 .append(function () {
                                     const $tr = $('<tr>');
                                     $(tableLayout.fields).each(function (index, tableColumn) {
-                                        const $th = $('<th style="padding: 0.1rem; cursor: pointer;">').text(tableColumn.name).attr('data-event-field', tableColumn.field)
+                                        const $th = $('<th style="padding: 0.1rem; cursor: pointer;">').text(tableColumn.name).attr('data-event-field', tableColumn.field);
                                         if (tableColumn.field === tableLayout.sort_field) {
                                             if ('asc' === tableLayout.sort_order) {
                                                 $th.addClass('headerSortAsc')
@@ -986,7 +976,7 @@
                                 }
                             })
                             .append(function () {
-                                const $body = $('<tbody>')
+                                const $body = $('<tbody>');
                                 $(data.results).each(function (index, searchResult) {
                                     $body.append(function () {
                                         return createResultTableRow(searchResult, data.time_zone);

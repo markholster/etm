@@ -6,7 +6,6 @@ const commons = (function () {
      * Method to retrieve query string parameters.
      */
     const queryString = (function (a) {
-        if (a === "") return {};
         const b = {};
         for (let i = 0; i < a.length; ++i) {
             const p = a[i].split('=', 2);
@@ -96,9 +95,9 @@ const commons = (function () {
      * Function to create an UUIDv4.
      */
     const generateUUID = function generateUUID() {
-        return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
+        return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, function (c) {
             (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
-        );
+        });
     };
 
     /**
@@ -234,7 +233,6 @@ const commons = (function () {
         queryString: queryString,
         showNotification: showNotification,
         sortSelectOptions: sortSelectOptions
-
     };
 })();
 

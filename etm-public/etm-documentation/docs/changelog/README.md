@@ -1,7 +1,8 @@
 # Changelog
 ## Version 4.1.0
 * [ETM-133](https://jecstar.atlassian.net/browse/ETM-133) Scripts of old version are cached in browser.
-* [ETM-134](https://jecstar.atlassian.net/browse/ETM-134) Option to set font size on number graphs..
+* [ETM-134](https://jecstar.atlassian.net/browse/ETM-134) Option to set font size on number graphs.
+* [ETM-135](https://jecstar.atlassian.net/browse/ETM-135) etm-commons.js not working in IE11.
 
 ## Version 4.0.1
 * [ETM-132](https://jecstar.atlassian.net/browse/ETM-132) Use UnboundID provider for LDAP connection.
