@@ -88,19 +88,19 @@ public class GraphsIntegrationTest extends AbstractCitrusSeleniumTest {
         runner.selenium(action -> action.setInput("Eden").element(By.id("input-metrics-name-y-axis-0-0")));
         runner.selenium(action -> action.select("true").element(By.id("sel-metrics-show-on-graph-y-axis-0-0")));
         runner.selenium(action -> action.select("average").element(By.id("sel-metrics-aggregator-y-axis-0-0")));
-        runner.selenium(action -> action.setInput("mem.pools.PS-Eden-Space.used").element(By.id("input-metrics-field-y-axis-0-0")));
+        runner.selenium(action -> action.setInput("mem.pools.G1-Eden-Space.used").element(By.id("input-metrics-field-y-axis-0-0")));
         // Add the Survivor space metric
         runner.selenium(action -> action.click().element(By.xpath("//*[@data-element-type='add-metrics-aggregator']")));
         runner.selenium(action -> action.setInput("Survivor space").element(By.id("input-metrics-name-y-axis-0-1")));
         runner.selenium(action -> action.select("true").element(By.id("sel-metrics-show-on-graph-y-axis-0-1")));
         runner.selenium(action -> action.select("average").element(By.id("sel-metrics-aggregator-y-axis-0-1")));
-        runner.selenium(action -> action.setInput("mem.pools.PS-Survivor-Space.used").element(By.id("input-metrics-field-y-axis-0-1")));
+        runner.selenium(action -> action.setInput("mem.pools.G1-Survivor-Space.used").element(By.id("input-metrics-field-y-axis-0-1")));
         // Add the Old gen space metric
         runner.selenium(action -> action.click().element(By.xpath("//*[@data-element-type='add-metrics-aggregator']")));
         runner.selenium(action -> action.setInput("Old gen").element(By.id("input-metrics-name-y-axis-0-2")));
         runner.selenium(action -> action.select("true").element(By.id("sel-metrics-show-on-graph-y-axis-0-2")));
         runner.selenium(action -> action.select("average").element(By.id("sel-metrics-aggregator-y-axis-0-2")));
-        runner.selenium(action -> action.setInput("mem.pools.PS-Old-Gen.used").element(By.id("input-metrics-field-y-axis-0-2")));
+        runner.selenium(action -> action.setInput("mem.pools.G1-Old-Gen.used").element(By.id("input-metrics-field-y-axis-0-2")));
 
         // Visualize it
         visualizeGraph(runner, browser);

@@ -1,5 +1,6 @@
 package com.jecstar.etm.server.core.converter.custom;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.server.core.converter.CustomFieldConverter;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import com.jecstar.etm.server.core.logging.LogFactory;
@@ -16,11 +17,10 @@ public class Base64Converter implements CustomFieldConverter<String> {
     private final int rounds = 7;
 
     @Override
-    public boolean addToJsonBuffer(String jsonKey, String value, StringBuilder buffer, boolean firstElement) {
+    public void addToJsonBuffer(String jsonKey, String value, JsonBuilder builder) {
         if (value != null) {
-            return this.jsonConverter.addStringElementToJsonBuffer(jsonKey, this.jsonConverter.encodeBase64(value, rounds), buffer, firstElement) || !firstElement;
+            builder.field(jsonKey, this.jsonConverter.encodeBase64(value, rounds));
         }
-        return false;
     }
 
     @Override

@@ -1,7 +1,7 @@
 package com.jecstar.etm.gui.rest.services.signal;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.gui.rest.services.AbstractUserAttributeService;
-import com.jecstar.etm.gui.rest.services.Keyword;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.aggregator.Aggregator;
 import com.jecstar.etm.server.core.domain.aggregator.bucket.BucketAggregator;
@@ -41,7 +41,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Path("/signal")
 @DeclareRoles(SecurityRoles.ALL_ROLES)
@@ -91,41 +90,36 @@ public class SignalService extends AbstractUserAttributeService {
      * @return The keywords of a user or group.
      */
     private String getKeywords(String groupName) {
-        Map<String, Object> entity = getEntity(dataRepository, groupName, this.etmPrincipalTags.getSignalDatasourcesTag());
-        Set<String> datasources = new HashSet<>(getArray(this.etmPrincipalTags.getSignalDatasourcesTag(), entity, Collections.emptyList()));
+        var entity = getEntity(dataRepository, groupName, this.etmPrincipalTags.getSignalDatasourcesTag());
+        var datasources = new HashSet<String>(getArray(this.etmPrincipalTags.getSignalDatasourcesTag(), entity, Collections.emptyList()));
         if (groupName == null) {
 //          We try to get the data for the user but when the user is added to some groups the context of that groups needs to be added to the user context
-            Set<EtmGroup> groups = getEtmPrincipal().getGroups();
-            for (EtmGroup group : groups) {
-                Map<String, Object> groupObjectMap = getEntity(dataRepository, group.getName(), this.etmPrincipalTags.getSignalDatasourcesTag());
+            var groups = getEtmPrincipal().getGroups();
+            for (var group : groups) {
+                var groupObjectMap = getEntity(dataRepository, group.getName(), this.etmPrincipalTags.getSignalDatasourcesTag());
                 datasources.addAll(getArray(this.etmPrincipalTags.getSignalDatasourcesTag(), groupObjectMap, Collections.emptyList()));
             }
         }
-        StringBuilder result = new StringBuilder();
-        result.append("{ \"keywords\":[");
-        boolean first = true;
+        var builder = new JsonBuilder();
+        builder.startObject();
+        builder.startArray("keywords");
         for (String indexName : datasources) {
-            List<Keyword> keywords = getIndexFields(dataRepository, indexName);
-            if (!first) {
-                result.append(", ");
+            var keywords = getIndexFields(dataRepository, indexName);
+            builder.startObject();
+            builder.field("index", indexName);
+            builder.startArray("keywords");
+            for (var keyword : keywords) {
+                builder.startObject();
+                builder.field("name", keyword.getName());
+                builder.field("type", keyword.getType());
+                builder.field("date", keyword.isDate());
+                builder.field("number", keyword.isNumber());
+                builder.endObject();
             }
-            first = false;
-            result.append("{");
-            result.append("\"index\": ").append(escapeToJson(indexName, true)).append(",");
-            result.append("\"keywords\": [").append(keywords.stream().map(n -> {
-                StringBuilder kw = new StringBuilder();
-                kw.append("{");
-                addStringElementToJsonBuffer("name", n.getName(), kw, true);
-                addStringElementToJsonBuffer("type", n.getType(), kw, false);
-                addBooleanElementToJsonBuffer("date", n.isDate(), kw, false);
-                addBooleanElementToJsonBuffer("number", n.isNumber(), kw, false);
-                kw.append("}");
-                return kw.toString();
-            }).collect(Collectors.joining(", "))).append("]");
-            result.append("}");
+            builder.endArray().endObject();
         }
-        result.append("]}");
-        return result.toString();
+        builder.endArray().endObject();
+        return builder.build();
     }
 
     @GET
@@ -416,7 +410,7 @@ public class SignalService extends AbstractUserAttributeService {
     }
 
     private String getGraphData(Signal signal, EtmPrincipal etmPrincipal, EtmGroup etmGroup, List<String> allowedDatasources) {
-        SignalSearchRequestBuilderBuilder signalSearchRequestBuilderBuilder = new SignalSearchRequestBuilderBuilder(dataRepository, etmConfiguration).setSignal(signal);
+        var signalSearchRequestBuilderBuilder = new SignalSearchRequestBuilderBuilder(dataRepository, etmConfiguration).setSignal(signal);
         if (allowedDatasources.indexOf(signal.getData().getDataSource()) < 0) {
             throw new EtmException(EtmException.NOT_AUTHORIZED_FOR_DASHBOARD_DATA_SOURCE);
         }
@@ -427,9 +421,9 @@ public class SignalService extends AbstractUserAttributeService {
             requestBuilder = signalSearchRequestBuilderBuilder.build(q -> addFilterQuery(etmPrincipal, q), etmPrincipal);
         }
         // Start building the response
-        StringBuilder result = new StringBuilder();
-        result.append("{");
-        result.append("\"locale\": ").append(getLocalFormatting(getEtmPrincipal()));
+        var builder = new JsonBuilder();
+        builder.startObject();
+        builder.field("locale", getLocalFormatting(getEtmPrincipal()));
         int exceededCount = 0;
         SearchResponse searchResponse = dataRepository.search(requestBuilder);
         Map<String, List<String>> seriesData = new LinkedHashMap<>();
@@ -449,43 +443,41 @@ public class SignalService extends AbstractUserAttributeService {
             }
         }
         if (signal.getThreshold() != null && signal.getThreshold().getComparison() != null) {
-            addIntegerElementToJsonBuffer("exceeded_count", exceededCount, result, false);
+            builder.field("exceeded_count", exceededCount);
         }
+        builder.startObject("chart_config");
+        builder.startObject("credits").field("enabled", false).endObject();
+        builder.startObject("tooltip").field("shared", true).endObject();
+        builder.startObject("title").field("text", "Signal visualization").endObject();
+        builder.startObject("time").field("timezone", etmPrincipal.getTimeZone().toZoneId().toString()).endObject();
+        builder.startObject("xAxis").field("type", "datetime").endObject();
+        builder.startObject("yAxis").startArray("plotLines").startObject().field("value", signal.getThreshold().getValue()).field("color", "red").field("dashStyle", "shortdash").field("width", 2).startObject("label").field("text", "Threshold limit").endObject().endObject().endArray().endObject();
+        builder.startObject("chart").field("type", "spline").endObject();
 
-        result.append(", \"chart_config\": {");
-        result.append("\"credits\": {\"enabled\": false}");
-        result.append(", \"tooltip\": {\"shared\": true}");
-        result.append(", \"title\": {\"text\": \"Signal visualization\"}");
-        result.append(", \"time\": {\"timezone\": " + escapeToJson(etmPrincipal.getTimeZone().toZoneId().toString(), true) + "}");
-        result.append(", \"xAxis\": {\"type\": \"datetime\"}");
-        result.append(", \"yAxis\": {\"plotLines\": [{ \"value\": " + signal.getThreshold().getValue() + ", \"color\": \"red\", \"dashStyle\": \"shortdash\", \"width\": 2, \"label\": {\"text\": \"Threshold limit\"}}]}");
-        result.append(", \"chart\": {\"type\": \"spline\"}");
-        result.append(", \"plotOptions\": {\"spline\": {\"marker\": {\"enabled\": true}}}");
-
-        result.append(", \"series\": [");
-        boolean firstSerie = true;
+        builder.startObject("plotOptions").startObject("spline").startObject("marker").field("enabled", true).endObject().endObject().endObject();
+        builder.startArray("series");
         for (Map.Entry<String, List<String>> entry : seriesData.entrySet()) {
-            if (!firstSerie) {
-                result.append(", ");
+            builder.startObject();
+            builder.field("name", entry.getKey());
+            builder.startArray("data");
+            for (var value : entry.getValue()) {
+                builder.rawElement(value);
             }
-            result.append("{ \"name\": " + escapeToJson(entry.getKey(), true));
-            result.append(", \"data\": [");
-            result.append(String.join(",", entry.getValue()));
-            result.append("], \"zones\": [");
+            builder.endArray();
+            builder.startArray("zones");
             if (Threshold.Comparison.GT.equals(signal.getThreshold().getComparison()) || Threshold.Comparison.GTE.equals(signal.getThreshold().getComparison())) {
-                result.append("{ \"value\": " + (Threshold.Comparison.GTE.equals(signal.getThreshold().getComparison()) ? signal.getThreshold().getValue() : signal.getThreshold().getValue() + 0.00000001) + "}");
-                result.append(", { \"color\": \"red\"}");
+                builder.startObject().field("value", (Threshold.Comparison.GTE.equals(signal.getThreshold().getComparison()) ? signal.getThreshold().getValue() : signal.getThreshold().getValue() + 0.00000001)).endObject();
+                builder.startObject().field("color", "red").endObject();
             } else if (Threshold.Comparison.LT.equals(signal.getThreshold().getComparison()) || Threshold.Comparison.LTE.equals(signal.getThreshold().getComparison())) {
-                result.append("{ \"value\": " + (Threshold.Comparison.LTE.equals(signal.getThreshold().getComparison()) ? signal.getThreshold().getValue() + 0.00000001 : signal.getThreshold().getValue()) + ", \"color\": \"red\"}");
+                builder.startObject().field("value", (Threshold.Comparison.GTE.equals(signal.getThreshold().getComparison()) ? signal.getThreshold().getValue() : signal.getThreshold().getValue() + 0.00000001)).field("color", "red").endObject();
             } else {
-                result.append("{ \"value\": " + (signal.getThreshold().getValue() - 0.00000001) + "}");
-                result.append(", { \"value\": " + (signal.getThreshold().getValue() + 0.00000001) + ", \"color\": \"red\"}");
+                builder.startObject().field("value", (signal.getThreshold().getValue() - 0.00000001)).endObject();
+                builder.startObject().field("value", (signal.getThreshold().getValue() + 0.00000001)).field("color", "red").endObject();
             }
-            result.append("]}");
-            firstSerie = false;
+            builder.endArray().endObject();
         }
-        result.append("]}}");
-        return result.toString();
+        builder.endArray().endObject().endObject();
+        return builder.build();
     }
 
     private int processAggregations(BucketKey root, HasAggregations aggregationHolder, Map<String, List<String>> seriesData, String currentName, Threshold threshold, int exceededCount) {

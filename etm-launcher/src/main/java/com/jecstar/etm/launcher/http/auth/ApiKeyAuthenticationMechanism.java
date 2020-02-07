@@ -30,7 +30,7 @@ public class ApiKeyAuthenticationMechanism implements AuthenticationMechanism {
     @Override
     public AuthenticationMechanismOutcome authenticate(HttpServerExchange exchange, SecurityContext securityContext) {
         String apiKey = exchange.getRequestHeaders().getFirst(API_KEY_HEADER);
-        if (apiKey == null) {
+        if (apiKey == null || apiKey.trim().length() == 0) {
             return NOT_ATTEMPTED;
         }
         Account account = this.identityManager.verify(new ApiKeyCredentials(apiKey));

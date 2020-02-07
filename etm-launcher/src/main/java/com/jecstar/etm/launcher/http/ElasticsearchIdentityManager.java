@@ -167,6 +167,10 @@ public class ElasticsearchIdentityManager implements IdentityManager {
                     .minimumShouldMatch(1);
             // Limit to a max of 2 api keys to narrow down the brute force attack vector.
             List<String> keys = apiKeyCredentials.getApiKeys().stream().limit(2).collect(Collectors.toList());
+            if (keys.size() == 0) {
+                log.logErrorMessage("No api key(s) provided.");
+                return null;
+            }
             for (var key : keys) {
                 apiKeyMatch
                         .should(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getApiKeyTag(), key))

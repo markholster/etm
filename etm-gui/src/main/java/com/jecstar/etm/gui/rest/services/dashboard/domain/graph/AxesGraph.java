@@ -1,5 +1,6 @@
 package com.jecstar.etm.gui.rest.services.dashboard.domain.graph;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.gui.rest.services.dashboard.domain.converter.XAxisConverter;
 import com.jecstar.etm.gui.rest.services.dashboard.domain.converter.YAxisConverter;
 import com.jecstar.etm.server.core.converter.JsonField;
@@ -96,15 +97,15 @@ public abstract class AxesGraph<T extends AxesGraph> extends Graph<T> {
     }
 
     @Override
-    public void appendHighchartsConfig(StringBuilder config) {
-        config.append(", \"legend\": {\"enabled\": " + isShowLegend() + "}");
+    public void appendHighchartsConfig(JsonBuilder builder) {
+        builder.startObject("legend").field("enabled", isShowLegend()).endObject();
         if (DateHistogramBucketAggregator.TYPE.equals(getXAxis().getBucketAggregator().getBucketAggregatorType())) {
-            config.append(", \"xAxis\": {\"type\": \"datetime\"}");
+            builder.startObject("xAxis").field("type", "datetime").endObject();
         } else if (TermBucketAggregator.TYPE.equals(getXAxis().getBucketAggregator().getBucketAggregatorType()) ||
                 SignificantTermBucketAggregator.TYPE.equals(getXAxis().getBucketAggregator().getBucketAggregatorType())) {
-            config.append(", \"xAxis\": {\"type\": \"category\"}");
+            builder.startObject("xAxis").field("type", "category").endObject();
         }
-        config.append(", \"yAxis\": { \"title\": { \"text\": " + this.jsonWriter.escapeToJson(getYAxis().getTitle(), true) + "}}");
+        builder.startObject("yAxis").startObject("title").field("text", getYAxis().getTitle()).endObject().endObject();
     }
 
     @Override

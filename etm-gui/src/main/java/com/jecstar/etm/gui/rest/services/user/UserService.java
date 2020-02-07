@@ -1,5 +1,6 @@
 package com.jecstar.etm.gui.rest.services.user;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.gui.rest.AbstractGuiService;
 import com.jecstar.etm.server.core.Etm;
 import com.jecstar.etm.server.core.EtmException;
@@ -16,7 +17,6 @@ import com.jecstar.etm.server.core.elasticsearch.builder.UpdateRequestBuilder;
 import com.jecstar.etm.server.core.persisting.RequestEnhancer;
 import com.jecstar.etm.server.core.util.BCrypt;
 import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.script.ScriptType;
@@ -48,7 +48,12 @@ public class UserService extends AbstractGuiService {
     }
 
     public UserService() {
-        this.timezoneResponse = "{\"time_zones\": [" + Arrays.stream(TimeZone.getAvailableIDs()).map(tz -> escapeToJson(tz, true)).collect(Collectors.joining(",")) + "], " + escapeObjectToJsonNameValuePair("default_time_zone", TimeZone.getDefault().getID()) + "}";
+        var builder = new JsonBuilder();
+        builder.startObject();
+        builder.field("time_zones", Arrays.stream(TimeZone.getAvailableIDs()).collect(Collectors.toList()));
+        builder.field("default_time_zone", TimeZone.getDefault().getID());
+        builder.endObject();
+        this.timezoneResponse = builder.build();
     }
 
     @SuppressWarnings("unchecked")
@@ -122,7 +127,7 @@ public class UserService extends AbstractGuiService {
     @Path("/api_key")
     @Produces(MediaType.APPLICATION_JSON)
     public String createNewApiKey() {
-        return "{" + this.escapeObjectToJsonNameValuePair("api_key", UUID.randomUUID().toString()) + "}";
+        return new JsonBuilder().startObject().field("api_key", UUID.randomUUID().toString()).endObject().build();
     }
 
     @PUT
@@ -173,27 +178,39 @@ public class UserService extends AbstractGuiService {
     @Path("/locales")
     @Produces(MediaType.APPLICATION_JSON)
     public String getLocales() {
-        Locale requestedLocale = getEtmPrincipal().getLocale();
-        return "{\"locales\": [" + Arrays.stream(Locale.getAvailableLocales()).filter(p -> p.getCountry().length() > 0).sorted(Comparator.comparing(o -> o.getDisplayName(requestedLocale))).map(l -> "{\"name\": " + escapeToJson(l.getDisplayName(requestedLocale), true) + ", \"value\": " + escapeToJson(l.toLanguageTag(), true) + "}")
-                .collect(Collectors.joining(","))
-                + "], \"default_locale\": {" + escapeObjectToJsonNameValuePair("name", Locale.getDefault().getDisplayName(requestedLocale))
-                + ", " + escapeObjectToJsonNameValuePair("value", Locale.getDefault().toLanguageTag()) + "}}";
+        var requestedLocale = getEtmPrincipal().getLocale();
+        var localeList = Arrays.stream(Locale.getAvailableLocales()).filter(p -> p.getCountry().length() > 0).sorted(Comparator.comparing(o -> o.getDisplayName(requestedLocale))).collect(Collectors.toList());
+        var builder = new JsonBuilder();
+        builder.startObject();
+        builder.startArray("locales");
+        for (var locale : localeList) {
+            builder.startObject();
+            builder.field("name", locale.getDisplayName(requestedLocale));
+            builder.field("value", locale.toLanguageTag());
+            builder.endObject();
+        }
+        builder.endArray();
+        builder.startObject("default_locale");
+        builder.field("name", Locale.getDefault().getDisplayName(requestedLocale));
+        builder.field("value", Locale.getDefault().toLanguageTag());
+        builder.endObject().endObject();
+        return builder.build();
     }
 
     @GET
     @Path("/etminfo")
     @Produces(MediaType.APPLICATION_JSON)
     public String getEvents() {
-        StringBuilder result = new StringBuilder();
-        NumberFormat numberFormat = NumberFormat.getInstance(getEtmPrincipal().getLocale());
-        SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL))
+        var numberFormat = NumberFormat.getInstance(getEtmPrincipal().getLocale());
+        var searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL))
                 .setSize(0).trackTotalHits(true).setQuery(QueryBuilders.matchAllQuery());
-        SearchResponse searchResponse = dataRepository.search(searchRequestBuilder);
-        result.append("{");
-        addLongElementToJsonBuffer("event_count", searchResponse.getHits().getTotalHits().value, result, true);
-        addStringElementToJsonBuffer("event_count_as_string", numberFormat.format(searchResponse.getHits().getTotalHits().value), result, false);
-        addStringElementToJsonBuffer("etm_version", Etm.getVersion(), result, false);
-        result.append("}");
-        return result.toString();
+        var searchResponse = dataRepository.search(searchRequestBuilder);
+        var builder = new JsonBuilder();
+        builder.startObject();
+        builder.field("event_count", searchResponse.getHits().getTotalHits().value);
+        builder.field("event_count_as_string", numberFormat.format(searchResponse.getHits().getTotalHits().value));
+        builder.field("etm_version", Etm.getVersion());
+        builder.endObject();
+        return builder.build();
     }
 }

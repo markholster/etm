@@ -5,6 +5,7 @@ import com.jecstar.etm.domain.builder.ApplicationBuilder;
 import com.jecstar.etm.domain.builder.EndpointBuilder;
 import com.jecstar.etm.domain.builder.EndpointHandlerBuilder;
 import com.jecstar.etm.domain.builder.MessagingTelemetryEventBuilder;
+import com.jecstar.etm.domain.writer.json.MessagingTelemetryEventWriterJsonImpl;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -72,6 +73,8 @@ public class TelemetryEventTest {
                 .build();
 
         assertEquals(builder1.build().getCalculatedHash(), builder2.build().getCalculatedHash());
+        MessagingTelemetryEventWriterJsonImpl writerJson = new MessagingTelemetryEventWriterJsonImpl();
+        System.out.println(writerJson.write(builder1.build()));
     }
 
 }

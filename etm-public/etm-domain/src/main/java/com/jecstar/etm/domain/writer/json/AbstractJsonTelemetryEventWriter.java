@@ -16,7 +16,6 @@ import java.util.Map.Entry;
 public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEvent<Event>> implements TelemetryEventWriter<String, Event> {
 
     private final TelemetryEventTags tags = new TelemetryEventTagsJsonImpl();
-    final JsonWriter jsonWriter = new JsonWriter();
 
     @Override
     public String write(Event event) {
@@ -24,69 +23,62 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
     }
 
     protected String write(Event event, boolean includeId, boolean includePayloadEncoding) {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("{");
-        boolean added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getObjectTypeTag(), getType(), sb, true);
+        var builder = new JsonBuilder();
+        builder.startObject();
+        builder.field(this.tags.getObjectTypeTag(), getType());
         if (includeId) {
-            added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getIdTag(), event.id, sb, !added) || added;
+            builder.field(this.tags.getIdTag(), event.id);
         }
-        added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getCorrelationIdTag(), event.correlationId, sb, !added) || added;
-        added = addMapElementToJsonBuffer(this.tags.getCorrelationDataTag(), event.correlationData, sb, !added) || added;
+        builder.field(this.tags.getCorrelationIdTag(), event.correlationId);
+        addMapElementToJsonBuilder(this.tags.getCorrelationDataTag(), event.correlationData, builder);
         if (event.endpoints.size() != 0) {
-            if (added) {
-                sb.append(", ");
+            builder.startArray(getTags().getEndpointsTag());
+            for (var endpoint : event.endpoints) {
+                addEndpointToJsonBuilder(endpoint, builder, this.tags);
             }
-            sb.append(this.jsonWriter.escapeToJson(getTags().getEndpointsTag(), true)).append(": [");
-            boolean endpointAdded = false;
-            for (int i = 0; i < event.endpoints.size(); i++) {
-                endpointAdded = addEndpointToJsonBuffer(event.endpoints.get(i), sb, i == 0 || !endpointAdded, getTags()) || endpointAdded;
-            }
-            sb.append("]");
-            added = endpointAdded || added;
+            builder.endArray();
         }
-        added = addMapElementToJsonBuffer(this.tags.getExtractedDataTag(), event.extractedData, sb, !added) || added;
-        added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getNameTag(), event.name, sb, !added) || added;
-        added = addMapElementToJsonBuffer(this.tags.getMetadataTag(), event.metadata, sb, !added) || added;
-        added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getPayloadTag(), event.payload, sb, !added) || added;
+        if (!event.extractedData.isEmpty()) {
+            builder.startObject(this.tags.getCorrelationDataTag());
+            for (Entry<String, Object> entry : event.extractedData.entrySet()) {
+                builder.fieldAsString(entry.getKey(), entry.getValue());
+            }
+            builder.endObject();
+        }
+        addMapElementToJsonBuilder(this.tags.getExtractedDataTag(), event.extractedData, builder);
+        builder.field(this.tags.getNameTag(), event.name);
+        addMapElementToJsonBuilder(this.tags.getMetadataTag(), event.metadata, builder);
+        builder.field(this.tags.getPayloadTag(), event.payload);
         if (event.payloadEncoding != null) {
-            added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getPayloadEncodingTag(), event.payloadEncoding.name(), sb, !added) || added;
+            builder.field(this.tags.getPayloadEncodingTag(), event.payloadEncoding.name());
         }
         if (event.payloadFormat != null) {
-            added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getPayloadFormatTag(), event.payloadFormat.name(), sb, !added) || added;
+            builder.field(this.tags.getPayloadFormatTag(), event.payloadFormat.name());
         }
         if (event.payload != null) {
-            added = this.jsonWriter.addIntegerElementToJsonBuffer(this.tags.getPayloadLengthTag(), event.payload.length(), sb, !added) || added;
+            builder.field(this.tags.getPayloadLengthTag(), event.payload.length());
         }
-        added = doWrite(event, sb, !added) || added;
-        sb.append("}");
-        return sb.toString();
+        doWrite(event, builder);
+        builder.endObject();
+        return builder.build();
     }
 
     abstract String getType();
 
-    abstract boolean doWrite(Event event, StringBuilder buffer, boolean firstElement);
+    abstract void doWrite(Event event, JsonBuilder builder);
 
-    private boolean addMapElementToJsonBuffer(String elementName, Map<String, Object> elementValues, StringBuilder buffer, boolean firstElement) {
+    private void addMapElementToJsonBuilder(String elementName, Map<String, Object> elementValues, JsonBuilder builder) {
         if (elementValues.size() < 1) {
-            return false;
+            return;
         }
-        if (!firstElement) {
-            buffer.append(", ");
-        }
-        buffer.append(this.jsonWriter.escapeToJson(elementName, true)).append(": {");
-        firstElement = true;
+        builder.startObject(elementName);
         for (Entry<String, Object> entry : elementValues.entrySet()) {
-            if (!firstElement) {
-                buffer.append(", ");
-            }
-            buffer.append(this.jsonWriter.escapeObjectToJsonNameValuePair(entry.getKey(), entry.getValue()));
-            firstElement = false;
+            builder.fieldAsString(entry.getKey(), entry.getValue());
         }
-        buffer.append("}");
-        return true;
+        builder.endObject();
     }
 
-    private boolean addEndpointToJsonBuffer(Endpoint endpoint, StringBuilder buffer, boolean firstElement, TelemetryEventTags tags) {
+    private void addEndpointToJsonBuilder(Endpoint endpoint, JsonBuilder builder, TelemetryEventTags tags) {
         boolean endpointHandlerSet = false;
         for (EndpointHandler handler : endpoint.getEndpointHandlers()) {
             if (handler.isSet()) {
@@ -95,82 +87,64 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
             }
         }
         if (endpoint.name == null && !endpointHandlerSet) {
-            return false;
+            return;
         }
-        if (!firstElement) {
-            buffer.append(", ");
-        }
-        buffer.append("{");
-        boolean added = this.jsonWriter.addStringElementToJsonBuffer(tags.getEndpointNameTag(), endpoint.name, buffer, true);
+
+        builder.startObject();
+        builder.field(tags.getEndpointNameTag(), endpoint.name);
         if (endpoint.protocolType != null) {
-            added = this.jsonWriter.addStringElementToJsonBuffer(tags.getEndpointProtocolTag(), endpoint.protocolType.name(), buffer, !added) || added;
+            builder.field(tags.getEndpointProtocolTag(), endpoint.protocolType.name());
         }
         if (endpointHandlerSet) {
-            if (added) {
-                buffer.append(", ");
-            }
-            buffer.append(this.jsonWriter.escapeToJson(getTags().getEndpointHandlersTag(), true)).append(": [");
-            added = false;
+            builder.startArray(getTags().getEndpointHandlersTag());
             EndpointHandler writingEndpointHandler = endpoint.getWritingEndpointHandler();
             Instant latencyStart = null;
             if (writingEndpointHandler != null) {
-                added = addEndpointHandlerToJsonBuffer(null, writingEndpointHandler, buffer, true, getTags()) || added;
+                addEndpointHandlerToJsonBuilder(null, writingEndpointHandler, builder, getTags());
                 latencyStart = writingEndpointHandler.handlingTime;
             }
 
             for (EndpointHandler endpointHandler : endpoint.getReadingEndpointHandlers()) {
-                added = addEndpointHandlerToJsonBuffer(latencyStart, endpointHandler, buffer, !added, getTags()) || added;
+                addEndpointHandlerToJsonBuilder(latencyStart, endpointHandler, builder, getTags());
             }
-            buffer.append("]");
-            added = true;
+            builder.endArray();
         }
-        buffer.append("}");
-        return added;
+        builder.endObject();
     }
 
-    private boolean addEndpointHandlerToJsonBuffer(Instant latencyStart, EndpointHandler endpointHandler, StringBuilder buffer, boolean firstElement, TelemetryEventTags tags) {
+    private void addEndpointHandlerToJsonBuilder(Instant latencyStart, EndpointHandler endpointHandler, JsonBuilder builder, TelemetryEventTags tags) {
         if (!endpointHandler.isSet()) {
-            return false;
+            return;
         }
-        if (!firstElement) {
-            buffer.append(", ");
-        }
-        buffer.append("{");
-        boolean added = this.jsonWriter.addStringElementToJsonBuffer(tags.getEndpointHandlerTypeTag(), endpointHandler.type.name(), buffer, true);
+        builder.startObject();
+        builder.field(tags.getEndpointHandlerTypeTag(), endpointHandler.type.name());
         if (endpointHandler.handlingTime != null) {
-            added = this.jsonWriter.addInstantElementToJsonBuffer(tags.getEndpointHandlerHandlingTimeTag(), endpointHandler.handlingTime, buffer, !added) || added;
+            builder.field(tags.getEndpointHandlerHandlingTimeTag(), endpointHandler.handlingTime);
             if (latencyStart != null) {
-                added = this.jsonWriter.addLongElementToJsonBuffer(tags.getEndpointHandlerLatencyTag(), endpointHandler.handlingTime.toEpochMilli() - latencyStart.toEpochMilli(), buffer, !added) || added;
+                builder.field(tags.getEndpointHandlerLatencyTag(), endpointHandler.handlingTime.toEpochMilli() - latencyStart.toEpochMilli());
             }
         }
-        added = this.jsonWriter.addStringElementToJsonBuffer(this.tags.getEndpointHandlerTransactionIdTag(), endpointHandler.transactionId, buffer, !added) || added;
-        added = this.jsonWriter.addIntegerElementToJsonBuffer(this.tags.getEndpointHandlerSequenceNumberTag(), endpointHandler.sequenceNumber, buffer, !added) || added;
-        added = addMapElementToJsonBuffer(this.tags.getMetadataTag(), endpointHandler.metadata, buffer, !added) || added;
+        builder.field(tags.getEndpointHandlerTransactionIdTag(), endpointHandler.transactionId);
+        builder.field(tags.getEndpointHandlerSequenceNumberTag(), endpointHandler.sequenceNumber);
+        addMapElementToJsonBuilder(tags.getMetadataTag(), endpointHandler.metadata, builder);
         Application application = endpointHandler.application;
         if (application.isSet()) {
-            if (added) {
-                buffer.append(", ");
-            }
-            buffer.append(this.jsonWriter.escapeToJson(tags.getEndpointHandlerApplicationTag(), true)).append(": {");
-            added = this.jsonWriter.addStringElementToJsonBuffer(tags.getApplicationNameTag(), application.name, buffer, true);
-            added = this.jsonWriter.addInetAddressElementToJsonBuffer(tags.getApplicationHostAddressTag(), tags.getApplicationHostNameTag(), application.hostAddress, buffer, !added) || added;
-            added = this.jsonWriter.addStringElementToJsonBuffer(tags.getApplicationInstanceTag(), application.instance, buffer, !added) || added;
-            added = this.jsonWriter.addStringElementToJsonBuffer(tags.getApplicationVersionTag(), application.version, buffer, !added) || added;
-            added = this.jsonWriter.addStringElementToJsonBuffer(tags.getApplicationPrincipalTag(), application.principal, buffer, !added) || added;
-            buffer.append("}");
+            builder.startObject(tags.getEndpointHandlerApplicationTag());
+            builder.field(tags.getApplicationNameTag(), application.name);
+            builder.field(tags.getApplicationHostAddressTag(), tags.getApplicationHostNameTag(), application.hostAddress);
+            builder.field(tags.getApplicationInstanceTag(), application.instance);
+            builder.field(tags.getApplicationVersionTag(), application.version);
+            builder.field(tags.getApplicationPrincipalTag(), application.principal);
+            builder.endObject();
         }
         Location location = endpointHandler.location;
         if (location.isSet()) {
-            if (added) {
-                buffer.append(", ");
-            }
-            buffer.append(this.jsonWriter.escapeToJson(tags.getEndpointHandlerLocationTag(), true)).append(": {");
-            added = this.jsonWriter.addDoubleElementToJsonBuffer(tags.getLatitudeTag(), location.latitude, buffer, true);
-            added = this.jsonWriter.addDoubleElementToJsonBuffer(tags.getLongitudeTag(), location.longitude, buffer, !added) || added;
-            buffer.append("}");
+            builder.startObject(tags.getEndpointHandlerLocationTag());
+            builder.field(tags.getLatitudeTag(), location.latitude);
+            builder.field(tags.getLongitudeTag(), location.longitude);
+            builder.endObject();
         }
-        buffer.append("}");
-        return true;
+        builder.endObject();
     }
 
     @Override

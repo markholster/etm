@@ -1,6 +1,7 @@
 package com.jecstar.etm.server.core.domain.converter.json;
 
 import com.jecstar.etm.domain.LogTelemetryEvent;
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.domain.writer.json.LogTelemetryEventWriterJsonImpl;
 import com.jecstar.etm.server.core.domain.converter.TelemetryEventConverter;
 
@@ -16,9 +17,9 @@ public class LogTelemetryEventConverterJsonImpl extends LogTelemetryEventWriterJ
     }
 
     @Override
-    protected boolean doWrite(LogTelemetryEvent event, StringBuilder buffer, boolean firstElement) {
-        boolean added = this.converter.addDatabaseFields(buffer, event, firstElement);
-        return super.doWrite(event, buffer, !added);
+    protected void doWrite(LogTelemetryEvent event, JsonBuilder builder) {
+        this.converter.addDatabaseFields(event, builder);
+        super.doWrite(event, builder);
     }
 
     @Override

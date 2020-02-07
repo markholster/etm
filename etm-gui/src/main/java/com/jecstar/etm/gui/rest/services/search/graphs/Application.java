@@ -1,5 +1,7 @@
 package com.jecstar.etm.gui.rest.services.search.graphs;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
+
 import java.util.Objects;
 
 public class Application extends AbstractVertex {
@@ -31,9 +33,9 @@ public class Application extends AbstractVertex {
     }
 
     @Override
-    protected void doWriteToJson(StringBuilder buffer) {
-        jsonWriter.addStringElementToJsonBuffer("name", getName(), buffer, false);
-        jsonWriter.addStringElementToJsonBuffer("instance", getInstance(), buffer, false);
+    protected void doWriteToJson(JsonBuilder builder) {
+        builder.field("name", getName());
+        builder.field("instance", getInstance());
     }
 
     @Override

@@ -46,6 +46,7 @@ Depending on the selected graph type the following attributes will be visible in
 Name | Description
 --- | ---
 Subtype | Can be 'Basic', 'Percentage' or 'Stacked' for the Area and Bar graph, and 'Basic', 'Donut' or 'Semi Circle' for the Pie graph. The 'Percentage' subtype divides each category to a percentage of the total. On the other hand the 'Stacked' subtype stacks all categories. The 'Donut' subtype shows a pie with a hole in the middle and the 'Semi Circle' shows half a donut.
+Font size | The font size that will be used to display the text of the graph.
 Line type | This attribute is available for graphs with a line. It determines how the line in the graph should be drawn.
 Orientation | This attribute is available for graphs with a x-axis and y-axis. Switching from 'Vertical' to 'Horizontal' will flip the x-axis and y-axis.
 Show markers | By setting this attribute to 'Yes' each point on the graph will have a marker.

@@ -1,5 +1,6 @@
 package com.jecstar.etm.server.core.converter.custom;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
@@ -47,10 +48,12 @@ public class NestedListEnumConverterTest {
         enums.add(MyEnum.ONE);
         enums.add(MyEnum.TWO);
         enums.add(MyEnum.THREE);
-        StringBuilder json = new StringBuilder();
-        converter.addToJsonBuffer("enums", enums, json, true);
+        var builder = new JsonBuilder();
+        builder.startObject();
+        converter.addToJsonBuffer("enums", enums, builder);
+        builder.endObject();
 
-        assertEquals("\"enums\": [ONE,TWO,THREE]", json.toString());
+        assertEquals("{\"enums\":[\"ONE\",\"TWO\",\"THREE\"]}", builder.build());
 
         var enumHolder = new EnumListHolder();
         Field field = enumHolder.getClass().getDeclaredField("enums");

@@ -56,7 +56,7 @@ public class DirectoryTest {
         ldapConfiguration.setUserEmailAttribute(EmbeddableLdapServer.USER_EMAIL_ATTRIBUTE);
         // Set the group mapping
         ldapConfiguration.setUserGroupsQueryBaseDn(EmbeddableLdapServer.GROUP_BASE_DN);
-        ldapConfiguration.setUserGroupsQueryFilter("(| (member={dn}) (uniqueMember={dn}) (memberUid={uid}))");
+        ldapConfiguration.setUserGroupsQueryFilter("(|(member={dn})(uniqueMember={dn})(memberUid={uid}))");
         return ldapConfiguration;
     }
 

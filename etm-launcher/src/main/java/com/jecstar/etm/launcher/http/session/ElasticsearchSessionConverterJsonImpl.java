@@ -1,5 +1,6 @@
 package com.jecstar.etm.launcher.http.session;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
@@ -39,41 +40,36 @@ public class ElasticsearchSessionConverterJsonImpl extends JsonConverter impleme
 
     @Override
     public String write(ElasticsearchSession session) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("{");
-        addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION, sb, true);
-        sb.append(", " + escapeToJson(ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION, true) + ": {");
-        addLongElementToJsonBuffer(this.tags.getLastAccessedTag(), session.getLastAccessedTime(), sb, true);
-        addStringElementToJsonBuffer(this.getTags().getIdTag(), session.getId(), sb, false);
-        sb.append(", ").append(escapeToJson(this.tags.getAttributesTag(), true)).append(": [");
+        var builder = new JsonBuilder();
+        builder.startObject();
+        builder.field(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION);
+        builder.startObject(ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION);
+        builder.field(this.tags.getLastAccessedTag(), session.getLastAccessedTime());
+        builder.field(this.getTags().getIdTag(), session.getId());
+        builder.startArray(this.tags.getAttributesTag());
         Set<String> attributeNames = session.getAttributeNames();
-        boolean first = true;
         for (String name : attributeNames) {
-            if (!first) {
-                sb.append(",");
-            }
-            first = false;
-            sb.append("{");
-            addStringElementToJsonBuffer(this.tags.getAttributeKeyTag(), name, sb, true);
+            builder.startObject();
+            builder.field(this.tags.getAttributeKeyTag(), name);
             Object attribute = session.getAttribute(name);
             if (attribute instanceof String) {
-                addStringElementToJsonBuffer(this.tags.getAttributeValueTypeTag(), String.class.getName(), sb, false);
-                addStringElementToJsonBuffer(this.tags.getAttributeValueTag(), attribute.toString(), sb, false);
+                builder.field(this.tags.getAttributeValueTypeTag(), String.class.getName());
+                builder.field(this.tags.getAttributeValueTag(), attribute.toString());
             } else if (attribute instanceof Boolean) {
-                addStringElementToJsonBuffer(this.tags.getAttributeValueTypeTag(), Boolean.class.getName(), sb, false);
-                addStringElementToJsonBuffer(this.tags.getAttributeValueTag(), attribute.toString(), sb, false);
+                builder.field(this.tags.getAttributeValueTypeTag(), Boolean.class.getName());
+                builder.field(this.tags.getAttributeValueTag(), attribute.toString());
             } else if (attribute instanceof Serializable) {
-                addStringElementToJsonBuffer(this.tags.getAttributeValueTypeTag(), attribute.getClass().getName(), sb, false);
-                addStringElementToJsonBuffer(this.tags.getAttributeValueTag(), serializeAttribute((Serializable) attribute), sb, false);
+                builder.field(this.tags.getAttributeValueTypeTag(), attribute.getClass().getName());
+                builder.field(this.tags.getAttributeValueTag(), serializeAttribute((Serializable) attribute));
             }
-            sb.append("}");
+            builder.endObject();
         }
-        sb.append("]}}");
-        return sb.toString();
+        builder.endArray().endObject().endObject();
+        return builder.build();
     }
 
     private String serializeAttribute(Serializable attribute) {
-        try (final ByteArrayOutputStream out = new ByteArrayOutputStream(); final ObjectOutputStream objectOutputStream = new ObjectOutputStream(out);) {
+        try (final ByteArrayOutputStream out = new ByteArrayOutputStream(); final ObjectOutputStream objectOutputStream = new ObjectOutputStream(out)) {
             objectOutputStream.writeObject(attribute);
             objectOutputStream.close();
             return Base64.getEncoder().encodeToString(out.toByteArray());
@@ -83,7 +79,7 @@ public class ElasticsearchSessionConverterJsonImpl extends JsonConverter impleme
     }
 
     private Object deserializeAttribute(String attribute) {
-        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(Base64.getDecoder().decode(attribute)));) {
+        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(Base64.getDecoder().decode(attribute)))) {
             return in.readObject();
         } catch (IOException | ClassNotFoundException e) {
             throw new EtmException(EtmException.WRAPPED_EXCEPTION, e);

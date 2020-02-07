@@ -1,5 +1,7 @@
 package com.jecstar.etm.gui.rest.services.dashboard.domain.graph;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
+
 public enum LineType {
 
     STRAIGHT, SMOOTH, STEP_LEFT, STEP_CENTER, STEP_RIGHT;
@@ -24,14 +26,13 @@ public enum LineType {
         throw new IllegalArgumentException("Unsupported graph: " + axesGraph.getClass().getName());
     }
 
-    public String getHighchartsPlotOptions(boolean firstElement) {
+    public void addHighchartsPlotOptions(JsonBuilder builder) {
         if (STEP_LEFT.equals(this)) {
-            return (firstElement ? "" : ", ") + "\"step\": \"left\"";
+            builder.field("step", "left");
         } else if (STEP_CENTER.equals(this)) {
-            return (firstElement ? "" : ", ") + "\"step\": \"center\"";
+            builder.field("step", "center");
         } else if (STEP_RIGHT.equals(this)) {
-            return (firstElement ? "" : ", ") + "\"step\": \"right\"";
+            builder.field("step", "right");
         }
-        return "";
     }
 }

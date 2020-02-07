@@ -1,5 +1,6 @@
 package com.jecstar.etm.server.core.converter.custom;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.server.core.converter.CustomFieldConverter;
 import com.jecstar.etm.server.core.converter.JsonEntityConverter;
 
@@ -7,7 +8,6 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class NestedNamedMapObjectConverter<V, T extends Map<String, V>> extends JsonEntityConverter<T> implements CustomFieldConverter<T> {
 
@@ -20,20 +20,15 @@ public class NestedNamedMapObjectConverter<V, T extends Map<String, V>> extends 
     }
 
     @Override
-    public boolean addToJsonBuffer(String jsonKey, T values, StringBuilder result, boolean firstElement) {
+    public void addToJsonBuffer(String jsonKey, T values, JsonBuilder builder) {
         if (values == null) {
-            return false;
+            return;
         }
-        if (!firstElement) {
-            result.append(", ");
+        builder.startObject(jsonKey);
+        for (var entry : values.entrySet()) {
+            builder.rawField(entry.getKey(), this.entityConverter.write(entry.getValue()));
         }
-        result.append(jsonConverter.escapeToJson(jsonKey, true));
-        result.append(": {");
-        result.append(values.entrySet().stream()
-                .map(e -> jsonConverter.escapeToJson(e.getKey(), true) + ":" + this.entityConverter.write(e.getValue()))
-                .collect(Collectors.joining(",")));
-        result.append("}");
-        return true;
+        builder.endObject();
     }
 
     @SuppressWarnings("unchecked")

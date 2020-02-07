@@ -1,5 +1,6 @@
 package com.jecstar.etm.server.core.rest;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.server.core.domain.QueryOccurrence;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import com.jecstar.etm.server.core.domain.principal.EtmGroup;
@@ -130,17 +131,17 @@ public abstract class AbstractJsonService extends JsonConverter {
     }
 
     protected String getLocalFormatting(EtmPrincipal etmPrincipal) {
-        NumberFormat numberFormat = NumberFormat.getInstance(etmPrincipal.getLocale());
-        DecimalFormatSymbols decimalFormatSymbols = new DecimalFormatSymbols(etmPrincipal.getLocale());
-        DateFormatSymbols dateFormatSymbols = DateFormatSymbols.getInstance(etmPrincipal.getLocale());
-        StringBuilder result = new StringBuilder();
-        result.append("{");
-        addStringElementToJsonBuffer("decimal", "" + decimalFormatSymbols.getDecimalSeparator(), result, true);
-        addStringElementToJsonBuffer("thousands", "" + decimalFormatSymbols.getGroupingSeparator(), result, false);
-        addStringElementToJsonBuffer("timezone", "" + etmPrincipal.getTimeZone().toZoneId().toString(), result, false);
-        result.append(",\"currency\": [\"").append(numberFormat.getCurrency().getSymbol(etmPrincipal.getLocale())).append("\", \"\"]");
-        result.append("}");
-        return result.toString();
+        var numberFormat = NumberFormat.getInstance(etmPrincipal.getLocale());
+        var decimalFormatSymbols = new DecimalFormatSymbols(etmPrincipal.getLocale());
+        var dateFormatSymbols = DateFormatSymbols.getInstance(etmPrincipal.getLocale());
+        final var builder = new JsonBuilder();
+        builder.startObject();
+        builder.field("decimal", "" + decimalFormatSymbols.getDecimalSeparator());
+        builder.field("thousands", "" + decimalFormatSymbols.getGroupingSeparator());
+        builder.field("timezone", "" + etmPrincipal.getTimeZone().toZoneId().toString());
+        builder.field("currency", numberFormat.getCurrency().getSymbol(etmPrincipal.getLocale()), "");
+        builder.endObject();
+        return builder.build();
     }
 
     /**

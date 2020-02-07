@@ -1,5 +1,6 @@
 package com.jecstar.etm.server.core.converter;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
@@ -105,7 +106,7 @@ public class JsonEntityConverter<T> implements EntityConverter<T, String> {
                     if (fieldType.equals(Float.class)) {
                         field.set(entity, value);
                     } else if (value == null) {
-                        field.setFloat(entity, 0f);
+                        field.setFloat(entity, 0F);
                     } else {
                         field.setFloat(entity, value);
                     }
@@ -181,8 +182,8 @@ public class JsonEntityConverter<T> implements EntityConverter<T, String> {
 
     @SuppressWarnings("unchecked")
     private String createJson(T entity) {
-        StringBuilder result = new StringBuilder();
-        result.append("{");
+        JsonBuilder builder = new JsonBuilder();
+        builder.startObject();
         Class<?> clazz = entity.getClass();
         ClassMetadata classMetadata = this.classMetadataCache.get(entity.getClass());
         if (classMetadata == null) {
@@ -190,10 +191,10 @@ public class JsonEntityConverter<T> implements EntityConverter<T, String> {
             this.classMetadataCache.put(clazz, classMetadata);
         }
         if (classMetadata.getJsonNamespace() != null) {
-            this.jsonConverter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, classMetadata.getJsonNamespace(), result, true);
-            result.append(", " + this.jsonConverter.escapeToJson(classMetadata.getJsonNamespace(), true) + ": {");
+            builder.field(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, classMetadata.getJsonNamespace());
+            builder.startObject(classMetadata.getJsonNamespace());
         }
-        boolean added = beforeJsonFields(entity, result, true);
+        beforeJsonFields(entity, builder);
         for (Field field : classMetadata.getFields()) {
             JsonField jsonField = field.getAnnotation(JsonField.class);
             Class<? extends CustomFieldConverter> converterClass = jsonField.converterClass();
@@ -203,90 +204,101 @@ public class JsonEntityConverter<T> implements EntityConverter<T, String> {
                 Object value = field.get(entity);
                 if (!converterClass.equals(JsonField.DefaultCustomConverter.class)) {
                     CustomFieldConverter fieldConverter = classMetadata.getFieldConverters().get(field);
-                    added = fieldConverter.addToJsonBuffer(jsonKey, value, result, !added) || added;
+                    fieldConverter.addToJsonBuffer(jsonKey, value, builder);
                     continue;
                 }
-                added = addElementToJson(fieldType, value, jsonKey, jsonField.writeWhenNull(), result, !added) || added;
+                addElementToJson(fieldType, value, jsonKey, jsonField.writeWhenNull(), false, builder);
             } catch (IllegalAccessException e) {
                 if (log.isErrorLevelEnabled()) {
                     log.logErrorMessage(e.getMessage(), e);
                 }
             }
         }
-        afterJsonFields(entity, result, added);
+        afterJsonFields(entity, builder);
         if (classMetadata.getJsonNamespace() != null) {
-            result.append("}");
+            builder.endObject();
         }
-        result.append("}");
-        return result.toString();
+        builder.endObject();
+        return builder.build();
     }
 
-    private boolean addElementToJson(Class entityClass, Object value, String jsonKey, boolean writeWhenNull, StringBuilder buffer, boolean firstElement) {
-        boolean added = !firstElement;
+    private void addElementToJson(Class entityClass, Object value, String jsonKey, boolean writeWhenNull, boolean asArrayValue, JsonBuilder builder) {
         if (entityClass.equals(String.class)) {
-            added = this.jsonConverter.addStringElementToJsonBuffer(jsonKey, (String) value, writeWhenNull, buffer, !added) || added;
+            if (asArrayValue) {
+                builder.rawElement(JsonBuilder.escapeToJson((String) value, true));
+            } else {
+                builder.field(jsonKey, (String) value, writeWhenNull);
+            }
         } else if (entityClass.equals(Long.class) || entityClass.equals(long.class)) {
-            added = this.jsonConverter.addLongElementToJsonBuffer(jsonKey, (Long) value, writeWhenNull, buffer, !added) || added;
+            if (asArrayValue) {
+                builder.rawElement(value.toString());
+            } else {
+                builder.field(jsonKey, (Long) value, writeWhenNull);
+            }
         } else if (entityClass.equals(Double.class) || entityClass.equals(double.class)) {
-            added = this.jsonConverter.addDoubleElementToJsonBuffer(jsonKey, (Double) value, writeWhenNull, buffer, !added) || added;
+            if (asArrayValue) {
+                builder.rawElement(value.toString());
+            } else {
+                builder.field(jsonKey, (Double) value, writeWhenNull);
+            }
         } else if (entityClass.equals(Float.class) || entityClass.equals(float.class)) {
-            added = this.jsonConverter.addFloatElementToJsonBuffer(jsonKey, (Float) value, writeWhenNull, buffer, !added) || added;
+            if (asArrayValue) {
+                builder.rawElement(value.toString());
+            } else {
+                builder.field(jsonKey, (Float) value, writeWhenNull);
+            }
         } else if (entityClass.equals(Integer.class) || entityClass.equals(int.class)) {
-            added = this.jsonConverter.addIntegerElementToJsonBuffer(jsonKey, (Integer) value, writeWhenNull, buffer, !added) || added;
+            if (asArrayValue) {
+                builder.rawElement(value.toString());
+            } else {
+                builder.field(jsonKey, (Integer) value, writeWhenNull);
+            }
         } else if (entityClass.equals(Boolean.class) || entityClass.equals(boolean.class)) {
-            added = this.jsonConverter.addBooleanElementToJsonBuffer(jsonKey, (Boolean) value, writeWhenNull, buffer, !added) || added;
+            if (asArrayValue) {
+                builder.rawElement(value.toString());
+            } else {
+                builder.field(jsonKey, (Boolean) value, writeWhenNull);
+            }
         } else if (entityClass.equals(Instant.class)) {
-            Instant instant = (Instant) value;
-            added = this.jsonConverter.addInstantElementToJsonBuffer(jsonKey, instant, writeWhenNull, buffer, !added) || added;
+            if (asArrayValue) {
+                builder.rawElement("" + ((Instant) value).toEpochMilli());
+            } else {
+                builder.field(jsonKey, (Instant) value, writeWhenNull);
+            }
         } else if (entityClass.equals(List.class)) {
             List<?> list = (List<?>) value;
             if (list == null) {
                 if (writeWhenNull) {
-                    if (!firstElement) {
-                        buffer.append(",");
-                    }
-                    buffer.append(this.jsonConverter.escapeToJson(jsonKey, true));
-                    buffer.append(": []");
-                    added = true;
+                    builder.startArray(jsonKey).endArray();
                 }
             } else {
-                if (!firstElement) {
-                    buffer.append(",");
+                builder.startArray(jsonKey);
+                for (var item : list) {
+                    if (item != null) {
+                        addElementToJson(item.getClass(), item, null, false, true, builder);
+                    }
                 }
-                buffer.append(this.jsonConverter.escapeToJson(jsonKey, true));
-                buffer.append(": [");
-                for (int i = 0; i < list.size(); i++) {
-                    addElementToJson(list.get(i).getClass(), list.get(i), null, false, buffer, i == 0);
-                }
-                buffer.append("]");
-                added = true;
+                builder.endArray();
             }
         }
-        return added;
     }
 
     /**
      * Callback method that will be called before the entity is converted to a json string.
      *
-     * @param entity     The entity that will be converted to json.
-     * @param buffer     The json buffer.
-     * @param firstField Boolean indicating this is the first element to be written.
-     * @return <code>true</code> when this method has added a field, <code>false</code> otherwise.
+     * @param entity  The entity that will be converted to json.
+     * @param builder The json builder.
      */
-    protected boolean beforeJsonFields(T entity, StringBuilder buffer, boolean firstField) {
-        return !firstField;
+    protected void beforeJsonFields(T entity, JsonBuilder builder) {
     }
 
     /**
      * Callback method that will be called after the entity is converted to a json string.
      *
-     * @param entity     The entity that is converted to json.
-     * @param buffer     The json buffer.
-     * @param firstField Boolean indicating this is the first element to be written.
-     * @return <code>true</code> when this method has added a field, <code>false</code> otherwise.
+     * @param entity  The entity that is converted to json.
+     * @param builder The json builder.
      */
-    protected boolean afterJsonFields(T entity, StringBuilder buffer, boolean firstField) {
-        return !firstField;
+    protected void afterJsonFields(T entity, JsonBuilder builder) {
     }
 
     protected JsonConverter getJsonConverter() {

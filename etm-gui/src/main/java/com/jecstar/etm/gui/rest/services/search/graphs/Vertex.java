@@ -1,5 +1,7 @@
 package com.jecstar.etm.gui.rest.services.search.graphs;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
+
 /**
  * Class representing a vertex in a directed graph.
  */
@@ -22,8 +24,7 @@ public interface Vertex {
     /**
      * Adds the object to the buffer as a json string.
      *
-     * @param buffer       The buffer to add the data to.
-     * @param firstElement Is the data to be written the first element within a json object?
+     * @param builder The <code>JsonBuilder</code> to add the data to.
      */
-    void toJson(StringBuilder buffer, boolean firstElement);
+    void toJson(JsonBuilder builder);
 }

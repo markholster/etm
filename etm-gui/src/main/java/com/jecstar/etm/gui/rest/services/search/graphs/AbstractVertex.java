@@ -1,6 +1,6 @@
 package com.jecstar.etm.gui.rest.services.search.graphs;
 
-import com.jecstar.etm.domain.writer.json.JsonWriter;
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 
 import java.util.Objects;
 
@@ -9,7 +9,6 @@ import java.util.Objects;
  */
 public abstract class AbstractVertex implements Vertex {
 
-    protected final JsonWriter jsonWriter = new JsonWriter();
     private final String vertexId;
 
     AbstractVertex(String vertexId) {
@@ -45,10 +44,10 @@ public abstract class AbstractVertex implements Vertex {
     }
 
     @Override
-    public void toJson(StringBuilder buffer, boolean firstElement) {
-        this.jsonWriter.addStringElementToJsonBuffer("vertex_id", getVertexId(), buffer, firstElement);
-        this.jsonWriter.addStringElementToJsonBuffer("type", getType(), buffer, false);
-        doWriteToJson(buffer);
+    public void toJson(JsonBuilder builder) {
+        builder.field("vertex_id", getVertexId());
+        builder.field("type", getType());
+        doWriteToJson(builder);
     }
 
     /**
@@ -61,8 +60,8 @@ public abstract class AbstractVertex implements Vertex {
     /**
      * Add the attributes of the <code>AbstractVertex</code> (without any nested objects) to the buffer as json data.
      *
-     * @param buffer The buffer to write the data to.
+     * @param builder The <code>JsonBuilder</code> to add the data to.
      */
-    protected abstract void doWriteToJson(StringBuilder buffer);
+    protected abstract void doWriteToJson(JsonBuilder builder);
 
 }

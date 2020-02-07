@@ -1,6 +1,7 @@
 package com.jecstar.etm.gui.rest.services.search;
 
 import com.jecstar.etm.domain.writer.TelemetryEventTags;
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
 import com.jecstar.etm.gui.rest.export.FieldLayout;
 import com.jecstar.etm.gui.rest.export.FieldType;
@@ -12,7 +13,6 @@ import com.jecstar.etm.server.core.util.DateUtils;
 
 import java.time.Instant;
 import java.util.*;
-import java.util.stream.Collectors;
 
 class SearchRequestParameters {
 
@@ -28,7 +28,7 @@ class SearchRequestParameters {
     private final String sortField;
     private final String sortOrder;
     private Long notAfterTimestamp;
-    private final List<String> types;
+    private final Set<String> types;
     private List<String> fields;
     private final String startTime;
     private final String endTime;
@@ -44,7 +44,7 @@ class SearchRequestParameters {
         TelemetryEventTags tags = new TelemetryEventTagsJsonImpl();
         this.sortField = tags.getTimestampTag();
         this.sortOrder = "desc";
-        this.types = new ArrayList<>(5);
+        this.types = new HashSet<>(5);
         this.types.add(ElasticsearchLayout.EVENT_OBJECT_TYPE_BUSINESS);
         this.types.add(ElasticsearchLayout.EVENT_OBJECT_TYPE_HTTP);
         this.types.add(ElasticsearchLayout.EVENT_OBJECT_TYPE_LOG);
@@ -91,7 +91,7 @@ class SearchRequestParameters {
         this.maxResults = this.converter.getInteger("max_results", requestValues, DEFAULT_MAX_SIZE);
         this.sortField = this.converter.getString("sort_field", requestValues);
         this.sortOrder = this.converter.getString("sort_order", requestValues);
-        this.types = this.converter.getArray("types", requestValues);
+        this.types = new HashSet<>(this.converter.getArray("types", requestValues));
         this.fields = new ArrayList<>(2);
         this.converter.getArray("fields", requestValues, new ArrayList<String>()).forEach(c -> addField(c));
         this.notAfterTimestamp = this.converter.getLong("timestamp", requestValues);
@@ -116,40 +116,32 @@ class SearchRequestParameters {
     }
 
     public String toJsonSearchTemplate(String name) {
-        StringBuilder result = new StringBuilder();
-        result.append("{\"types\":[");
-        if (this.types != null) {
-            result.append(this.types.stream().map(e -> this.converter.escapeToJson(e, true)).collect(Collectors.joining(",")));
-        }
-        result.append("]");
-        this.converter.addStringElementToJsonBuffer("name", name, result, false);
-        this.converter.addStringElementToJsonBuffer("sort_field", this.sortField, result, false);
-        this.converter.addStringElementToJsonBuffer("sort_order", this.sortOrder, result, false);
-        this.converter.addIntegerElementToJsonBuffer("start_ix", this.getStartIndex(), result, false);
-        this.converter.addStringElementToJsonBuffer("start_time", this.getStartTime(), result, false);
-        this.converter.addStringElementToJsonBuffer("end_time", this.getEndTime(), result, false);
-        this.converter.addStringElementToJsonBuffer("time_filter_field", this.getTimeFilterField(), result, false);
-        this.converter.addIntegerElementToJsonBuffer("results_per_page", this.getMaxResults(), result, false);
-        this.converter.addStringElementToJsonBuffer("query", this.queryString, result, false);
-        result.append(",\"fields\": [");
+        var builder = new JsonBuilder();
+        builder.startObject();
+        builder.field("types", this.types);
+        builder.field("name", name);
+        builder.field("sort_field", this.sortField);
+        builder.field("sort_order", this.sortOrder);
+        builder.field("start_ix", this.getStartIndex());
+        builder.field("start_time", this.getStartTime());
+        builder.field("end_time", this.getEndTime());
+        builder.field("time_filter_field", this.getTimeFilterField());
+        builder.field("results_per_page", this.getMaxResults());
+        builder.field("query", this.queryString);
+        builder.startArray("fields");
         if (this.fieldsLayout != null) {
-            boolean first = true;
             for (Map<String, Object> field : this.fieldsLayout) {
-                if (!first) {
-                    result.append(",");
-                }
-                result.append("{");
-                this.converter.addStringElementToJsonBuffer("name", this.converter.getString("name", field), result, true);
-                this.converter.addStringElementToJsonBuffer("field", this.converter.getString("field", field), result, false);
-                this.converter.addStringElementToJsonBuffer("format", this.converter.getString("format", field), result, false);
-                this.converter.addStringElementToJsonBuffer("array", this.converter.getString("array", field), result, false);
-                this.converter.addBooleanElementToJsonBuffer("link", this.converter.getBoolean("link", field), result, false);
-                result.append("}");
-                first = false;
+                builder.startObject();
+                builder.field("name", this.converter.getString("name", field));
+                builder.field("field", this.converter.getString("field", field));
+                builder.field("format", this.converter.getString("format", field));
+                builder.field("array", this.converter.getString("array", field));
+                builder.field("link", this.converter.getBoolean("link", field));
+                builder.endObject();
             }
         }
-        result.append("]}");
-        return result.toString();
+        builder.endArray().endObject();
+        return builder.build();
     }
 
     public String getQueryString() {
@@ -172,7 +164,7 @@ class SearchRequestParameters {
         return this.sortOrder;
     }
 
-    public List<String> getTypes() {
+    public Set<String> getTypes() {
         return this.types;
     }
 

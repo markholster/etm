@@ -617,14 +617,14 @@ function showEvent(scrollTo, id) {
 													let s = 0;
 													$.each(textElements, function (ix, elem) {
 														const overlap = boundingBoxOverlap(
-															calculateBoundingBox(textElement.parentGroup.attr('translateX'), textElement.parentGroup.attr('translateY'), textElement.getBBox(true)),
-															calculateBoundingBox(elem.parentGroup.attr('translateX'), elem.parentGroup.attr('translateY'), elem.getBBox(true))
+															calculateBoundingBox(Number(textElement.parentGroup.attr('translateX')), Number(textElement.parentGroup.attr('translateY')), textElement.getBBox(true)),
+															calculateBoundingBox(Number(elem.parentGroup.attr('translateX')), Number(elem.parentGroup.attr('translateY')), elem.getBBox(true))
 														);
 														if (overlap > 0) {
 															s += lineHeight * 1.25;
 															// We can't use the translate function over here because the bbox method returns the box without the translated position.
 															textElement.destroy();
-															textElement = ren.text(vertex.name, 0, endpointSize + lineHeight).add(vertexGroup);
+															textElement = ren.text(vertex.name, 0, endpointSize + lineHeight + s).add(vertexGroup);
 														}
 													});
 													textElements.push(textElement);
@@ -698,8 +698,8 @@ function showEvent(scrollTo, id) {
 													let s = 0;
 													$.each(textElements, function (ix, elem) {
 														const overlap = boundingBoxOverlap(
-															calculateBoundingBox(textElement.parentGroup.attr('translateX'), textElement.parentGroup.attr('translateY'), textElement.getBBox(true)),
-															calculateBoundingBox(elem.parentGroup.attr('translateX'), elem.parentGroup.attr('translateY'), elem.getBBox(true))
+															calculateBoundingBox(Number(textElement.parentGroup.attr('translateX')), Number(textElement.parentGroup.attr('translateY')), textElement.getBBox(true)),
+															calculateBoundingBox(Number(elem.parentGroup.attr('translateX')), Number(elem.parentGroup.attr('translateY')), elem.getBBox(true))
 														);
 														if (overlap > 0) {
 															s += lineHeight * 1.25;
@@ -731,7 +731,7 @@ function showEvent(scrollTo, id) {
 											let toY = to.y;
 											if (from.y < to.y) {
 												// From top to bottom.
-												fromY += from.r + lineHeight + flowOffset;
+												fromY += from.r + lineHeight + flowOffset + from.s;
 												toY -= (to.r + flowOffset);
 											} else if (from.y > to.y) {
 												// From bottom to top.
@@ -856,8 +856,8 @@ function showEvent(scrollTo, id) {
 
 		function calculateBoundingBox(x, y, bbox) {
 			return {
-				x: x + bbox.x,
-				y: y + bbox.y,
+				x: (x + bbox.x),
+				y: (y + bbox.y),
 				width: bbox.width,
 				height: bbox.height
 			};

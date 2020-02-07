@@ -12,8 +12,7 @@ public class BusinessTelemetryEventWriterJsonImpl extends AbstractJsonTelemetryE
     }
 
     @Override
-    protected boolean doWrite(BusinessTelemetryEvent event, StringBuilder buffer, boolean firstElement) {
-        return firstElement;
+    protected void doWrite(BusinessTelemetryEvent event, JsonBuilder builder) {
     }
 
 }

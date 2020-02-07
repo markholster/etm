@@ -1,5 +1,6 @@
 package com.jecstar.etm.gui.rest.services.settings;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.gui.rest.services.AbstractIndexMetadataService;
 import com.jecstar.etm.gui.rest.services.Keyword;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
@@ -11,7 +12,6 @@ import com.jecstar.etm.server.core.elasticsearch.builder.GetRequestBuilder;
 import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
 import org.apache.lucene.search.TotalHits;
 import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
@@ -26,7 +26,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.text.NumberFormat;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Path("/audit")
 @DeclareRoles(SecurityRoles.ALL_ROLES)
@@ -46,24 +45,26 @@ public class AuditService extends AbstractIndexMetadataService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.AUDIT_LOG_READ)
     public String getKeywords(@PathParam("indexName") String indexName) {
-        StringBuilder result = new StringBuilder();
+        var builder = new JsonBuilder();
         List<Keyword> keywords = getIndexFields(AuditService.dataRepository, indexName);
-        result.append("{ \"keywords\":[");
-        result.append("{");
-        result.append("\"index\": ").append(escapeToJson(indexName, true)).append(",");
-        result.append("\"keywords\": [").append(keywords.stream().map(n -> {
-            StringBuilder kw = new StringBuilder();
-            kw.append("{");
-            addStringElementToJsonBuffer("name", n.getName(), kw, true);
-            addStringElementToJsonBuffer("type", n.getType(), kw, false);
-            addBooleanElementToJsonBuffer("date", n.isDate(), kw, false);
-            addBooleanElementToJsonBuffer("number", n.isNumber(), kw, false);
-            kw.append("}");
-            return kw.toString();
-        }).collect(Collectors.joining(", "))).append("]");
-        result.append("}");
-        result.append("]}");
-        return result.toString();
+        builder.startObject();
+        builder.startArray("keywords");
+        builder.startObject();
+        builder.field("index", indexName);
+        builder.startArray("keywords");
+        for (var keyword : keywords) {
+            builder.startObject();
+            builder.field("name", keyword.getName());
+            builder.field("type", keyword.getType());
+            builder.field("date", keyword.isDate());
+            builder.field("number", keyword.isNumber());
+            builder.endObject();
+        }
+        builder.endArray();
+        builder.endObject();
+        builder.endArray();
+        builder.endObject();
+        return builder.build();
     }
 
     @GET
@@ -86,33 +87,33 @@ public class AuditService extends AbstractIndexMetadataService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.AUDIT_LOG_READ)
     public String executeQuery(String json) {
-        long startTime = System.currentTimeMillis();
-        EtmPrincipal etmPrincipal = getEtmPrincipal();
+        var startTime = System.currentTimeMillis();
+        var etmPrincipal = getEtmPrincipal();
 
-        AuditSearchRequestParameters parameters = new AuditSearchRequestParameters(toMap(json));
-        SearchRequestBuilder requestBuilder = createRequestFromInput(parameters, etmPrincipal);
-        NumberFormat numberFormat = NumberFormat.getInstance(etmPrincipal.getLocale());
-        SearchResponse response = dataRepository.search(requestBuilder);
-        StringBuilder result = new StringBuilder();
-        result.append("{");
-        result.append("\"status\": \"success\"");
-        result.append(",\"hits\": ").append(response.getHits().getTotalHits().value);
-        result.append(",\"hits_relation\": \"").append(response.getHits().getTotalHits().relation.name()).append("\"");
-        result.append(",\"hits_as_string\": \"").append(numberFormat.format(response.getHits().getTotalHits().value)).append((TotalHits.Relation.GREATER_THAN_OR_EQUAL_TO.equals(response.getHits().getTotalHits().relation)) ? "+\"" : "\"");
-        result.append(",\"time_zone\": \"").append(etmPrincipal.getTimeZone().getID()).append("\"");
-        result.append(",\"start_ix\": ").append(parameters.getStartIndex());
-        result.append(",\"end_ix\": ").append(parameters.getStartIndex() + response.getHits().getHits().length - 1);
+        var parameters = new AuditSearchRequestParameters(toMap(json));
+        var requestBuilder = createRequestFromInput(parameters, etmPrincipal);
+        var numberFormat = NumberFormat.getInstance(etmPrincipal.getLocale());
+        var response = dataRepository.search(requestBuilder);
+        var builder = new JsonBuilder();
+        builder.startObject();
+        builder.field("status", "success");
+        builder.field("hits", response.getHits().getTotalHits().value);
+        builder.field("hits_relation", response.getHits().getTotalHits().relation.name());
+        builder.field("hits_as_string", numberFormat.format(response.getHits().getTotalHits().value) + (TotalHits.Relation.GREATER_THAN_OR_EQUAL_TO.equals(response.getHits().getTotalHits().relation) ? "+" : ""));
+        builder.field("time_zone", etmPrincipal.getTimeZone().getID());
+        builder.field("start_ix", parameters.getStartIndex());
+        builder.field("end_ix", parameters.getStartIndex() + response.getHits().getHits().length - 1);
         // TODO has_more_results is inaccurate in etm 4 because totalhits is a GTE value.
-        result.append(",\"has_more_results\": ").append(parameters.getStartIndex() + response.getHits().getHits().length < response.getHits().getTotalHits().value - 1);
-        result.append(",\"time_zone\": \"").append(etmPrincipal.getTimeZone().getID()).append("\"");
-        result.append(",\"results\": [");
-        addSearchHits(result, response.getHits());
-        result.append("]");
+        builder.field("has_more_results", parameters.getStartIndex() + response.getHits().getHits().length < response.getHits().getTotalHits().value - 1);
+        builder.field("time_zone", etmPrincipal.getTimeZone().getID());
+        builder.startArray("results");
+        addSearchHits(builder, response.getHits());
+        builder.endArray();
         long queryTime = System.currentTimeMillis() - startTime;
-        result.append(",\"query_time\": ").append(queryTime);
-        result.append(",\"query_time_as_string\": \"").append(numberFormat.format(queryTime)).append("\"");
-        result.append("}");
-        return result.toString();
+        builder.field("query_time", queryTime);
+        builder.field("query_time_as_string", numberFormat.format(queryTime));
+        builder.endObject();
+        return builder.build();
     }
 
     private SearchRequestBuilder createRequestFromInput(AuditSearchRequestParameters parameters, EtmPrincipal etmPrincipal) {
@@ -137,19 +138,13 @@ public class AuditService extends AbstractIndexMetadataService {
         return requestBuilder;
     }
 
-    private void addSearchHits(StringBuilder result, SearchHits hits) {
-        boolean first = true;
+    private void addSearchHits(JsonBuilder builder, SearchHits hits) {
         for (SearchHit searchHit : hits.getHits()) {
-            if (first) {
-                result.append("{");
-                first = false;
-            } else {
-                result.append(", {");
-            }
-            addStringElementToJsonBuffer("index", searchHit.getIndex(), result, true);
-            addStringElementToJsonBuffer("id", searchHit.getId(), result, false);
-            result.append(", \"source\": ").append(searchHit.getSourceAsString());
-            result.append("}");
+            builder.startObject();
+            builder.field("index", searchHit.getIndex());
+            builder.field("id", searchHit.getId());
+            builder.rawField("source", searchHit.getSourceAsString());
+            builder.endObject();
         }
     }
 

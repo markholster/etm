@@ -12,14 +12,12 @@ public class HttpTelemetryEventWriterJsonImpl extends AbstractJsonTelemetryEvent
     }
 
     @Override
-    protected boolean doWrite(HttpTelemetryEvent event, StringBuilder buffer, boolean firstElement) {
-        boolean added = !firstElement;
-        added = this.jsonWriter.addInstantElementToJsonBuffer(getTags().getExpiryTag(), event.expiry, buffer, !added) || added;
+    protected void doWrite(HttpTelemetryEvent event, JsonBuilder builder) {
+        builder.field(getTags().getExpiryTag(), event.expiry);
         if (event.httpEventType != null) {
-            added = this.jsonWriter.addStringElementToJsonBuffer(getTags().getHttpEventTypeTag(), event.httpEventType.name(), buffer, !added) || added;
+            builder.field(getTags().getHttpEventTypeTag(), event.httpEventType.name());
         }
-        added = this.jsonWriter.addIntegerElementToJsonBuffer(getTags().getStatusCodeTag(), event.statusCode, buffer, !added) || added;
-        return added;
+        builder.field(getTags().getStatusCodeTag(), event.statusCode);
     }
 
 }

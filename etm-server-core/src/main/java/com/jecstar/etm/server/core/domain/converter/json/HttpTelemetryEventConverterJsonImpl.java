@@ -3,6 +3,7 @@ package com.jecstar.etm.server.core.domain.converter.json;
 import com.jecstar.etm.domain.HttpTelemetryEvent;
 import com.jecstar.etm.domain.HttpTelemetryEvent.HttpEventType;
 import com.jecstar.etm.domain.writer.json.HttpTelemetryEventWriterJsonImpl;
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.server.core.domain.converter.TelemetryEventConverter;
 
 import java.util.Map;
@@ -17,9 +18,9 @@ public class HttpTelemetryEventConverterJsonImpl extends HttpTelemetryEventWrite
     }
 
     @Override
-    protected boolean doWrite(HttpTelemetryEvent event, StringBuilder buffer, boolean firstElement) {
-        boolean added = this.converter.addDatabaseFields(buffer, event, firstElement);
-        return super.doWrite(event, buffer, !added);
+    protected void doWrite(HttpTelemetryEvent event, JsonBuilder builder) {
+        this.converter.addDatabaseFields(event, builder);
+        super.doWrite(event, builder);
     }
 
     @Override

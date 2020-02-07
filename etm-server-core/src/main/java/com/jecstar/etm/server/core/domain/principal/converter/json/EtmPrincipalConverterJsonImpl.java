@@ -1,5 +1,6 @@
 package com.jecstar.etm.server.core.domain.principal.converter.json;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.server.core.domain.QueryOccurrence;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
@@ -21,32 +22,31 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 
     @Override
     public String writePrincipal(EtmPrincipal etmPrincipal) {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("{");
-        this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, true, sb, true);
-        sb.append(", " + this.converter.escapeToJson(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, true) + ": {");
-        boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getIdTag(), etmPrincipal.getId(), sb, true);
-        added = this.converter.addStringElementToJsonBuffer(this.tags.getEmailTag(), etmPrincipal.getEmailAddress(), true, sb, !added) || added;
-        added = this.converter.addStringElementToJsonBuffer(this.tags.getApiKeyTag(), etmPrincipal.getApiKey(), true, sb, !added) || added;
-        added = this.converter.addStringElementToJsonBuffer(this.tags.getSecondaryApiKeyTag(), etmPrincipal.getSecondaryApiKey(), true, sb, !added) || added;
-        added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryTag(), etmPrincipal.getFilterQuery(), true, sb, !added) || added;
-        added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryOccurrenceTag(), etmPrincipal.getFilterQueryOccurrence().name(), true, sb, !added) || added;
-        added = this.converter.addBooleanElementToJsonBuffer(this.tags.getAlwaysShowCorrelatedEventsTag(), etmPrincipal.isAlwaysShowCorrelatedEvents(), sb, !added) || added;
-        added = this.converter.addIntegerElementToJsonBuffer(this.tags.getSearchHistorySizeTag(), etmPrincipal.getHistorySize(), sb, !added) || added;
-        added = this.converter.addLongElementToJsonBuffer(this.tags.getDefaultSearchRangeTag(), etmPrincipal.getDefaultSearchRange(), true, sb, !added) || added;
-        added = this.converter.addStringElementToJsonBuffer(this.tags.getLocaleTag(), etmPrincipal.getLocale().toLanguageTag(), sb, !added) || added;
-        added = this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), etmPrincipal.getName(), true, sb, !added) || added;
-        added = this.converter.addStringElementToJsonBuffer(this.tags.getPasswordHashTag(), etmPrincipal.getPasswordHash(), sb, !added) || added;
-        added = this.converter.addBooleanElementToJsonBuffer(this.tags.getChangePasswordOnLogonTag(), etmPrincipal.isChangePasswordOnLogon(), sb, !added) || added;
-        added = this.converter.addBooleanElementToJsonBuffer(this.tags.getLdapBaseTag(), etmPrincipal.isLdapBase(), sb, !added) || added;
-        added = this.converter.addSetElementToJsonBuffer(this.tags.getRolesTag(), etmPrincipal.getRoles(), true, sb, !added) || added;
-        added = this.converter.addSetElementToJsonBuffer(this.tags.getDashboardDatasourcesTag(), etmPrincipal.getDashboardDatasources(), true, sb, !added) || added;
-        added = this.converter.addSetElementToJsonBuffer(this.tags.getSignalDatasourcesTag(), etmPrincipal.getSignalDatasources(), true, sb, !added) || added;
-        added = this.converter.addSetElementToJsonBuffer(this.tags.getNotifiersTag(), etmPrincipal.getNotifiers(), true, sb, !added) || added;
-        added = this.converter.addSetElementToJsonBuffer(this.tags.getGroupsTag(), etmPrincipal.getGroups().stream().filter(g -> !g.isLdapBase()).map(EtmGroup::getName).collect(Collectors.toSet()), true, sb, !added) || added;
-        added = this.converter.addStringElementToJsonBuffer(this.tags.getTimeZoneTag(), etmPrincipal.getTimeZone().getID(), sb, !added) || added;
-        sb.append("}}");
-        return sb.toString();
+        JsonBuilder builder = new JsonBuilder();
+        builder.startObject();
+        builder.field(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER);
+        builder.startObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER);
+        builder.field(this.tags.getIdTag(), etmPrincipal.getId());
+        builder.field(this.tags.getEmailTag(), etmPrincipal.getEmailAddress(), true);
+        builder.field(this.tags.getApiKeyTag(), etmPrincipal.getApiKey(), true);
+        builder.field(this.tags.getSecondaryApiKeyTag(), etmPrincipal.getSecondaryApiKey(), true);
+        builder.field(this.tags.getFilterQueryTag(), etmPrincipal.getFilterQuery(), true);
+        builder.field(this.tags.getFilterQueryOccurrenceTag(), etmPrincipal.getFilterQueryOccurrence().name());
+        builder.field(this.tags.getAlwaysShowCorrelatedEventsTag(), etmPrincipal.isAlwaysShowCorrelatedEvents());
+        builder.field(this.tags.getSearchHistorySizeTag(), etmPrincipal.getHistorySize());
+        builder.field(this.tags.getDefaultSearchRangeTag(), etmPrincipal.getDefaultSearchRange(), true);
+        builder.field(this.tags.getLocaleTag(), etmPrincipal.getLocale().toLanguageTag());
+        builder.field(this.tags.getNameTag(), etmPrincipal.getName(), true);
+        builder.field(this.tags.getPasswordHashTag(), etmPrincipal.getPasswordHash());
+        builder.field(this.tags.getChangePasswordOnLogonTag(), etmPrincipal.isChangePasswordOnLogon());
+        builder.field(this.tags.getLdapBaseTag(), etmPrincipal.isLdapBase());
+        builder.field(this.tags.getRolesTag(), etmPrincipal.getRoles());
+        builder.field(this.tags.getDashboardDatasourcesTag(), etmPrincipal.getDashboardDatasources());
+        builder.field(this.tags.getNotifiersTag(), etmPrincipal.getNotifiers());
+        builder.field(this.tags.getGroupsTag(), etmPrincipal.getGroups().stream().filter(g -> !g.isLdapBase()).map(EtmGroup::getName).collect(Collectors.toSet()));
+        builder.field(this.tags.getTimeZoneTag(), etmPrincipal.getTimeZone().getID());
+        builder.endObject().endObject();
+        return builder.build();
     }
 
     @Override
@@ -56,22 +56,22 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
 
     @Override
     public String writeGroup(EtmGroup etmGroup) {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("{");
-        this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP, true, sb, true);
-        sb.append(", " + this.converter.escapeToJson(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP, true) + ": {");
-        boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), etmGroup.getName(), true, sb, true);
-        added = this.converter.addStringElementToJsonBuffer(this.tags.getDisplayNameTag(), etmGroup.getDisplayName(), true, sb, !added) || added;
-        added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryTag(), etmGroup.getFilterQuery(), true, sb, !added) || added;
-        added = this.converter.addStringElementToJsonBuffer(this.tags.getFilterQueryOccurrenceTag(), etmGroup.getFilterQueryOccurrence().name(), true, sb, !added) || added;
-        added = this.converter.addBooleanElementToJsonBuffer(this.tags.getAlwaysShowCorrelatedEventsTag(), etmGroup.isAlwaysShowCorrelatedEvents(), sb, !added) || added;
-        added = this.converter.addBooleanElementToJsonBuffer(this.tags.getLdapBaseTag(), etmGroup.isLdapBase(), sb, !added) || added;
-        added = this.converter.addSetElementToJsonBuffer(this.tags.getRolesTag(), etmGroup.getRoles(), true, sb, !added) || added;
-        added = this.converter.addSetElementToJsonBuffer(this.tags.getDashboardDatasourcesTag(), etmGroup.getDashboardDatasources(), true, sb, !added) || added;
-        added = this.converter.addSetElementToJsonBuffer(this.tags.getSignalDatasourcesTag(), etmGroup.getSignalDatasources(), true, sb, !added) || added;
-        added = this.converter.addSetElementToJsonBuffer(this.tags.getNotifiersTag(), etmGroup.getNotifiers(), true, sb, !added) || added;
-        sb.append("}}");
-        return sb.toString();
+        JsonBuilder builder = new JsonBuilder();
+        builder.startObject();
+        builder.field(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP);
+        builder.startObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP);
+        builder.field(this.tags.getNameTag(), etmGroup.getName(), true);
+        builder.field(this.tags.getDisplayNameTag(), etmGroup.getDisplayName(), true);
+        builder.field(this.tags.getFilterQueryTag(), etmGroup.getFilterQuery(), true);
+        builder.field(this.tags.getFilterQueryOccurrenceTag(), etmGroup.getFilterQueryOccurrence().name());
+        builder.field(this.tags.getAlwaysShowCorrelatedEventsTag(), etmGroup.isAlwaysShowCorrelatedEvents());
+        builder.field(this.tags.getLdapBaseTag(), etmGroup.isLdapBase());
+        builder.field(this.tags.getRolesTag(), etmGroup.getRoles());
+        builder.field(this.tags.getDashboardDatasourcesTag(), etmGroup.getDashboardDatasources());
+        builder.field(this.tags.getSignalDatasourcesTag(), etmGroup.getSignalDatasources());
+        builder.field(this.tags.getNotifiersTag(), etmGroup.getNotifiers());
+        builder.endObject().endObject();
+        return builder.build();
     }
 
     @Override

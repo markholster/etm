@@ -1,7 +1,7 @@
 package com.jecstar.etm.gui.rest.services.dashboard;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.gui.rest.services.AbstractUserAttributeService;
-import com.jecstar.etm.gui.rest.services.Keyword;
 import com.jecstar.etm.gui.rest.services.dashboard.domain.Column;
 import com.jecstar.etm.gui.rest.services.dashboard.domain.Dashboard;
 import com.jecstar.etm.gui.rest.services.dashboard.domain.Data;
@@ -27,7 +27,6 @@ import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
 import com.jecstar.etm.server.core.persisting.EtmQueryBuilder;
 import com.jecstar.etm.server.core.persisting.RequestEnhancer;
 import com.jecstar.etm.server.core.util.DateUtils;
-import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.HasAggregations;
@@ -44,7 +43,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.time.Instant;
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 @Path("/visualization")
@@ -94,41 +92,36 @@ public class DashboardService extends AbstractUserAttributeService {
      * @return The keywords of a user or group.
      */
     private String getKeywords(String groupName) {
-        Map<String, Object> entity = getEntity(dataRepository, groupName, this.principalTags.getDashboardDatasourcesTag());
-        Set<String> datasources = new HashSet<>(getArray(this.principalTags.getDashboardDatasourcesTag(), entity, Collections.emptyList()));
+        var entity = getEntity(dataRepository, groupName, this.principalTags.getDashboardDatasourcesTag());
+        var datasources = new HashSet<String>(getArray(this.principalTags.getDashboardDatasourcesTag(), entity, Collections.emptyList()));
         if (groupName == null) {
 //          We try to get the data for the user but when the user is added to some groups the context of that groups needs to be added to the user context
-            Set<EtmGroup> groups = getEtmPrincipal().getGroups();
-            for (EtmGroup group : groups) {
-                Map<String, Object> groupObjectMap = getEntity(dataRepository, group.getName(), this.principalTags.getDashboardDatasourcesTag());
+            var groups = getEtmPrincipal().getGroups();
+            for (var group : groups) {
+                var groupObjectMap = getEntity(dataRepository, group.getName(), this.principalTags.getDashboardDatasourcesTag());
                 datasources.addAll(getArray(this.principalTags.getDashboardDatasourcesTag(), groupObjectMap, Collections.emptyList()));
             }
         }
-        StringBuilder result = new StringBuilder();
-        result.append("{ \"keywords\":[");
-        boolean first = true;
+        var builder = new JsonBuilder();
+        builder.startObject();
+        builder.startArray("keywords");
         for (String indexName : datasources) {
-            List<Keyword> keywords = getIndexFields(dataRepository, indexName);
-            if (!first) {
-                result.append(", ");
+            var keywords = getIndexFields(dataRepository, indexName);
+            builder.startObject();
+            builder.field("index", indexName);
+            builder.startArray("keywords");
+            for (var keyword : keywords) {
+                builder.startObject();
+                builder.field("name", keyword.getName());
+                builder.field("type", keyword.getType());
+                builder.field("date", keyword.isDate());
+                builder.field("number", keyword.isNumber());
+                builder.endObject();
             }
-            first = false;
-            result.append("{");
-            result.append("\"index\": ").append(escapeToJson(indexName, true)).append(",");
-            result.append("\"keywords\": [").append(keywords.stream().map(n -> {
-                StringBuilder kw = new StringBuilder();
-                kw.append("{");
-                addStringElementToJsonBuffer("name", n.getName(), kw, true);
-                addStringElementToJsonBuffer("type", n.getType(), kw, false);
-                addBooleanElementToJsonBuffer("date", n.isDate(), kw, false);
-                addBooleanElementToJsonBuffer("number", n.isNumber(), kw, false);
-                kw.append("}");
-                return kw.toString();
-            }).collect(Collectors.joining(", "))).append("]");
-            result.append("}");
+            builder.endArray().endObject();
         }
-        result.append("]}");
-        return result.toString();
+        builder.endArray().endObject();
+        return builder.build();
     }
 
     @GET
@@ -687,26 +680,26 @@ public class DashboardService extends AbstractUserAttributeService {
     }
 
     private String getSingleValueData(GraphContainer graphContainer) {
-        EtmPrincipal etmPrincipal = getEtmPrincipal();
-        SearchResponse searchResponse = dataRepository.search(createGraphSearchRequest(etmPrincipal, graphContainer));
+        var etmPrincipal = getEtmPrincipal();
+        var searchResponse = dataRepository.search(createGraphSearchRequest(etmPrincipal, graphContainer));
         Aggregation aggregation = null;
         for (Aggregation aggregationUnderInvestigation : searchResponse.getAggregations().asList()) {
-            boolean showOnGraph = (boolean) aggregationUnderInvestigation.getMetaData().get(Aggregator.SHOW_ON_GRAPH);
+            var showOnGraph = (boolean) aggregationUnderInvestigation.getMetaData().get(Aggregator.SHOW_ON_GRAPH);
             if (showOnGraph) {
                 aggregation = aggregationUnderInvestigation;
                 break;
             }
         }
-        final MetricValue metricValue = extractSingleLeafMetricValue(aggregation);
-        StringBuilder result = initializeGraphResult(etmPrincipal, graphContainer);
+        final var metricValue = extractSingleLeafMetricValue(aggregation);
+        var builder = initializeGraphResult(etmPrincipal, graphContainer);
         if (metricValue != null) {
-            result.append(", \"value\": " + metricValue.getJsonValue());
+            builder.field("value", metricValue.getJsonValue());
         }
-        result.append(", \"chart_config\": {");
-        result.append("\"credits\": {\"enabled\": false}");
-        graphContainer.getGraph().appendHighchartsConfig(result);
-        result.append("}}");
-        return result.toString();
+        builder.startObject("chart_config");
+        builder.startObject("credits").field("enabled", false).endObject();
+        graphContainer.getGraph().appendHighchartsConfig(builder);
+        builder.endObject().endObject();
+        return builder.build();
     }
 
     /**
@@ -727,18 +720,17 @@ public class DashboardService extends AbstractUserAttributeService {
     }
 
     private String getMultiBucketData(GraphContainer graphContainer) {
-        EtmPrincipal etmPrincipal = getEtmPrincipal();
-        SearchResponse searchResponse = dataRepository.search(createGraphSearchRequest(etmPrincipal, graphContainer));
-        Aggregation aggregation = searchResponse.getAggregations().asList().get(0);
+        var etmPrincipal = getEtmPrincipal();
+        var searchResponse = dataRepository.search(createGraphSearchRequest(etmPrincipal, graphContainer));
+        var aggregation = searchResponse.getAggregations().asList().get(0);
 
         // Start building the response
-        StringBuilder result = initializeGraphResult(etmPrincipal, graphContainer);
-
-        result.append(", \"chart_config\": {");
-        result.append("\"credits\": {\"enabled\": false}");
-        result.append(", \"tooltip\": {\"shared\": true}");
-        result.append(", \"time\": {\"timezone\": " + escapeToJson(etmPrincipal.getTimeZone().toZoneId().toString(), true) + "}");
-        graphContainer.getGraph().appendHighchartsConfig(result);
+        var builder = initializeGraphResult(etmPrincipal, graphContainer);
+        builder.startObject("chart_config");
+        builder.startObject("credits").field("enabled", false).endObject();
+        builder.startObject("tooltip").field("shared", true).endObject();
+        builder.startObject("time").field("timezone", etmPrincipal.getTimeZone().toZoneId().toString()).endObject();
+        graphContainer.getGraph().appendHighchartsConfig(builder);
         if (!(aggregation instanceof MultiBucketsAggregation)) {
             throw new IllegalArgumentException("'" + aggregation.getClass().getName() + "' is an invalid multi bucket aggregation.");
         }
@@ -755,30 +747,28 @@ public class DashboardService extends AbstractUserAttributeService {
                 processAggregations(bucketKey, bucket, seriesData, "");
             }
         }
-        result.append(", \"series\": [");
-        boolean firstSerie = true;
-        for (Entry<String, List<String>> entry : seriesData.entrySet()) {
-            if (!firstSerie) {
-                result.append(", ");
+        builder.startArray("series");
+        for (var entry : seriesData.entrySet()) {
+            builder.startObject();
+            builder.field("name", entry.getKey());
+            builder.startArray("data");
+            for (var value : entry.getValue()) {
+                builder.rawElement(value);
             }
-            result.append("{ \"name\": " + escapeToJson(entry.getKey(), true));
-            result.append(", \"data\": [");
-            result.append(String.join(",", entry.getValue()));
-            result.append("]}");
-            firstSerie = false;
+            builder.endArray();
+            builder.endObject();
         }
-        result.append("]");
-        result.append("}}");
-        return result.toString();
+        builder.endArray().endObject().endObject();
+        return builder.build();
     }
 
-    private StringBuilder initializeGraphResult(EtmPrincipal etmPrincipal, GraphContainer graphContainer) {
-        StringBuilder result = new StringBuilder();
-        result.append("{");
-        result.append("\"locale\": ").append(getLocalFormatting(etmPrincipal));
-        addStringElementToJsonBuffer("type", graphContainer.getGraph().getType(), result, false);
-        addStringElementToJsonBuffer("valueFormat", graphContainer.getGraph().getValueFormat(), result, false);
-        return result;
+    private JsonBuilder initializeGraphResult(EtmPrincipal etmPrincipal, GraphContainer graphContainer) {
+        var builder = new JsonBuilder();
+        builder.startObject();
+        builder.field("locale", getLocalFormatting(etmPrincipal));
+        builder.field("type", graphContainer.getGraph().getType());
+        builder.field("valueFormat", graphContainer.getGraph().getValueFormat());
+        return builder;
     }
 
     /**

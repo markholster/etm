@@ -1,5 +1,6 @@
 package com.jecstar.etm.gui.rest.services.dashboard.domain.graph;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.server.core.converter.JsonField;
 
 /**
@@ -28,18 +29,17 @@ public class BarGraph extends AxesGraph<BarGraph> {
     }
 
     @Override
-    public void appendHighchartsConfig(StringBuilder config) {
-        super.appendHighchartsConfig(config);
+    public void appendHighchartsConfig(JsonBuilder builder) {
+        super.appendHighchartsConfig(builder);
         String chartType = Orientation.HORIZONTAL.equals(getOrientation()) ? "bar" : "column";
-        config.append(", \"chart\": {\"type\": \"" + chartType + "\"}");
-
-        config.append(", \"plotOptions\": {\"" + chartType + "\": {");
+        builder.startObject("chart").field("type", chartType).endObject();
+        builder.startObject("plotOptions").startObject(chartType);
         if ("percentage".equals(getSubType())) {
-            config.append("\"stacking\": \"percent\"");
+            builder.field("stacking", "percent");
         } else if ("stacked".equals(getSubType())) {
-            config.append("\"stacking\": \"normal\"");
+            builder.field("stacking", "normal");
         }
-        config.append("}}");
+        builder.endObject().endObject();
     }
 
     @Override

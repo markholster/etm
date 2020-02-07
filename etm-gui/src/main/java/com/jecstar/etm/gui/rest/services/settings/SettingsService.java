@@ -1,5 +1,6 @@
 package com.jecstar.etm.gui.rest.services.settings;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.gui.rest.AbstractGuiService;
 import com.jecstar.etm.gui.rest.export.*;
 import com.jecstar.etm.gui.rest.services.search.DefaultSearchTemplates;
@@ -29,7 +30,6 @@ import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalC
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.elasticsearch.builder.*;
 import com.jecstar.etm.server.core.elasticsearch.domain.IndexStats;
-import com.jecstar.etm.server.core.elasticsearch.domain.IndicesStatsResponse;
 import com.jecstar.etm.server.core.enhancers.DefaultField;
 import com.jecstar.etm.server.core.enhancers.DefaultTelemetryEventEnhancer;
 import com.jecstar.etm.server.core.enhancers.DefaultTransformation;
@@ -64,10 +64,8 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.text.NumberFormat;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 @Path("/settings")
 @DeclareRoles(SecurityRoles.ALL_ROLES)
@@ -118,16 +116,18 @@ public class SettingsService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.LICENSE_READ, SecurityRoles.LICENSE_READ_WRITE})
     public String getLicense() {
-        EtmPrincipal etmPrincipal = getEtmPrincipal();
-        License license = etmConfiguration.getLicense();
+        var etmPrincipal = getEtmPrincipal();
+        var license = etmConfiguration.getLicense();
         if (license == null) {
             return null;
         }
-        StringBuilder result = new StringBuilder();
-        result.append("{");
-        addLongElementToJsonBuffer("max_database_size_in_bytes", license.getMaxDatabaseSize(), result, true);
-        addStringElementToJsonBuffer("max_database_size_in_bytes_as_text", etmPrincipal.getNumberFormat().format(license.getMaxDatabaseSize()), result, false);
-        return addLicenseData(license, result, false, etmPrincipal).toString();
+        var builder = new JsonBuilder();
+        builder.startObject();
+        builder.field("max_database_size_in_bytes", license.getMaxDatabaseSize());
+        builder.field("max_database_size_in_bytes_as_text", etmPrincipal.getNumberFormat().format(license.getMaxDatabaseSize()));
+        addLicenseData(license, builder, etmPrincipal);
+        builder.endObject();
+        return builder.build();
     }
 
     @PUT
@@ -135,12 +135,12 @@ public class SettingsService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.LICENSE_READ_WRITE)
     public String setLicense(String json) {
-        EtmPrincipal etmPrincipal = getEtmPrincipal();
-        Map<String, Object> requestValues = toMap(json);
-        String licenseKey = getString("key", requestValues);
+        var etmPrincipal = getEtmPrincipal();
+        var requestValues = toMap(json);
+        var licenseKey = getString("key", requestValues);
         etmConfiguration.setLicenseKey(licenseKey);
-        Map<String, Object> licenseObject = new HashMap<>();
-        Map<String, Object> values = new HashMap<>();
+        var licenseObject = new HashMap<String, Object>();
+        var values = new HashMap<String, Object>();
         values.put(this.etmConfigurationConverter.getTags().getLicenseTag(), licenseKey);
         licenseObject.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LICENSE, values);
         UpdateRequestBuilder updateRequestBuilder = requestEnhancer.enhance(
@@ -153,34 +153,32 @@ public class SettingsService extends AbstractGuiService {
         // Because the access to the etmConfiguration in the above statement could cause a reload of the configuration
         // the old license may still be applied. To prevent this, we set the license again at this place.
         etmConfiguration.setLicenseKey(licenseKey);
-        License license = etmConfiguration.getLicense();
-        StringBuilder result = new StringBuilder();
-        result.append("{");
-        addStringElementToJsonBuffer("status", "success", result, true);
-        addLongElementToJsonBuffer("max_database_size_in_bytes", license.getMaxDatabaseSize(), result, false);
-        addStringElementToJsonBuffer("max_database_size_in_bytes_as_text", etmPrincipal.getNumberFormat().format(license.getMaxDatabaseSize()), result, false);
-        return addLicenseData(license, result, false, etmPrincipal).toString();
+        var license = etmConfiguration.getLicense();
+        var builder = new JsonBuilder();
+        builder.startObject();
+        builder.field("status", "success");
+        builder.field("max_database_size_in_bytes", license.getMaxDatabaseSize());
+        builder.field("max_database_size_in_bytes_as_text", etmPrincipal.getNumberFormat().format(license.getMaxDatabaseSize()));
+        addLicenseData(license, builder, etmPrincipal);
+        builder.endObject();
+        return builder.build();
     }
 
     /**
      * Add the common license data as json
      *
      * @param license      The <code>License</code> to add the data from.
-     * @param buffer       The buffer to add the data to.
-     * @param firstElement Is this the first json element?
-     * @param firstElement The <code>EtmPrincipal</code>?
+     * @param builder      The <code>JsonBuilder</code> to add the data to.
+     * @param etmPrincipal The <code>EtmPrincipal</code>?
      * @return The buffer with the license data added.
      */
-    private StringBuilder addLicenseData(License license, StringBuilder buffer, boolean firstElement, EtmPrincipal etmPrincipal) {
-        boolean added = !firstElement;
-        added = addStringElementToJsonBuffer(License.OWNER, license.getOwner(), buffer, !added) || added;
-        added = addLongElementToJsonBuffer(License.START_DATE, license.getStartDate() != null ? license.getStartDate().toEpochMilli() : null, buffer, !added) || added;
-        added = addLongElementToJsonBuffer(License.EXPIRY_DATE, license.getExpiryDate().toEpochMilli(), buffer, !added) || added;
-        added = addStringElementToJsonBuffer("time_zone", etmPrincipal.getTimeZone().getID(), buffer, !added) || added;
-        added = addLongElementToJsonBuffer(License.MAX_REQUEST_UNITS_PER_SECOND, license.getMaxRequestUnitsPerSecond(), buffer, !added) || added;
-        added = addStringElementToJsonBuffer(License.MAX_REQUEST_UNITS_PER_SECOND + "_as_text", etmPrincipal.getNumberFormat().format(license.getMaxRequestUnitsPerSecond()), buffer, !added) || added;
-        buffer.append("}");
-        return buffer;
+    private void addLicenseData(License license, JsonBuilder builder, EtmPrincipal etmPrincipal) {
+        builder.field(License.OWNER, license.getOwner());
+        builder.field(License.START_DATE, license.getStartDate());
+        builder.field(License.EXPIRY_DATE, license.getExpiryDate());
+        builder.field("time_zone", etmPrincipal.getTimeZone().getID());
+        builder.field(License.MAX_REQUEST_UNITS_PER_SECOND, license.getMaxRequestUnitsPerSecond());
+        builder.field(License.MAX_REQUEST_UNITS_PER_SECOND + "_as_text", etmPrincipal.getNumberFormat().format(license.getMaxRequestUnitsPerSecond()));
     }
 
     @GET
@@ -357,64 +355,59 @@ public class SettingsService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.INDEX_STATISTICS_READ)
     public String getIndexStatistics() {
-        IndicesStatsResponse allIndicesStatsResponse = dataRepository.indicesGetStats(new IndicesStatsRequestBuilder()
+        var allIndicesStatsResponse = dataRepository.indicesGetStats(new IndicesStatsRequestBuilder()
                 .clear()
                 .setStore(true)
                 .setDocs(true)
                 .setIndexing(true)
                 .setSearch(true)
                 .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout())));
-        IndicesStatsResponse eventIndicesStatsResponse = dataRepository.indicesGetStats(new IndicesStatsRequestBuilder().setIndices("etm_event_*")
+        var eventIndicesStatsResponse = dataRepository.indicesGetStats(new IndicesStatsRequestBuilder().setIndices("etm_event_*")
                 .clear()
                 .setStore(true)
                 .setDocs(true)
                 .setIndexing(true)
                 .setSearch(true)
                 .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout())));
-        NumberFormat numberFormat = getEtmPrincipal().getNumberFormat();
-        StringBuilder result = new StringBuilder();
-        result.append("{");
-        result.append("\"locale\": ").append(getLocalFormatting(getEtmPrincipal()));
-        result.append(",\"totals\": {");
+        var numberFormat = getEtmPrincipal().getNumberFormat();
+        var builder = new JsonBuilder();
+        builder.startObject();
+        builder.field("locale", getLocalFormatting(getEtmPrincipal()));
+        builder.startObject("totals");
         final long totalCount = eventIndicesStatsResponse.getPrimaries().getDocs().getCount() - eventIndicesStatsResponse.getPrimaries().getDocs().getDeleted();
-        addLongElementToJsonBuffer("document_count", totalCount, result, true);
-        addStringElementToJsonBuffer("document_count_as_string", numberFormat.format(totalCount), result, false);
-        addLongElementToJsonBuffer("size_in_bytes", allIndicesStatsResponse.getTotal().getStore().getSizeInBytes(), result, false);
-        addStringElementToJsonBuffer("size_in_bytes_as_string", numberFormat.format(allIndicesStatsResponse.getTotal().getStore().getSizeInBytes()), result, false);
-        result.append("}, \"indices\": [");
+        builder.field("document_count", totalCount);
+        builder.field("document_count_as_string", numberFormat.format(totalCount));
+        builder.field("size_in_bytes", allIndicesStatsResponse.getTotal().getStore().getSizeInBytes());
+        builder.field("size_in_bytes_as_string", numberFormat.format(allIndicesStatsResponse.getTotal().getStore().getSizeInBytes()));
+        builder.endObject();
+        builder.startArray("indices");
         Map<String, IndexStats> indices = eventIndicesStatsResponse.getIndices();
-        boolean firstEntry = true;
         for (Entry<String, IndexStats> entry : indices.entrySet()) {
-            if (!firstEntry) {
-                result.append(",");
-            }
-            result.append("{");
+            builder.startObject();
             final long count = entry.getValue().getPrimaries().getDocs().getCount() - entry.getValue().getPrimaries().getDocs().getDeleted();
-            addStringElementToJsonBuffer("name", entry.getKey(), result, true);
-            addLongElementToJsonBuffer("document_count", count, result, false);
-            addStringElementToJsonBuffer("document_count_as_string", numberFormat.format(count), result, false);
-            addLongElementToJsonBuffer("size_in_bytes", entry.getValue().getTotal().getStore().getSizeInBytes(), result, false);
-            addStringElementToJsonBuffer("size_in_bytes_as_string", numberFormat.format(entry.getValue().getTotal().getStore().getSizeInBytes()), result, false);
+            builder.field("name", entry.getKey());
+            builder.field("document_count", count);
+            builder.field("document_count_as_string", numberFormat.format(count));
+            builder.field("size_in_bytes", entry.getValue().getTotal().getStore().getSizeInBytes());
+            builder.field("size_in_bytes_as_string", numberFormat.format(entry.getValue().getTotal().getStore().getSizeInBytes()));
 
             long indexCount = entry.getValue().getTotal().getIndexing().getIndexCount();
             if (indexCount != 0) {
                 long averageIndexTime = entry.getValue().getTotal().getIndexing().getIndexTime().millis() / indexCount;
-                addLongElementToJsonBuffer("average_index_time", averageIndexTime, result, false);
-                addStringElementToJsonBuffer("average_index_time_as_string", numberFormat.format(averageIndexTime), result, false);
+                builder.field("average_index_time", averageIndexTime);
+                builder.field("average_index_time_as_string", numberFormat.format(averageIndexTime));
             }
 
             indexCount = entry.getValue().getTotal().getSearch().getQueryCount();
             if (indexCount != 0) {
                 long averageSearchTime = entry.getValue().getTotal().getSearch().getQueryTimeInMillis() / indexCount;
-                addLongElementToJsonBuffer("average_search_time", averageSearchTime, result, false);
-                addStringElementToJsonBuffer("average_search_time_as_string", numberFormat.format(averageSearchTime), result, false);
+                builder.field("average_search_time", averageSearchTime);
+                builder.field("average_search_time_as_string", numberFormat.format(averageSearchTime));
             }
-
-            result.append("}");
-            firstEntry = false;
+            builder.endObject();
         }
-        result.append("]}");
-        return result.toString();
+        builder.endArray().endObject();
+        return builder.build();
     }
 
     @GET
@@ -422,14 +415,14 @@ public class SettingsService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.PARSER_SETTINGS_READ, SecurityRoles.PARSER_SETTINGS_READ_WRITE, SecurityRoles.IMPORT_PROFILES_READ, SecurityRoles.IMPORT_PROFILES_READ_WRITE})
     public String getParsers() {
-        SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
+        var searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER));
-        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
+        var scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
         if (!scrollableSearch.hasNext()) {
             return null;
         }
-        StringBuilder result = new StringBuilder();
+        var result = new StringBuilder();
         result.append("{\"parsers\": [");
         boolean first = true;
         for (SearchHit searchHit : scrollableSearch) {
@@ -451,20 +444,16 @@ public class SettingsService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.PARSER_SETTINGS_READ, SecurityRoles.PARSER_SETTINGS_READ_WRITE, SecurityRoles.IMPORT_PROFILES_READ, SecurityRoles.IMPORT_PROFILES_READ_WRITE})
     public String getParserFields() {
-        StringBuilder result = new StringBuilder();
-        boolean first = true;
-        result.append("{\"parserfields\": [");
+        var builder = new JsonBuilder();
+        builder.startObject();
+        builder.startArray("parserfields");
         for (ExpressionParserField field : ExpressionParserField.values()) {
-            if (!first) {
-                result.append(",");
-            }
-            result.append("{");
-            addStringElementToJsonBuffer("name", field.getJsonTag(), result, true);
-            result.append("}");
-            first = false;
+            builder.startObject();
+            builder.field("name", field.getJsonTag());
+            builder.endObject();
         }
-        result.append("]}");
-        return result.toString();
+        builder.endArray().endObject();
+        return builder.build();
     }
 
 
@@ -533,11 +522,12 @@ public class SettingsService extends AbstractGuiService {
         // Do a read and write of the parser to make sure it's valid.
         ExpressionParser expressionParser = this.expressionParserConverter.read(toStringWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER));
 
+
         bulkRequestBuilder.add(
                 requestEnhancer.enhance(
                         new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER_ID_PREFIX + parserName)
                 )
-                        .setDoc(this.expressionParserConverter.write(expressionParser), XContentType.JSON)
+                        .setDoc(this.expressionParserConverter.write(expressionParser, true), XContentType.JSON)
                         .setDocAsUpsert(true)
                         .setDetectNoop(true)
                         .build()
@@ -743,27 +733,23 @@ public class SettingsService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.USER_SETTINGS_READ_WRITE)
     public String searchLdapUsers(String json) {
-        String query = getString("query", toMap(json));
+        var query = getString("query", toMap(json));
         if (query == null || etmConfiguration.getDirectory() == null) {
             return null;
         }
-        List<EtmPrincipal> principals = etmConfiguration.getDirectory().searchPrincipal(query.endsWith("*") ? query : query + "*");
-        StringBuilder result = new StringBuilder();
-        result.append("[");
-        boolean first = true;
+        var principals = etmConfiguration.getDirectory().searchPrincipal(query.endsWith("*") ? query : query + "*");
+        var builder = new JsonBuilder();
+        builder.startObject();
+        builder.startArray("users");
         for (EtmPrincipal principal : principals) {
-            if (!first) {
-                result.append(",");
-            }
-            result.append("{");
-            addStringElementToJsonBuffer("id", principal.getId(), result, true);
-            addStringElementToJsonBuffer("label", principal.getName() != null ? principal.getId() + " - " + principal.getName() : principal.getId(), result, false);
-            addStringElementToJsonBuffer("value", principal.getId(), result, false);
-            result.append("}");
-            first = false;
+            builder.startObject();
+            builder.field("id", principal.getId());
+            builder.field("label", principal.getName() != null ? principal.getId() + " - " + principal.getName() : principal.getId());
+            builder.field("value", principal.getId());
+            builder.endObject();
         }
-        result.append("]");
-        return result.toString();
+        builder.endArray().endObject();
+        return builder.build();
     }
 
     @PUT
@@ -847,23 +833,22 @@ public class SettingsService extends AbstractGuiService {
     }
 
     private String certChainToJson(Certificate... certChain) {
-        var result = new StringBuilder();
-        result.append("{ \"certificates\": [");
+        var builder = new JsonBuilder();
+        builder.startObject();
+        builder.startArray("certificates");
         if (certChain != null) {
-            result.append(
-                    Arrays.stream(certChain).filter(c -> c instanceof X509Certificate).map(c -> {
-                        var x509Cert = (X509Certificate) c;
-                        StringBuilder certJsonBuilder = new StringBuilder();
-                        certJsonBuilder.append("{");
-                        addStringElementToJsonBuffer("dn", x509Cert.getSubjectDN().getName(), true, certJsonBuilder, true);
-                        addStringElementToJsonBuffer("serial", x509Cert.getSerialNumber().toString(16), true, certJsonBuilder, false);
-                        certJsonBuilder.append("}");
-                        return certJsonBuilder.toString();
-                    }).collect(Collectors.joining(","))
-            );
+            for (var cert : certChain) {
+                if (cert instanceof X509Certificate) {
+                    var x509Cert = (X509Certificate) cert;
+                    builder.startObject();
+                    builder.field("dn", x509Cert.getSubjectDN().getName());
+                    builder.field("serial", x509Cert.getSerialNumber().toString(16));
+                    builder.endObject();
+                }
+            }
         }
-        result.append("]}");
-        return result.toString();
+        builder.endArray().endObject();
+        return builder.build();
     }
 
 
@@ -1160,7 +1145,7 @@ public class SettingsService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.USER_SETTINGS_READ_WRITE})
     public String createNewApiKey() {
-        return "{" + this.escapeObjectToJsonNameValuePair("api_key", UUID.randomUUID().toString()) + "}";
+        return new JsonBuilder().startObject().field("api_key", UUID.randomUUID().toString()).endObject().build();
     }
 
     @GET
@@ -1378,7 +1363,7 @@ public class SettingsService extends AbstractGuiService {
         if (testConnection) {
             ConnectionTestResult testResult = notifier.testConnection(dataRepository);
             if (testResult.isFailed()) {
-                return "{ \"status\": \"failed\", " + escapeObjectToJsonNameValuePair("reason", testResult.getErrorMessage()) + "}";
+                return new JsonBuilder().startObject().field("status", "failed").field("reason", testResult.getErrorMessage()).endObject().build();
             }
         }
 

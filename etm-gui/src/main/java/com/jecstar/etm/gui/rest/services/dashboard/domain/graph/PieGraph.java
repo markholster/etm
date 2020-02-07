@@ -1,5 +1,6 @@
 package com.jecstar.etm.gui.rest.services.dashboard.domain.graph;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.gui.rest.services.dashboard.domain.converter.XAxisConverter;
 import com.jecstar.etm.gui.rest.services.dashboard.domain.converter.YAxisConverter;
 import com.jecstar.etm.server.core.converter.JsonField;
@@ -64,23 +65,23 @@ public class PieGraph extends Graph<PieGraph> {
     }
 
     @Override
-    public void appendHighchartsConfig(StringBuilder config) {
-        config.append(", \"legend\": {\"enabled\": " + isShowLegend() + "}");
-        config.append(", \"chart\": {\"type\": \"pie\"}");
-        config.append(", \"plotOptions\": {\"pie\": { \"dataLabels\": { \"enabled\": " + isShowDataLabels() + "}");
-        config.append(", \"showInLegend\": true");
-        config.append(", \"allowPointSelect\": true");
+    public void appendHighchartsConfig(JsonBuilder builder) {
+        builder.startObject("legend").field("enabled", isShowLegend()).endObject();
+        builder.startObject("chart").field("type", "pie").endObject();
+        builder.startObject("plotOptions").startObject("pie").startObject("dataLabels").field("enabled", isShowDataLabels()).endObject();
+        builder.field("showInLegend", true);
+        builder.field("allowPointSelect", true);
         if ("semi_circle".equals(getSubType())) {
-            config.append(", \"startAngle\": -90");
-            config.append(", \"endAngle\": 90");
-            config.append(", \"innerSize\": \"50%\"");
-            config.append(", \"center\": [\"50%\", \"100%\"]");
-            config.append(", \"size\": \"200%\"");
+            builder.field("startAngle", -90);
+            builder.field("endAngle", 90);
+            builder.field("innerSize", "50%");
+            builder.field("center", "50%", "100%");
+            builder.field("size", "100%");
         } else if ("donut".equals(getSubType())) {
-            config.append(", \"innerSize\": \"50%\"");
-            config.append(", \"center\": [\"50%\", \"50%\"]");
+            builder.field("innerSize", "50%");
+            builder.field("center", "50%", "100%");
         }
-        config.append("}}");
+        builder.endObject().endObject();
     }
 
     @Override

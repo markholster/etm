@@ -1,5 +1,6 @@
 package com.jecstar.etm.server.core.converter.custom;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.server.core.converter.CustomFieldConverter;
 import com.jecstar.etm.server.core.converter.JsonEntityConverter;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
@@ -21,17 +22,11 @@ public abstract class NestedObjectConverter<T> extends JsonEntityConverter<T> im
     }
 
     @Override
-    public boolean addToJsonBuffer(String jsonKey, T value, StringBuilder result, boolean firstElement) {
+    public void addToJsonBuffer(String jsonKey, T value, JsonBuilder builder) {
         if (value == null) {
-            return false;
+            return;
         }
-        if (!firstElement) {
-            result.append(", ");
-        }
-        result.append(this.jsonConverter.escapeToJson(jsonKey, true));
-        result.append(": ");
-        result.append(write(value));
-        return true;
+        builder.rawField(jsonKey, write(value));
     }
 
     @Override

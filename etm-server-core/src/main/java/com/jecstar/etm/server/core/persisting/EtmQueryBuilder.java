@@ -11,6 +11,7 @@ import org.elasticsearch.index.query.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -28,14 +29,14 @@ public class EtmQueryBuilder {
     private final TelemetryEventTags eventTags = new TelemetryEventTagsJsonImpl();
 
     private final String queryString;
-    private final List<String> objectTypes;
+    private final Set<String> objectTypes;
     private final DataRepository dataRepository;
     private final RequestEnhancer requestEnhancer;
     private List<QueryBuilder> joinFilters = new ArrayList<>();
     private List<QueryBuilder> rootFilters = new ArrayList<>();
     private String timeZoneId;
 
-    public EtmQueryBuilder(String queryString, List<String> objectTypes, DataRepository dataRepository, RequestEnhancer requestEnhancer) {
+    public EtmQueryBuilder(String queryString, Set<String> objectTypes, DataRepository dataRepository, RequestEnhancer requestEnhancer) {
         this.queryString = queryString;
         this.objectTypes = objectTypes;
         this.dataRepository = dataRepository;

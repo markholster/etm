@@ -12,11 +12,9 @@ public class LogTelemetryEventWriterJsonImpl extends AbstractJsonTelemetryEventW
     }
 
     @Override
-    protected boolean doWrite(LogTelemetryEvent event, StringBuilder buffer, boolean firstElement) {
-        boolean added = !firstElement;
-        added = this.jsonWriter.addStringElementToJsonBuffer(getTags().getLogLevelTag(), event.logLevel, buffer, !added) || added;
-        added = this.jsonWriter.addStringElementToJsonBuffer(getTags().getStackTraceTag(), event.stackTrace, buffer, !added) || added;
-        return added;
+    protected void doWrite(LogTelemetryEvent event, JsonBuilder builder) {
+        builder.field(getTags().getLogLevelTag(), event.logLevel);
+        builder.field(getTags().getStackTraceTag(), event.stackTrace);
     }
 
 }

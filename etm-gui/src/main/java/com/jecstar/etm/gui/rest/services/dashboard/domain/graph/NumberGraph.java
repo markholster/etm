@@ -1,5 +1,6 @@
 package com.jecstar.etm.gui.rest.services.dashboard.domain.graph;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.gui.rest.services.dashboard.domain.converter.YAxisConverter;
 import com.jecstar.etm.server.core.converter.JsonField;
 import com.jecstar.etm.server.core.domain.aggregator.Aggregator;
@@ -60,8 +61,8 @@ public class NumberGraph extends Graph<NumberGraph> {
     }
 
     @Override
-    public void appendHighchartsConfig(StringBuilder config) {
-        config.append(", \"font_size\": \"" + getFontSize() + "em\"");
+    public void appendHighchartsConfig(JsonBuilder builder) {
+        builder.field("font_size", getFontSize() + "em");
     }
 
     @Override

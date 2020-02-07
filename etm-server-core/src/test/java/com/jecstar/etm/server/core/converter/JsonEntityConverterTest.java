@@ -21,7 +21,7 @@ class JsonEntityConverterTest {
 
         JsonEntityConverter converter = new JsonEntityConverter<>(f -> new StringAnnotatedClass());
         String json = converter.write(entity);
-        assertEquals("{\"first_value\": \"First value\", \"second_value\": \"Second value\"}", json);
+        assertEquals("{\"first_value\":\"First value\",\"second_value\":\"Second value\"}", json);
         StringAnnotatedClass entity2 = (StringAnnotatedClass) converter.read(json);
 
         assertEquals(entity, entity2);
@@ -34,7 +34,7 @@ class JsonEntityConverterTest {
 
         JsonEntityConverter converter = new JsonEntityConverter<>(f -> new StringAnnotatedClass());
         String json = converter.write(entity);
-        assertEquals("{\"second_value\": null}", json);
+        assertEquals("{\"second_value\":null}", json);
         StringAnnotatedClass entity2 = (StringAnnotatedClass) converter.read(json);
 
         assertEquals(entity, entity2);
@@ -50,7 +50,7 @@ class JsonEntityConverterTest {
 
         JsonEntityConverter converter = new JsonEntityConverter<>(f -> new LongAnnotatedClass());
         String json = converter.write(entity);
-        assertEquals("{\"first_value\": 101, \"second_value\": 213, \"third_value\": 456}", json);
+        assertEquals("{\"first_value\":101,\"second_value\":213,\"third_value\":456}", json);
         LongAnnotatedClass entity2 = (LongAnnotatedClass) converter.read(json);
 
         assertEquals(entity, entity2);
@@ -63,7 +63,7 @@ class JsonEntityConverterTest {
 
         JsonEntityConverter converter = new JsonEntityConverter<>(f -> new LongAnnotatedClass());
         String json = converter.write(entity);
-        assertEquals("{\"second_value\": null, \"third_value\": 0}", json);
+        assertEquals("{\"second_value\":null,\"third_value\":0}", json);
         LongAnnotatedClass entity2 = (LongAnnotatedClass) converter.read(json);
 
         assertEquals(entity, entity2);
@@ -79,7 +79,7 @@ class JsonEntityConverterTest {
 
         JsonEntityConverter converter = new JsonEntityConverter<>(f -> new DoubleAnnotatedClass());
         String json = converter.write(entity);
-        assertEquals("{\"first_value\": 101.23, \"second_value\": 213.45, \"third_value\": 456.54}", json);
+        assertEquals("{\"first_value\":101.23,\"second_value\":213.45,\"third_value\":456.54}", json);
         DoubleAnnotatedClass entity2 = (DoubleAnnotatedClass) converter.read(json);
 
         assertEquals(entity, entity2);
@@ -92,7 +92,7 @@ class JsonEntityConverterTest {
 
         JsonEntityConverter converter = new JsonEntityConverter<>(f -> new DoubleAnnotatedClass());
         String json = converter.write(entity);
-        assertEquals("{\"second_value\": null, \"third_value\": 0.0}", json);
+        assertEquals("{\"second_value\":null,\"third_value\":0.0}", json);
         DoubleAnnotatedClass entity2 = (DoubleAnnotatedClass) converter.read(json);
 
         assertEquals(entity, entity2);
@@ -108,7 +108,7 @@ class JsonEntityConverterTest {
 
         JsonEntityConverter converter = new JsonEntityConverter<>(f -> new IntegerAnnotatedClass());
         String json = converter.write(entity);
-        assertEquals("{\"first_value\": 101, \"second_value\": 213, \"third_value\": 456}", json);
+        assertEquals("{\"first_value\":101,\"second_value\":213,\"third_value\":456}", json);
         IntegerAnnotatedClass entity2 = (IntegerAnnotatedClass) converter.read(json);
 
         assertEquals(entity, entity2);
@@ -121,7 +121,7 @@ class JsonEntityConverterTest {
 
         JsonEntityConverter converter = new JsonEntityConverter<>(f -> new IntegerAnnotatedClass());
         String json = converter.write(entity);
-        assertEquals("{\"second_value\": null, \"third_value\": 0}", json);
+        assertEquals("{\"second_value\":null,\"third_value\":0}", json);
         IntegerAnnotatedClass entity2 = (IntegerAnnotatedClass) converter.read(json);
 
         assertEquals(entity, entity2);
@@ -137,7 +137,7 @@ class JsonEntityConverterTest {
 
         JsonEntityConverter converter = new JsonEntityConverter<>(f -> new BooleanAnnotatedClass());
         String json = converter.write(entity);
-        assertEquals("{\"first_value\": true, \"second_value\": false, \"third_value\": true}", json);
+        assertEquals("{\"first_value\":true,\"second_value\":false,\"third_value\":true}", json);
         BooleanAnnotatedClass entity2 = (BooleanAnnotatedClass) converter.read(json);
 
         assertEquals(entity, entity2);
@@ -150,7 +150,7 @@ class JsonEntityConverterTest {
 
         JsonEntityConverter converter = new JsonEntityConverter<>(f -> new BooleanAnnotatedClass());
         String json = converter.write(entity);
-        assertEquals("{\"second_value\": null, \"third_value\": false}", json);
+        assertEquals("{\"second_value\":null,\"third_value\":false}", json);
         BooleanAnnotatedClass entity2 = (BooleanAnnotatedClass) converter.read(json);
 
         assertEquals(entity, entity2);
@@ -167,7 +167,7 @@ class JsonEntityConverterTest {
 
         JsonEntityConverter converter = new JsonEntityConverter<>(f -> new InstantAnnotatedClass());
         String json = converter.write(entity);
-        assertEquals("{\"first_value\": " + instant1.toEpochMilli() + ", \"second_value\": " + instant2.toEpochMilli() + "}", json);
+        assertEquals("{\"first_value\":" + instant1.toEpochMilli() + ",\"second_value\":" + instant2.toEpochMilli() + "}", json);
         InstantAnnotatedClass entity2 = (InstantAnnotatedClass) converter.read(json);
 
         assertEquals(entity, entity2);
@@ -180,7 +180,7 @@ class JsonEntityConverterTest {
 
         JsonEntityConverter converter = new JsonEntityConverter<>(f -> new InstantAnnotatedClass());
         String json = converter.write(entity);
-        assertEquals("{\"second_value\": null}", json);
+        assertEquals("{\"second_value\":null}", json);
         InstantAnnotatedClass entity2 = (InstantAnnotatedClass) converter.read(json);
 
         assertEquals(entity, entity2);

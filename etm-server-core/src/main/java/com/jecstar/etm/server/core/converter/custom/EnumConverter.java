@@ -1,5 +1,6 @@
 package com.jecstar.etm.server.core.converter.custom;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.server.core.converter.CustomFieldConverter;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import com.jecstar.etm.server.core.logging.LogFactory;
@@ -16,11 +17,10 @@ public class EnumConverter implements CustomFieldConverter<Enum> {
     private final JsonConverter jsonConverter = new JsonConverter();
 
     @Override
-    public boolean addToJsonBuffer(String jsonKey, Enum value, StringBuilder buffer, boolean firstElement) {
+    public void addToJsonBuffer(String jsonKey, Enum value, JsonBuilder builder) {
         if (value != null) {
-            return this.jsonConverter.addStringElementToJsonBuffer(jsonKey, value.name(), buffer, firstElement) || !firstElement;
+            builder.field(jsonKey, value.name());
         }
-        return false;
     }
 
     @Override

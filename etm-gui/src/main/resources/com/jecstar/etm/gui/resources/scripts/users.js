@@ -134,7 +134,7 @@ function buildUserPage() {
                     if (!data) {
                         return
                     }
-                    response(data);
+                    response(data.users);
                 }
             });
         },

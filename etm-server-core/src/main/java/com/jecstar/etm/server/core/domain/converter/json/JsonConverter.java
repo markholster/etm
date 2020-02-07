@@ -2,7 +2,6 @@ package com.jecstar.etm.server.core.domain.converter.json;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jecstar.etm.domain.writer.json.JsonWriter;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
@@ -16,7 +15,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class JsonConverter extends JsonWriter {
+public class JsonConverter {
 
     /**
      * The <code>LogWrapper</code> for this class.

@@ -6,7 +6,7 @@ public interface ExpressionParserConverter<T> {
 
     ExpressionParser read(T content);
 
-    T write(ExpressionParser expressionParser);
+    T write(ExpressionParser expressionParser, boolean withNamespace);
 
     ExpressionParserTags getTags();
 }

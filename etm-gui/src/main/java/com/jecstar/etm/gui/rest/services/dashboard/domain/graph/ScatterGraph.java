@@ -1,5 +1,6 @@
 package com.jecstar.etm.gui.rest.services.dashboard.domain.graph;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.server.core.converter.JsonField;
 
 /**
@@ -23,12 +24,12 @@ public class ScatterGraph extends AxesGraph<ScatterGraph> {
     }
 
     @Override
-    public void appendHighchartsConfig(StringBuilder config) {
-        super.appendHighchartsConfig(config);
+    public void appendHighchartsConfig(JsonBuilder builder) {
+        super.appendHighchartsConfig(builder);
         boolean inverted = Orientation.HORIZONTAL.equals(getOrientation());
-        config.append(", \"chart\": {\"type\": \"scatter\", \"inverted\": " + inverted + "}");
-        config.append(", \"plotOptions\": {\"scatter\": {\"dataLabels\": { \"enabled\": " + isShowDataLabels() + "}");
-        config.append("}}");
+        builder.startObject("chart").field("type", "scatter").field("inverted", inverted).endObject();
+        builder.startObject("plotOptions").startObject("scatter").startObject("dataLabels").field("enabled", isShowDataLabels()).endObject();
+        builder.endObject().endObject();
     }
 
     @Override

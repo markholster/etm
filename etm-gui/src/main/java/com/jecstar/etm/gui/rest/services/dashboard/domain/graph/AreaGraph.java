@@ -1,5 +1,6 @@
 package com.jecstar.etm.gui.rest.services.dashboard.domain.graph;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.server.core.converter.JsonField;
 import com.jecstar.etm.server.core.converter.custom.EnumConverter;
 
@@ -65,21 +66,20 @@ public class AreaGraph extends AxesGraph<AreaGraph> {
     }
 
     @Override
-    public void appendHighchartsConfig(StringBuilder config) {
-        super.appendHighchartsConfig(config);
+    public void appendHighchartsConfig(JsonBuilder builder) {
+        super.appendHighchartsConfig(builder);
         boolean inverted = Orientation.HORIZONTAL.equals(getOrientation());
-        config.append(", \"chart\": {\"type\": \"" + getChartType() + "\", \"inverted\": " + inverted + "}");
-
-        config.append(", \"plotOptions\": {\"" + getChartType() + "\": {");
-        config.append("\"marker\": {\"enabled\": " + isShowMarkers() + "}");
+        builder.startObject("chart").field("type", getChartType()).field("inverted", inverted).endObject();
+        builder.startObject("plotOptions").startObject(getChartType());
+        builder.startObject("marker").field("enabled", isShowMarkers()).endObject();
         if ("percentage".equals(getSubType())) {
-            config.append(", \"stacking\": \"percent\"");
+            builder.field("stacking", "percent");
         } else if ("stacked".equals(getSubType())) {
-            config.append(", \"stacking\": \"normal\"");
+            builder.field("stacking", "normal");
         }
-        config.append(", \"dataLabels\": { \"enabled\": " + isShowDataLabels() + "}");
-        config.append(getLineType().getHighchartsPlotOptions(false));
-        config.append("}}");
+        builder.startObject("dataLabels").field("enabled", isShowDataLabels()).endObject();
+        getLineType().addHighchartsPlotOptions(builder);
+        builder.endObject().endObject();
     }
 
     private String getChartType() {

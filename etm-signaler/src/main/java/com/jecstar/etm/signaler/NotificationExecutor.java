@@ -1,10 +1,10 @@
 package com.jecstar.etm.signaler;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.server.core.domain.cluster.notifier.EmailNotifier;
 import com.jecstar.etm.server.core.domain.cluster.notifier.Notifier;
 import com.jecstar.etm.server.core.domain.cluster.notifier.SnmpNotifier;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import com.jecstar.etm.server.core.domain.principal.EtmSecurityEntity;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.persisting.internal.BusinessEventLogger;
@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Interface for all classes that are able execute a notification.
@@ -24,7 +23,6 @@ import java.util.stream.Collectors;
 public class NotificationExecutor implements Closeable {
 
 
-    private final JsonConverter jsonConverter = new JsonConverter();
     private final EmailSignal emailSignal = new EmailSignal();
     private final SnmpSignal snmpSignal;
 
@@ -61,25 +59,24 @@ public class NotificationExecutor implements Closeable {
         } else if (Notifier.NotifierType.SNMP.equals(notifier.getNotifierType())) {
             this.snmpSignal.sendExceedanceNotification(clusterName, signal, (SnmpNotifier) notifier, thresholdExceedances, systemStartTime);
         } else if (Notifier.NotifierType.ETM_BUSINESS_EVENT.equals(notifier.getNotifierType())) {
-            final StringBuilder buffer = new StringBuilder();
-            buffer.append("{");
-            this.jsonConverter.addStringElementToJsonBuffer("signal", signal.getName(), buffer, true);
-            this.jsonConverter.addStringElementToJsonBuffer("owner", etmSecurityEntity.getType(), buffer, false);
-            this.jsonConverter.addStringElementToJsonBuffer("owner_id", etmSecurityEntity.getId(), buffer, false);
-            this.jsonConverter.addDoubleElementToJsonBuffer("threshold", signal.getThreshold().getValue(), buffer, false);
-            this.jsonConverter.addIntegerElementToJsonBuffer("max_frequency_of_exceedance", signal.getNotifications().getMaxFrequencyOfExceedance(), buffer, false);
+            final var builder = new JsonBuilder();
+            builder.startObject();
+            builder.field("signal", signal.getName());
+            builder.field("owner", etmSecurityEntity.getType());
+            builder.field("owner_id", etmSecurityEntity.getId());
+            builder.field("threshold", signal.getThreshold().getValue());
+            builder.field("max_frequency_of_exceedance", signal.getNotifications().getMaxFrequencyOfExceedance());
             List<ZonedDateTime> keys = new ArrayList<>(thresholdExceedances.keySet());
             Collections.sort(keys);
-            buffer.append(", " + this.jsonConverter.escapeToJson("threshold_exceedances", true) + ": [");
-            buffer.append(
-                    keys.stream().map(k -> "{"
-                            + "\"timestamp\": " + k.toInstant().toEpochMilli()
-                            + ",\"value\": " + thresholdExceedances.get(k)
-                            + "}").collect(Collectors.joining(","))
-            );
-            buffer.append("]}");
-
-            BusinessEventLogger.logSignalThresholdExceeded(buffer.toString());
+            builder.startArray("threshold_exceedances");
+            for (var key : keys) {
+                builder.startObject();
+                builder.field("timestamp", key.toInstant());
+                builder.field("value", thresholdExceedances.get(key));
+                builder.endObject();
+            }
+            builder.endArray().endObject();
+            BusinessEventLogger.logSignalThresholdExceeded(builder.build());
         }
     }
 
@@ -102,15 +99,15 @@ public class NotificationExecutor implements Closeable {
         if (Notifier.NotifierType.EMAIL.equals(notifier.getNotifierType())) {
             this.emailSignal.sendNoLongerExceededNotification(dataRepository, etmConfiguration, clusterName, signal, (EmailNotifier) notifier, etmSecurityEntity);
         } else if (Notifier.NotifierType.ETM_BUSINESS_EVENT.equals(notifier.getNotifierType())) {
-            final StringBuilder buffer = new StringBuilder();
-            buffer.append("{");
-            this.jsonConverter.addStringElementToJsonBuffer("signal", signal.getName(), buffer, true);
-            this.jsonConverter.addStringElementToJsonBuffer("owner", etmSecurityEntity.getType(), buffer, false);
-            this.jsonConverter.addStringElementToJsonBuffer("owner_id", etmSecurityEntity.getId(), buffer, false);
-            this.jsonConverter.addDoubleElementToJsonBuffer("threshold", signal.getThreshold().getValue(), buffer, false);
-            this.jsonConverter.addIntegerElementToJsonBuffer("max_frequency_of_exceedance", signal.getNotifications().getMaxFrequencyOfExceedance(), buffer, false);
-            buffer.append("}");
-            BusinessEventLogger.logSignalThresholdNoLongerExceeded(buffer.toString());
+            final var builder = new JsonBuilder();
+            builder.startObject();
+            builder.field("signal", signal.getName());
+            builder.field("owner", etmSecurityEntity.getType());
+            builder.field("owner_id", etmSecurityEntity.getId());
+            builder.field("threshold", signal.getThreshold().getValue());
+            builder.field("max_frequency_of_exceedance", signal.getNotifications().getMaxFrequencyOfExceedance());
+            builder.endObject();
+            BusinessEventLogger.logSignalThresholdNoLongerExceeded(builder.build());
         }
     }
 

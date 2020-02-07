@@ -52,8 +52,6 @@ echo "Uploading distributions to www.jecstar.com"
 scp -r "$SCRIPT_DIR"/etm-distribution/build/distributions/* www.jecstar.com:/home/mark/etm-dist
 cd "$SCRIPT_DIR" || exit
 
-echo "Checking for support matrix in documentation"
-
 echo "Building the documentation"
 cd "$SCRIPT_DIR"/etm-public/etm-documentation || exit
 yarn docs:build
@@ -67,6 +65,7 @@ scp -r docs/.vuepress/dist www.jecstar.com:/home/mark/etm-docs
 cd "$SCRIPT_DIR" || exit
 
 echo "Generating OCI image"
+podman rmi docker.io/adoptopenjdk/openjdk11:alpine-slim
 buildah unshare "$SCRIPT_DIR"/etm-public/etm-buildah/build-oci.sh $VERSION
 if [ $? -ne 0 ]; then
     echo "Generating OCI image failed"
@@ -74,8 +73,6 @@ if [ $? -ne 0 ]; then
 fi
 echo "Pushing OCI image to Google Container Registry"
 podman push eu.gcr.io/virtual-ellipse-208415/etm:$VERSION
-
-#Check release date in support matrix document!!
 
 #==== Push subtree
 #git subtree push --prefix=etm-public git@github.com:jecstarinnovations/etm.git develop

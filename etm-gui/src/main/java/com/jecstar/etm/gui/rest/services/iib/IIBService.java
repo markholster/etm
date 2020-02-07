@@ -2,6 +2,7 @@ package com.jecstar.etm.gui.rest.services.iib;
 
 import com.ibm.broker.config.proxy.ConfigManagerProxyLoggedException;
 import com.ibm.broker.config.proxy.ConfigurableService;
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.gui.rest.AbstractGuiService;
 import com.jecstar.etm.gui.rest.IIBApi;
 import com.jecstar.etm.gui.rest.services.iib.proxy.*;
@@ -115,29 +116,26 @@ public class IIBService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.IIB_EVENT_READ, SecurityRoles.IIB_EVENT_READ_WRITE})
     public String getServers(@PathParam("nodeName") String nodeName) {
-        GetResponse getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
+        var getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName)
                 .setFetchSource(true));
         if (!getResponse.isExists()) {
             return null;
         }
-        Node node = this.nodeConverter.read(getResponse.getSourceAsString());
-        StringBuilder result = new StringBuilder();
-        result.append("{\"servers\": [");
-        boolean first = true;
+        var node = this.nodeConverter.read(getResponse.getSourceAsString());
+        var builder = new JsonBuilder();
+        builder.startObject();
+        var servers = new ArrayList<String>();
         try (IIBNodeConnection nodeConnection = createIIBConnectionInstance(node)) {
             nodeConnection.connect();
             List<IIBIntegrationServer> integrationServers = nodeConnection.getServers();
             for (IIBIntegrationServer integrationServer : integrationServers) {
-                if (!first) {
-                    result.append(",");
-                }
-                result.append(escapeToJson(integrationServer.getName(), true));
-                first = false;
+                servers.add(integrationServer.getName());
             }
         }
-        result.append("]}");
-        return result.toString();
+        builder.field("servers", servers);
+        builder.endObject();
+        return builder.build();
     }
 
     @POST
@@ -203,15 +201,16 @@ public class IIBService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.IIB_EVENT_READ, SecurityRoles.IIB_EVENT_READ_WRITE})
     public String getServerDeployments(@PathParam("nodeName") String nodeName, @PathParam("serverName") String serverName) {
-        GetResponse getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
+        var getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName)
                 .setFetchSource(true));
         if (!getResponse.isExists()) {
             return null;
         }
-        Node node = this.nodeConverter.read(getResponse.getSourceAsString());
-        StringBuilder result = new StringBuilder();
-        result.append("{\"deployments\": {");
+        var node = this.nodeConverter.read(getResponse.getSourceAsString());
+        var builder = new JsonBuilder();
+        builder.startObject();
+        builder.startObject("deployments");
         try (IIBNodeConnection nodeConnection = createIIBConnectionInstance(node)) {
             nodeConnection.connect();
             IIBIntegrationServer integrationServer = nodeConnection.getServerByName(serverName);
@@ -222,73 +221,50 @@ public class IIBService extends AbstractGuiService {
             }
 
             List<IIBApplication> applications = integrationServer.getApplications();
-            result.append("\"applications\": [");
-            boolean firstApplication = true;
+            builder.startArray("applications");
             for (IIBApplication application : applications) {
-                if (!firstApplication) {
-                    result.append(",");
-                }
-                result.append("{");
+                builder.startObject();
                 List<IIBSubFlow> subFlows = application.getSubFlows();
                 subFlows.addAll(sharedLibrarySubFlows);
-                addStringElementToJsonBuffer("name", application.getName(), result, true);
+                builder.field("name", application.getName());
                 List<IIBLibrary> libraries = application.getLibraries();
-                result.append(", \"libraries\": [");
-                boolean firstLibrary = true;
+                builder.startArray("libraries");
                 for (IIBLibrary library : libraries) {
                     subFlows.addAll(library.getSubFlows());
-                    if (!firstLibrary) {
-                        result.append(",");
-                    }
-                    addLibraryDeployment(nodeConnection, library, result);
-                    firstLibrary = false;
+                    addLibraryDeployment(nodeConnection, library, builder);
                 }
-                result.append("], \"flows\": [");
+                builder.endArray();
+                builder.startArray("flows");
                 List<IIBMessageFlow> messageFlows = application.getMessageFlows();
-                boolean firstFlow = true;
                 for (IIBMessageFlow messageFlow : messageFlows) {
-                    if (!firstFlow) {
-                        result.append(",");
-                    }
-                    addFlowDeployment(nodeConnection, messageFlow, subFlows, result);
-                    firstFlow = false;
+                    addFlowDeployment(nodeConnection, messageFlow, subFlows, builder);
                 }
-                result.append("]}");
-                firstApplication = false;
+                builder.endArray().endObject();
             }
-            result.append("], \"flows\": [");
+            builder.endArray();
+            builder.startArray("flows");
             List<IIBMessageFlow> messageFlows = integrationServer.getMessageFlows();
-            boolean firstFlow = true;
             for (IIBMessageFlow messageFlow : messageFlows) {
-                if (!firstFlow) {
-                    result.append(",");
-                }
-                addFlowDeployment(nodeConnection, messageFlow, Collections.emptyList(), result);
-                firstFlow = false;
+                addFlowDeployment(nodeConnection, messageFlow, Collections.emptyList(), builder);
             }
-            result.append("]");
+            builder.endArray();
         }
-        result.append("}}");
-        return result.toString();
+        builder.endObject().endObject();
+        return builder.build();
     }
 
-    private void addLibraryDeployment(IIBNodeConnection nodeConnection, IIBLibrary library, StringBuilder result) {
-        result.append("{");
-        addStringElementToJsonBuffer("name", library.getName(), result, true);
-        result.append(", \"flows\": [");
+    private void addLibraryDeployment(IIBNodeConnection nodeConnection, IIBLibrary library, JsonBuilder builder) {
+        builder.startObject();
+        builder.field("name", library.getName());
+        builder.startArray("flows");
         List<IIBMessageFlow> messageFlows = library.getMessageFlows();
-        boolean firstFlow = true;
         for (IIBMessageFlow messageFlow : messageFlows) {
-            if (!firstFlow) {
-                result.append(",");
-            }
-            addFlowDeployment(nodeConnection, messageFlow, library.getSubFlows(), result);
-            firstFlow = false;
+            addFlowDeployment(nodeConnection, messageFlow, library.getSubFlows(), builder);
         }
-        result.append("]}");
+        builder.endArray().endObject();
     }
 
-    private void addFlowDeployment(IIBNodeConnection nodeConnection, IIBMessageFlow flow, List<IIBSubFlow> subFlows, StringBuilder result) {
+    private void addFlowDeployment(IIBNodeConnection nodeConnection, IIBMessageFlow flow, List<IIBSubFlow> subFlows, JsonBuilder builder) {
         boolean monitoringActivated = flow.isMonitoringActivated();
         String currentProfile = null;
         String currentProfileName = flow.getMonitoringProfileName();
@@ -298,16 +274,16 @@ public class IIBService extends AbstractGuiService {
                 currentProfile = configurableService.getProperties().getProperty(PROFILE_PROPERTIES);
             }
         }
-        result.append("{");
-        addStringElementToJsonBuffer("name", flow.getName(), result, true);
-        addBooleanElementToJsonBuffer("monitoring_active", monitoringActivated, result, false);
-        result.append(", \"nodes\": [");
+        builder.startObject();
+        builder.field("name", flow.getName());
+        builder.field("monitoring_active", monitoringActivated);
+        builder.startArray("nodes");
         List<IIBNode> nodes = flow.getNodes();
-        appendNodes(result, null, nodes, subFlows, currentProfile, true);
-        result.append("]}");
+        appendNodes(builder, null, nodes, subFlows, currentProfile);
+        builder.endArray().endObject();
     }
 
-    private boolean appendNodes(StringBuilder buffer, String namePrefix, List<IIBNode> nodes, List<IIBSubFlow> subFlows, String currentMonitoringProfile, boolean firstNode) {
+    private void appendNodes(JsonBuilder builder, String namePrefix, List<IIBNode> nodes, List<IIBSubFlow> subFlows, String currentMonitoringProfile) {
         for (IIBNode node : nodes) {
             if (!node.isSupported()) {
                 continue;
@@ -323,25 +299,20 @@ public class IIBService extends AbstractGuiService {
                     continue;
                 }
                 List<IIBNode> subFlowNodes = optional.get().getNodes();
-                firstNode = appendNodes(buffer, namePrefix == null ? node.getName() + "." : namePrefix + node.getName() + ".", subFlowNodes, subFlows, currentMonitoringProfile, firstNode);
+                appendNodes(builder, namePrefix == null ? node.getName() + "." : namePrefix + node.getName() + ".", subFlowNodes, subFlows, currentMonitoringProfile);
             } else {
-                if (!firstNode) {
-                    buffer.append(",");
-                }
                 String fullNodeName = namePrefix == null ? node.getName() : namePrefix + node.getName();
-                appendNode(buffer, fullNodeName, node.getType(), isMonitoringSetInProfile(currentMonitoringProfile, fullNodeName));
-                firstNode = false;
+                appendNode(builder, fullNodeName, node.getType(), isMonitoringSetInProfile(currentMonitoringProfile, fullNodeName));
             }
         }
-        return firstNode;
     }
 
-    private void appendNode(StringBuilder buffer, String name, String type, boolean monitoringSet) {
-        buffer.append("{");
-        addStringElementToJsonBuffer("name", name, buffer, true);
-        addStringElementToJsonBuffer("type", type, buffer, false);
-        addBooleanElementToJsonBuffer("monitoring_set", monitoringSet, buffer, false);
-        buffer.append("}");
+    private void appendNode(JsonBuilder builder, String name, String type, boolean monitoringSet) {
+        builder.startObject();
+        builder.field("name", name);
+        builder.field("type", type);
+        builder.field("monitoring_set", monitoringSet);
+        builder.endObject();
     }
 
     private String updateApplicationMonitorning(IIBNodeConnection nodeConnection, IIBIntegrationServer integrationServer, Map<String, Object> valueMap) throws ConfigManagerProxyLoggedException {

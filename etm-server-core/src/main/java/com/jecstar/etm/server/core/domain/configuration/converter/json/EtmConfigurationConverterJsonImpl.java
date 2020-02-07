@@ -1,5 +1,6 @@
 package com.jecstar.etm.server.core.domain.configuration.converter.json;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.configuration.WaitStrategy;
@@ -11,6 +12,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Converter class that converts a <code>TelemetryEvent</code> to a JSON string.
@@ -24,66 +26,66 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
 
     @Override
     public String write(EtmConfiguration nodeConfiguration, EtmConfiguration defaultConfiguration) {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("{");
-        this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE, sb, true);
-        sb.append(", " + this.converter.escapeToJson(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE, true) + ": {");
+        final JsonBuilder builder = new JsonBuilder();
+        builder.startObject();
+        builder.field(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE);
+        builder.startObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE);
         if (nodeConfiguration == null) {
             // only add the defaults.
-            boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getNodeNameTag(), ElasticsearchLayout.ETM_OBJECT_NAME_DEFAULT, sb, true);
-            added = this.converter.addLongElementToJsonBuffer(this.tags.getSessionTimeoutTag(), defaultConfiguration.getSessionTimeout(), sb, !added) || added;
-            added = this.converter.addIntegerElementToJsonBuffer(this.tags.getImportProfileCacheSizeTag(), defaultConfiguration.getImportProfileCacheSize(), sb, !added) || added;
-            added = this.converter.addIntegerElementToJsonBuffer(this.tags.getEnhancingHandlerCountTag(), defaultConfiguration.getEnhancingHandlerCount(), sb, !added) || added;
-            added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPersistingHandlerCountTag(), defaultConfiguration.getPersistingHandlerCount(), sb, !added) || added;
-            added = this.converter.addIntegerElementToJsonBuffer(this.tags.getEventBufferSizeTag(), defaultConfiguration.getEventBufferSize(), sb, !added) || added;
-            added = this.converter.addStringElementToJsonBuffer(this.tags.getWaitStrategyTag(), defaultConfiguration.getWaitStrategy().name(), sb, !added);
-            added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPersistingBulkCountTag(), defaultConfiguration.getPersistingBulkCount(), sb, !added) || added;
-            added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPersistingBulkSizeTag(), defaultConfiguration.getPersistingBulkSize(), sb, !added) || added;
-            added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPersistingBulkTimeTag(), defaultConfiguration.getPersistingBulkTime(), sb, !added) || added;
-            added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPersistingBulkThreadsTag(), defaultConfiguration.getPersistingBulkThreads(), sb, !added) || added;
-            added = this.converter.addIntegerElementToJsonBuffer(this.tags.getShardsPerIndexTag(), defaultConfiguration.getShardsPerIndex(), sb, !added) || added;
-            added = this.converter.addIntegerElementToJsonBuffer(this.tags.getReplicasPerIndexTag(), defaultConfiguration.getReplicasPerIndex(), sb, !added) || added;
-            added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMaxEventIndexCountTag(), defaultConfiguration.getMaxEventIndexCount(), sb, !added) || added;
-            added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMaxMetricsIndexCountTag(), defaultConfiguration.getMaxMetricsIndexCount(), sb, !added) || added;
-            added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMaxAuditLogIndexCountTag(), defaultConfiguration.getMaxAuditLogIndexCount(), sb, !added) || added;
-            added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMaxSearchResultDownloadRowsTag(), defaultConfiguration.getMaxSearchResultDownloadRows(), sb, !added) || added;
-            added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMaxSearchHistoryCountTag(), defaultConfiguration.getMaxSearchHistoryCount(), sb, !added) || added;
-            added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMaxSearchTemplateCountTag(), defaultConfiguration.getMaxSearchTemplateCount(), sb, !added) || added;
-            added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMaxGraphCountTag(), defaultConfiguration.getMaxGraphCount(), sb, !added) || added;
-            added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMaxDashboardCountTag(), defaultConfiguration.getMaxDashboardCount(), sb, !added) || added;
-            added = this.converter.addIntegerElementToJsonBuffer(this.tags.getMaxSignalCountTag(), defaultConfiguration.getMaxSignalCount(), sb, !added) || added;
-            added = this.converter.addIntegerElementToJsonBuffer(this.tags.getWaitForActiveShardsTag(), defaultConfiguration.getWaitForActiveShards(), sb, !added) || added;
-            added = this.converter.addLongElementToJsonBuffer(this.tags.getQueryTimeoutTag(), defaultConfiguration.getQueryTimeout(), sb, !added) || added;
-            added = this.converter.addIntegerElementToJsonBuffer(this.tags.getRetryOnConflictCountTag(), defaultConfiguration.getRetryOnConflictCount(), sb, !added) || added;
+            builder.field(this.tags.getNodeNameTag(), ElasticsearchLayout.ETM_OBJECT_NAME_DEFAULT);
+            builder.field(this.tags.getSessionTimeoutTag(), defaultConfiguration.getSessionTimeout());
+            builder.field(this.tags.getImportProfileCacheSizeTag(), defaultConfiguration.getImportProfileCacheSize());
+            builder.field(this.tags.getEnhancingHandlerCountTag(), defaultConfiguration.getEnhancingHandlerCount());
+            builder.field(this.tags.getPersistingHandlerCountTag(), defaultConfiguration.getPersistingHandlerCount());
+            builder.field(this.tags.getEventBufferSizeTag(), defaultConfiguration.getEventBufferSize());
+            builder.field(this.tags.getWaitStrategyTag(), defaultConfiguration.getWaitStrategy().name());
+            builder.field(this.tags.getPersistingBulkCountTag(), defaultConfiguration.getPersistingBulkCount());
+            builder.field(this.tags.getPersistingBulkSizeTag(), defaultConfiguration.getPersistingBulkSize());
+            builder.field(this.tags.getPersistingBulkTimeTag(), defaultConfiguration.getPersistingBulkTime());
+            builder.field(this.tags.getPersistingBulkThreadsTag(), defaultConfiguration.getPersistingBulkThreads());
+            builder.field(this.tags.getShardsPerIndexTag(), defaultConfiguration.getShardsPerIndex());
+            builder.field(this.tags.getReplicasPerIndexTag(), defaultConfiguration.getReplicasPerIndex());
+            builder.field(this.tags.getMaxEventIndexCountTag(), defaultConfiguration.getMaxEventIndexCount());
+            builder.field(this.tags.getMaxMetricsIndexCountTag(), defaultConfiguration.getMaxMetricsIndexCount());
+            builder.field(this.tags.getMaxAuditLogIndexCountTag(), defaultConfiguration.getMaxAuditLogIndexCount());
+            builder.field(this.tags.getMaxSearchResultDownloadRowsTag(), defaultConfiguration.getMaxSearchResultDownloadRows());
+            builder.field(this.tags.getMaxSearchHistoryCountTag(), defaultConfiguration.getMaxSearchHistoryCount());
+            builder.field(this.tags.getMaxSearchTemplateCountTag(), defaultConfiguration.getMaxSearchTemplateCount());
+            builder.field(this.tags.getMaxGraphCountTag(), defaultConfiguration.getMaxGraphCount());
+            builder.field(this.tags.getMaxDashboardCountTag(), defaultConfiguration.getMaxDashboardCount());
+            builder.field(this.tags.getMaxSignalCountTag(), defaultConfiguration.getMaxSignalCount());
+            builder.field(this.tags.getWaitForActiveShardsTag(), defaultConfiguration.getWaitForActiveShards());
+            builder.field(this.tags.getQueryTimeoutTag(), defaultConfiguration.getQueryTimeout());
+            builder.field(this.tags.getRetryOnConflictCountTag(), defaultConfiguration.getRetryOnConflictCount());
         } else {
-            boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getNodeNameTag(), nodeConfiguration.getNodeName(), sb, true);
-            added = addLongWhenNotDefault(this.tags.getSessionTimeoutTag(), defaultConfiguration.getSessionTimeout(), nodeConfiguration.getSessionTimeout(), sb, !added) || added;
-            added = addIntegerWhenNotDefault(this.tags.getImportProfileCacheSizeTag(), defaultConfiguration.getImportProfileCacheSize(), nodeConfiguration.getImportProfileCacheSize(), sb, !added) || added;
-            added = addIntegerWhenNotDefault(this.tags.getEnhancingHandlerCountTag(), defaultConfiguration.getEnhancingHandlerCount(), nodeConfiguration.getEnhancingHandlerCount(), sb, !added) || added;
-            added = addIntegerWhenNotDefault(this.tags.getPersistingHandlerCountTag(), defaultConfiguration.getPersistingHandlerCount(), nodeConfiguration.getPersistingHandlerCount(), sb, !added) || added;
-            added = addIntegerWhenNotDefault(this.tags.getEventBufferSizeTag(), defaultConfiguration.getEventBufferSize(), nodeConfiguration.getEventBufferSize(), sb, !added) || added;
-            added = addStringWhenNotDefault(this.tags.getWaitStrategyTag(), defaultConfiguration.getWaitStrategy().name(), nodeConfiguration.getWaitStrategy().name(), sb, !added) || added;
-            added = addIntegerWhenNotDefault(this.tags.getPersistingBulkCountTag(), defaultConfiguration.getPersistingBulkCount(), nodeConfiguration.getPersistingBulkCount(), sb, !added) || added;
-            added = addIntegerWhenNotDefault(this.tags.getPersistingBulkSizeTag(), defaultConfiguration.getPersistingBulkSize(), nodeConfiguration.getPersistingBulkSize(), sb, !added) || added;
-            added = addIntegerWhenNotDefault(this.tags.getPersistingBulkTimeTag(), defaultConfiguration.getPersistingBulkTime(), nodeConfiguration.getPersistingBulkTime(), sb, !added) || added;
-            added = addIntegerWhenNotDefault(this.tags.getPersistingBulkThreadsTag(), defaultConfiguration.getPersistingBulkThreads(), nodeConfiguration.getPersistingBulkThreads(), sb, !added) || added;
-            added = addIntegerWhenNotDefault(this.tags.getShardsPerIndexTag(), defaultConfiguration.getShardsPerIndex(), nodeConfiguration.getShardsPerIndex(), sb, !added) || added;
-            added = addIntegerWhenNotDefault(this.tags.getReplicasPerIndexTag(), defaultConfiguration.getReplicasPerIndex(), nodeConfiguration.getReplicasPerIndex(), sb, !added) || added;
-            added = addIntegerWhenNotDefault(this.tags.getMaxEventIndexCountTag(), defaultConfiguration.getMaxEventIndexCount(), nodeConfiguration.getMaxEventIndexCount(), sb, !added) || added;
-            added = addIntegerWhenNotDefault(this.tags.getMaxMetricsIndexCountTag(), defaultConfiguration.getMaxMetricsIndexCount(), nodeConfiguration.getMaxMetricsIndexCount(), sb, !added) || added;
-            added = addIntegerWhenNotDefault(this.tags.getMaxAuditLogIndexCountTag(), defaultConfiguration.getMaxAuditLogIndexCount(), nodeConfiguration.getMaxAuditLogIndexCount(), sb, !added) || added;
-            added = addIntegerWhenNotDefault(this.tags.getMaxSearchResultDownloadRowsTag(), defaultConfiguration.getMaxSearchResultDownloadRows(), nodeConfiguration.getMaxSearchResultDownloadRows(), sb, !added) || added;
-            added = addIntegerWhenNotDefault(this.tags.getMaxSearchHistoryCountTag(), defaultConfiguration.getMaxSearchHistoryCount(), nodeConfiguration.getMaxSearchHistoryCount(), sb, !added) || added;
-            added = addIntegerWhenNotDefault(this.tags.getMaxSearchTemplateCountTag(), defaultConfiguration.getMaxSearchTemplateCount(), nodeConfiguration.getMaxSearchTemplateCount(), sb, !added) || added;
-            added = addIntegerWhenNotDefault(this.tags.getMaxGraphCountTag(), defaultConfiguration.getMaxGraphCount(), nodeConfiguration.getMaxGraphCount(), sb, !added) || added;
-            added = addIntegerWhenNotDefault(this.tags.getMaxDashboardCountTag(), defaultConfiguration.getMaxDashboardCount(), nodeConfiguration.getMaxDashboardCount(), sb, !added) || added;
-            added = addIntegerWhenNotDefault(this.tags.getMaxSignalCountTag(), defaultConfiguration.getMaxSignalCount(), nodeConfiguration.getMaxSignalCount(), sb, !added) || added;
-            added = addIntegerWhenNotDefault(this.tags.getWaitForActiveShardsTag(), defaultConfiguration.getWaitForActiveShards(), nodeConfiguration.getWaitForActiveShards(), sb, !added) || added;
-            added = addLongWhenNotDefault(this.tags.getQueryTimeoutTag(), defaultConfiguration.getQueryTimeout(), nodeConfiguration.getQueryTimeout(), sb, !added) || added;
-            added = addIntegerWhenNotDefault(this.tags.getRetryOnConflictCountTag(), defaultConfiguration.getRetryOnConflictCount(), nodeConfiguration.getRetryOnConflictCount(), sb, !added) || added;
+            builder.field(this.tags.getNodeNameTag(), nodeConfiguration.getNodeName());
+            addLongWhenNotDefault(this.tags.getSessionTimeoutTag(), defaultConfiguration.getSessionTimeout(), nodeConfiguration.getSessionTimeout(), builder);
+            addIntegerWhenNotDefault(this.tags.getImportProfileCacheSizeTag(), defaultConfiguration.getImportProfileCacheSize(), nodeConfiguration.getImportProfileCacheSize(), builder);
+            addIntegerWhenNotDefault(this.tags.getEnhancingHandlerCountTag(), defaultConfiguration.getEnhancingHandlerCount(), nodeConfiguration.getEnhancingHandlerCount(), builder);
+            addIntegerWhenNotDefault(this.tags.getPersistingHandlerCountTag(), defaultConfiguration.getPersistingHandlerCount(), nodeConfiguration.getPersistingHandlerCount(), builder);
+            addIntegerWhenNotDefault(this.tags.getEventBufferSizeTag(), defaultConfiguration.getEventBufferSize(), nodeConfiguration.getEventBufferSize(), builder);
+            addStringWhenNotDefault(this.tags.getWaitStrategyTag(), defaultConfiguration.getWaitStrategy().name(), nodeConfiguration.getWaitStrategy().name(), builder);
+            addIntegerWhenNotDefault(this.tags.getPersistingBulkCountTag(), defaultConfiguration.getPersistingBulkCount(), nodeConfiguration.getPersistingBulkCount(), builder);
+            addIntegerWhenNotDefault(this.tags.getPersistingBulkSizeTag(), defaultConfiguration.getPersistingBulkSize(), nodeConfiguration.getPersistingBulkSize(), builder);
+            addIntegerWhenNotDefault(this.tags.getPersistingBulkTimeTag(), defaultConfiguration.getPersistingBulkTime(), nodeConfiguration.getPersistingBulkTime(), builder);
+            addIntegerWhenNotDefault(this.tags.getPersistingBulkThreadsTag(), defaultConfiguration.getPersistingBulkThreads(), nodeConfiguration.getPersistingBulkThreads(), builder);
+            addIntegerWhenNotDefault(this.tags.getShardsPerIndexTag(), defaultConfiguration.getShardsPerIndex(), nodeConfiguration.getShardsPerIndex(), builder);
+            addIntegerWhenNotDefault(this.tags.getReplicasPerIndexTag(), defaultConfiguration.getReplicasPerIndex(), nodeConfiguration.getReplicasPerIndex(), builder);
+            addIntegerWhenNotDefault(this.tags.getMaxEventIndexCountTag(), defaultConfiguration.getMaxEventIndexCount(), nodeConfiguration.getMaxEventIndexCount(), builder);
+            addIntegerWhenNotDefault(this.tags.getMaxMetricsIndexCountTag(), defaultConfiguration.getMaxMetricsIndexCount(), nodeConfiguration.getMaxMetricsIndexCount(), builder);
+            addIntegerWhenNotDefault(this.tags.getMaxAuditLogIndexCountTag(), defaultConfiguration.getMaxAuditLogIndexCount(), nodeConfiguration.getMaxAuditLogIndexCount(), builder);
+            addIntegerWhenNotDefault(this.tags.getMaxSearchResultDownloadRowsTag(), defaultConfiguration.getMaxSearchResultDownloadRows(), nodeConfiguration.getMaxSearchResultDownloadRows(), builder);
+            addIntegerWhenNotDefault(this.tags.getMaxSearchHistoryCountTag(), defaultConfiguration.getMaxSearchHistoryCount(), nodeConfiguration.getMaxSearchHistoryCount(), builder);
+            addIntegerWhenNotDefault(this.tags.getMaxSearchTemplateCountTag(), defaultConfiguration.getMaxSearchTemplateCount(), nodeConfiguration.getMaxSearchTemplateCount(), builder);
+            addIntegerWhenNotDefault(this.tags.getMaxGraphCountTag(), defaultConfiguration.getMaxGraphCount(), nodeConfiguration.getMaxGraphCount(), builder);
+            addIntegerWhenNotDefault(this.tags.getMaxDashboardCountTag(), defaultConfiguration.getMaxDashboardCount(), nodeConfiguration.getMaxDashboardCount(), builder);
+            addIntegerWhenNotDefault(this.tags.getMaxSignalCountTag(), defaultConfiguration.getMaxSignalCount(), nodeConfiguration.getMaxSignalCount(), builder);
+            addIntegerWhenNotDefault(this.tags.getWaitForActiveShardsTag(), defaultConfiguration.getWaitForActiveShards(), nodeConfiguration.getWaitForActiveShards(), builder);
+            addLongWhenNotDefault(this.tags.getQueryTimeoutTag(), defaultConfiguration.getQueryTimeout(), nodeConfiguration.getQueryTimeout(), builder);
+            addIntegerWhenNotDefault(this.tags.getRetryOnConflictCountTag(), defaultConfiguration.getRetryOnConflictCount(), nodeConfiguration.getRetryOnConflictCount(), builder);
         }
-        sb.append("}}");
-        return sb.toString();
+        builder.endObject().endObject();
+        return builder.build();
     }
 
     @Override
@@ -169,16 +171,25 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
         return null;
     }
 
-    private boolean addIntegerWhenNotDefault(String tag, int defaultValue, int specificValue, StringBuilder buffer, boolean firstElement) {
-        return defaultValue != specificValue && this.converter.addIntegerElementToJsonBuffer(tag, specificValue, buffer, firstElement);
+    private void addIntegerWhenNotDefault(String tag, int defaultValue, int specificValue, JsonBuilder builder) {
+        if (defaultValue == specificValue) {
+            return;
+        }
+        builder.field(tag, specificValue);
     }
 
-    private boolean addLongWhenNotDefault(String tag, long defaultValue, long specificValue, StringBuilder buffer, boolean firstElement) {
-        return defaultValue != specificValue && this.converter.addLongElementToJsonBuffer(tag, specificValue, buffer, firstElement);
+    private void addLongWhenNotDefault(String tag, long defaultValue, long specificValue, JsonBuilder builder) {
+        if (defaultValue == specificValue) {
+            return;
+        }
+        builder.field(tag, specificValue);
     }
 
-    private boolean addStringWhenNotDefault(String tag, String defaultValue, String specificValue, StringBuilder buffer, boolean firstElement) {
-        return !defaultValue.equals(specificValue) && this.converter.addStringElementToJsonBuffer(tag, specificValue, buffer, firstElement);
+    private void addStringWhenNotDefault(String tag, String defaultValue, String specificValue, JsonBuilder builder) {
+        if (Objects.equals(defaultValue, specificValue)) {
+            return;
+        }
+        builder.field(tag, specificValue);
     }
 
     @Override

@@ -1,14 +1,12 @@
 package com.jecstar.etm.server.core.domain.aggregator.bucket;
 
-import com.jecstar.etm.domain.writer.json.JsonWriter;
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
 import org.joda.time.DateTime;
 
 import java.time.ZonedDateTime;
 
 public class BucketKey {
-
-    private static final JsonWriter jsonWriter = new JsonWriter();
 
     private final String jsonValue;
 
@@ -21,12 +19,12 @@ public class BucketKey {
             this.jsonValue = Long.toString(value.toInstant().toEpochMilli());
         } else if (bucket.getKey() instanceof Double) {
             Double value = (Double) bucket.getKey();
-            this.jsonValue = keyAsString ? jsonWriter.escapeToJson(value.toString(), true) : value.toString();
+            this.jsonValue = keyAsString ? JsonBuilder.escapeToJson(value.toString(), true) : value.toString();
         } else if (bucket.getKey() instanceof Long) {
             Long value = (Long) bucket.getKey();
-            this.jsonValue = keyAsString ? jsonWriter.escapeToJson(value.toString(), true) : value.toString();
+            this.jsonValue = keyAsString ? JsonBuilder.escapeToJson(value.toString(), true) : value.toString();
         } else {
-            this.jsonValue = jsonWriter.escapeToJson(bucket.getKeyAsString(), true);
+            this.jsonValue = JsonBuilder.escapeToJson(bucket.getKeyAsString(), true);
         }
     }
 

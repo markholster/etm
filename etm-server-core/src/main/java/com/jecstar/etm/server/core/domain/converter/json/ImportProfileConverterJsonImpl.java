@@ -1,6 +1,7 @@
 package com.jecstar.etm.server.core.domain.converter.json;
 
 import com.jecstar.etm.domain.writer.TelemetryEventTags;
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
 import com.jecstar.etm.server.core.domain.ImportProfile;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
@@ -106,68 +107,48 @@ public class ImportProfileConverterJsonImpl implements ImportProfileConverter<St
         return enhancer;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public String write(ImportProfile importProfile) {
-        StringBuilder result = new StringBuilder();
-        result.append("{");
-        this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE, result, true);
-        result.append(", " + this.converter.escapeToJson(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE, true) + ": {");
-        this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), importProfile.name, result, true);
+        final JsonBuilder builder = new JsonBuilder();
+        builder.startObject();
+        builder.field(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE);
+        builder.startObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE);
+        builder.field(this.tags.getNameTag(), importProfile.name);
         if (importProfile.eventEnhancer != null) {
-            result.append(",\"").append(this.tags.getEnhancerTag()).append("\": {");
+            builder.startObject(this.tags.getEnhancerTag());
             if (importProfile.eventEnhancer instanceof DefaultTelemetryEventEnhancer) {
                 DefaultTelemetryEventEnhancer enhancer = (DefaultTelemetryEventEnhancer) importProfile.eventEnhancer;
-                this.converter.addStringElementToJsonBuffer(this.tags.getEnhancerTypeTag(), DEFAULT_ENHANCER_TYPE, result, true);
-                this.converter.addBooleanElementToJsonBuffer(this.tags.getEnhancePayloadFormatTag(), enhancer.isEnhancePayloadFormat(), result, false);
-                result.append(",");
-                result.append(this.converter.escapeToJson(this.tags.getFieldsTag(), true)).append(": [");
-                boolean first = true;
+                builder.field(this.tags.getEnhancerTypeTag(), DEFAULT_ENHANCER_TYPE);
+                builder.field(this.tags.getEnhancePayloadFormatTag(), enhancer.isEnhancePayloadFormat());
+                builder.startArray(this.tags.getFieldsTag());
                 for (DefaultField field : enhancer.getFields()) {
-                    if (!first) {
-                        result.append(",");
-                    }
-                    result.append("{");
-                    this.converter.addStringElementToJsonBuffer(this.tags.getFieldTag(), field.getName(), result, true);
-                    this.converter.addStringElementToJsonBuffer(this.tags.getWritePolicyTag(), field.getWritePolicy().name(), result, false);
-                    this.converter.addStringElementToJsonBuffer(this.tags.getParsersSourceTag(), field.getParsersSource(), result, false);
-                    result.append(",\"").append(this.tags.getParsersTag()).append("\": [");
-                    boolean firstParser = true;
+                    builder.startObject();
+                    builder.field(this.tags.getFieldTag(), field.getName());
+                    builder.field(this.tags.getWritePolicyTag(), field.getWritePolicy().name());
+                    builder.field(this.tags.getParsersSourceTag(), field.getParsersSource());
+                    builder.startArray(this.tags.getParsersTag());
                     for (ExpressionParser expressionParser : field.getParsers()) {
-                        if (!firstParser) {
-                            result.append(",");
-                        }
-                        Map<String, Object> objectMap = this.converter.toMap(this.expressionParserConverter.write(expressionParser));
-                        result.append(this.converter.toString((Map<String, Object>) objectMap.get(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER)));
-                        firstParser = false;
+                        builder.rawElement(this.expressionParserConverter.write(expressionParser, false));
                     }
-                    result.append("]}");
-                    first = false;
+                    builder.endArray().endObject();
                 }
-                result.append("],");
-                result.append(this.converter.escapeToJson(this.tags.getTransformationsTag(), true)).append(": [");
-                first = true;
+                builder.endArray();
+                builder.startArray(this.tags.getTransformationsTag());
                 for (DefaultTransformation transformation : enhancer.getTransformations()) {
-                    if (!first) {
-                        result.append(",");
-                    }
-                    result.append("{");
-                    this.converter.addStringElementToJsonBuffer(this.tags.getReplacementTag(), transformation.getReplacement(), true, result, true);
-                    this.converter.addBooleanElementToJsonBuffer(this.tags.getReplaceAllTag(), transformation.isReplaceAll(), result, false);
-                    result.append(", " + this.converter.escapeToJson(this.tags.getParserTag(), true) + ": ");
-                    Map<String, Object> objectMap = this.converter.toMap(this.expressionParserConverter.write(transformation.getExpressionParser()));
-                    result.append(this.converter.toString((Map<String, Object>) objectMap.get(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER)));
-                    result.append("}");
-                    first = false;
+                    builder.startObject();
+                    builder.field(this.tags.getReplacementTag(), transformation.getReplacement(), true);
+                    builder.field(this.tags.getReplaceAllTag(), transformation.isReplaceAll());
+                    builder.rawField(this.tags.getParserTag(), this.expressionParserConverter.write(transformation.getExpressionParser(), false));
+                    builder.endObject();
                 }
-                result.append("]");
+                builder.endArray();
             } else {
-                this.converter.addStringElementToJsonBuffer(this.tags.getEnhancerTypeTag(), importProfile.getClass().getName(), result, true);
+                builder.field(this.tags.getEnhancerTypeTag(), importProfile.getClass().getName());
             }
-            result.append("}");
+            builder.endObject();
         }
-        result.append("}}");
-        return result.toString();
+        builder.endObject().endObject();
+        return builder.build();
     }
 
     @Override

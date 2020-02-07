@@ -1,5 +1,7 @@
 package com.jecstar.etm.server.core.converter;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -18,8 +20,7 @@ public @interface JsonField {
 
     final class DefaultCustomConverter implements CustomFieldConverter {
         @Override
-        public boolean addToJsonBuffer(String jsonKey, Object entity, StringBuilder result, boolean firstValue) {
-            return false;
+        public void addToJsonBuffer(String jsonKey, Object entity, JsonBuilder builder) {
         }
 
         @Override

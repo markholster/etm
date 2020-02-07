@@ -100,7 +100,7 @@ public class ClusterSettingsIntegrationTest extends AbstractCitrusSeleniumTest {
         runner.selenium(action -> action.setInput(EmbeddableLdapServer.USER_NAME_ATTRIBUTE).element(By.id("input-ldap-user-fullname-attribute")));
         runner.selenium(action -> action.setInput(EmbeddableLdapServer.USER_EMAIL_ATTRIBUTE).element(By.id("input-ldap-user-email-attribute")));
         runner.selenium(action -> action.setInput(EmbeddableLdapServer.GROUP_BASE_DN).element(By.id("input-ldap-user-groups-query-base-dn")));
-        runner.selenium(action -> action.setInput("(| (member={dn}) (uniqueMember={dn}) (memberUid={uid}))").element(By.id("input-ldap-user-groups-query-filter")));
+        runner.selenium(action -> action.setInput("(|(member={dn})(uniqueMember={dn})(memberUid={uid}))").element(By.id("input-ldap-user-groups-query-filter")));
         // And save the configuration
         runner.selenium(action -> action.click().element(By.id("btn-save-ldap")));
         // Now browse to the users page

@@ -1,5 +1,7 @@
 package com.jecstar.etm.gui.rest.services.search.graphs;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -85,16 +87,16 @@ public class Endpoint extends AbstractVertex {
     }
 
     @Override
-    protected void doWriteToJson(StringBuilder buffer) {
-        jsonWriter.addStringElementToJsonBuffer("name", getName(), buffer, false);
-        jsonWriter.addStringElementToJsonBuffer("event_id", getEventId(), buffer, false);
-        jsonWriter.addInstantElementToJsonBuffer("write_time", getWriteTime(), buffer, false);
+    protected void doWriteToJson(JsonBuilder builder) {
+        builder.field("name", getName());
+        builder.field("event_id", getEventId());
+        builder.field("write_time", getWriteTime());
         if (!this.readTimes.isEmpty()) {
             Collections.sort(this.readTimes);
-            jsonWriter.addInstantElementToJsonBuffer("first_read_time", this.readTimes.get(0), buffer, false);
+            builder.field("first_read_time", this.readTimes.get(0));
         }
         if (getProtocolType() != null) {
-            jsonWriter.addStringElementToJsonBuffer("protocol", getProtocolType().name(), buffer, false);
+            builder.field("protocol", getProtocolType().name());
         }
     }
 

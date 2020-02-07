@@ -4,6 +4,7 @@ import com.jecstar.etm.domain.EndpointHandler;
 import com.jecstar.etm.domain.HttpTelemetryEvent;
 import com.jecstar.etm.domain.MessagingTelemetryEvent;
 import com.jecstar.etm.domain.writer.TelemetryEventTags;
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
 import com.jecstar.etm.gui.rest.export.FileType;
 import com.jecstar.etm.gui.rest.export.QueryExporter;
@@ -66,7 +67,6 @@ import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 @Path("/search")
 @DeclareRoles(SecurityRoles.ALL_ROLES)
@@ -168,25 +168,26 @@ public class SearchService extends AbstractIndexMetadataService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
     public String getKeywords(@PathParam("indexName") String indexName) {
-        StringBuilder result = new StringBuilder();
+        var builder = new JsonBuilder();
         List<Keyword> keywords = getIndexFields(SearchService.dataRepository, indexName);
-        result.append("{ \"keywords\":[");
-        result.append("{");
-        result.append("\"index\": ").append(escapeToJson(indexName, true)).append(",");
-        result.append("\"keywords\": [").append(keywords.stream().map(n ->
-        {
-            StringBuilder kw = new StringBuilder();
-            kw.append("{");
-            addStringElementToJsonBuffer("name", n.getName(), kw, true);
-            addStringElementToJsonBuffer("type", n.getType(), kw, false);
-            addBooleanElementToJsonBuffer("date", n.isDate(), kw, false);
-            addBooleanElementToJsonBuffer("number", n.isNumber(), kw, false);
-            kw.append("}");
-            return kw.toString();
-        }).collect(Collectors.joining(", "))).append("]");
-        result.append("}");
-        result.append("]}");
-        return result.toString();
+        builder.startObject();
+        builder.startArray("keywords");
+        builder.startObject();
+        builder.field("index", indexName);
+        builder.startArray("keywords");
+        for (var keyword : keywords) {
+            builder.startObject();
+            builder.field("name", keyword.getName());
+            builder.field("type", keyword.getType());
+            builder.field("date", keyword.isDate());
+            builder.field("number", keyword.isNumber());
+            builder.endObject();
+        }
+        builder.endArray();
+        builder.endObject();
+        builder.endArray();
+        builder.endObject();
+        return builder.build();
     }
 
     @POST
@@ -195,39 +196,39 @@ public class SearchService extends AbstractIndexMetadataService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
     public String executeQuery(String json) {
-        long startTime = System.currentTimeMillis();
-        EtmPrincipal etmPrincipal = getEtmPrincipal();
-        boolean payloadVisible = etmPrincipal.isInAnyRole(SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE);
+        var startTime = System.currentTimeMillis();
+        var etmPrincipal = getEtmPrincipal();
+        var payloadVisible = etmPrincipal.isInAnyRole(SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE);
 
-        Instant now = Instant.now();
-        QueryAuditLogBuilder auditLogBuilder = new QueryAuditLogBuilder().setTimestamp(now).setHandlingTime(now).setPrincipalId(etmPrincipal.getId());
+        var now = Instant.now();
+        var auditLogBuilder = new QueryAuditLogBuilder().setTimestamp(now).setHandlingTime(now).setPrincipalId(etmPrincipal.getId());
 
-        SearchRequestParameters parameters = new SearchRequestParameters(toMap(json), etmPrincipal);
-        SearchRequestBuilder requestBuilder = createRequestFromInput(parameters, etmPrincipal);
-        NumberFormat numberFormat = NumberFormat.getInstance(etmPrincipal.getLocale());
-        SearchResponse response = dataRepository.search(requestBuilder);
-        StringBuilder result = new StringBuilder();
-        result.append("{");
-        result.append("\"status\": \"success\"");
-        result.append(",\"history_size\": ").append(etmPrincipal.getHistorySize());
-        result.append(",\"hits\": ").append(response.getHits().getTotalHits().value);
-        result.append(",\"hits_relation\": \"").append(response.getHits().getTotalHits().relation.name()).append("\"");
-        result.append(",\"hits_as_string\": \"").append(numberFormat.format(response.getHits().getTotalHits().value)).append((TotalHits.Relation.GREATER_THAN_OR_EQUAL_TO.equals(response.getHits().getTotalHits().relation)) ? "+\"" : "\"");
-        result.append(",\"time_zone\": \"").append(etmPrincipal.getTimeZone().getID()).append("\"");
-        result.append(",\"start_ix\": ").append(parameters.getStartIndex());
-        result.append(",\"end_ix\": ").append(parameters.getStartIndex() + response.getHits().getHits().length - 1);
+        var parameters = new SearchRequestParameters(toMap(json), etmPrincipal);
+        var requestBuilder = createRequestFromInput(parameters, etmPrincipal);
+        var numberFormat = NumberFormat.getInstance(etmPrincipal.getLocale());
+        var response = dataRepository.search(requestBuilder);
+        var builder = new JsonBuilder();
+        builder.startObject();
+        builder.field("status", "success");
+        builder.field("history_size", etmPrincipal.getHistorySize());
+        builder.field("hits", response.getHits().getTotalHits().value);
+        builder.field("hits_relation", response.getHits().getTotalHits().relation.name());
+        builder.field("hits_as_string", numberFormat.format(response.getHits().getTotalHits().value) + (TotalHits.Relation.GREATER_THAN_OR_EQUAL_TO.equals(response.getHits().getTotalHits().relation) ? "+" : ""));
+        builder.field("time_zone", etmPrincipal.getTimeZone().getID());
+        builder.field("start_ix", parameters.getStartIndex());
+        builder.field("end_ix", parameters.getStartIndex() + response.getHits().getHits().length - 1);
         // TODO has_more_results is inaccurate in etm 4 because totalhits is a GTE value.
-        result.append(",\"has_more_results\": ").append(parameters.getStartIndex() + response.getHits().getHits().length < response.getHits().getTotalHits().value - 1);
-        result.append(",\"time_zone\": \"").append(etmPrincipal.getTimeZone().getID()).append("\"");
-        result.append(",\"max_downloads\": ").append(etmConfiguration.getMaxSearchResultDownloadRows());
-        result.append(",\"may_see_payload\": ").append(payloadVisible);
-        result.append(",\"results\": [");
-        addSearchHits(result, response.getHits());
-        result.append("]");
+        builder.field("has_more_results", parameters.getStartIndex() + response.getHits().getHits().length < response.getHits().getTotalHits().value - 1);
+        builder.field("time_zone", etmPrincipal.getTimeZone().getID());
+        builder.field("max_downloads", etmConfiguration.getMaxSearchResultDownloadRows());
+        builder.field("may_see_payload", payloadVisible);
+        builder.startArray("results");
+        addSearchHits(builder, response.getHits());
+        builder.endArray();
         long queryTime = System.currentTimeMillis() - startTime;
-        result.append(",\"query_time\": ").append(queryTime);
-        result.append(",\"query_time_as_string\": \"").append(numberFormat.format(queryTime)).append("\"");
-        result.append("}");
+        builder.field("query_time", queryTime);
+        builder.field("query_time_as_string", numberFormat.format(queryTime));
+        builder.endObject();
 
         if (parameters.getStartIndex() == 0) {
             writeQueryHistory(startTime,
@@ -251,13 +252,13 @@ public class SearchService extends AbstractIndexMetadataService {
                     .setNumberOfResults(response.getHits().getTotalHits().value)
                     .setNumberOfResultsRelation(response.getHits().getTotalHits().relation.name())
                     .setQueryTime(queryTime);
-            IndexRequestBuilder builder = requestEnhancer.enhance(
+            IndexRequestBuilder indexRequestBuilder = requestEnhancer.enhance(
                     new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now))
             )
                     .setSource(this.queryAuditLogConverter.write(auditLogBuilder.build()), XContentType.JSON);
-            dataRepository.indexAsync(builder, DataRepository.noopActionListener());
+            dataRepository.indexAsync(indexRequestBuilder, DataRepository.noopActionListener());
         }
-        return result.toString();
+        return builder.build();
     }
 
     private SearchRequestBuilder createRequestFromInput(SearchRequestParameters parameters, EtmPrincipal etmPrincipal) {
@@ -404,9 +405,9 @@ public class SearchService extends AbstractIndexMetadataService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
     public String getEvent(@PathParam("id") String eventId) {
-        Instant now = Instant.now();
-        boolean payloadVisible = getEtmPrincipal().maySeeEventPayload();
-        GetEventAuditLogBuilder auditLogBuilder = new GetEventAuditLogBuilder()
+        var now = Instant.now();
+        var payloadVisible = getEtmPrincipal().maySeeEventPayload();
+        var auditLogBuilder = new GetEventAuditLogBuilder()
                 .setTimestamp(now)
                 .setHandlingTime(now)
                 .setPrincipalId(getEtmPrincipal().getId())
@@ -420,18 +421,18 @@ public class SearchService extends AbstractIndexMetadataService {
             // We've got an principal with audit logs roles requesting the event. Also add the audit logs of this event to the response.
             findAuditLogsForEvent(eventId, auditLogListener);
         }
-        StringBuilder result = new StringBuilder();
-        result.append("{");
-        addStringElementToJsonBuffer("time_zone", getEtmPrincipal().getTimeZone().getID(), result, true);
+        var builder = new JsonBuilder();
+        builder.startObject();
+        builder.field("time_zone", getEtmPrincipal().getTimeZone().getID());
         SearchHit searchHit = getEvent(eventId, new String[]{"*"}, !payloadVisible ? new String[]{this.eventTags.getPayloadTag()} : null);
         if (searchHit != null) {
             auditLogBuilder.setFound(true);
             Map<String, Object> valueMap = searchHit.getSourceAsMap();
-            result.append(", \"event\": {");
-            addStringElementToJsonBuffer("index", searchHit.getIndex(), result, true);
-            addStringElementToJsonBuffer("id", searchHit.getId(), result, false);
-            result.append(", \"source\": ").append(toString(valueMap));
-            result.append("}");
+            builder.startObject("event");
+            builder.field("index", searchHit.getIndex());
+            builder.field("id", searchHit.getId());
+            builder.rawField("source", toString(valueMap));
+            builder.endObject();
             // Add the name to the audit log.
             auditLogBuilder.setEventName(getString(this.eventTags.getNameTag(), valueMap));
             // Try to find an event this event is correlating to.
@@ -440,12 +441,12 @@ public class SearchService extends AbstractIndexMetadataService {
             if (correlatedToId != null && !correlatedToId.equals(eventId)) {
                 SearchHit correlatedEvent = conditionallyGetEvent(correlatedToId, payloadVisible);
                 if (correlatedEvent != null) {
-                    result.append(", \"correlated_events\": [");
-                    result.append("{");
-                    addStringElementToJsonBuffer("index", correlatedEvent.getIndex(), result, true);
-                    addStringElementToJsonBuffer("id", correlatedEvent.getId(), result, false);
-                    result.append(", \"source\": ").append(correlatedEvent.getSourceAsString());
-                    result.append("}");
+                    builder.startArray("correlated_events");
+                    builder.startObject();
+                    builder.field("index", correlatedEvent.getIndex());
+                    builder.field("id", correlatedEvent.getId());
+                    builder.rawField("source", correlatedEvent.getSourceAsString());
+                    builder.endObject();
                     correlationAdded = true;
                     auditLogBuilder.addCorrelatedEvent(correlatedEvent.getId());
                 }
@@ -467,57 +468,48 @@ public class SearchService extends AbstractIndexMetadataService {
                     if (correlatedEvent != null) {
                         added++;
                         if (!correlationAdded) {
-                            result.append(", \"correlated_events\": [");
-                        } else {
-                            result.append(",");
+                            builder.startArray("correlated_events");
                         }
-                        result.append("{");
-                        addStringElementToJsonBuffer("index", correlatedEvent.getIndex(), result, true);
-                        addStringElementToJsonBuffer("id", correlatedEvent.getId(), result, false);
-                        result.append(", \"source\": ").append(correlatedEvent.getSourceAsString());
-                        result.append("}");
+                        builder.startObject();
+                        builder.field("index", correlatedEvent.getIndex());
+                        builder.field("id", correlatedEvent.getId());
+                        builder.rawField("source", correlatedEvent.getSourceAsString());
+                        builder.endObject();
                         correlationAdded = true;
                         auditLogBuilder.addCorrelatedEvent(correlatedEvent.getId());
                     }
                 }
             }
             if (correlationAdded) {
-                result.append("]");
+                builder.endArray();
             }
             if (auditLogListener != null) {
                 // Audit logs received async. Wait here to add the to the result.
                 SearchResponse auditLogResponse = auditLogListener.get();
                 if (auditLogResponse != null && auditLogResponse.getHits().getHits().length != 0) {
-                    boolean auditLogAdded = false;
-                    result.append(", \"audit_logs\": [");
+                    builder.startArray("audit_logs");
                     for (SearchHit hit : auditLogResponse.getHits().getHits()) {
                         Map<String, Object> auditLogValues = hit.getSourceAsMap();
-                        if (auditLogAdded) {
-                            result.append(",");
-                        } else {
-                            auditLogAdded = true;
-                        }
-                        result.append("{");
-                        addBooleanElementToJsonBuffer("direct", getString(GetEventAuditLog.EVENT_ID, auditLogValues).equals(eventId), result, true);
-                        addLongElementToJsonBuffer("handling_time", getLong(AuditLog.HANDLING_TIME, auditLogValues), result, false);
-                        addStringElementToJsonBuffer("principal_id", getString(AuditLog.PRINCIPAL_ID, auditLogValues), result, false);
-                        addBooleanElementToJsonBuffer("payload_visible", getBoolean(GetEventAuditLog.PAYLOAD_VISIBLE, auditLogValues, true), result, false);
-                        addBooleanElementToJsonBuffer("downloaded", getBoolean(GetEventAuditLog.DOWNLOADED, auditLogValues, false), result, false);
-                        result.append("}");
+                        builder.startObject();
+                        builder.field("direct", getString(GetEventAuditLog.EVENT_ID, auditLogValues).equals(eventId));
+                        builder.field("handling_time", getLong(AuditLog.HANDLING_TIME, auditLogValues));
+                        builder.field("principal_id", getString(AuditLog.PRINCIPAL_ID, auditLogValues));
+                        builder.field("payload_visible", getBoolean(GetEventAuditLog.PAYLOAD_VISIBLE, auditLogValues, true));
+                        builder.field("downloaded", getBoolean(GetEventAuditLog.DOWNLOADED, auditLogValues, false));
+                        builder.endObject();
                     }
-                    result.append("]");
+                    builder.endArray();
                 }
             }
-
         }
-        result.append("}");
+        builder.endObject();
         // Log the retrieval request to the audit logs.
-        IndexRequestBuilder builder = requestEnhancer.enhance(
+        IndexRequestBuilder indexRequestBuilder = requestEnhancer.enhance(
                 new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now))
         )
                 .setSource(this.getEventAuditLogConverter.write(auditLogBuilder.build()), XContentType.JSON);
-        dataRepository.indexAsync(builder, DataRepository.noopActionListener());
-        return result.toString();
+        dataRepository.indexAsync(indexRequestBuilder, DataRepository.noopActionListener());
+        return builder.build();
     }
 
     private void findAuditLogsForEvent(String eventId, ActionListener<SearchResponse> actionListener) {
@@ -545,65 +537,41 @@ public class SearchService extends AbstractIndexMetadataService {
             return null;
         }
         var layers = directedGraph.getLayers();
-        var result = new StringBuilder();
-        result.append("{");
-        result.append("\"locale\": ").append(getLocalFormatting(getEtmPrincipal()));
-        var firstLayer = true;
-        result.append(", \"layers\": [");
+        var builder = new JsonBuilder();
+        builder.startObject();
+        builder.field("locale", getLocalFormatting(getEtmPrincipal()));
+        builder.startArray("layers");
         for (var layer : layers) {
-            if (firstLayer) {
-                result.append("{");
-                firstLayer = false;
-            } else {
-                result.append(", {");
-            }
-            var firstVertex = true;
-            result.append("\"vertices\": [");
+            builder.startObject();
+            builder.startArray("vertices");
             for (var vertex : layer.getVertices()) {
-                if (firstVertex) {
-                    result.append("{");
-                    firstVertex = false;
-                } else {
-                    result.append(", {");
-                }
-                vertex.toJson(result, true);
+                builder.startObject();
+                vertex.toJson(builder);
                 var childVertices = layer.getChildVertices(vertex);
                 if (childVertices != null && childVertices.size() > 0) {
-                    var firstChild = true;
-                    result.append(", \"children\": [");
+                    builder.startArray("children");
                     for (var childVertex : childVertices) {
-                        if (firstChild) {
-                            result.append("{");
-                            firstChild = false;
-                        } else {
-                            result.append(", {");
-                        }
-                        childVertex.toJson(result, true);
-                        result.append("}");
+                        builder.startObject();
+                        childVertex.toJson(builder);
+                        builder.endObject();
                     }
-                    result.append("]");
+                    builder.endArray();
                 }
-                result.append("}");
+                builder.endObject();
             }
-            result.append("]}");
+            builder.endArray().endObject();
         }
-        result.append("]");
-        var firstEdge = true;
-        result.append(", \"edges\": [");
+        builder.endArray();
+        builder.startArray("edges");
         Duration totalEventTime = directedGraph.getTotalEventTime();
         if (totalEventTime != null && totalEventTime.toMillis() <= 0) {
             totalEventTime = null;
         }
         for (var vertex : directedGraph.getVertices()) {
             for (var adjVertex : directedGraph.getAdjacentOutVertices(vertex)) {
-                if (firstEdge) {
-                    result.append("{");
-                    firstEdge = false;
-                } else {
-                    result.append(", {");
-                }
-                addStringElementToJsonBuffer("from", vertex.getVertexId(), result, true);
-                addStringElementToJsonBuffer("to", adjVertex.getVertexId(), result, false);
+                builder.startObject();
+                builder.field("from", vertex.getVertexId());
+                builder.field("to", adjVertex.getVertexId());
                 if (totalEventTime != null) {
                     Instant startTime = null;
                     Instant endTime = null;
@@ -619,15 +587,15 @@ public class SearchService extends AbstractIndexMetadataService {
                     }
                     if (startTime != null && endTime != null) {
                         long transitionTime = endTime.toEpochMilli() - startTime.toEpochMilli();
-                        addLongElementToJsonBuffer("transition_time", transitionTime, result, false);
-                        addDoubleElementToJsonBuffer("transition_time_percentage", (double) ((float) transitionTime / (float) totalEventTime.toMillis()), result, false);
+                        builder.field("transition_time", transitionTime);
+                        builder.field("transition_time_percentage", (double) ((float) transitionTime / (float) totalEventTime.toMillis()));
                     }
                 }
-                result.append("}");
+                builder.endObject();
             }
         }
-        result.append("]}");
-        return result.toString();
+        builder.endArray().endObject();
+        return builder.build();
 
     }
 
@@ -636,19 +604,19 @@ public class SearchService extends AbstractIndexMetadataService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
     public String getEventChainEndpoint(@PathParam("id") String eventId) {
-        StringBuilder result = new StringBuilder();
-        result.append("{");
-        addStringElementToJsonBuffer("time_zone", getEtmPrincipal().getTimeZone().getID(), result, true);
+        var builder = new JsonBuilder();
+        builder.startObject();
+        builder.field("time_zone", getEtmPrincipal().getTimeZone().getID());
         SearchHit searchHit = getEvent(eventId, new String[]{this.eventTags.getEndpointsTag() + ".*"}, null);
         if (searchHit != null) {
-            result.append(", \"event\": {");
-            addStringElementToJsonBuffer("index", searchHit.getIndex(), result, true);
-            addStringElementToJsonBuffer("id", searchHit.getId(), result, false);
-            result.append(", \"source\": ").append(searchHit.getSourceAsString());
-            result.append("}");
+            builder.startObject("event");
+            builder.field("index", searchHit.getIndex());
+            builder.field("id", searchHit.getId());
+            builder.rawField("source", searchHit.getSourceAsString());
+            builder.endObject();
         }
-        result.append("}");
-        return result.toString();
+        builder.endObject();
+        return builder.build();
     }
 
     private SearchHit getEvent(String eventId, String[] includes, String[] excludes) {
@@ -702,35 +670,29 @@ public class SearchService extends AbstractIndexMetadataService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
     public String getTransaction(@PathParam("id") String transactionId) {
-        List<TransactionEvent> events = getTransactionEvents(transactionId);
+        var events = getTransactionEvents(transactionId);
         if (events == null) {
             return null;
         }
-        StringBuilder result = new StringBuilder();
-        result.append("{");
-        addStringElementToJsonBuffer("time_zone", getEtmPrincipal().getTimeZone().getID(), result, true);
-        result.append(",\"events\":[");
-        boolean first = true;
+        var builder = new JsonBuilder();
+        builder.startObject();
+        builder.field("time_zone", getEtmPrincipal().getTimeZone().getID());
+        builder.startArray("events");
         for (TransactionEvent event : events) {
-            if (first) {
-                result.append("{");
-                first = false;
-            } else {
-                result.append(", {");
-            }
-            addStringElementToJsonBuffer("index", event.index, result, true);
-            addStringElementToJsonBuffer("object_type", event.objectType, result, false);
-            addStringElementToJsonBuffer("sub_type", event.subtype, result, false);
-            addStringElementToJsonBuffer("id", event.id, result, false);
-            addLongElementToJsonBuffer("handling_time", event.handlingTime, result, false);
-            addStringElementToJsonBuffer("name", event.name, result, false);
-            addStringElementToJsonBuffer("direction", event.direction, result, false);
-            addStringElementToJsonBuffer("payload", event.payload, result, false);
-            addStringElementToJsonBuffer("endpoint", event.endpoint, result, false);
-            result.append("}");
+            builder.startObject();
+            builder.field("index", event.index);
+            builder.field("object_type", event.objectType);
+            builder.field("sub_type", event.subtype);
+            builder.field("id", event.id);
+            builder.field("handling_time", event.handlingTime);
+            builder.field("name", event.name);
+            builder.field("direction", event.direction);
+            builder.field("payload", event.payload);
+            builder.field("endpoint", event.endpoint);
+            builder.endObject();
         }
-        result.append("]}");
-        return result.toString();
+        builder.endArray().endObject();
+        return builder.build();
     }
 
     private List<TransactionEvent> getTransactionEvents(String transactionId) {
@@ -839,40 +801,55 @@ public class SearchService extends AbstractIndexMetadataService {
         if (directedGraph == null) {
             return null;
         }
-        List<Event> events = directedGraph.findEvents(x -> !x.isResponse());
+        var events = directedGraph.findEvents(x -> !x.isResponse());
         events.sort(Comparator.comparing(Event::getEventStartTime).thenComparing(Event::getOrder).thenComparing(Event::getEventEndTime, Comparator.reverseOrder()));
 
-        EtmPrincipal etmPrincipal = getEtmPrincipal();
-        return "{" +
-                "\"locale\": " + getLocalFormatting(etmPrincipal) +
-                ", \"chart_config\": {" +
-                "\"credits\": {\"enabled\": false}" +
-                ", \"legend\": {\"enabled\": false}" +
-                ", \"time\": {\"timezone\": " + escapeToJson(etmPrincipal.getTimeZone().toZoneId().toString(), true) + "}" +
-                ", \"chart\": {\"type\": \"xrange\"}" +
-                ", \"title\": {\"text\": \"Event chain times\"}" +
-                ", \"xAxis\": {\"type\": \"datetime\"}" +
-                ", \"yAxis\": {\"title\": { \"text\": \"Events\"}, \"reversed\": true, \"categories\": [" +
-                events.stream().map(e -> escapeToJson(e.getName() + (e.isSent() ? " (sent)" : " (received)"), true)).collect(Collectors.joining(",")) +
-                "]}" +
-                ", \"series\": [{\"name\": \"Chain overview\", \"pointPadding\": 0, \"colorByPoint\": false, \"colorIndex\": 7, \"data\": [" +
-                IntStream.range(0, events.size())
-                        .mapToObj(i -> "{ \"x\": "
-                                + events.get(i).getEventStartTime().toEpochMilli()
-                                + ", \"x2\": " + (events.get(i).getEventEndTime() != null ? events.get(i).getEventEndTime().toEpochMilli() : events.get(i).getEventStartTime().toEpochMilli() + 10)
-                                + ",\"y\": " + i
-                                + ",\"partialFill\": " + (events.get(i).getAbsoluteTransactionPercentage() != null ? events.get(i).getAbsoluteTransactionPercentage().toString() : 0.0)
-                                + ",\"dataLabels\": {\"enabled\": " + (events.get(i).getAbsoluteTransactionPercentage() != null ? "true" : "false") + "}"
-                                + ",\"event_time\": " + escapeToJson(events.get(i).getTotalEventTime() != null ? etmPrincipal.getNumberFormat().format(events.get(i).getTotalEventTime().toMillis()) : null, true)
-                                + ",\"event_absolute_time\": " + escapeToJson(events.get(i).getAbsoluteDuration() != null ? etmPrincipal.getNumberFormat().format(events.get(i).getAbsoluteDuration().toMillis()) : null, true)
-                                + ",\"event_id\": " + escapeToJson(events.get(i).getEventId(), true)
-                                + ",\"endpoint\": " + escapeToJson(events.get(i).getEndpointName(), true)
-                                + ",\"application\": " + (events.get(i).getParent() != null ? escapeToJson(events.get(i).getParent().getName(), true) : null)
-                                + ",\"application_instance\": " + (events.get(i).getParent() != null ? escapeToJson(events.get(i).getParent().getInstance(), true) : null)
-                                + ",\"transaction_id\": " + escapeToJson(events.get(i).getTransactionId(), true) + "}")
-                        .collect(Collectors.joining(",")) +
-                "], \"tooltip\": { \"pointFormat\": " + escapeToJson("Name: <b>{point.yCategory}</b><br/>Application: <b>{point.application}</b><br/>Application instance: <b>{point.application_instance}</b><br/>Endpoint: <b>{point.endpoint}</b><br/>Response time: <b>{point.event_time}ms</b><br/>Absolute time: <b>{point.event_absolute_time}ms</b><br/>", true) + "}}]" +
-                "}}";
+        var etmPrincipal = getEtmPrincipal();
+        var builder = new JsonBuilder();
+        builder.startObject()
+                .rawField("locale", getLocalFormatting(etmPrincipal))
+                .startObject("chart_config")
+                .startObject("credits").field("enabled", false).endObject()
+                .startObject("legend").field("enabled", false).endObject()
+                .startObject("time").field("timezone", etmPrincipal.getTimeZone().toZoneId().toString()).endObject()
+                .startObject("chart").field("type", "xrange").endObject()
+                .startObject("title").field("text", "Event chain times").endObject()
+                .startObject("xAxis").field("type", "datetime").endObject()
+                .startObject("yAxis")
+                .startObject("title").field("text", "Events").endObject()
+                .field("reversed", true)
+                .field("categories", events.stream().map(e -> e.getName() + (e.isSent() ? " (sent)" : " (received)")).collect(Collectors.toSet()))
+                .endObject()
+                .startArray("series")
+                .startObject()
+                .field("name", "Chain overview")
+                .field("pointPadding", 0)
+                .field("colorByPoint", false)
+                .field("colorIndex", 7)
+                .startArray("data");
+        for (int i = 0; i < events.size(); i++) {
+            var event = events.get(i);
+            builder.startObject();
+            builder.field("x", event.getEventStartTime());
+            builder.field("x2", (event.getEventEndTime() != null ? event.getEventEndTime().toEpochMilli() : event.getEventStartTime().toEpochMilli() + 10));
+            builder.field("y", i);
+            builder.field("partialFill", (event.getAbsoluteTransactionPercentage() != null ? event.getAbsoluteTransactionPercentage().doubleValue() : 0.0));
+            builder.startObject("dataLabels").field("enabled", event.getAbsoluteTransactionPercentage() != null).endObject();
+            builder.field("event_time", event.getTotalEventTime() != null ? etmPrincipal.getNumberFormat().format(event.getTotalEventTime().toMillis()) : null);
+            builder.field("event_absolute_time", event.getAbsoluteDuration() != null ? etmPrincipal.getNumberFormat().format(event.getAbsoluteDuration().toMillis()) : null);
+            builder.field("event_id", event.getEventId());
+            builder.field("endpoint", event.getEndpointName());
+            builder.field("application", (event.getParent() != null ? event.getParent().getName() : null));
+            builder.field("application_instance", (event.getParent() != null ? event.getParent().getInstance() : null));
+            builder.field("transaction_id", event.getTransactionId());
+            builder.endObject();
+        }
+        builder.endArray();
+        builder.startObject("tooltip")
+                .field("pointFormat", "Name: <b>{point.yCategory}</b><br/>Application: <b>{point.application}</b><br/>Application instance: <b>{point.application_instance}</b><br/>Endpoint: <b>{point.endpoint}</b><br/>Response time: <b>{point.event_time}ms</b><br/>Absolute time: <b>{point.event_absolute_time}ms</b><br/>")
+                .endObject().endObject().endArray();
+        builder.endObject().endObject();
+        return builder.build();
     }
 
     /**
@@ -991,7 +968,7 @@ public class SearchService extends AbstractIndexMetadataService {
      * @param handledTransactions A set of transaction id's on which the recursive transaction id's that are covered by this method are added.
      */
     private void addTransactionToDirectedGraph(String transactionId, DirectedGraph directedGraph, Set<String> handledTransactions) {
-        if (handledTransactions.contains(transactionId)) {
+        if (transactionId == null || handledTransactions.contains(transactionId)) {
             return;
         }
         handledTransactions.add(transactionId);
@@ -1129,19 +1106,13 @@ public class SearchService extends AbstractIndexMetadataService {
         return application != null;
     }
 
-    private void addSearchHits(StringBuilder result, SearchHits hits) {
-        boolean first = true;
+    private void addSearchHits(JsonBuilder builder, SearchHits hits) {
         for (SearchHit searchHit : hits.getHits()) {
-            if (first) {
-                result.append("{");
-                first = false;
-            } else {
-                result.append(", {");
-            }
-            addStringElementToJsonBuffer("index", searchHit.getIndex(), result, true);
-            addStringElementToJsonBuffer("id", searchHit.getId(), result, false);
-            result.append(", \"source\": ").append(searchHit.getSourceAsString());
-            result.append("}");
+            builder.startObject();
+            builder.field("index", searchHit.getIndex());
+            builder.field("id", searchHit.getId());
+            builder.rawField("source", searchHit.getSourceAsString());
+            builder.endObject();
         }
     }
 }

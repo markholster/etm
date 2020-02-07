@@ -1,6 +1,6 @@
 package com.jecstar.etm.gui.rest.services.dashboard.domain.graph;
 
-import com.jecstar.etm.domain.writer.json.JsonWriter;
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.server.core.converter.JsonField;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
@@ -8,7 +8,6 @@ import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
 public abstract class Graph<T extends Graph> {
 
     public static final String TYPE = "type";
-    protected final JsonWriter jsonWriter = new JsonWriter();
 
     @JsonField(TYPE)
     private String type;
@@ -30,11 +29,11 @@ public abstract class Graph<T extends Graph> {
     public abstract void addAggregators(SearchRequestBuilder searchRequest);
 
     /**
-     * Append the highcharts configuration (as json) to the current config.
+     * Append the highcharts configuration (as json) to a <code>JsonBuilder</code>.
      *
-     * @param config The current configuration
+     * @param builder The <code>JsonBuilder</code>
      */
-    public abstract void appendHighchartsConfig(StringBuilder config);
+    public abstract void appendHighchartsConfig(JsonBuilder builder);
 
     /**
      * Gives the D3 format of the values in the graph.

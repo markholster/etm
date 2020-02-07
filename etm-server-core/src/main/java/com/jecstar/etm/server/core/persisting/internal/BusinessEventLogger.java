@@ -4,7 +4,7 @@ import com.jecstar.etm.domain.BusinessTelemetryEvent;
 import com.jecstar.etm.domain.PayloadFormat;
 import com.jecstar.etm.domain.builder.BusinessTelemetryEventBuilder;
 import com.jecstar.etm.domain.builder.EndpointBuilder;
-import com.jecstar.etm.domain.writer.json.JsonWriter;
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 
 public class BusinessEventLogger {
 
@@ -14,14 +14,11 @@ public class BusinessEventLogger {
     private static final String BUSINESS_EVENT_REMOVED_INDEX = "{\"component\": \"index cleaner\", \"node\": {0}, \"action\": \"removed index\", \"index\": {1}}";
     private static final String BUSINESS_EVENT_LICENSE_EXPIRED = "{\"component\": \"etm\", \"action\": \"license expired\"}";
     private static final String BUSINESS_EVENT_LICENSE_NOT_YET_VALID = "{\"component\": \"etm\", \"action\": \"license not yet valid\"}";
-    private static final String BUSINESS_EVENT_LICENSE_COUNT_EXCEEDED = "{\"component\": \"etm\", \"action\": \"license count exceeded\"}";
     private static final String BUSINESS_EVENT_LICENSE_STORAGE_SIZE_EXCEEDED = "{\"component\": \"etm\", \"action\": \"license storage size exceeded\"}";
     private static final String BUSINESS_EVENT_SNMP_ENGINE_ID_ASSIGNMENT = "{\"component\": \"signaler\", \"node\": {0}, \"action\": \"SNMP engine ID assignment\", \"engineId\" : {1}}";
     private static final String BUSINESS_EVENT_SIGNAL_THRESHOLD_EXCEEDED = "{\"component\": \"signaler\", \"action\": \"signal threshold exceeded\", \"details\" : {0}}";
     private static final String BUSINESS_EVENT_SIGNAL_THRESHOLD_NO_LONGER_EXCEEDED = "{\"component\": \"signaler\", \"action\": \"signal threshold no longer exceeded\", \"details\" : {0}}";
 
-
-    private static final JsonWriter jsonWriter = new JsonWriter();
 
     private static InternalBulkProcessorWrapper internalBulkProcessorWrapper;
     private static EndpointBuilder etmEndpoint;
@@ -34,7 +31,7 @@ public class BusinessEventLogger {
     public static void logEtmStartup() {
         BusinessTelemetryEvent businessEvent = new BusinessTelemetryEventBuilder()
                 .setPayload(BUSINESS_EVENT_ETM_STARTED
-                        .replace("{0}", jsonWriter.escapeToJson(etmEndpoint.getName(), true))
+                        .replace("{0}", JsonBuilder.escapeToJson(etmEndpoint.getName(), true))
                 )
                 .setPayloadFormat(PayloadFormat.JSON)
                 .setName("Enterprise Telemetry Monitor node started")
@@ -46,7 +43,7 @@ public class BusinessEventLogger {
     public static void logEtmShutdown() {
         BusinessTelemetryEvent businessEvent = new BusinessTelemetryEventBuilder()
                 .setPayload(BUSINESS_EVENT_ETM_STOPPED
-                        .replace("{0}", jsonWriter.escapeToJson(etmEndpoint.getName(), true))
+                        .replace("{0}", JsonBuilder.escapeToJson(etmEndpoint.getName(), true))
                 )
                 .setPayloadFormat(PayloadFormat.JSON)
                 .setName("Enterprise Telemetry Monitor node stopped")
@@ -58,8 +55,8 @@ public class BusinessEventLogger {
     public static void logMqProcessorEmergencyShutdown(Error e) {
         BusinessTelemetryEvent businessEvent = new BusinessTelemetryEventBuilder()
                 .setPayload(BUSINESS_EVENT_IBM_MQ_PROCESSOR_EMERGENCY_SHUTDOWN
-                        .replace("{0}", jsonWriter.escapeToJson(etmEndpoint.getName(), true))
-                        .replace("{1}", jsonWriter.escapeToJson(e.getMessage(), true))
+                        .replace("{0}", JsonBuilder.escapeToJson(etmEndpoint.getName(), true))
+                        .replace("{1}", JsonBuilder.escapeToJson(e.getMessage(), true))
                 )
                 .setPayloadFormat(PayloadFormat.JSON)
                 .setName("IBM MQ processor emergency shutdown")
@@ -71,8 +68,8 @@ public class BusinessEventLogger {
     public static void logIndexRemoval(String indexName) {
         BusinessTelemetryEvent businessEvent = new BusinessTelemetryEventBuilder()
                 .setPayload(BUSINESS_EVENT_REMOVED_INDEX
-                        .replace("{0}", jsonWriter.escapeToJson(etmEndpoint.getName(), true))
-                        .replace("{1}", jsonWriter.escapeToJson(indexName, true))
+                        .replace("{0}", JsonBuilder.escapeToJson(etmEndpoint.getName(), true))
+                        .replace("{1}", JsonBuilder.escapeToJson(indexName, true))
                 )
                 .setPayloadFormat(PayloadFormat.JSON)
                 .setName("Index removed")
@@ -114,8 +111,8 @@ public class BusinessEventLogger {
     public static void logSnmpEngineIdAssignment(String engineId) {
         BusinessTelemetryEvent businessEvent = new BusinessTelemetryEventBuilder()
                 .setPayload(BUSINESS_EVENT_SNMP_ENGINE_ID_ASSIGNMENT
-                        .replace("{0}", jsonWriter.escapeToJson(etmEndpoint.getName(), true))
-                        .replace("{1}", jsonWriter.escapeToJson(engineId, true))
+                        .replace("{0}", JsonBuilder.escapeToJson(etmEndpoint.getName(), true))
+                        .replace("{1}", JsonBuilder.escapeToJson(engineId, true))
                 )
                 .setPayloadFormat(PayloadFormat.JSON)
                 .setName("SNMP engine id assigned")

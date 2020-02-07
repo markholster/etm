@@ -1,5 +1,7 @@
 package com.jecstar.etm.gui.rest.services.search.graphs;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
@@ -172,25 +174,24 @@ public class Event extends AbstractVertex {
     }
 
     @Override
-    protected void doWriteToJson(StringBuilder buffer) {
-        jsonWriter.addStringElementToJsonBuffer("name", getName(), buffer, false);
-        jsonWriter.addStringElementToJsonBuffer("event_id", getEventId(), buffer, false);
-        jsonWriter.addStringElementToJsonBuffer("correlation_event_id", getCorrelationEventId(), buffer, false);
-        jsonWriter.addInstantElementToJsonBuffer("event_start_time", getEventStartTime(), buffer, false);
-        jsonWriter.addInstantElementToJsonBuffer("event_end_time", getEventEndTime(), buffer, false);
-        jsonWriter.addStringElementToJsonBuffer("transaction_id", getTransactionId(), buffer, false);
-        jsonWriter.addStringElementToJsonBuffer("endpoint", getEndpointName(), buffer, false);
-        jsonWriter.addBooleanElementToJsonBuffer("async", isAsync(), buffer, false);
-        jsonWriter.addIntegerElementToJsonBuffer("order", getOrder(), buffer, false);
-        jsonWriter.addBooleanElementToJsonBuffer("response", isResponse(), buffer, false);
-        jsonWriter.addBooleanElementToJsonBuffer("sent", isSent(), buffer, false);
+    protected void doWriteToJson(JsonBuilder builder) {
+        builder.field("name", getName());
+        builder.field("event_id", getEventId());
+        builder.field("correlation_event_id", getCorrelationEventId());
+        builder.field("event_start_time", getEventStartTime());
+        builder.field("event_end_time", getEventEndTime());
+        builder.field("transaction_id", getTransactionId());
+        builder.field("endpoint", getEndpointName());
+        builder.field("async", isAsync());
+        builder.field("order", getOrder());
+        builder.field("response", isResponse());
+        builder.field("sent", isSent());
         if (getAbsoluteTransactionPercentage() != null) {
-            jsonWriter.addDoubleElementToJsonBuffer("absolute_event_percentage", getAbsoluteTransactionPercentage().doubleValue(), buffer, false);
+            builder.field("absolute_event_percentage", getAbsoluteTransactionPercentage().doubleValue());
         }
         if (getAbsoluteDuration() != null) {
-            jsonWriter.addLongElementToJsonBuffer("absolute_duration", getAbsoluteDuration().toMillis(), buffer, false);
+            builder.field("absolute_duration", getAbsoluteDuration().toMillis());
         }
     }
-
 
 }

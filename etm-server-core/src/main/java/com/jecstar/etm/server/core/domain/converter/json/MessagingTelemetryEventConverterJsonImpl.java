@@ -2,6 +2,7 @@ package com.jecstar.etm.server.core.domain.converter.json;
 
 import com.jecstar.etm.domain.MessagingTelemetryEvent;
 import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.domain.writer.json.MessagingTelemetryEventWriterJsonImpl;
 import com.jecstar.etm.server.core.domain.converter.TelemetryEventConverter;
 
@@ -17,9 +18,9 @@ public class MessagingTelemetryEventConverterJsonImpl extends MessagingTelemetry
     }
 
     @Override
-    protected boolean doWrite(MessagingTelemetryEvent event, StringBuilder buffer, boolean firstElement) {
-        boolean added = this.converter.addDatabaseFields(buffer, event, firstElement);
-        return super.doWrite(event, buffer, !added);
+    protected void doWrite(MessagingTelemetryEvent event, JsonBuilder builder) {
+        this.converter.addDatabaseFields(event, builder);
+        super.doWrite(event, builder);
     }
 
     @Override

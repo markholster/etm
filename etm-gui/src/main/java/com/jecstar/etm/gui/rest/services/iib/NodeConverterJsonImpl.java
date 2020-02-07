@@ -1,5 +1,6 @@
 package com.jecstar.etm.gui.rest.services.iib;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 
@@ -28,19 +29,19 @@ public class NodeConverterJsonImpl implements NodeConverter<String> {
 
     @Override
     public String write(Node node) {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("{");
-        this.converter.addStringElementToJsonBuffer(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE, sb, true);
-        sb.append(", " + this.converter.escapeToJson(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE, true) + ": {");
-        boolean added = this.converter.addStringElementToJsonBuffer(this.tags.getNameTag(), node.getName(), sb, true);
-        added = this.converter.addStringElementToJsonBuffer(this.tags.getHostTag(), node.getHost(), sb, !added) || added;
-        added = this.converter.addIntegerElementToJsonBuffer(this.tags.getPortTag(), node.getPort(), sb, !added) || added;
-        added = this.converter.addStringElementToJsonBuffer(this.tags.getUsernameTag(), node.getUsername(), sb, !added) || added;
-        added = this.converter.addStringElementToJsonBuffer(this.tags.getPasswordTag(), this.converter.encodeBase64(node.getPassword(), 7), sb, !added) || added;
-        added = this.converter.addStringElementToJsonBuffer(this.tags.getQueueManagerTag(), node.getQueueManager(), sb, !added) || added;
-        added = this.converter.addStringElementToJsonBuffer(this.tags.getChannelTag(), node.getChannel(), sb, !added) || added;
-        sb.append("}}");
-        return sb.toString();
+        final var builder = new JsonBuilder();
+        builder.startObject();
+        builder.field(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE);
+        builder.startObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE);
+        builder.field(this.tags.getNameTag(), node.getName());
+        builder.field(this.tags.getHostTag(), node.getHost());
+        builder.field(this.tags.getPortTag(), node.getPort());
+        builder.field(this.tags.getUsernameTag(), node.getUsername());
+        builder.field(this.tags.getPasswordTag(), this.converter.encodeBase64(node.getPassword(), 7));
+        builder.field(this.tags.getQueueManagerTag(), node.getQueueManager());
+        builder.field(this.tags.getChannelTag(), node.getChannel());
+        builder.endObject().endObject();
+        return builder.build();
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.jecstar.etm.server.core.domain.converter.json;
 
 import com.jecstar.etm.domain.*;
 import com.jecstar.etm.domain.writer.TelemetryEventTags;
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
 import com.jecstar.etm.server.core.domain.converter.PayloadDecoder;
 import com.jecstar.etm.server.core.logging.LogFactory;
@@ -147,18 +148,11 @@ class TelemetryEventJsonConverter<Event extends TelemetryEvent<Event>> extends J
         return endpointHandler;
     }
 
-    boolean addDatabaseFields(StringBuilder buffer, Event event, boolean firstElement) {
-        boolean added = addLongElementToJsonBuffer(this.tags.getTimestampTag(), System.currentTimeMillis(), buffer, firstElement) || !firstElement;
+    void addDatabaseFields(Event event, JsonBuilder builder) {
+        builder.field(this.tags.getTimestampTag(), System.currentTimeMillis());
         if (event.id != null) {
-            if (added) {
-                buffer.append(", ");
-            }
-            buffer.append(escapeToJson(this.tags.getEventHashesTag(), true)).append(": [");
-            buffer.append(event.getCalculatedHash());
-            buffer.append("]");
-            added = true;
+            builder.field(this.tags.getEventHashesTag(), new Long[]{event.getCalculatedHash()});
         }
-        return added;
     }
 
 

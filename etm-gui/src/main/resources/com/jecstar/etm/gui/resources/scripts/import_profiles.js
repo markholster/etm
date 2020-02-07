@@ -21,10 +21,11 @@ function buildImportProfilesPage() {
 	    event.preventDefault();
         const parser = parserMap[$(this).val()];
         const cardBody = $(this).parent().parent().parent();
+        $(cardBody).children().show();
         if ('xslt' === parser.type) {
             $(cardBody).children().slice(2).hide();
-        } else if ('regex' === parser.type) {
-            $(cardBody).children().slice(2).show();
+        } else if ('javascript' === parser.type) {
+            $(cardBody).children().slice(3).hide();
         }
 	});
 
@@ -416,6 +417,9 @@ function buildImportProfilesPage() {
                 transformation.replace_all = $(block).find('.etm-replace-all').val() === 'true';
             } else if ('xslt' === transformation.parser.type) {
                 transformation.replacement = null;
+                transformation.replace_all = false;
+            } else if ('javascript' === transformation.parser.type) {
+                transformation.replacement = $(block).find('.etm-replacement').val() ? $(block).find('.etm-replacement').val() : null;
                 transformation.replace_all = false;
             }
             importProfileData.enhancer.transformations.push(transformation);

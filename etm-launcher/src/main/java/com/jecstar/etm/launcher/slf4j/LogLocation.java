@@ -133,8 +133,7 @@ class LogLocation implements Serializable {
             s = sw.toString();
             sw.getBuffer().setLength(0);
         }
-        // System.out.println("s is ["+s+"].");
-        int ibegin, iend;
+        int ixBegin, ixEnd;
 
         // Given the current structure of the package, the line
         // containing "org.apache.log4j.Category." should be printed just
@@ -143,8 +142,8 @@ class LogLocation implements Serializable {
         // This method of searching may not be fastest but it's safer
         // than counting the stack depth which is not guaranteed to be
         // constant across JVM implementations.
-        ibegin = s.lastIndexOf(fqnOfCallingClass);
-        if (ibegin == -1)
+        ixBegin = s.lastIndexOf(fqnOfCallingClass);
+        if (ixBegin == -1)
             return;
 
         //
@@ -154,35 +153,35 @@ class LogLocation implements Serializable {
         // Minimizes mistakeningly matching on a class whose
         // name is a substring of the desired class.
         // See bug 44888.
-        if (ibegin + fqnOfCallingClass.length() < s.length() && s.charAt(ibegin + fqnOfCallingClass.length()) != '.') {
+        if (ixBegin + fqnOfCallingClass.length() < s.length() && s.charAt(ixBegin + fqnOfCallingClass.length()) != '.') {
             int i = s.lastIndexOf(fqnOfCallingClass + ".");
             if (i != -1) {
-                ibegin = i;
+                ixBegin = i;
             }
         }
 
-        ibegin = s.indexOf(LINE_SEP, ibegin);
-        if (ibegin == -1)
+        ixBegin = s.indexOf(LINE_SEP, ixBegin);
+        if (ixBegin == -1)
             return;
-        ibegin += LINE_SEP_LEN;
+        ixBegin += LINE_SEP_LEN;
 
         // determine end of line
-        iend = s.indexOf(LINE_SEP, ibegin);
-        if (iend == -1)
+        ixEnd = s.indexOf(LINE_SEP, ixBegin);
+        if (ixEnd == -1)
             return;
 
         // VA has a different stack trace format which doesn't
         // need to skip the inital 'at'
         if (!inVisualAge) {
             // back up to first blank character
-            ibegin = s.lastIndexOf("at ", iend);
-            if (ibegin == -1)
+            ixBegin = s.lastIndexOf("at ", ixEnd);
+            if (ixBegin == -1)
                 return;
             // Add 3 to skip "at ";
-            ibegin += 3;
+            ixBegin += 3;
         }
         // everything between is the requested stack item
-        this.fullInfo = s.substring(ibegin, iend);
+        this.fullInfo = s.substring(ixBegin, ixEnd);
     }
 
     /**
@@ -316,12 +315,12 @@ class LogLocation implements Serializable {
         if (fullInfo == null)
             return NA;
         if (methodName == null) {
-            int iend = fullInfo.lastIndexOf('(');
-            int ibegin = fullInfo.lastIndexOf('.', iend);
-            if (ibegin == -1)
+            int ixEnd = fullInfo.lastIndexOf('(');
+            int ixBegin = fullInfo.lastIndexOf('.', ixEnd);
+            if (ixBegin == -1)
                 methodName = NA;
             else
-                methodName = this.fullInfo.substring(ibegin + 1, iend);
+                methodName = this.fullInfo.substring(ixBegin + 1, ixEnd);
         }
         return methodName;
     }

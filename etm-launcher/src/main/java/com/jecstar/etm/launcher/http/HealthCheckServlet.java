@@ -1,6 +1,6 @@
 package com.jecstar.etm.launcher.http;
 
-import com.jecstar.etm.domain.writer.json.JsonWriter;
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.elasticsearch.builder.ClusterHealthRequestBuilder;
 import org.elasticsearch.ElasticsearchException;
@@ -25,8 +25,6 @@ public class HealthCheckServlet extends HttpServlet {
 
     private static DataRepository dataRepository;
 
-    private final JsonWriter jsonWriter = new JsonWriter();
-
     public static void initialize(DataRepository dataRepository) {
         HealthCheckServlet.dataRepository = dataRepository;
     }
@@ -40,7 +38,7 @@ public class HealthCheckServlet extends HttpServlet {
         resp.setCharacterEncoding(Charset.defaultCharset().name());
         resp.setContentType("application/json");
         PrintWriter writer = resp.getWriter();
-        writer.write("{ \"status\": \"Up and running\", \"es_status\": " + this.jsonWriter.escapeToJson(getElasticsearchStatus(), true) + " }");
+        writer.write("{ \"status\": \"Up and running\", \"es_status\": " + JsonBuilder.escapeToJson(getElasticsearchStatus(), true) + " }");
     }
 
     private String getElasticsearchStatus() {

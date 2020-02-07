@@ -1,8 +1,8 @@
 package com.jecstar.etm.server.core.converter.custom;
 
+import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.server.core.converter.CustomFieldConverter;
 import com.jecstar.etm.server.core.converter.JsonEntityConverter;
-import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 
@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 public class NestedListEnumConverter<K extends Enum, T extends List<K>> extends JsonEntityConverter<T> implements CustomFieldConverter<T> {
 
     private final LogWrapper log = LogFactory.getLogger(getClass());
-    private final JsonConverter jsonConverter = new JsonConverter();
     private final Function<String, K> entityConverter;
 
     @SuppressWarnings("unchecked")
@@ -26,18 +25,11 @@ public class NestedListEnumConverter<K extends Enum, T extends List<K>> extends 
     }
 
     @Override
-    public boolean addToJsonBuffer(String jsonKey, T values, StringBuilder result, boolean firstElement) {
+    public void addToJsonBuffer(String jsonKey, T values, JsonBuilder builder) {
         if (values == null) {
-            return false;
+            return;
         }
-        if (!firstElement) {
-            result.append(", ");
-        }
-        result.append(this.jsonConverter.escapeToJson(jsonKey, true));
-        result.append(": [");
-        result.append(values.stream().map(Enum::name).collect(Collectors.joining(",")));
-        result.append("]");
-        return true;
+        builder.field(jsonKey, values.stream().map(Enum::name).collect(Collectors.toSet()));
     }
 
     @Override
