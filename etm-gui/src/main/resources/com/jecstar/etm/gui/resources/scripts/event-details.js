@@ -584,9 +584,8 @@ function showEvent(scrollTo, id) {
 										const eventSize = lineHeight * 2;
 										const halfEventSize = eventSize / 2;
 										const flowOffset = 5;
-
+										const textElements = [];
 										const calculatedPositions = {};
-
 										$.each(response.layers, function (layerIx, layer) {
 											const nrOfVertices = layer.vertices.length;
 											const xUnits = bbox.width / (nrOfVertices + 1);
@@ -614,13 +613,29 @@ function showEvent(scrollTo, id) {
 														})
 														.addClass('etm-gen-drawing-endpoint')
 														.add(vertexGroup);
-													ren.text(vertex.name, 0, endpointSize + lineHeight).add(vertexGroup);
+													let textElement = ren.text(vertex.name, 0, endpointSize + lineHeight).add(vertexGroup);
+													let s = 0;
+													$.each(textElements, function (ix, elem) {
+														const overlap = boundingBoxOverlap(
+															calculateBoundingBox(textElement.parentGroup.attr('translateX'), textElement.parentGroup.attr('translateY'), textElement.getBBox(true)),
+															calculateBoundingBox(elem.parentGroup.attr('translateX'), elem.parentGroup.attr('translateY'), elem.getBBox(true))
+														);
+														if (overlap > 0) {
+															s += lineHeight * 1.25;
+															// We can't use the translate function over here because the bbox method returns the box without the translated position.
+															textElement.destroy();
+															textElement = ren.text(vertex.name, 0, endpointSize + lineHeight).add(vertexGroup);
+														}
+													});
+													textElements.push(textElement);
 													calculatedPositions[vertex.vertex_id] = {
 														x: xPos,
 														y: yPos + halfEndpointSize,
-														r: halfEndpointSize
+														r: halfEndpointSize,
+														s: s
 													};
 												} else if ('application' === vertex.type) {
+													const appTextElements = [];
 													const xPos = (xUnits * (vertexIx + 1)) - xUnits / 2;
 													const yPos = yTop + (layerIx * yLevelHeight) - (yLevelHeight / 3);
 													const applicationGroup = ren.g().addClass('application').translate(xPos, yPos).add(mainGroup);
@@ -644,11 +659,23 @@ function showEvent(scrollTo, id) {
 																'style': 'cursor: pointer;'
 															})
 															.add(applicationGroup);
-														ren.text(childVertex.name, childWith * (childIx + .5), yOffset).add(applicationGroup);
+														let textElement = ren.text(childVertex.name, childWith * (childIx + .5), yOffset).add(applicationGroup);
+														let s = 0;
+														$.each(appTextElements, function (ix, elem) {
+															const overlap = boundingBoxOverlap(textElement.getBBox(true), elem.getBBox(true));
+															if (overlap > 0) {
+																s += lineHeight * 1.25;
+																// We can't use the translate function over here because the bbox method returns the box without the translated position.
+																textElement.destroy();
+																textElement = ren.text(childVertex.name, childWith * (childIx + .5), yOffset + s).add(applicationGroup);
+															}
+														});
+														appTextElements.push(textElement);
 														calculatedPositions[childVertex.vertex_id] = {
 															x: xPos + itemXPos,
 															y: yPos + itemYPos + halfEventSize,
-															r: halfEventSize
+															r: halfEventSize,
+															s: s
 														};
 													});
 												} else if ('event' === vertex.type) {
@@ -667,11 +694,26 @@ function showEvent(scrollTo, id) {
 															'style': 'cursor: pointer;'
 														})
 														.add(vertexGroup);
-													ren.text(vertex.name, 0, endpointSize + lineHeight).add(vertexGroup);
+													let textElement = ren.text(vertex.name, 0, endpointSize + lineHeight).add(vertexGroup);
+													let s = 0;
+													$.each(textElements, function (ix, elem) {
+														const overlap = boundingBoxOverlap(
+															calculateBoundingBox(textElement.parentGroup.attr('translateX'), textElement.parentGroup.attr('translateY'), textElement.getBBox(true)),
+															calculateBoundingBox(elem.parentGroup.attr('translateX'), elem.parentGroup.attr('translateY'), elem.getBBox(true))
+														);
+														if (overlap > 0) {
+															s += lineHeight * 1.25;
+															// We can't use the translate function over here because the bbox method returns the box without the translated position.
+															textElement.destroy();
+															textElement = ren.text(vertex.name, 0, endpointSize + lineHeight + s).add(vertexGroup);
+														}
+													});
+													textElements.push(textElement);
 													calculatedPositions[vertex.vertex_id] = {
 														x: xPos,
-														y: yPos + halfEventSize,
-														r: halfEndpointSize
+														y: yPos + halfEndpointSize,
+														r: halfEndpointSize,
+														s: s
 													};
 												}
 											});
@@ -694,7 +736,7 @@ function showEvent(scrollTo, id) {
 											} else if (from.y > to.y) {
 												// From bottom to top.
 												fromY -= (from.r + flowOffset);
-												toY += to.r + lineHeight + flowOffset;
+												toY += to.r + lineHeight + flowOffset + to.s;
 											} else if (from.x < to.x) {
 												// From left to right.
 												fromX += from.r + flowOffset;
@@ -807,6 +849,19 @@ function showEvent(scrollTo, id) {
 
 			}
 		});
+
+		function boundingBoxOverlap(bb1, bb2) {
+			return Math.max(0, Math.min(bb1.x + bb1.width, bb2.x + bb2.width) - Math.max(bb1.x, bb2.x)) * Math.max(0, Math.min(bb1.y + bb1.height, bb2.y + bb2.height) - Math.max(bb1.y, bb2.y));
+		}
+
+		function calculateBoundingBox(x, y, bbox) {
+			return {
+				x: x + bbox.x,
+				y: y + bbox.y,
+				width: bbox.width,
+				height: bbox.height
+			};
+		}
 	}
 
 	function loadEventData(eventId) {
