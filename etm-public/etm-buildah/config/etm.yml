@@ -1,4 +1,4 @@
-instanceName: OCI_node_1
+instanceName: ETM_node_1
 bindingAddress: 0.0.0.0
 clusterName: Enterprise Telemetry Monitor
 elasticsearch:
