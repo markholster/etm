@@ -6,6 +6,7 @@
 * [ETM-136](https://jecstar.atlassian.net/browse/ETM-136) Text is overlapping in endpoints view.
 * [ETM-137](https://jecstar.atlassian.net/browse/ETM-137) Support Elasticsearch Remote Clusters.
 * [ETM-138](https://jecstar.atlassian.net/browse/ETM-138) Opensource Enterprise Telemetry Monitor.
+* [ETM-1](https://github.com/jecstarinnovations/etm/issues/1) Unable to set threshold fractions.
 
 ## Version 4.0.1
 * [ETM-132](https://jecstar.atlassian.net/browse/ETM-132) Use UnboundID provider for LDAP connection.
