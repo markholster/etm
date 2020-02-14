@@ -111,7 +111,12 @@ class MetricReporterElasticImpl extends ScheduledReporter {
         for (Entry<String, Gauge> entry : gauges.entrySet()) {
             Map<String, Object> valueMap = getValueMap(root, entry.getKey());
             String name = getValueKey(entry.getKey());
-            valueMap.put(name, entry.getValue().getValue());
+            Object value = entry.getValue().getValue();
+            if (value instanceof Double) {
+                addWhenValidNumber(name, (Double) value, valueMap);
+            } else {
+                valueMap.put(name, entry.getValue().getValue());
+            }
         }
     }
 
