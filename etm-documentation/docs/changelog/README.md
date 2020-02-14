@@ -10,6 +10,7 @@
 * [ETM-2](https://github.com/jecstarinnovations/etm/issues/2) Response table in search screen doesn't wrap long names.
 * [ETM-3](https://github.com/jecstarinnovations/etm/issues/3) Elasticsearch exception in MetricReporter.
 * [ETM-5](https://github.com/jecstarinnovations/etm/issues/5) Number graphs should have a bottom margin.
+* [ETM-6](https://github.com/jecstarinnovations/etm/issues/6) Graph borders should be removed.
 
 ## Version 4.0.1
 * [ETM-132](https://jecstar.atlassian.net/browse/ETM-132) Use UnboundID provider for LDAP connection.

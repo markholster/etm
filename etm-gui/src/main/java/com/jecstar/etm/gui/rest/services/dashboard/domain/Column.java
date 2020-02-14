@@ -30,7 +30,6 @@ public class Column {
     public static final String WIDTH = "width";
     public static final String TITLE = "title";
     public static final String GRAPH_NAME = "graph_name";
-    public static final String BORDERED = "bordered";
     public static final String REFRESH_RATE = "refresh_rate";
 
 
@@ -48,9 +47,6 @@ public class Column {
 
     @JsonField(value = GraphContainer.GRAPH, converterClass = GraphConverter.class)
     private Graph<?> graph;
-
-    @JsonField(BORDERED)
-    private boolean bordered;
 
     @JsonField(REFRESH_RATE)
     private Integer refreshRate;
@@ -77,10 +73,6 @@ public class Column {
 
     public Graph<?> getGraph() {
         return this.graph;
-    }
-
-    public boolean isBordered() {
-        return this.bordered;
     }
 
     public Integer getRefreshRate() {
@@ -114,11 +106,6 @@ public class Column {
 
     public Column setGraph(Graph<?> graph) {
         this.graph = graph;
-        return this;
-    }
-
-    public Column setBordered(boolean bordered) {
-        this.bordered = bordered;
         return this;
     }
 

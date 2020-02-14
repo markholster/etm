@@ -331,9 +331,6 @@ function addListeners(readonly) {
             const $this = $(this);
             $this.find(selectorToShowOrHide).removeClass('invisible');
             $this.find(".card").addClass('selectedColumn');
-            if ('false' === $this.attr('data-col-bordered')) {
-                $this.find(".card").removeClass('noBorder');
-            }
         }
     });
 
@@ -342,9 +339,6 @@ function addListeners(readonly) {
             const $this = $(this);
             $this.find(selectorToShowOrHide).addClass('invisible');
             $this.find(".card").removeClass('selectedColumn');
-            if ('false' === $this.attr('data-col-bordered')) {
-                $this.find(".card").addClass('noBorder');
-            }
         }
     });
 
@@ -486,7 +480,6 @@ function addListeners(readonly) {
 
             const $refreshRate = $('#input-refresh-rate');
             column.title = $("#input-graph-title").val();
-            column.bordered = $('#sel-graph-border').val() === 'true';
             column.graph_name = $('#sel-graph').val();
             column.data.from = $from.val() ? $from.val() : null;
             column.data.till = $till.val() ? $till.val() : null;
@@ -646,7 +639,6 @@ function editGraph(cellId) {
     const $selGraph = $('#sel-graph');
     $('#input-graph-id').val(column.id);
     $('#input-graph-title').val(column.title);
-    $('#sel-graph-border').val(column.bordered ? 'true' : 'false');
     $selGraph.val(column.graph_name);
     $('#input-graph-from').val(column.data.from);
     $('#input-graph-till').val(column.data.till);
@@ -847,10 +839,7 @@ function appendCell($cellContainer, graph, readonly) {
     }
     $card.append($cardBody);
     $cellContainer.append($card);
-    $cellContainer.attr('data-col-bordered', graph.bordered).addClass('col-lg-' + graph.width).attr('style', 'height: 100%;');
-    if (!graph.bordered) {
-        $card.addClass('noBorder');
-    }
+    $cellContainer.addClass('col-lg-' + graph.width).attr('style', 'height: 100%;');
     if (graph.interval) {
         // Remove previous update if present.
         clearInterval(graph.interval);
@@ -1135,7 +1124,6 @@ function applyDashboardSettings(currentDashboard) {
                 let column = {
                     id: commons.generateUUID(),
                     width: parts,
-                    bordered: true
                 };
                 if (oldRow && oldRow.columns && oldRow.columns[i]) {
                     column = oldRow.columns[i];

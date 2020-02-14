@@ -18,7 +18,7 @@ A few sample usecases that Enterprise Telemetry Monitor could be used for:
 2. [Download](https://www.elastic.co/downloads/elasticsearch-oss/) Elasticsearch.
 3. Start Elasticsearch by running <es_dir>/bin/elasticsearch.sh
 4. Start Enterprise Telemetry Monitor by running <etm_dir>/bin/etm start
-5. Browse to [http://127.0.0.1:8080/gui/](http://127.0.0.1:8080/gui/) and read the [manuals](https://www.jecstar.com/documentation/etm.html).
+5. Browse to [http://127.0.0.1:8080/gui/](http://127.0.0.1:8080/gui/) and read the [manuals](https://www.jecstar.com/docs/enterprise-telemetry-monitor).
 
 ## License
 
