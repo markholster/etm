@@ -3,6 +3,7 @@ package com.jecstar.etm.server.core.domain.configuration.converter.json;
 import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
+import com.jecstar.etm.server.core.domain.configuration.RemoteCluster;
 import com.jecstar.etm.server.core.domain.configuration.WaitStrategy;
 import com.jecstar.etm.server.core.domain.configuration.converter.EtmConfigurationConverter;
 import com.jecstar.etm.server.core.domain.configuration.converter.EtmConfigurationTags;
@@ -57,6 +58,22 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
             builder.field(this.tags.getWaitForActiveShardsTag(), defaultConfiguration.getWaitForActiveShards());
             builder.field(this.tags.getQueryTimeoutTag(), defaultConfiguration.getQueryTimeout());
             builder.field(this.tags.getRetryOnConflictCountTag(), defaultConfiguration.getRetryOnConflictCount());
+            builder.startArray(this.tags.getRemoteClustersTag());
+            for (var remoteCLuster : defaultConfiguration.getRemoteClusters()) {
+                builder.startObject();
+                builder.field(this.getTags().getRemoteClusterNameTag(), remoteCLuster.getName());
+                builder.field(this.tags.getRemoteClusterClusterWideTag(), remoteCLuster.isClusterWide());
+                builder.startArray(this.tags.getRemoteClusterSeedsTag());
+                for (var seed : remoteCLuster.getSeeds()) {
+                    builder.startObject();
+                    builder.field(this.tags.getRemoteClusterSeedHostTag(), seed.getHost());
+                    builder.field(this.tags.getRemoteClusterSeedPortTag(), seed.getPort());
+                    builder.endObject();
+                }
+                builder.endArray();
+                builder.endObject();
+            }
+            builder.endArray();
         } else {
             builder.field(this.tags.getNodeNameTag(), nodeConfiguration.getNodeName());
             addLongWhenNotDefault(this.tags.getSessionTimeoutTag(), defaultConfiguration.getSessionTimeout(), nodeConfiguration.getSessionTimeout(), builder);
@@ -123,6 +140,27 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
         etmConfiguration.setWaitForActiveShards(getIntValue(this.tags.getWaitForActiveShardsTag(), defaultMap, nodeMap));
         etmConfiguration.setQueryTimeout(getLongValue(this.tags.getQueryTimeoutTag(), defaultMap, nodeMap));
         etmConfiguration.setRetryOnConflictCount(getIntValue(this.tags.getRetryOnConflictCountTag(), defaultMap, nodeMap));
+        if (defaultMap != null) {
+            List<Map<String, Object>> remoteClusters = this.converter.getArray(this.tags.getRemoteClustersTag(), defaultMap);
+            if (remoteClusters != null) {
+                for (var remoteClusterMap : remoteClusters) {
+                    var remoteCluster = new RemoteCluster();
+                    remoteCluster.setName(this.converter.getString(this.tags.getRemoteClusterNameTag(), remoteClusterMap));
+                    remoteCluster.setClusterWide(this.converter.getBoolean(this.tags.getRemoteClusterClusterWideTag(), remoteClusterMap));
+
+                    List<Map<String, Object>> seeds = this.converter.getArray(this.tags.getRemoteClusterSeedsTag(), remoteClusterMap);
+                    if (seeds != null) {
+                        for (var seedMap : seeds) {
+                            var seed = new RemoteCluster.Seed();
+                            seed.setHost(this.converter.getString(this.tags.getRemoteClusterSeedHostTag(), seedMap));
+                            seed.setPort(this.converter.getInteger(this.tags.getRemoteClusterSeedPortTag(), seedMap));
+                            remoteCluster.addSeed(seed);
+                        }
+                    }
+                    etmConfiguration.addRemoteCluster(remoteCluster);
+                }
+            }
+        }
         return etmConfiguration;
     }
 

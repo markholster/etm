@@ -296,25 +296,55 @@ function buildClusterPage() {
         });
     });
 
-	$.ajax({
-	    type: 'GET',
-	    contentType: 'application/json',
-	    url: '../rest/settings/cluster',
-	    cache: false,
-	    success: function(data) {
-	        if (!data) {
-	            return;
-	        }
-	        setClusterData(data)
-	    }
-	});
-	
-	$.ajax({
-	    type: 'GET',
-	    contentType: 'application/json',
-	    url: '../rest/settings/ldap',
-	    cache: false,
-	    success: function(data) {
+    $('#lnk-add-remote-cluster').on('click', function (event) {
+        event.preventDefault();
+        addRemoteClusterRow();
+    });
+
+    $("#remote-cluster-columns").on('click', 'a', function (event) {
+        event.preventDefault();
+        if ($(this).hasClass('fa-plus')) {
+            $(this).parent().parent().parent().append(
+                $('<div class="row mt-1">').append(
+                    $('<div class="col-sm-8">').append($('<input>').attr('type', 'text').addClass('form-control form-control-sm').attr('placeholder', 'host').attr('required', 'required')),
+                    $('<div class="col-sm-3">').append($('<input>').attr('type', 'number').addClass('form-control form-control-sm').attr('min', '1').attr('max', '65535').val('9300').attr('required', 'required')),
+                    $('<div class="col-sm-1">').append($('<a class="fa fa-times text-danger remove-host">').attr('href', '#'))
+                )
+            )
+        } else if ($(this).hasClass('remove-row')) {
+            $(this).parent().parent().remove();
+        } else if ($(this).hasClass('remove-host')) {
+            $(this).parent().parent().remove();
+        }
+    }).on('click', ':checkbox', function () {
+        if ($(this).is(':checked')) {
+            $(this).parent().parent().next().find('input').removeAttr('disabled');
+            $(this).parent().parent().next().find('a').show();
+        } else {
+            $(this).parent().parent().next().find('input').attr('disabled', 'true');
+            $(this).parent().parent().next().find('a').hide();
+        }
+    });
+
+    $.ajax({
+        type: 'GET',
+        contentType: 'application/json',
+        url: '../rest/settings/cluster',
+        cache: false,
+        success: function (data) {
+            if (!data) {
+                return;
+            }
+            setClusterData(data)
+        }
+    });
+
+    $.ajax({
+        type: 'GET',
+        contentType: 'application/json',
+        url: '../rest/settings/ldap',
+        cache: false,
+        success: function (data) {
 	        if (!data) {
 	            return;
 	        }
@@ -344,16 +374,52 @@ function buildClusterPage() {
             enableOrDisableCertificateButtons();
         }
     });
-	
-	function saveCluster(context) {
+
+    function addRemoteClusterRow(remoteCluster) {
+        const checkboxId = commons.generateUUID();
+        const $row = $('<div class="row remoteClusterRow">').append(
+            $('<div class="col-sm-3 mt-1">').append($('<input>').attr('type', 'text').addClass('form-control form-control-sm').attr('placeholder', 'Name').attr('required', 'required')),
+            $('<div class="col-sm-2 mt-1 center-block text-center">').append(
+                $('<div>').addClass('custom-control custom-checkbox align-center').append(
+                    $('<input>').attr('type', 'checkbox').addClass('form-control form-control-sm custom-control-input').attr('id', checkboxId).attr('checked', 'checked'),
+                    $('<label>').addClass('custom-control-label').attr('for', checkboxId)
+                )
+            ),
+            $('<div class="col mt-1">').append(
+                $('<div class="row">').append(
+                    $('<div class="col-sm-8">').append($('<input>').attr('type', 'text').addClass('form-control form-control-sm').attr('placeholder', 'host').attr('required', 'required')),
+                    $('<div class="col-sm-3">').append($('<input>').attr('type', 'number').addClass('form-control form-control-sm').attr('min', '1').attr('max', '65535').val('9300').attr('required', 'required')),
+                    $('<div class="col-sm-1">').append($('<a class="fa fa-plus">').attr('href', '#'))
+                )
+            ),
+            $('<div class="col-sm-2 mt-1 center-block text-center">').append($('<a class="fa fa-times text-danger remove-row">').attr('href', '#'))
+        );
+        $('#remote-cluster-columns').append($row);
+        if (remoteCluster) {
+            $row.children(":nth-child(1)").find('input').val(remoteCluster.name);
+            if (!remoteCluster.cluster_wide) {
+                $row.children(":nth-child(2)").find('input').trigger('click');
+            }
+            $(remoteCluster.seeds.sort((a, b) => (a.host > b.host) ? 1 : ((a.host < b.host) ? -1 : 0))).each(function (index, seed) {
+                if (0 !== index) {
+                    // First row is always visible. So in case we're not the first row, append another one.
+                    $row.children(":nth-child(3)").find('a.fa-plus').trigger('click');
+                }
+                $row.children(":nth-child(3)").find('input[type="text"]').last().val(seed.host);
+                $row.children(":nth-child(3)").find('input[type="number"]').last().val(seed.port);
+            });
+        }
+    }
+
+    function saveCluster(context) {
         const clusterData = createClusterData(context);
-		$.ajax({
+        $.ajax({
             type: 'PUT',
             contentType: 'application/json',
             url: '../rest/settings/cluster',
             cache: false,
             data: JSON.stringify(clusterData),
-            success: function(data) {
+            success: function (data) {
                 if (!data) {
                     return;
                 }
@@ -391,31 +457,35 @@ function buildClusterPage() {
     }
 	
 	function setClusterData(data) {
-		$("#input-session-timeout").val(data.session_timeout);
-		$("#input-import-profile-cache-size").val(data.import_profile_cache_size);
-		$("#input-shards-per-index").val(data.shards_per_index);
-		$("#input-replicas-per-index").val(data.replicas_per_index);
-		$("#input-max-event-indices").val(data.max_event_index_count);
-		$("#input-max-metrics-indices").val(data.max_metrics_index_count);
-		$("#input-max-audit-log-indices").val(data.max_audit_log_index_count);
-		$("#input-wait-for-active-shards").val(data.wait_for_active_shards);
-		$("#input-retries-on-conflict").val(data.retry_on_conflict_count);
-		$("#input-query-timeout").val(data.query_timeout);
-		$("#input-search-export-max-rows").val(data.max_search_result_download_rows);
-		$("#input-search-max-templates").val(data.max_search_template_count);
-		$("#input-search-max-history-size").val(data.max_search_history_count);
-		$("#input-visualization-max-graph-count").val(data.max_graph_count);
-		$("#input-visualization-max-dashboard-count").val(data.max_dashboard_count);
-		$("#input-signal-max-signal-count").val(data.max_signal_count);
-		$("#input-enhancing-handler-count").val(data.enhancing_handler_count);
-		$("#input-persisting-handler-count").val(data.persisting_handler_count);
-		$("#input-event-buffer-size").val(data.event_buffer_size);
-		$("#sel-wait-strategy").val(data.wait_strategy);
-		$("#input-persisting-bulk-count").val(data.persisting_bulk_count);
-		$("#input-persisting-bulk-size").val(data.persisting_bulk_size);
-		$("#input-persisting-bulk-time").val(data.persisting_bulk_time);
-		$("#input-persisting-bulk-threads").val(data.persisting_bulk_threads);
-	}
+        $("#input-session-timeout").val(data.session_timeout);
+        $("#input-import-profile-cache-size").val(data.import_profile_cache_size);
+        $("#input-shards-per-index").val(data.shards_per_index);
+        $("#input-replicas-per-index").val(data.replicas_per_index);
+        $("#input-max-event-indices").val(data.max_event_index_count);
+        $("#input-max-metrics-indices").val(data.max_metrics_index_count);
+        $("#input-max-audit-log-indices").val(data.max_audit_log_index_count);
+        $("#input-wait-for-active-shards").val(data.wait_for_active_shards);
+        $("#input-retries-on-conflict").val(data.retry_on_conflict_count);
+        $("#input-query-timeout").val(data.query_timeout);
+        $(data.remote_clusters.sort((a, b) => (a.name > b.name) ? 1 : ((a.name < b.name) ? -1 : 0))).each(function (index, remoteCluster) {
+            addRemoteClusterRow(remoteCluster);
+        });
+
+        $("#input-search-export-max-rows").val(data.max_search_result_download_rows);
+        $("#input-search-max-templates").val(data.max_search_template_count);
+        $("#input-search-max-history-size").val(data.max_search_history_count);
+        $("#input-visualization-max-graph-count").val(data.max_graph_count);
+        $("#input-visualization-max-dashboard-count").val(data.max_dashboard_count);
+        $("#input-signal-max-signal-count").val(data.max_signal_count);
+        $("#input-enhancing-handler-count").val(data.enhancing_handler_count);
+        $("#input-persisting-handler-count").val(data.persisting_handler_count);
+        $("#input-event-buffer-size").val(data.event_buffer_size);
+        $("#sel-wait-strategy").val(data.wait_strategy);
+        $("#input-persisting-bulk-count").val(data.persisting_bulk_count);
+        $("#input-persisting-bulk-size").val(data.persisting_bulk_size);
+        $("#input-persisting-bulk-time").val(data.persisting_bulk_time);
+        $("#input-persisting-bulk-threads").val(data.persisting_bulk_threads);
+    }
 	
 	function createClusterData(context) {
         const clusterData = {};
@@ -429,14 +499,43 @@ function buildClusterPage() {
 			clusterData.max_dashboard_count = Number($("#input-visualization-max-dashboard-count").val());
 			clusterData.max_signal_count = Number($("#input-signal-max-signal-count").val());
         } else if ('Elasticsearch' === context) {
-			clusterData.shards_per_index = Number($("#input-shards-per-index").val());
-			clusterData.replicas_per_index = Number($("#input-replicas-per-index").val());
-			clusterData.max_event_index_count = Number($("#input-max-event-indices").val());
-			clusterData.max_metrics_index_count = Number($("#input-max-metrics-indices").val());
-			clusterData.max_audit_log_index_count = Number($("#input-max-audit-log-indices").val());
-			clusterData.wait_for_active_shards = Number($("#input-wait-for-active-shards").val());
-			clusterData.retry_on_conflict_count = Number($("#input-retries-on-conflict").val());
-			clusterData.query_timeout = Number($("#input-query-timeout").val());
+            clusterData.shards_per_index = Number($("#input-shards-per-index").val());
+            clusterData.replicas_per_index = Number($("#input-replicas-per-index").val());
+            clusterData.max_event_index_count = Number($("#input-max-event-indices").val());
+            clusterData.max_metrics_index_count = Number($("#input-max-metrics-indices").val());
+            clusterData.max_audit_log_index_count = Number($("#input-max-audit-log-indices").val());
+            clusterData.wait_for_active_shards = Number($("#input-wait-for-active-shards").val());
+            clusterData.retry_on_conflict_count = Number($("#input-retries-on-conflict").val());
+            clusterData.query_timeout = Number($("#input-query-timeout").val());
+            clusterData.remote_clusters = [];
+            $('#remote-cluster-columns .remoteClusterRow').each(function (rowIndex, row) {
+                const remoteCluster = {name: '', cluster_wide: true, seeds: []};
+                $(row).children().each(function (columnIndex, column) {
+                    if (0 === columnIndex) {
+                        remoteCluster.name = $(column).find('input').val();
+                    } else if (1 === columnIndex) {
+                        remoteCluster.cluster_wide = $(column).find('input').is(':checked');
+                    } else if (2 === columnIndex) {
+                        $(column).children().each(function (seedRowIx, seedRow) {
+                            const seed = {};
+                            $(seedRow).children().each(function (seedColumnIx, seedColumn) {
+                                if (0 === seedColumnIx) {
+                                    seed.host = $(seedColumn).find('input').val();
+                                } else if (1 === seedColumnIx) {
+                                    seed.port = Number($(seedColumn).find('input').val());
+                                }
+                            });
+                            remoteCluster.seeds.push(seed);
+                        });
+                    }
+                });
+                if (remoteCluster.name.trim().length > 0) {
+                    if (!remoteCluster.cluster_wide) {
+                        remoteCluster.seeds = [];
+                    }
+                    clusterData.remote_clusters.push(remoteCluster);
+                }
+            });
         } else if ('Persisting' === context) {
 			clusterData.enhancing_handler_count = Number($("#input-enhancing-handler-count").val());
 			clusterData.persisting_handler_count = Number($("#input-persisting-handler-count").val());

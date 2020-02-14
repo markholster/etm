@@ -40,10 +40,12 @@ import com.jecstar.etm.server.core.persisting.RequestEnhancer;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import com.jecstar.etm.server.core.tls.TrustAllTrustManager;
 import com.jecstar.etm.server.core.util.BCrypt;
+import org.elasticsearch.action.admin.cluster.settings.ClusterGetSettingsResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.get.MultiGetItemResponse;
 import org.elasticsearch.action.get.MultiGetResponse;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
@@ -66,6 +68,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 @Path("/settings")
 @DeclareRoles(SecurityRoles.ALL_ROLES)
@@ -170,7 +173,6 @@ public class SettingsService extends AbstractGuiService {
      * @param license      The <code>License</code> to add the data from.
      * @param builder      The <code>JsonBuilder</code> to add the data to.
      * @param etmPrincipal The <code>EtmPrincipal</code>?
-     * @return The buffer with the license data added.
      */
     private void addLicenseData(License license, JsonBuilder builder, EtmPrincipal etmPrincipal) {
         builder.field(License.OWNER, license.getOwner());
@@ -208,6 +210,29 @@ public class SettingsService extends AbstractGuiService {
         currentValues.putAll(toMap(json));
         EtmConfiguration defaultConfig = this.etmConfigurationConverter.read(null, currentNodeObject, null);
 
+        // Update the new cluster settings.
+        ClusterGetSettingsResponse clusterGetSettingsResponse = dataRepository.clusterGetSettings(new ClusterGetSettingsRequestBuilder());
+        final var prefix = "cluster.remote.";
+        Map<String, Settings> currentRemoteClusters = clusterGetSettingsResponse.getPersistentSettings().getGroups(prefix);
+        Settings.Builder settingsBuilder = Settings.builder();
+        // First remove all current remote clusters.
+        for (var entry : currentRemoteClusters.entrySet()) {
+            var keys = entry.getValue().keySet();
+            for (var key : keys) {
+                settingsBuilder.putNull(prefix + entry.getKey() + "." + key);
+            }
+        }
+        // and add the clusters we've received from the gui
+        for (var remoteCluster : defaultConfig.getRemoteClusters()) {
+            if (remoteCluster.isClusterWide()) {
+                var clusterName = remoteCluster.getName().replace(" ", "_");
+                settingsBuilder.put(prefix + clusterName + ".skip_unavailable", true);
+                settingsBuilder.putList(prefix + clusterName + ".seeds", remoteCluster.getSeeds().stream().map(rc -> rc.getHost() + ":" + rc.getPort()).collect(Collectors.toList()));
+            }
+        }
+        if (!settingsBuilder.keys().isEmpty()) {
+            dataRepository.clusterUpdateSettings(new ClusterUpdateSettingsRequestBuilder().setPersistentSettings(settingsBuilder));
+        }
         UpdateRequestBuilder builder = requestEnhancer.enhance(
                 new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_NODE_DEFAULT)
         )
@@ -995,7 +1020,7 @@ public class SettingsService extends AbstractGuiService {
                 if (line.startsWith("220")) {
                     SSLContext sc = SSLContext.getInstance("TLS");
                     sc.init(null, new TrustManager[]{new TrustAllTrustManager()}, null);
-                    SSLSocketFactory sslSocketFactory = ((SSLSocketFactory) sc.getSocketFactory());
+                    SSLSocketFactory sslSocketFactory = sc.getSocketFactory();
                     SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(
                             socket,
                             socket.getInetAddress().getHostAddress(),

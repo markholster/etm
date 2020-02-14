@@ -835,7 +835,7 @@ public class DashboardService extends AbstractUserAttributeService {
 
     private SearchRequestBuilder createGraphSearchRequest(EtmPrincipal etmPrincipal, GraphContainer graphContainer) {
         Data data = graphContainer.getData();
-        SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder()).setIndices(data.getDataSource())
+        SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder()).setIndices(etmConfiguration.mergeRemoteIndices(data.getDataSource()))
                 .setFetchSource(false)
                 .setSize(0);
         var etmQueryBuilder = new EtmQueryBuilder(data.getQuery(), null, dataRepository, requestEnhancer).setTimeZone(etmPrincipal.getTimeZone().getID());

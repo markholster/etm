@@ -19,7 +19,7 @@ Once Elasticsearch is up and running you can download and run Enterprise Telemet
 preference) you can download a .zip or .tgz file. In this example we choose the .tgz file, so let's download the binary to our machine:
 
 ```bash
-curl -LO https://www.jecstar.com/downloads/etm/etm-4.0.0.tgz
+curl -LO https://www.jecstar.com/downloads/etm-4.0.0.tgz
 ```
 
 Then extract the archive with the following command:

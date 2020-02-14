@@ -31,6 +31,7 @@ public class ElasticBackedEtmConfigurationTest {
                 , "public void removeConfigurationChangeListener(com.jecstar.etm.server.core.domain.configuration.ConfigurationChangeListener)"
                 , "public synchronized boolean mergeAndNotify(com.jecstar.etm.server.core.domain.configuration.EtmConfiguration)"
                 , "public com.jecstar.etm.server.core.domain.configuration.LicenseRateLimiter getLicenseRateLimiter()"
+                , "public transient [Ljava.lang.String; mergeRemoteIndices([Ljava.lang.String;)"
         );
 
         Method[] declaredMethods = EtmConfiguration.class.getDeclaredMethods();

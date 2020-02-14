@@ -100,6 +100,48 @@ public class EtmConfigurationTagsJsonImpl implements EtmConfigurationTags {
     }
 
     @Override
+    public String getRemoteClustersTag() {
+        return "remote_clusters";
+    }
+
+    ;
+
+    @Override
+    public String getRemoteClusterNameTag() {
+        return "name";
+    }
+
+    ;
+
+    @Override
+    public String getRemoteClusterClusterWideTag() {
+        return "cluster_wide";
+    }
+
+    ;
+
+    @Override
+    public String getRemoteClusterSeedsTag() {
+        return "seeds";
+    }
+
+    ;
+
+    @Override
+    public String getRemoteClusterSeedHostTag() {
+        return "host";
+    }
+
+    ;
+
+    @Override
+    public String getRemoteClusterSeedPortTag() {
+        return "port";
+    }
+
+    ;
+
+    @Override
     public String getRetryOnConflictCountTag() {
         return "retry_on_conflict_count";
     }

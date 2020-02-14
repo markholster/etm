@@ -6,8 +6,7 @@ import com.jecstar.etm.server.core.util.ObjectUtils;
 
 import java.time.Instant;
 import java.time.Period;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class EtmConfiguration {
     //License configuration
@@ -22,6 +21,7 @@ public class EtmConfiguration {
     private static final String CONFIG_KEY_MAX_AUDIT_LOG_INDEX_COUNT = "maxAuditLogIndexCount";
     private static final String CONFIG_KEY_WAIT_FOR_ACTIVE_SHARDS = "waitForActiveShards";
     private static final String CONFIG_KEY_QUERY_TIMEOUT = "queryTimeout";
+    private static final String CONFIG_KEY_REMOTE_CLUSTERS = "remoteClusters";
     private static final String CONFIG_KEY_RETRY_ON_CONFLICT_COUNT = "retryOnConflictCount";
     private static final String CONFIG_KEY_MAX_SEARCH_RESULT_DOWNLOAD_ROWS = "maxSearchResultDownloadRows";
     private static final String CONFIG_KEY_MAX_SEARCH_TEMPLATE_COUNT = "maxSearchTemplateCount";
@@ -40,7 +40,6 @@ public class EtmConfiguration {
     public static final String CONFIG_KEY_PERSISTING_BULK_THREADS = "persistingBulkThreads";
     public static final String CONFIG_KEY_WAIT_STRATEGY = "waitStrategy";
     public static final String CONFIG_KEY_IMPORT_PROFILE_CACHE_SIZED = "importProfileCacheSize";
-
 
     // Disruptor configuration properties.
     private int enhancingHandlerCount = 5;
@@ -88,6 +87,8 @@ public class EtmConfiguration {
 
     private Directory directory;
 
+    private Set<RemoteCluster> remoteClusters = new HashSet<>();
+
     private final List<ConfigurationChangeListener> changeListeners = new ArrayList<>();
 
     private final LicenseRateLimiter licenseRateLimiter;
@@ -123,6 +124,60 @@ public class EtmConfiguration {
         }
         this.directory = directory;
     }
+
+    /**
+     * Gives the configured remote clusters.
+     *
+     * @return The remote clusters.
+     */
+    public Set<RemoteCluster> getRemoteClusters() {
+        return this.remoteClusters;
+    }
+
+    /**
+     * Adds a <code>RemoteCluster</code> instance to the <code>EtmConfiguration</code>
+     *
+     * @param remoteCluster The <code>RemoteCluster</code> to add.
+     * @return This instance for chaining.
+     */
+    public EtmConfiguration addRemoteCluster(RemoteCluster remoteCluster) {
+        this.remoteClusters.add(remoteCluster);
+        return this;
+    }
+
+    /**
+     * Removes a <code>RemoteCluster</code> instance from the <code>EtmConfiguration</code>
+     *
+     * @param remoteCluster The <code>RemoteCluster</code> to remove.
+     * @return This instance for chaining.
+     */
+    public EtmConfiguration removeRemoteCluster(RemoteCluster remoteCluster) {
+        this.remoteClusters.remove(remoteCluster);
+        return this;
+    }
+
+    /**
+     * Merge the indices of the remote cluster to the given local indices.
+     *
+     * @param indices The indices of the local cluster.
+     * @return The given indices at the local cluster and the same indices at the remote clusters.
+     */
+    public String[] mergeRemoteIndices(String... indices) {
+        var remoteClusters = getRemoteClusters().toArray(new RemoteCluster[0]);
+        if (remoteClusters.length == 0) {
+            return indices;
+        }
+        String[] result = new String[indices.length + (indices.length * remoteClusters.length)];
+        for (int i = 0; i < indices.length; i++) {
+            final int offset = i * (remoteClusters.length + 1);
+            result[offset] = indices[i];
+            for (int j = 0; j < remoteClusters.length; j++) {
+                result[offset + j + 1] = remoteClusters[j].getName() + ":" + indices[i];
+            }
+        }
+        return result;
+    }
+
 
     /**
      * Method to determine if a license key is valid. This method does not check
@@ -534,6 +589,11 @@ public class EtmConfiguration {
             setQueryTimeout(etmConfiguration.getQueryTimeout());
             changed.add(CONFIG_KEY_QUERY_TIMEOUT);
         }
+        if (!Objects.equals(this.remoteClusters, etmConfiguration.getRemoteClusters())) {
+            this.remoteClusters = etmConfiguration.getRemoteClusters();
+            changed.add(CONFIG_KEY_REMOTE_CLUSTERS);
+        }
+
         if (this.retryOnConflictCount != etmConfiguration.getRetryOnConflictCount()) {
             setRetryOnConflictCount(etmConfiguration.getRetryOnConflictCount());
             changed.add(CONFIG_KEY_RETRY_ON_CONFLICT_COUNT);

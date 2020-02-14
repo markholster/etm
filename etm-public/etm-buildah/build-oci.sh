@@ -15,7 +15,7 @@ tar -zxvf $SCRIPT_DIR/../../etm-distribution/build/distributions/etm-$VERSION.tg
 cp -f $SCRIPT_DIR/config/etm.yml $dir/opt/etm-$VERSION/config
 
 ## CONFIGURE ETM
-buildah config --port 8080 --entrypoint "['/opt/etm-$VERSION/bin/etm', 'console']" $container
+buildah config --port 8080 --entrypoint "[\"/opt/etm-$VERSION/bin/etm\", \"console\"]" $container
 buildah commit $container docker.jecstar.com/etm:$VERSION
 buildah tag docker.jecstar.com/etm:$VERSION eu.gcr.io/virtual-ellipse-208415/etm:$VERSION
 buildah unmount $container

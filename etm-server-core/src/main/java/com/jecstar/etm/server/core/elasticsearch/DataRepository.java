@@ -14,6 +14,8 @@ import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
+import org.elasticsearch.action.admin.cluster.settings.ClusterGetSettingsResponse;
+import org.elasticsearch.action.admin.cluster.settings.ClusterUpdateSettingsResponse;
 import org.elasticsearch.action.admin.cluster.storedscripts.GetStoredScriptResponse;
 import org.elasticsearch.action.admin.indices.flush.FlushResponse;
 import org.elasticsearch.action.admin.indices.settings.get.GetSettingsResponse;
@@ -432,6 +434,28 @@ public class DataRepository {
         try {
             long startTime = System.currentTimeMillis();
             var response = this.client.cluster().health(builder.build(), RequestOptions.DEFAULT);
+            shapeRequest(calculateIndexRequestUnits(response), System.currentTimeMillis() - startTime);
+            return response;
+        } catch (IOException e) {
+            throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
+        }
+    }
+
+    public ClusterGetSettingsResponse clusterGetSettings(ClusterGetSettingsRequestBuilder builder) {
+        try {
+            long startTime = System.currentTimeMillis();
+            var response = this.client.cluster().getSettings(builder.build(), RequestOptions.DEFAULT);
+            shapeRequest(calculateIndexRequestUnits(response), System.currentTimeMillis() - startTime);
+            return response;
+        } catch (IOException e) {
+            throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
+        }
+    }
+
+    public ClusterUpdateSettingsResponse clusterUpdateSettings(ClusterUpdateSettingsRequestBuilder builder) {
+        try {
+            long startTime = System.currentTimeMillis();
+            var response = this.client.cluster().putSettings(builder.build(), RequestOptions.DEFAULT);
             shapeRequest(calculateIndexRequestUnits(response), System.currentTimeMillis() - startTime);
             return response;
         } catch (IOException e) {

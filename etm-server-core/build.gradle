@@ -36,6 +36,7 @@ dependencies {
             dep_elasticsearchClient,
             dep_apacheDs
     integrationTestRuntimeOnly dep_slf4jSimple, dep_log4jToSlf4j
+    testRuntimeOnly dep_slf4jSimple
 }
 
 

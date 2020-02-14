@@ -318,7 +318,7 @@ public class SearchService extends AbstractIndexMetadataService {
         if (parameters.getTypes().size() != 5) {
             etmQueryBuilder.filterRoot(QueryBuilders.termsQuery(this.eventTags.getObjectTypeTag(), parameters.getTypes().toArray()));
         }
-        var requestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL))
+        var requestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(etmConfiguration.mergeRemoteIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL)))
                 .setQuery(addFilterQuery(getEtmPrincipal(), etmQueryBuilder.buildRootQuery()))
                 .setFetchSource(parameters.getFields().toArray(new String[0]), null)
                 .setFrom(parameters.getStartIndex())
@@ -624,7 +624,7 @@ public class SearchService extends AbstractIndexMetadataService {
                 .addIds(eventId);
         BoolQueryBuilder query = new BoolQueryBuilder();
         query.must(idsQueryBuilder);
-        SearchRequestBuilder builder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL))
+        SearchRequestBuilder builder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(etmConfiguration.mergeRemoteIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL)))
                 .setQuery(addFilterQuery(getEtmPrincipal(), query))
                 .setFrom(0)
                 .setSize(1);
@@ -640,7 +640,7 @@ public class SearchService extends AbstractIndexMetadataService {
         IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder()
                 .addIds(eventId);
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder().must(idsQueryBuilder);
-        SearchRequestBuilder builder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL))
+        SearchRequestBuilder builder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(etmConfiguration.mergeRemoteIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL)))
                 .setQuery(alwaysShowCorrelatedEvents(getEtmPrincipal()) ? idsQueryBuilder : addFilterQuery(getEtmPrincipal(), boolQueryBuilder))
                 .setFrom(0)
                 .setSize(1)
@@ -701,7 +701,7 @@ public class SearchService extends AbstractIndexMetadataService {
                         "." + this.eventTags.getEndpointHandlersTag() +
                         "." + this.eventTags.getEndpointHandlerTransactionIdTag() + KEYWORD_SUFFIX, transactionId)
                 );
-        SearchRequestBuilder searchRequest = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL))
+        SearchRequestBuilder searchRequest = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(etmConfiguration.mergeRemoteIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL)))
                 .setQuery(addFilterQuery(getEtmPrincipal(), findEventsQuery))
                 .setSort(SortBuilders.fieldSort("_doc"))
                 .setFetchSource(new String[]{
@@ -863,7 +863,7 @@ public class SearchService extends AbstractIndexMetadataService {
         IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder()
                 .addIds(eventId);
         // No principal filtered query. We would like to show the entire event chain, but the user should not be able to retrieve all information.
-        SearchRequestBuilder builder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL))
+        SearchRequestBuilder builder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(etmConfiguration.mergeRemoteIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL)))
                 .setQuery(idsQueryBuilder)
                 .setFetchSource(null, this.eventTags.getPayloadTag())
                 .setFrom(0)
@@ -978,7 +978,7 @@ public class SearchService extends AbstractIndexMetadataService {
                         "." + this.eventTags.getEndpointHandlerTransactionIdTag() + KEYWORD_SUFFIX, transactionId)
                 ).filter(QueryBuilders.termsQuery(this.eventTags.getObjectTypeTag(), "http", "messaging"));
         // No principal filtered query. We would like to show the entire event chain, but the user should not be able to retrieve all information.
-        SearchRequestBuilder searchRequest = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL))
+        SearchRequestBuilder searchRequest = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(etmConfiguration.mergeRemoteIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL)))
                 .setQuery(findEventsQuery)
                 .setSort(SortBuilders.fieldSort("_doc"))
                 .setFetchSource(null, this.eventTags.getPayloadTag());

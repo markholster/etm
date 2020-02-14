@@ -50,7 +50,7 @@ public class SignalSearchRequestBuilderBuilder {
         final var data = this.signal.getData();
         final var requestEnhancer = new RequestEnhancer(this.etmConfiguration);
         SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder())
-                .setIndices(data.getDataSource())
+                .setIndices(etmConfiguration.mergeRemoteIndices(data.getDataSource()))
                 .setFetchSource(false)
                 .setTimeout(TimeValue.timeValueMillis(this.etmConfiguration.getQueryTimeout()))
                 .setSize(0);

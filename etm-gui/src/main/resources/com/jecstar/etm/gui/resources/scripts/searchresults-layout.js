@@ -175,7 +175,7 @@ $('#link-edit-table').on('click', function (event) {
             $('<div>').addClass('col-sm-1').append(
                 $('<div>').addClass('custom-control custom-checkbox').append(
                     $('<input>').attr('type', 'checkbox').addClass('form-control form-control-sm custom-control-input').attr('id', checkboxId),
-                    $('<label>').addClass('custom-control-label').attr('for', checkboxId).attr('style', 'top: -0.75rem;')
+                    $('<label>').addClass('custom-control-label').attr('for', checkboxId)
                 )
             )
         );

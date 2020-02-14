@@ -31,6 +31,21 @@ Wait for active shards | The number of Elasticsearch shards that need to be acti
 Retries on conflict | The number of retries before an insert or update query will fail.
 Query timeout | The timeout in milliseconds for queries to Elasticsearch.
 
+### Remote clusters
+Enterprise Telemetry Monitor is capable of searching through different Elasticsearch clusters. This might be useful when you have multiple datacenters with their own Enterprise Telemetry Monitor instances. To create a single overview of all
+events in all datacenters you can connect an Enterprise Telemetry Monitor instance to remote Elasticsearch instances. Remote clusters will be used in the context of [Searching](../searching/README.md), [Visualizations](../visualizations/README.md) and [Signals](../signals/README.md).
+
+To add a remote cluster to the running Enterprise Telemetry Monitor instance click on the *Add cluster* link. This adds a row in the Remote cluster table. You must give the remote
+cluster a unique name. When you enable the *Cluster wide* option, Enterprise Telemetry Monitor will manage the connections to the remote cluster for you. To be able to connect to the
+remote cluster it needs at least one seed of the remote host. All Elasticsearch instances of the local cluster should be able to connect to all nodes in the remote cluster! When a cluster
+cannot be reached Enterprise Telemetry Monitor will not log any warning. The cluster will be ignored without a warning.
+
+When you disable the *Cluster wide* option, Enterprise Telemetry Monitor will not configure anything for you. You need to configure the remote cluster alias in the elasticsearch.yml files
+yourself. The only thing you need to tell Enterprise Telemetry Monitor is the cluster name you configured in Elasticsearch. This option gives you more flexibility over which 
+nodes are capable of connecting to the remote cluster.  
+
+For mor information on Elasticsearch configuration of remote clusters browse to <https://www.elastic.co/guide/en/elasticsearch/reference/7.x/modules-remote-clusters.html>. 
+
 ## Persisting settings
 Name | Description
 --- | ---

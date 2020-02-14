@@ -1,9 +1,6 @@
 package com.jecstar.etm.launcher;
 
-import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
-import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
-import com.jecstar.etm.server.core.domain.configuration.License;
-import com.jecstar.etm.server.core.domain.configuration.WaitStrategy;
+import com.jecstar.etm.server.core.domain.configuration.*;
 import com.jecstar.etm.server.core.domain.configuration.converter.EtmConfigurationConverter;
 import com.jecstar.etm.server.core.domain.configuration.converter.LdapConfigurationConverter;
 import com.jecstar.etm.server.core.domain.configuration.converter.json.EtmConfigurationConverterJsonImpl;
@@ -20,6 +17,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilders;
 
 import java.util.Map;
+import java.util.Set;
 
 public class ElasticBackedEtmConfiguration extends EtmConfiguration {
 
@@ -62,6 +60,24 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
     public License getLicense() {
         reloadConfigurationWhenNecessary();
         return super.getLicense();
+    }
+
+    @Override
+    public Set<RemoteCluster> getRemoteClusters() {
+        reloadConfigurationWhenNecessary();
+        return super.getRemoteClusters();
+    }
+
+    @Override
+    public EtmConfiguration addRemoteCluster(RemoteCluster remoteCluster) {
+        reloadConfigurationWhenNecessary();
+        return super.addRemoteCluster(remoteCluster);
+    }
+
+    @Override
+    public EtmConfiguration removeRemoteCluster(RemoteCluster remoteCluster) {
+        reloadConfigurationWhenNecessary();
+        return super.removeRemoteCluster(remoteCluster);
     }
 
     @Override
