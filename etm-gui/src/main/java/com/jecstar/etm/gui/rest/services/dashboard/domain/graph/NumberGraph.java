@@ -20,6 +20,7 @@ package com.jecstar.etm.gui.rest.services.dashboard.domain.graph;
 import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.gui.rest.services.dashboard.domain.converter.YAxisConverter;
 import com.jecstar.etm.server.core.converter.JsonField;
+import com.jecstar.etm.server.core.converter.custom.EnumConverter;
 import com.jecstar.etm.server.core.domain.aggregator.Aggregator;
 import com.jecstar.etm.server.core.domain.aggregator.bucket.BucketAggregator;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
@@ -30,15 +31,34 @@ import org.elasticsearch.search.aggregations.PipelineAggregationBuilder;
 
 public class NumberGraph extends Graph<NumberGraph> {
 
+    public enum VerticalAlignment {
+        CENTER, BOTTOM;
+
+        public static VerticalAlignment safeValueOf(String value) {
+            if (value == null) {
+                return null;
+            }
+            try {
+                return VerticalAlignment.valueOf(value.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
+        }
+    }
+
     public static final String TYPE = "number";
     public static final String Y_AXIS = "y_axis";
     public static final String FONT_SIZE = "font_size";
+    public static final String VERTICAL_ALIGNMENT = "vertical_alignment";
 
     @JsonField(value = Y_AXIS, converterClass = YAxisConverter.class)
     private YAxis yAxis;
 
     @JsonField(value = FONT_SIZE)
     private float fontSize = 4;
+
+    @JsonField(value = VERTICAL_ALIGNMENT, converterClass = EnumConverter.class)
+    private VerticalAlignment verticalAlignment = VerticalAlignment.CENTER;
 
     public NumberGraph() {
         super();
@@ -63,6 +83,15 @@ public class NumberGraph extends Graph<NumberGraph> {
         return this;
     }
 
+    public VerticalAlignment getVerticalAlignment() {
+        return this.verticalAlignment;
+    }
+
+    public NumberGraph setVerticalAlignment(VerticalAlignment verticalAlignment) {
+        this.verticalAlignment = verticalAlignment;
+        return this;
+    }
+
     @Override
     public void addAggregators(SearchRequestBuilder searchRequest) {
         for (Aggregator aggregator : getYAxis().getAggregators()) {
@@ -79,7 +108,11 @@ public class NumberGraph extends Graph<NumberGraph> {
 
     @Override
     public void appendHighchartsConfig(JsonBuilder builder) {
-        builder.field("font_size", getFontSize() + "em");
+        builder.field(FONT_SIZE, getFontSize() + "em");
+        if (getVerticalAlignment() != null) {
+            builder.field(VERTICAL_ALIGNMENT, getVerticalAlignment().name());
+        }
+
     }
 
     @Override
@@ -90,6 +123,7 @@ public class NumberGraph extends Graph<NumberGraph> {
     @Override
     public void mergeFromColumn(NumberGraph graph) {
         this.fontSize = graph.getFontSize();
+        this.verticalAlignment = graph.getVerticalAlignment();
     }
 
     @Override

@@ -48,7 +48,8 @@ function buildGraphsPage(groupName) {
                 yAxis: true,
                 category: false,
                 parts: false,
-                'font-size': false,
+                fontSize: false,
+                verticalAlignment: false,
                 lineType: true,
                 orientation: true,
                 markers: true,
@@ -68,7 +69,8 @@ function buildGraphsPage(groupName) {
                 yAxis: true,
                 category: false,
                 parts: false,
-                'font-size': false,
+                fontSize: false,
+                verticalAlignment: false,
                 lineType: false,
                 orientation: true,
                 markers: false,
@@ -84,7 +86,8 @@ function buildGraphsPage(groupName) {
                 yAxis: true,
                 category: false,
                 parts: false,
-                'font-size': false,
+                fontSize: false,
+                verticalAlignment: false,
                 lineType: true,
                 orientation: true,
                 markers: true,
@@ -100,7 +103,8 @@ function buildGraphsPage(groupName) {
                 yAxis: false,
                 category: false,
                 parts: true,
-                'font-size': true,
+                fontSize: true,
+                verticalAlignment: true,
                 lineType: false,
                 orientation: false,
                 markers: false,
@@ -120,8 +124,9 @@ function buildGraphsPage(groupName) {
                 yAxis: false,
                 category: true,
                 parts: true,
-                'font-size': false,
+                fontSize: false,
                 lineType: false,
+                verticalAlignment: false,
                 orientation: false,
                 markers: false,
                 dataLabels: true,
@@ -136,7 +141,8 @@ function buildGraphsPage(groupName) {
                 yAxis: true,
                 category: false,
                 parts: false,
-                'font-size': false,
+                fontSize: false,
+                verticalAlignment: false,
                 lineType: false,
                 orientation: true,
                 markers: false,
@@ -160,7 +166,8 @@ function buildGraphsPage(groupName) {
             $('#card-parts').toggle(config.elements.parts);
 
             const $subTypeGroup = $('#grp-graph-subtype').toggle(config.subTypes.length > 0);
-            $('#grp-graph-font-size').toggle(config.elements["font-size"]);
+            $('#grp-graph-font-size').toggle(config.elements.fontSize);
+            $('#grp-graph-vertical-alignment').toggle(config.elements.verticalAlignment);
             $('#grp-graph-line-type').toggle(config.elements.lineType);
             $('#grp-graph-orientation').toggle(config.elements.orientation);
             $('#grp-graph-show-markers').toggle(config.elements.markers);
@@ -543,6 +550,9 @@ function buildGraphsPage(groupName) {
         if ($('#grp-graph-font-size').css('display') !== 'none') {
             graphData.graph.font_size = Number($('#input-graph-font-size').val());
         }
+        if ($('#grp-graph-vertical-alignment').css('display') !== 'none') {
+            graphData.graph.vertical_alignment = $('#sel-graph-vertical-alignment').val();
+        }
         if ($('#grp-graph-line-type').css('display') !== 'none') {
             graphData.graph.line_type = $('#sel-graph-line-type').val();
         }
@@ -682,7 +692,7 @@ function buildGraphsPage(groupName) {
                     chartConfig.chart = {
                         events: {
                             load: function () {
-                                this.renderer.text(formatLabel(response.valueFormat, response.value), this.chartWidth / 2, this.chartHeight / 2)
+                                this.renderer.text(formatLabel(response.valueFormat, response.value), this.chartWidth / 2, 'BOTTOM' === chartConfig.vertical_alignment ? this.chartHeight - 10 : this.chartHeight / 2)
                                     .css({
                                         fontSize: chartConfig.font_size,
                                     })
@@ -741,6 +751,9 @@ function buildGraphsPage(groupName) {
         }
         if (graphContainer.graph.font_size) {
             $('#input-graph-font-size').val(graphContainer.graph.font_size);
+        }
+        if (graphContainer.graph.vertical_alignment) {
+            $('#sel-graph-vertical-alignment').val(graphContainer.graph.vertical_alignment);
         }
         if (graphContainer.graph.line_type) {
             $('#sel-graph-line-type').val(graphContainer.graph.line_type);
