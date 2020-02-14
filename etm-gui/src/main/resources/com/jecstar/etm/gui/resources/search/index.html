@@ -795,11 +795,11 @@
         window.location.href = '../rest/search/download?q=' + encodeURIComponent(JSON.stringify(q));
     });
 
-    $('#result_card').on('click', '#search_result_table tbody a', function (event) {
+    $('#result_card').on('click', '#search_result_table a', function (event) {
         event.preventDefault();
         if ('show-event' === $(this).attr('data-link-type')) {
             showEvent($(window).scrollTop(), $(this).attr('id'));
-            $('#search_result_table > tbody > tr.event-selected').removeClass('event-selected');
+            $('#search_result_table div.event-selected').removeClass('event-selected');
             $(event.target).parent().parent().addClass('event-selected');
         } else if ('set-as-start-for-query' === $(this).attr('data-link-type')) {
             const value = $(this).parent().children(":first").text();
@@ -808,13 +808,15 @@
             const value = $(this).parent().children(":first").text();
             $('#query-string-till').val(value);
         }
-    }).on('mouseenter mouseleave', '#search_result_table tbody tr td', function () {
-        $(this).children("[data-link-type='set-as-start-for-query'], [data-link-type='set-as-end-for-query']").toggleClass('invisible');
-    }).on('click', '#search_result_table thead th', function (event) {
+    }).on('mouseenter mouseleave', '#search_result_table .result-row', function () {
+        $(this).toggleClass('bg-light');
+        $(this).find("[data-link-type='set-as-start-for-query'], [data-link-type='set-as-end-for-query']").toggleClass('invisible');
+    }).on('click', '#search_result_table .header-row div', function (event) {
         event.preventDefault();
         sortResultTable($(this).attr('data-event-field'));
-    }).on('click', '#search_result_table tfoot a', function (event) {
+    }).on('click', '#search_result_table .footer-row a', function (event) {
         event.preventDefault();
+        $('#search_result_table .footer-row').remove();
         const query = createQuery(true);
         query.start_ix = tableLayout.current_ix + tableLayout.results_per_page;
         executeQuery(query, true);
@@ -929,14 +931,19 @@
                 if (appendToCurrent) {
                     const endIx = $('#search-stats').text().lastIndexOf(' ');
                     $('#search-stats').text($('#search-stats').text().substring(0, endIx + 1) + (data.end_ix + 1) + '.');
-                    const $body = $('#search_result_table > tbody');
+                    const $results = $('#search_result_table');
                     $(data.results).each(function (index, searchResult) {
-                        $body.append(function () {
+                        $results.append(function () {
                             return createResultTableRow(searchResult, data.time_zone);
                         })
                     });
-                    if (!data.has_more_results) {
-                        $('#search_result_table > tfoot').remove();
+                    if (data.has_more_results) {
+                        $results.append(
+                            $('<div class="row footer-row">')
+                                .append($('<div class="col">').addClass('text-center').attr('colspan', $(tableLayout.fields).length)
+                                    .append($('<a href="#">').attr('id', 'lnk_show_more').text('Show more'))
+                                )
+                        )
                     }
                 } else {
                     $('#result_card').empty();
@@ -945,46 +952,36 @@
                         $('#result_card').append($('<p>').text('No results found'));
                     } else {
                         $('#search-stats').text(':  Found ' + data.hits_as_string + ' results in ' + data.query_time_as_string + 'ms. Showing results ' + (data.start_ix + 1) + ' to ' + (data.end_ix + 1) + '.');
-                        const resultTable = $('<table id="search_result_table">');
-                        $(resultTable)
-                            .addClass('table table-hover table-sm')
-                            .append($('<thead>')
-                                .append(function () {
-                                    const $tr = $('<tr>');
-                                    $(tableLayout.fields).each(function (index, tableColumn) {
-                                        const $th = $('<th style="padding: 0.1rem; cursor: pointer;">').text(tableColumn.name).attr('data-event-field', tableColumn.field);
-                                        if (tableColumn.field === tableLayout.sort_field) {
-                                            if ('asc' === tableLayout.sort_order) {
-                                                $th.addClass('headerSortAsc')
-                                            } else {
-                                                $th.addClass('headerSortDesc')
-                                            }
-                                        }
-                                        $tr.append($th)
-                                    });
-                                    return $tr;
-                                })
-                            )
-                            .append(function () {
-                                if (data.has_more_results) {
-                                    return $('<tfoot>')
-                                        .append($('<tr>')
-                                            .append($('<td>').addClass('text-center').attr('colspan', $(tableLayout.fields).length)
-                                                .append($('<a href="#">').attr('id', 'lnk_show_more').text('Show more'))
-                                            )
-                                        )
+                        const $resultTable = $('<div id="search_result_table" class="container">');
+                        $resultTable.append(function () {
+                            const $row = $('<div class="row header-row">');
+                            $(tableLayout.fields).each(function (index, tableColumn) {
+                                const $col = $('<div style="cursor: pointer;" class="col font-weight-bold">').text(tableColumn.name).attr('data-event-field', tableColumn.field);
+                                if (tableColumn.field === tableLayout.sort_field) {
+                                    if ('asc' === tableLayout.sort_order) {
+                                        $col.addClass('headerSortAsc')
+                                    } else {
+                                        $col.addClass('headerSortDesc')
+                                    }
                                 }
-                            })
-                            .append(function () {
-                                const $body = $('<tbody>');
-                                $(data.results).each(function (index, searchResult) {
-                                    $body.append(function () {
-                                        return createResultTableRow(searchResult, data.time_zone);
-                                    })
-                                });
-                                return $body;
+                                $row.append($col)
                             });
-                        $('#result_card').append($('<div>').addClass('table-responsive').append($(resultTable)));
+                            return $row;
+                        });
+                        $(data.results).each(function (index, searchResult) {
+                            $resultTable.append(function () {
+                                return createResultTableRow(searchResult, data.time_zone);
+                            })
+                        });
+                        if (data.has_more_results) {
+                            $resultTable.append(
+                                $('<div class="row footer-row">')
+                                    .append($('<div class="col">').addClass('text-center').attr('colspan', $(tableLayout.fields).length)
+                                        .append($('<a href="#">').attr('id', 'lnk_show_more').text('Show more'))
+                                    )
+                            )
+                        }
+                        $('#result_card').append($resultTable);
                         if (!commons.isInViewport($('#result_card'))) {
                             $('html,body').animate({scrollTop: $('#query-string').offset().top}, 'slow');
                         }
@@ -1011,11 +1008,11 @@
     }
 
     function createResultTableRow(searchResult, timeZone) {
-        const $tr = $('<tr>');
+        const $row = $('<div class="row result-row">');
         $(tableLayout.fields).each(function (index, field) {
-            const $td = $('<td style="padding: 0.1rem">');
+            const $col = $('<div class="col">');
             if (field.link) {
-                $td.append(
+                $col.append(
                     $('<a>')
                         .attr('href', '?id=' + encodeURIComponent(searchResult.id))
                         .attr('id', searchResult.id)
@@ -1023,25 +1020,25 @@
                         .text(tableLayout.getValueFromSearchResult(searchResult, field, timeZone))
                 );
             } else {
-                $td.append($('<span>').text(tableLayout.getValueFromSearchResult(searchResult, field, timeZone)));
+                $col.append($('<span>').text(tableLayout.getValueFromSearchResult(searchResult, field, timeZone)));
             }
             if ('isotimestamp' === field.format || 'isoutctimestamp' === field.format) {
-                $td.append(
-                    $('<a style="padding-top: 0.2rem">')
+                $col.append(
+                    $('<a>')
                         .addClass('fa fa-hourglass-end float-right invisible')
                         .attr('data-link-type', 'set-as-end-for-query')
                         .attr('title', "Set as 'End date' for query")
                         .attr('href', '#'),
-                    $('<a style="padding-top: 0.2rem">')
+                    $('<a>')
                         .addClass('fa fa-hourglass-start float-right pr-1 invisible')
                         .attr('data-link-type', 'set-as-start-for-query')
                         .attr('title', "Set as 'Start date' for query")
                         .attr('href', '#')
                 );
             }
-            $tr.append($td);
+            $row.append($col);
         });
-        return $tr;
+        return $row;
     }
 
     function sortResultTable(fieldName) {
@@ -1059,7 +1056,6 @@
         }
         tableLayout.current_ix = 0;
         executeQuery(createQuery(true));
-        <!-- End User Profile -->
     }
 
     $(window).scroll(function (event) {

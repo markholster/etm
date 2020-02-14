@@ -15,7 +15,8 @@
  *  under the License.
  */
 
-var tableLayout = {
+'use strict';
+const tableLayout = {
     fields: [
         {name: 'Timestamp', field: 'timestamp', format: 'isotimestamp', array: 'lowest', link: true},
         {name: 'Name', field: 'name', format: 'plain', array: 'first', link: false}
@@ -72,9 +73,9 @@ var tableLayout = {
         return result;
     },
     retrieveValuesFromSource: function(source, fields, values) {
-        var currentObject = source;
+        let currentObject = source;
         $(fields).each(function (index, fieldName) {
-            var container = currentObject[fieldName];
+            const container = currentObject[fieldName];
             if (container) {
                 if (tableLayout.isArray(container)) {
                     $(container).each(function (i,v){

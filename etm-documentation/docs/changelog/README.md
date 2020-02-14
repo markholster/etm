@@ -7,6 +7,7 @@
 * [ETM-137](https://jecstar.atlassian.net/browse/ETM-137) Support Elasticsearch Remote Clusters.
 * [ETM-138](https://jecstar.atlassian.net/browse/ETM-138) Opensource Enterprise Telemetry Monitor.
 * [ETM-1](https://github.com/jecstarinnovations/etm/issues/1) Unable to set threshold fractions.
+* [ETM-2](https://github.com/jecstarinnovations/etm/issues/2) Response table in search screen doesn't wrap long names.
 
 ## Version 4.0.1
 * [ETM-132](https://jecstar.atlassian.net/browse/ETM-132) Use UnboundID provider for LDAP connection.
