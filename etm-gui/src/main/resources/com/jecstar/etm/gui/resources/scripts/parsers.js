@@ -1,3 +1,20 @@
+/*
+ * Licensed to Jecstar Innovation under one or more contributor
+ * license agreements. Jecstar Innovation licenses this file to you
+ * under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing,
+ *  software distributed under the License is distributed on an
+ *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ *  KIND, either express or implied. See the License for the
+ *  specific language governing permissions and limitations
+ *  under the License.
+ */
+
 function buildParserPage() {
     "use strict";
     const parserMap = {};
@@ -97,11 +114,11 @@ function buildParserPage() {
                 parserMap[parser.name] = parser;
             });
             commons.sortSelectOptions($parserSelect)
-	        $parserSelect.val('');
-	    }
-	});
+            $parserSelect.val('');
+        }
+    });
 
-	function enableOrDisableButtons() {
+    function enableOrDisableButtons() {
         const parserName = $('#input-parser-name').val();
         if (parserName) {
             $('#btn-confirm-save-parser').removeAttr('disabled');
@@ -113,13 +130,13 @@ function buildParserPage() {
         } else {
             $('#btn-confirm-save-parser, #btn-confirm-remove-parser').attr('disabled', 'disabled');
         }
-	}
-	
-	function isParserExistent(name) {
-		return "undefined" != typeof parserMap[name];
-	}
-	
-	function saveParser() {
+    }
+
+    function isParserExistent(name) {
+        return "undefined" != typeof parserMap[name];
+    }
+
+    function saveParser() {
         const parserData = createParserData();
         $.ajax({
             type: 'PUT',
@@ -142,30 +159,30 @@ function buildParserPage() {
         }).always(function () {
             commons.hideModals($('#modal-parser-overwrite'));
         });
-	}
-	
-	function removeParser(parserName) {
-		$.ajax({
+    }
+
+    function removeParser(parserName) {
+        $.ajax({
             type: 'DELETE',
             contentType: 'application/json',
             url: '../rest/settings/parser/' + encodeURIComponent(parserName),
             cache: false,
-            success: function(data) {
+            success: function (data) {
                 if (!data) {
                     return;
                 }
-        		delete parserMap[parserName];
-        		$("#sel-parser > option").filter(function(i){
-					return $(this).attr("value") === parserName;
-        		}).remove();
-				commons.showNotification('Parser \'' + parserName + '\' removed.', 'success');
+                delete parserMap[parserName];
+                $("#sel-parser > option").filter(function (i) {
+                    return $(this).attr("value") === parserName;
+                }).remove();
+                commons.showNotification('Parser \'' + parserName + '\' removed.', 'success');
             }
         }).always(function () {
             commons.hideModals($('#modal-parser-remove'));
         });
-	}
-	
-	function createParserData() {
+    }
+
+    function createParserData() {
         const parserData = {
             name: $('#input-parser-name').val(),
             type: $('#sel-parser-type').val()
@@ -198,12 +215,12 @@ function buildParserPage() {
         } else if ('xslt' === parserData.type) {
             parserData['template'] = $('#input-xslt-template').val();
         }
-		return parserData;
-	}
+        return parserData;
+    }
 
-	function resetValues() {
-	    document.getElementById('parser_form').reset();
+    function resetValues() {
+        document.getElementById('parser_form').reset();
         $('#sel-parser-type').val('copy_value').change();
-		enableOrDisableButtons();
-	}
+        enableOrDisableButtons();
+    }
 }

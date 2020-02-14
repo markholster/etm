@@ -4,7 +4,7 @@ plugins {
 
 dependencies {
     implementation project(":etm-gui"),
-            project(":etm-public:etm-domain"),
+            project(":etm-domain"),
             project(":etm-server-core"),
             project(":etm-signaler"),
             project(":etm-processor"),

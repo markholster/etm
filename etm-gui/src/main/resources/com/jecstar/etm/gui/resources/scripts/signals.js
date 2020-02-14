@@ -1,3 +1,20 @@
+/*
+ * Licensed to Jecstar Innovation under one or more contributor
+ * license agreements. Jecstar Innovation licenses this file to you
+ * under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing,
+ *  software distributed under the License is distributed on an
+ *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ *  KIND, either express or implied. See the License for the
+ *  specific language governing permissions and limitations
+ *  under the License.
+ */
+
 function buildSignalsPage(groupName) {
     'use strict';
     const $notifierSelect = $('<select>').addClass('form-control form-control-sm custom-select custom-select-sm etm-notifier').attr('required', 'required');
@@ -98,18 +115,18 @@ function buildSignalsPage(groupName) {
     });
     $.when(
         $.ajax({
-	        type: 'GET',
-	        contentType: 'application/json',
+            type: 'GET',
+            contentType: 'application/json',
             url: contextRoot + 'keywords',
-	        cache: false,
-	        success: function(data) {
-	            if (!data || !data.keywords) {
-	                return;
-	            }
-	            keywords = $.merge(keywords, data.keywords);
-	        }
+            cache: false,
+            success: function (data) {
+                if (!data || !data.keywords) {
+                    return;
+                }
+                keywords = $.merge(keywords, data.keywords);
+            }
         })
-	).done(function () {
+    ).done(function () {
         aggregators.initialize({
             keywords: keywords,
             enableOrDisableButtons: enableOrDisableButtons
@@ -194,11 +211,11 @@ function buildSignalsPage(groupName) {
 
     $('#input-signal-max-frequency-of-exceedance').on('change', function () {
         if (Number($(this).val()) !== 1) {
-	        $('#label-exceeded-count-time').text('times');
-	    } else {
-	        $('#label-exceeded-count-time').text('time');
-	    }
-	});
+            $('#label-exceeded-count-time').text('times');
+        } else {
+            $('#label-exceeded-count-time').text('time');
+        }
+    });
 
     $('#btn-confirm-save-signal').on('click', function (event) {
         event.preventDefault();
@@ -456,14 +473,14 @@ function buildSignalsPage(groupName) {
                 }
             });
         }
-		return signalData;
+        return signalData;
     }
 
     function createNotifierRow(notifierName) {
         const notifierRow = $('<li>').attr('style', 'margin-top: 5px; list-style-type: none;').append(
-			$('<div>').addClass('input-group').append(
-				$notifierSelect.clone(true),
-				$('<div>').addClass('input-group-append').append(
+            $('<div>').addClass('input-group').append(
+                $notifierSelect.clone(true),
+                $('<div>').addClass('input-group-append').append(
                     $('<button>').addClass('btn btn-outline-secondary fa fa-times text-danger').attr('type', 'button').on('click', function (event) {
                         event.preventDefault();
                         removeRowFromList($(this));
@@ -471,30 +488,30 @@ function buildSignalsPage(groupName) {
                         enableOrDisableButtons();
                     })
                 )
-			)
-		);
-    	if (notifierName) {
-    		$(notifierRow).find('.etm-notifier').val(notifierName)
-    	}
-    	return notifierRow;
+            )
+        );
+        if (notifierName) {
+            $(notifierRow).find('.etm-notifier').val(notifierName)
+        }
+        return notifierRow;
     }
 
     function createRecipientRow(email) {
         const recipientRow = $('<li>').attr('style', 'margin-top: 5px; list-style-type: none;').append(
-			$('<div>').addClass('input-group').append(
-				$('<input>').addClass('form-control form-control-sm etm-recipient').attr('type', 'email').attr('placeholder', 'user@host.com'),
-				$('<div>').addClass('input-group-append').append(
+            $('<div>').addClass('input-group').append(
+                $('<input>').addClass('form-control form-control-sm etm-recipient').attr('type', 'email').attr('placeholder', 'user@host.com'),
+                $('<div>').addClass('input-group-append').append(
                     $('<button>').addClass('btn btn-outline-secondary fa fa-times text-danger').attr('type', 'button').on('click', function (event) {
                         event.preventDefault();
                         removeRowFromList($(this));
                     })
                 )
-			)
-		);
-    	if (email) {
-    		$(recipientRow).find('.etm-recipient').val(email)
-    	}
-    	return recipientRow;
+            )
+        );
+        if (email) {
+            $(recipientRow).find('.etm-recipient').val(email)
+        }
+        return recipientRow;
     }
 
     function removeRowFromList(anchor) {

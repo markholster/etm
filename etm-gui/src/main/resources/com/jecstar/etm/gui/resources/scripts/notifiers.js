@@ -1,27 +1,44 @@
+/*
+ * Licensed to Jecstar Innovation under one or more contributor
+ * license agreements. Jecstar Innovation licenses this file to you
+ * under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing,
+ *  software distributed under the License is distributed on an
+ *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ *  KIND, either express or implied. See the License for the
+ *  specific language governing permissions and limitations
+ *  under the License.
+ */
+
 function buildNotifiersPage() {
     "use strict";
     let notifierMap = {};
 
-	$.ajax({
-	    type: 'GET',
-	    contentType: 'application/json',
-	    url: '../rest/settings/notifiers',
-	    cache: false,
-	    success: function(data) {
-	        if (!data) {
-	            return;
-	        }
+    $.ajax({
+        type: 'GET',
+        contentType: 'application/json',
+        url: '../rest/settings/notifiers',
+        cache: false,
+        success: function (data) {
+            if (!data) {
+                return;
+            }
             const $notifierSelect = $('#sel-notifier');
-	        $.each(data.notifiers, function(index, notifier) {
-	        	$notifierSelect.append($('<option>').attr('value', notifier.name).text(notifier.name));
-	        	notifierMap[notifier.name] = notifier;
-	        });
+            $.each(data.notifiers, function (index, notifier) {
+                $notifierSelect.append($('<option>').attr('value', notifier.name).text(notifier.name));
+                notifierMap[notifier.name] = notifier;
+            });
             commons.sortSelectOptions($notifierSelect);
-	        $notifierSelect.val('');
-	    }
-	});
+            $notifierSelect.val('');
+        }
+    });
 
-	$('input[data-required]').on('input', enableOrDisableButtons);
+    $('input[data-required]').on('input', enableOrDisableButtons);
 
     $('#sel-notifier').change(function(event) {
         event.preventDefault();
@@ -59,20 +76,20 @@ function buildNotifiersPage() {
         enableOrDisableButtons();
     });
 
-	$('#sel-notifier-type').on('change', function(event) {
+    $('#sel-notifier-type').on('change', function (event) {
         event.preventDefault();
         if ('ETM_BUSINESS_EVENT' === $(this).val()) {
             $('#email-fields, #snmp-fields').hide();
-	        $('#business-event-fields').show();
+            $('#business-event-fields').show();
         } else if ('EMAIL' === $(this).val()) {
             $('#business-event-fields, #snmp-fields').hide();
-	        $('#email-fields').show();
+            $('#email-fields').show();
         } else if ('SNMP' === $(this).val()) {
             $('#business-event-fields, #email-fields').hide();
             $('#snmp-fields').show();
         }
-	    enableOrDisableButtons();
-	});
+        enableOrDisableButtons();
+    });
 
     $('#sel-snmp-version').on('change', function (event) {
         event.preventDefault();

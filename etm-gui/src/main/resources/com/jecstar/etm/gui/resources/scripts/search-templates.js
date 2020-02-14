@@ -1,8 +1,25 @@
+/*
+ * Licensed to Jecstar Innovation under one or more contributor
+ * license agreements. Jecstar Innovation licenses this file to you
+ * under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing,
+ *  software distributed under the License is distributed on an
+ *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ *  KIND, either express or implied. See the License for the
+ *  specific language governing permissions and limitations
+ *  under the License.
+ */
+
 let max_search_templates;
 let timeZone;
 let currentSelectedFile;
 
-$('#template-name').on('input', function() {
+$('#template-name').on('input', function () {
     if (!$(this).val()) {
         $('#btn-save-template').attr('disabled', 'disabled');
     } else {
@@ -37,9 +54,9 @@ $('#btn-remove-template').on('click', function (event) {
         cache: false,
         success: function() {
             commons.showNotification('Search template \'' + templateName + '\' removed.', 'success');
-            $('#list-template-links > li > a').filter(function() {
-                    return $(this).text() === templateName;
-                }).parent().remove();
+            $('#list-template-links > li > a').filter(function () {
+                return $(this).text() === templateName;
+            }).parent().remove();
             validateMaxTemplates();
         }
     }).always(function () {
@@ -64,12 +81,12 @@ $.ajax({
                 $('#list-template-links').append(
                     $('<li>').append(
                         $('<a href="#">').on('click', function (event) {
-                           event.preventDefault();
+                            event.preventDefault();
                             setValuesFromTemplate(template)
                         }).text(template.name),
                         $('<a href="#" class="fa fa-times text-danger float-right">').on('click', function (event) {
-                           event.preventDefault();
-                           askRemoveTemplate(template)
+                            event.preventDefault();
+                            askRemoveTemplate(template)
                         })
                     )
                 );
@@ -88,9 +105,9 @@ $.ajax({
                 $('#list-search-history-links').append(
                     $('<li>').append(
                         $('<a href="#">').on('click', function (event) {
-                                event.preventDefault();
+                            event.preventDefault();
                             setValuesFromHistory(query)
-                            })
+                        })
                             .text(query.query)
                             .attr('title', query.query)
                     )
@@ -102,13 +119,13 @@ $.ajax({
 });
 
 function validateMaxTemplates() {
-	if ($('#list-template-links').children().length >= max_search_templates ) {
-		$('#no-more-tenplates-allowed').show();
-		$('#template-save-group').hide();
-	} else {
-		$('#no-more-tenplates-allowed').hide();
-		$('#template-save-group').show();		
-	}
+    if ($('#list-template-links').children().length >= max_search_templates) {
+        $('#no-more-tenplates-allowed').show();
+        $('#template-save-group').hide();
+    } else {
+        $('#no-more-tenplates-allowed').hide();
+        $('#template-save-group').show();
+    }
 }
 
 function setValuesFromTemplate(template) {
@@ -120,7 +137,7 @@ function setValuesFromTemplate(template) {
 function setValuesFromHistory(query) {
     $('[id^=check-type-]').prop('checked', false);
     $.each(query.types, function(index, type){
-        $('#check-type-' + type).prop('checked', true);    
+        $('#check-type-' + type).prop('checked', true);
     });
     $('#query-string').val(query.query);
     if (query.start_time) {
@@ -153,19 +170,19 @@ function setValuesFromHistory(query) {
 }
 
 function updateHistory(query, max_size) {
-	$('#list-search-history-links > li > a[title="' + query.query.replace(/(")/g, "\\$1" ) + '"]').parent().remove();
+    $('#list-search-history-links > li > a[title="' + query.query.replace(/(")/g, "\\$1") + '"]').parent().remove();
     $('#list-search-history-links').prepend(
-            $('<li>').append(
-                $('<a href="#">')
-                .click(function(event) {
-                   event.preventDefault();
-                   setValuesFromHistory(query)
+        $('<li>').append(
+            $('<a href="#">')
+                .click(function (event) {
+                    event.preventDefault();
+                    setValuesFromHistory(query)
                 })
                 .text(query.query)
                 .attr('title', query.query)
-            )
-     ).children().slice(max_size).remove();
-    
+        )
+    ).children().slice(max_size).remove();
+
 }
 
 function createTemplate() {
@@ -225,16 +242,16 @@ function storeTemplate(template, isOverwrite) {
                 $('#list-template-links').append(
                     $('<li>').append(
                         $('<a href="#">').on('click', function (event) {
-                           event.preventDefault();
-                           setValuesFromTemplate(template)
+                            event.preventDefault();
+                            setValuesFromTemplate(template)
                         }).text(template.name),
                         $('<a href="#" class="fa fa-times float-right text-danger">').on('click', function (event) {
-                           event.preventDefault();
-                           askRemoveTemplate(template)
+                            event.preventDefault();
+                            askRemoveTemplate(template)
                         })
                     )
                 );
-                validateMaxTemplates();                
+                validateMaxTemplates();
             }
         }
     }).always(function () {

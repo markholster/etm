@@ -2,7 +2,7 @@ plugins {
     id 'java'
 }
 dependencies {
-    implementation project(":etm-processor"), project(":etm-public:etm-domain"), project(":etm-server-core"), dep_jms, dep_metricsCore
+    implementation project(":etm-processor"), project(":etm-domain"), project(":etm-server-core"), dep_jms, dep_metricsCore
     testImplementation dep_artemisJmsClient,
             dep_artemisJmsServer,
             dep_artemisServer

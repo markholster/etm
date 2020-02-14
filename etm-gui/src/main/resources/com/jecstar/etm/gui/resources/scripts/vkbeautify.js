@@ -1,48 +1,19 @@
-/**
-* vkBeautify - javascript plugin to pretty-print or minify text in XML, JSON, CSS and SQL formats.
-*  
-* Version - 0.99.00.beta 
-* Copyright (c) 2012 Vadim Kiryukhin
-* vkiryukhin @ gmail.com
-* http://www.eslinstructor.net/vkbeautify/
-* 
-* MIT license:
-*   http://www.opensource.org/licenses/mit-license.php
-*
-*   Pretty print
-*
-*        vkbeautify.xml(text [,indent_pattern]);
-*        vkbeautify.json(text [,indent_pattern]);
-*        vkbeautify.css(text [,indent_pattern]);
-*        vkbeautify.sql(text [,indent_pattern]);
-*
-*        @text - String; text to beatufy;
-*        @indent_pattern - Integer | String;
-*                Integer:  number of white spaces;
-*                String:   character string to visualize indentation ( can also be a set of white spaces )
-*   Minify
-*
-*        vkbeautify.xmlmin(text [,preserve_comments]);
-*        vkbeautify.jsonmin(text);
-*        vkbeautify.cssmin(text [,preserve_comments]);
-*        vkbeautify.sqlmin(text);
-*
-*        @text - String; text to minify;
-*        @preserve_comments - Bool; [optional];
-*                Set this flag to true to prevent removing comments from @text ( minxml and mincss functions only. )
-*
-*   Examples:
-*        vkbeautify.xml(text); // pretty print XML
-*        vkbeautify.json(text, 4 ); // pretty print JSON
-*        vkbeautify.css(text, '. . . .'); // pretty print CSS
-*        vkbeautify.sql(text, '----'); // pretty print SQL
-*
-*        vkbeautify.xmlmin(text, true);// minify XML, preserve comments
-*        vkbeautify.jsonmin(text);// minify JSON
-*        vkbeautify.cssmin(text);// minify CSS, remove comments ( default )
-*        vkbeautify.sqlmin(text);// minify SQL
-*
-*/
+/*
+ * Licensed to Jecstar Innovation under one or more contributor
+ * license agreements. Jecstar Innovation licenses this file to you
+ * under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing,
+ *  software distributed under the License is distributed on an
+ *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ *  KIND, either express or implied. See the License for the
+ *  specific language governing permissions and limitations
+ *  under the License.
+ */
 
 (function() {
 

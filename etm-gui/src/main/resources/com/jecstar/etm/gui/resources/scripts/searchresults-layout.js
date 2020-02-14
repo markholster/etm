@@ -1,6 +1,23 @@
+/*
+ * Licensed to Jecstar Innovation under one or more contributor
+ * license agreements. Jecstar Innovation licenses this file to you
+ * under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing,
+ *  software distributed under the License is distributed on an
+ *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ *  KIND, either express or implied. See the License for the
+ *  specific language governing permissions and limitations
+ *  under the License.
+ */
+
 var tableLayout = {
     fields: [
-        {name: 'Timestamp', field: 'timestamp', format: 'isotimestamp', array: 'lowest', link: true },
+        {name: 'Timestamp', field: 'timestamp', format: 'isotimestamp', array: 'lowest', link: true},
         {name: 'Name', field: 'name', format: 'plain', array: 'first', link: false}
     ],
     results_per_page: 50,
@@ -30,7 +47,7 @@ var tableLayout = {
         if ('_id' === tableColumn.field) {
             values.push(searchResult.id);
         } else {
-        	tableLayout.retrieveValuesFromSource(searchResult.source, fieldParts, values);
+            tableLayout.retrieveValuesFromSource(searchResult.source, fieldParts, values);
         }
         if (values.length === 0) {
             result = ''
@@ -75,20 +92,20 @@ var tableLayout = {
         });
     },
     formatValue: function(value, tableColumn, timeZone) {
-    	// When changed also change the QueryExporter.java with the same functionality.
+        // When changed also change the QueryExporter.java with the same functionality.
         if ('plain' === (tableColumn.format)) {
             return value;
         } else if ('isoutctimestamp' === tableColumn.format) {
             if (value) {
                 return moment.tz(value, 'UTC').format('YYYY-MM-DDTHH:mm:ss.SSSZ');
             } else {
-                return ''; 
+                return '';
             }
         } else if ('isotimestamp' === tableColumn.format) {
             if (value) {
                 return moment.tz(value, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ');
             } else {
-                return ''; 
+                return '';
             }
         }
         return value;
@@ -106,36 +123,36 @@ $('#link-edit-table').on('click', function (event) {
     $('#table-settings-columns').empty();
     $('#table-settings-columns').append(
         $('<div>').addClass('row').append(
-            $('<div>').addClass('col-sm-2 font-weight-bold').text('Name'),    
-            $('<div>').addClass('col-sm-3 font-weight-bold').text('Field'),    
-            $('<div>').addClass('col-sm-2 font-weight-bold').text('Format'),    
+            $('<div>').addClass('col-sm-2 font-weight-bold').text('Name'),
+            $('<div>').addClass('col-sm-3 font-weight-bold').text('Field'),
+            $('<div>').addClass('col-sm-2 font-weight-bold').text('Format'),
             $('<div>').addClass('col-sm-2 font-weight-bold').text('Multiselect'),
             $('<div>').addClass('col-sm-1 font-weight-bold').text('Link'),
             $('<div>').addClass('col-sm-2 font-weight-bold')
                 .append($('<a href="#">').text('Add row')
-                	.attr('id', 'link-add-result-row')	
+                    .attr('id', 'link-add-result-row')
                     .click(function (event) {
-                        event.preventDefault(); 
+                        event.preventDefault();
                         $('#table-settings-columns').append(createRow());
                         updateRowActions();
                     })
-                )        
+                )
         )
     );
-    $(tableLayout.fields).each(function(index, column) {
+    $(tableLayout.fields).each(function (index, column) {
         $('#table-settings-columns').append(function () {
                 return createRow(column);
             }
         )
     });
-    updateRowActions(); 
+    updateRowActions();
     $('#modal-table-settings').modal();
-    
+
     function removeRow(row) {
         $(row).remove();
         updateRowActions();
     }
-    
+
     function moveRowUp(row) {
         $(row).after($(row).prev());
         updateRowActions();
@@ -145,23 +162,23 @@ $('#link-edit-table').on('click', function (event) {
         $(row).before($(row).next());
         updateRowActions();
     }
-    
+
     function createRow(columnData) {
         const checkboxId = commons.generateUUID();
         const row = $('<div>').addClass('row fieldConfigurationRow').attr('style', 'margin-top: 5px;');
         $(row).append(
             $('<div>').addClass('col-sm-2').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<input>').attr('type', 'text').addClass('form-control form-control-sm').attr('placeholder', 'Name')),
             $('<div>').addClass('col-sm-3').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<input>').attr('type', 'text').addClass('form-control form-control-sm').attr('placeholder', 'Field')
-                .bind('keydown', function( event ) {
-                     if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
-                         event.stopPropagation();
-                     }
-                 })
-                 .autocompleteFieldQuery(
-                		 {
-                		 	queryKeywords: queryKeywords, 
-                		 	mode: 'field'
-                		 }
+                .bind('keydown', function (event) {
+                    if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
+                        event.stopPropagation();
+                    }
+                })
+                .autocompleteFieldQuery(
+                    {
+                        queryKeywords: queryKeywords,
+                        mode: 'field'
+                    }
                 )),
             $('<div>').addClass('col-sm-2').attr('style', 'padding-right: 0px; padding-left: 0.5em;').append($('<select>').addClass('form-control form-control-sm custom-select custom-select-sm')
                 .append($('<option>').attr('value', 'plain').text('Plain'))
@@ -200,11 +217,11 @@ $('#link-edit-table').on('click', function (event) {
                 } else if (4 === index) {
                     $(column).find('input').prop('checked', columnData.link);
                 }
-            });    
+            });
         }
-        return row;        
+        return row;
     }
-    
+
     function updateRowActions() {
         $('#table-settings-columns .actionRow').each(function (index, row) {
             if ($('#table-settings-columns').children().length > 2) {
@@ -258,7 +275,7 @@ $('#btn-apply-table-settings').on('click', function () {
         });
         if (rowData.name.trim().length > 0 && rowData.field.trim().length > 0) {
             fields.push(rowData);
-        }            
+        }
     });
 
     if (JSON.stringify(fields) !== JSON.stringify(tableLayout.fields)) {

@@ -1,63 +1,80 @@
+/*
+ * Licensed to Jecstar Innovation under one or more contributor
+ * license agreements. Jecstar Innovation licenses this file to you
+ * under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing,
+ *  software distributed under the License is distributed on an
+ *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ *  KIND, either express or implied. See the License for the
+ *  specific language governing permissions and limitations
+ *  under the License.
+ */
+
 function buildGroupPage() {
 	const $notifierSelect = $('<select>').addClass('form-control custom-select etm-notifier');
 
-    $.when(
-        $.ajax({
-            type: 'GET',
-            contentType: 'application/json',
-            url: '../rest/search/keywords/etm_event_all',
-            cache: false,
-            success: function (data) {
-                if (!data || !data.keywords) {
-                    return;
-                }
-                $('#input-filter-query').bind('keydown', function (event) {
-                    if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
-                        event.stopPropagation();
-                    }
-                }).autocompleteFieldQuery({queryKeywords: data.keywords});
-            }
-        }),
-        $.ajax({
-            type: 'GET',
-            contentType: 'application/json',
-            url: '../rest/settings/notifiers/basics',
-            cache: false,
-            success: function (data) {
-                if (!data || !data.notifiers) {
-                    // No groups, remove the fieldset.
-                    $('#lnk-add-notifier').parent().remove();
-                    return;
-                }
-                $.each(data.notifiers, function (index, notifier) {
-                    $notifierSelect.append($('<option>').attr('value', notifier.name).text(notifier.name));
-                });
-                commons.sortSelectOptions($notifierSelect);
-            }
-        })
-    ).done(function () {
-        $.ajax({
-            type: 'GET',
-            contentType: 'application/json',
-            url: '../rest/settings/groups',
-            cache: false,
-            success: function (data) {
-                if (!data) {
-                    return;
-                }
-                if (data.has_ldap) {
-                    $('#btn-confirm-import-group').show();
-                }
-                const $groupSelect = $('#sel-group');
-                $.each(data.groups, function (index, group) {
-                    $groupSelect.append($('<option>').attr('value', group.name).text(group.name));
-                    groupMap[group.name] = group;
-                });
+	$.when(
+		$.ajax({
+			type: 'GET',
+			contentType: 'application/json',
+			url: '../rest/search/keywords/etm_event_all',
+			cache: false,
+			success: function (data) {
+				if (!data || !data.keywords) {
+					return;
+				}
+				$('#input-filter-query').bind('keydown', function (event) {
+					if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
+						event.stopPropagation();
+					}
+				}).autocompleteFieldQuery({queryKeywords: data.keywords});
+			}
+		}),
+		$.ajax({
+			type: 'GET',
+			contentType: 'application/json',
+			url: '../rest/settings/notifiers/basics',
+			cache: false,
+			success: function (data) {
+				if (!data || !data.notifiers) {
+					// No groups, remove the fieldset.
+					$('#lnk-add-notifier').parent().remove();
+					return;
+				}
+				$.each(data.notifiers, function (index, notifier) {
+					$notifierSelect.append($('<option>').attr('value', notifier.name).text(notifier.name));
+				});
+				commons.sortSelectOptions($notifierSelect);
+			}
+		})
+	).done(function () {
+		$.ajax({
+			type: 'GET',
+			contentType: 'application/json',
+			url: '../rest/settings/groups',
+			cache: false,
+			success: function (data) {
+				if (!data) {
+					return;
+				}
+				if (data.has_ldap) {
+					$('#btn-confirm-import-group').show();
+				}
+				const $groupSelect = $('#sel-group');
+				$.each(data.groups, function (index, group) {
+					$groupSelect.append($('<option>').attr('value', group.name).text(group.name));
+					groupMap[group.name] = group;
+				});
 				commons.sortSelectOptions($groupSelect);
-                $groupSelect.val('');
-            }
-        });
-    });
+				$groupSelect.val('');
+			}
+		});
+	});
 
 	const groupMap = {};
 	$('#sel-group').on('change', function (event) {
@@ -67,7 +84,7 @@ function buildGroupPage() {
 			resetValues();
 			return;
 		}
-        $('#list-notifiers').empty();
+		$('#list-notifiers').empty();
 		$('#input-group-name').val(groupData.name);
 		$('#input-group-display-name').val(groupData.display_name);
 		$('#input-filter-query').val(groupData.filter_query);
@@ -75,30 +92,30 @@ function buildGroupPage() {
 		$('#sel-always-show-correlated-events').val(groupData.always_show_correlated_events ? 'true' : 'false');
 		$('#group-roles-container > label > input').prop('checked', false);
 		if (groupData.roles) {
-		    $('#card-acl').find('select').val('none');
-			$.each(groupData.roles, function(index, role) {
-			    $('#card-acl').find("option[value='" + role + "']").parent().val(role);
+			$('#card-acl').find('select').val('none');
+			$.each(groupData.roles, function (index, role) {
+				$('#card-acl').find("option[value='" + role + "']").parent().val(role);
 			});
 		}
 		$('#dashboard-datasource-block').find("input[type='checkbox']").prop('checked', false);
-        if (groupData.dashboard_datasources) {
-            $('#dashboard-datasource-block').find("input[type='checkbox']").prop('checked', false);
-            $.each(groupData.dashboard_datasources, function (index, ds) {
-                $('#check-dashboard-datasource-' + ds).prop('checked', true);
-            });
-        }
+		if (groupData.dashboard_datasources) {
+			$('#dashboard-datasource-block').find("input[type='checkbox']").prop('checked', false);
+			$.each(groupData.dashboard_datasources, function (index, ds) {
+				$('#check-dashboard-datasource-' + ds).prop('checked', true);
+			});
+		}
 		$('#signal-datasource-block').find("input[type='checkbox']").prop('checked', false);
-        if (groupData.signal_datasources) {
-            $('#signal-datasource-block').find("input[type='checkbox']").prop('checked', false);
-            $.each(groupData.signal_datasources, function (index, ds) {
-                $('#check-signal-datasource-' + ds).prop('checked', true);
-            });
-        }
-        if (groupData.notifiers) {
-            $.each(groupData.notifiers, function (index, notifierName) {
-                $('#list-notifiers').append(createNotifierRow(notifierName));
-            });
-        }
+		if (groupData.signal_datasources) {
+			$('#signal-datasource-block').find("input[type='checkbox']").prop('checked', false);
+			$.each(groupData.signal_datasources, function (index, ds) {
+				$('#check-signal-datasource-' + ds).prop('checked', true);
+			});
+		}
+		if (groupData.notifiers) {
+			$.each(groupData.notifiers, function (index, notifierName) {
+				$('#list-notifiers').append(createNotifierRow(notifierName));
+			});
+		}
 		enableOrDisableButtons();
 	});
 
@@ -124,7 +141,7 @@ function buildGroupPage() {
 	$('#btn-confirm-remove-group').on('click', function (event) {
 		event.preventDefault();
 		$('#remove-group-name').text($('#input-group-name').val());
-        $('#modal-group-remove').modal();
+		$('#modal-group-remove').modal();
 	});
 
 	$('#btn-remove-group').on('click', function (event) {
@@ -136,23 +153,23 @@ function buildGroupPage() {
 		event.preventDefault();
 		$("#sel-import-group").empty();
 		$.ajax({
-		    type: 'GET',
-		    contentType: 'application/json',
-		    url: '../rest/settings/groups/ldap',
-		    cache: false,
-		    success: function(data) {
-		        if (!data) {
-		            return;
-		        }
-                const $groupSelect = $('#sel-import-group');
-		        $.each(data.groups, function(index, group) {
-		        	$groupSelect.append($('<option>').attr('value', group.name).text(group.name));
-		        });
+			type: 'GET',
+			contentType: 'application/json',
+			url: '../rest/settings/groups/ldap',
+			cache: false,
+			success: function (data) {
+				if (!data) {
+					return;
+				}
+				const $groupSelect = $('#sel-import-group');
+				$.each(data.groups, function (index, group) {
+					$groupSelect.append($('<option>').attr('value', group.name).text(group.name));
+				});
 				commons.sortSelectOptions($groupSelect);
-		        $groupSelect.val('');
-		        $('#modal-group-import').modal();
-		    }
-		});		
+				$groupSelect.val('');
+				$('#modal-group-import').modal();
+			}
+		});
 	});
 
 	$('#btn-import-group').on('click', function (event) {
@@ -162,38 +179,38 @@ function buildGroupPage() {
 			return false;
 		}
 		$.ajax({
-		    type: 'PUT',
-		    contentType: 'application/json',
-		    url: '../rest/settings/groups/ldap/import/' + encodeURIComponent(groupName),
-		    cache: false,
-		    success: function(group) {
-		        if (!group) {
-		            return;
-		        }
+			type: 'PUT',
+			contentType: 'application/json',
+			url: '../rest/settings/groups/ldap/import/' + encodeURIComponent(groupName),
+			cache: false,
+			success: function (group) {
+				if (!group) {
+					return;
+				}
 				// First the group if it is already present
 				$('#sel-group > option').each(function () {
 					if (group.name === $(this).attr('value')) {
-				        $(this).remove();
-				    }
+						$(this).remove();
+					}
 				});
 				// Now add the updated group
-		        $('#sel-group').append($('<option>').attr('value', group.name).text(group.name));
-                commons.sortSelectOptions($('#sel-group'));
-		        groupMap[group.name] = group;
-		        $('#sel-group').val(group.name).trigger('change');
-		    }
+				$('#sel-group').append($('<option>').attr('value', group.name).text(group.name));
+				commons.sortSelectOptions($('#sel-group'));
+				groupMap[group.name] = group;
+				$('#sel-group').val(group.name).trigger('change');
+			}
 		}).always(function () {
-            commons.hideModals($('#modal-group-import'));
-        });
+			commons.hideModals($('#modal-group-import'));
+		});
 	});
 
 	$('#lnk-add-notifier').on('click', function (event) {
-        event.preventDefault();
-        $('#list-notifiers').append(createNotifierRow());
-    });
-	
+		event.preventDefault();
+		$('#list-notifiers').append(createNotifierRow());
+	});
+
 	$('#input-group-name').on('input', enableOrDisableButtons);
-	
+
 	function enableOrDisableButtons() {
 		var groupName = $('#input-group-name').val();
 		if (groupName) {
@@ -207,115 +224,115 @@ function buildGroupPage() {
 			$('#btn-confirm-save-group, #btn-confirm-remove-group').attr('disabled', 'disabled');
 		}
 	}
-	
+
 	function isGroupExistent(groupName) {
 		return "undefined" != typeof groupMap[groupName];
 	}
-	
+
 	function saveGroup() {
 		var groupData = createGroupData();
 		$.ajax({
-            type: 'PUT',
-            contentType: 'application/json',
-            url: '../rest/settings/group/' + encodeURIComponent(groupData.name),
-            cache: false,
-            data: JSON.stringify(groupData),
-            success: function(data) {
-                if (!data) {
-                    return;
-                }
-        		if (!isGroupExistent(groupData.name)) {
-                    const $groupSelect = $('#sel-group');
-        			$groupSelect.append($('<option>').attr('value', groupData.name).text(groupData.name));
-                    commons.sortSelectOptions($groupSelect);
-        		}
-        		groupMap[groupData.name] = groupData;
+			type: 'PUT',
+			contentType: 'application/json',
+			url: '../rest/settings/group/' + encodeURIComponent(groupData.name),
+			cache: false,
+			data: JSON.stringify(groupData),
+			success: function (data) {
+				if (!data) {
+					return;
+				}
+				if (!isGroupExistent(groupData.name)) {
+					const $groupSelect = $('#sel-group');
+					$groupSelect.append($('<option>').attr('value', groupData.name).text(groupData.name));
+					commons.sortSelectOptions($groupSelect);
+				}
+				groupMap[groupData.name] = groupData;
 				commons.showNotification('Group \'' + groupData.name + '\' saved.', 'success');
-            }
-        }).always(function () {
-            commons.hideModals($('#modal-group-overwrite'));
-        });
+			}
+		}).always(function () {
+			commons.hideModals($('#modal-group-overwrite'));
+		});
 	}
-	
+
 	function removeGroup(groupName) {
 		$.ajax({
-            type: 'DELETE',
-            contentType: 'application/json',
-            url: '../rest/settings/group/' + encodeURIComponent(groupName),
-            cache: false,
-            success: function(data) {
-                if (!data) {
-                    return;
-                }
-        		delete groupMap[groupName];
+			type: 'DELETE',
+			contentType: 'application/json',
+			url: '../rest/settings/group/' + encodeURIComponent(groupName),
+			cache: false,
+			success: function (data) {
+				if (!data) {
+					return;
+				}
+				delete groupMap[groupName];
 				$("#sel-group > option").filter(function () {
 					return $(this).attr("value") === groupName;
-        		}).remove();
+				}).remove();
 				commons.showNotification('Group \'' + groupName + '\' removed.', 'success');
-            }
-        }).always(function () {
-            commons.hideModals($('#modal-group-remove'));
-        });
+			}
+		}).always(function () {
+			commons.hideModals($('#modal-group-remove'));
+		});
 	}
 
-    function createNotifierRow(notifierName) {
-        var notifierRow = $('<li>').attr('style', 'margin-top: 5px; list-style-type: none;').append(
-            $('<div>').addClass('input-group').append(
-                $notifierSelect.clone(true),
-                $('<div>').addClass('input-group-append').append(
-                    $('<button>').addClass('btn btn-outline-secondary fa fa-times text-danger').attr('type', 'button').click(function (event) {
-                        event.preventDefault();
-                        removeNotifierRow($(this));
-                    })
-                )
-            )
-        );
-        if (notifierName) {
-            $(notifierRow).find('.etm-notifier').val(notifierName)
-        }
-        return notifierRow;
-    }
+	function createNotifierRow(notifierName) {
+		var notifierRow = $('<li>').attr('style', 'margin-top: 5px; list-style-type: none;').append(
+			$('<div>').addClass('input-group').append(
+				$notifierSelect.clone(true),
+				$('<div>').addClass('input-group-append').append(
+					$('<button>').addClass('btn btn-outline-secondary fa fa-times text-danger').attr('type', 'button').click(function (event) {
+						event.preventDefault();
+						removeNotifierRow($(this));
+					})
+				)
+			)
+		);
+		if (notifierName) {
+			$(notifierRow).find('.etm-notifier').val(notifierName)
+		}
+		return notifierRow;
+	}
 
-    function removeNotifierRow(anchor) {
-        anchor.parent().parent().parent().remove();
-    }
-	
+	function removeNotifierRow(anchor) {
+		anchor.parent().parent().parent().remove();
+	}
+
 	function createGroupData() {
 		const groupData = {
 			name: $('#input-group-name').val(),
 			display_name: $('#input-group-display-name').val() ? $('#input-group-display-name').val() : null,
 			filter_query: $('#input-filter-query').val() ? $('#input-filter-query').val() : null,
-			filter_query_occurrence: $('#sel-filter-query-occurrence').val(),		
+			filter_query_occurrence: $('#sel-filter-query-occurrence').val(),
 			always_show_correlated_events: $('#sel-always-show-correlated-events').val() == 'true' ? true : false,
-            roles: [],
-            dashboard_datasources: $('#dashboard-datasource-block')
-                .find("input[type='checkbox']:checked")
-                .map(function () {
-                    return $(this).val();
-                }).get(),
-            signal_datasources: $('#signal-datasource-block')
-                .find("input[type='checkbox']:checked")
-                .map(function () {
-                    return $(this).val();
-                }).get(),
-            notifiers: []
+			roles: [],
+			dashboard_datasources: $('#dashboard-datasource-block')
+				.find("input[type='checkbox']:checked")
+				.map(function () {
+					return $(this).val();
+				}).get(),
+			signal_datasources: $('#signal-datasource-block')
+				.find("input[type='checkbox']:checked")
+				.map(function () {
+					return $(this).val();
+				}).get(),
+			notifiers: []
 		};
 		$('#card-acl').find('select').each(function () {
-		    if ($(this).val() !== 'none') {
-			    groupData.roles.push($(this).val());
+			if ($(this).val() !== 'none') {
+				groupData.roles.push($(this).val());
 			}
 		});
-        $('.etm-notifier').each(function () {
+		$('.etm-notifier').each(function () {
 			const notifierName = $(this).val();
 			if (-1 === groupData.notifiers.indexOf(notifierName)) {
-                groupData.notifiers.push(notifierName);
-            }
-        });
+				groupData.notifiers.push(notifierName);
+			}
+		});
 		return groupData;
 	}
 
 	function resetValues() {
-	    document.getElementById('group_form').reset();
+		document.getElementById('group_form').reset();
 		enableOrDisableButtons();
 	}
 }

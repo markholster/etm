@@ -1,1 +1,0 @@
-include 'etm-domain', 'etm-docker', 'etm-kubernetes', 'etm-cloud-management'

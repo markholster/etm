@@ -1,5 +1,22 @@
+/*
+ * Licensed to Jecstar Innovation under one or more contributor
+ * license agreements. Jecstar Innovation licenses this file to you
+ * under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing,
+ *  software distributed under the License is distributed on an
+ *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ *  KIND, either express or implied. See the License for the
+ *  specific language governing permissions and limitations
+ *  under the License.
+ */
+
 (function ($) {
-	$.fn.autocompleteFieldQuery = function(options) {
+    $.fn.autocompleteFieldQuery = function (options) {
 
         const queryOperators = ['AND NOT', 'AND', 'OR'];
         const joinOperators = ['WITH REQUEST', 'WITH RESPONSE'];
@@ -119,7 +136,7 @@
             }
             return {"queryTerm": null};
         }
-        
+
         function isQueryForFieldTerm(term) {
             if (!term) {
                 return false;
@@ -130,55 +147,55 @@
             }
             return queryForFields.indexOf(termToQuery) !== -1;
         }
-		
-	    return this.each(function() {
-	    	$(this).autocomplete({
-	            minLength: 0,
-	            source: function( request, response ) {
+
+        return this.each(function () {
+            $(this).autocomplete({
+                minLength: 0,
+                source: function (request, response) {
                     const query = extractAutocompleteTerm(request.term);
-	              if (query.queryTerm === null) {
-	                return;
-	              }
-	              if ("fieldTermValue" === query.queryType) {
-                      const fieldSuggestions = $.grep(getCurrentKeywords(), function (n, i) {
-                          return queryForFields.indexOf(n) === -1;
-	                });
-	                response($.ui.autocomplete.filter(fieldSuggestions, query.queryTerm));
-	              } else if ("field" === query.queryType) {
-	                response($.ui.autocomplete.filter(getCurrentKeywords(), query.queryTerm));
-	              }
-	            },
-	            focus: function() {
-	              // prevent value inserted on focus
-	              return false;
-	            },
-	            select: function( event, ui ) {
+                    if (query.queryTerm === null) {
+                        return;
+                    }
+                    if ("fieldTermValue" === query.queryType) {
+                        const fieldSuggestions = $.grep(getCurrentKeywords(), function (n, i) {
+                            return queryForFields.indexOf(n) === -1;
+                        });
+                        response($.ui.autocomplete.filter(fieldSuggestions, query.queryTerm));
+                    } else if ("field" === query.queryType) {
+                        response($.ui.autocomplete.filter(getCurrentKeywords(), query.queryTerm));
+                    }
+                },
+                focus: function () {
+                    // prevent value inserted on focus
+                    return false;
+                },
+                select: function (event, ui) {
                     const query = extractAutocompleteTerm(this.value);
-	              if ('' === query.queryTerm) {
-	                this.value += ui.item.value;
-	              } else {
-                      const ix = this.value.lastIndexOf(query.queryTerm);
-                      if (ix !== -1) {
-	                    this.value = this.value.substring(0, ix) + ui.item.value;
-	                }
-	              }
-	              if ('query' === settings.mode) {
-		              if ("field" === query.queryType) {
-		                this.value += ':'
-		              }
-		              this.value += ' '
-	              }
-	              $(this).trigger('autocomplete:selected');
-	              return false;
-	            }
-	        })
-	    });
-	 
-	};
-	
-	function endsWith(value, valueToTest) {
+                    if ('' === query.queryTerm) {
+                        this.value += ui.item.value;
+                    } else {
+                        const ix = this.value.lastIndexOf(query.queryTerm);
+                        if (ix !== -1) {
+                            this.value = this.value.substring(0, ix) + ui.item.value;
+                        }
+                    }
+                    if ('query' === settings.mode) {
+                        if ("field" === query.queryType) {
+                            this.value += ':'
+                        }
+                        this.value += ' '
+                    }
+                    $(this).trigger('autocomplete:selected');
+                    return false;
+                }
+            })
+        });
+
+    };
+
+    function endsWith(value, valueToTest) {
         const d = value.length - valueToTest.length;
         return d >= 0 && value.lastIndexOf(valueToTest) === d;
     }
-	
+
 }(jQuery));

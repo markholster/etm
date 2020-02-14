@@ -1,3 +1,20 @@
+/*
+ * Licensed to Jecstar Innovation under one or more contributor
+ * license agreements. Jecstar Innovation licenses this file to you
+ * under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing,
+ *  software distributed under the License is distributed on an
+ *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ *  KIND, either express or implied. See the License for the
+ *  specific language governing permissions and limitations
+ *  under the License.
+ */
+
 function buildClusterPage() {
     'use strict';
 
@@ -8,40 +25,40 @@ function buildClusterPage() {
 
     $('#btn-save-general').on('click', function (event) {
         if (!validateForm('form-general')) {
-			return;
-		}
-		event.preventDefault();
-		saveCluster('General');
-	});
+            return;
+        }
+        event.preventDefault();
+        saveCluster('General');
+    });
 
     $('#btn-save-elasticsearch').on('click', function (event) {
         if (!validateForm('form-elasticsearch')) {
-			return;
-		}
-		event.preventDefault();
-		saveCluster('Elasticsearch');
-	});
+            return;
+        }
+        event.preventDefault();
+        saveCluster('Elasticsearch');
+    });
 
     $('#btn-save-persisting').on('click', function (event) {
         if (!validateForm('form-persisting')) {
-			return;
-		}
-		event.preventDefault();
-		saveCluster('Persisting');
-	});
+            return;
+        }
+        event.preventDefault();
+        saveCluster('Persisting');
+    });
 
     $('#btn-save-ldap').on('click', function (event) {
         if (!validateForm('form-ldap')) {
-			return;
-		}
-		event.preventDefault();
-		saveLdap();
-	});
+            return;
+        }
+        event.preventDefault();
+        saveLdap();
+    });
 
     $('#btn-confirm-remove-ldap').on('click', function (event) {
-		event.preventDefault();
-		$('#modal-ldap-remove').modal();
-	});
+        event.preventDefault();
+        $('#modal-ldap-remove').modal();
+    });
 
     $('#btn-save-notifications').on('click', function (event) {
         if (!validateForm('form-notifications')) {
@@ -52,24 +69,24 @@ function buildClusterPage() {
     });
 
     $('#btn-remove-ldap').on('click', function (event) {
-		event.preventDefault();
-		$.ajax({
-		    type: 'DELETE',
-		    contentType: 'application/json',
-		    url: '../rest/settings/ldap',
-		    cache: false,
-		    success: function(data) {
-		        if (!data) {
-		            return;
-		        }
-				document.getElementById('form-ldap').reset();
-				$('#btn-confirm-remove-ldap').attr('disabled', 'disabled');
-				commons.showNotification('Ldap configuration removed.', 'success');
-		    }
-		}).always(function () {
+        event.preventDefault();
+        $.ajax({
+            type: 'DELETE',
+            contentType: 'application/json',
+            url: '../rest/settings/ldap',
+            cache: false,
+            success: function (data) {
+                if (!data) {
+                    return;
+                }
+                document.getElementById('form-ldap').reset();
+                $('#btn-confirm-remove-ldap').attr('disabled', 'disabled');
+                commons.showNotification('Ldap configuration removed.', 'success');
+            }
+        }).always(function () {
             commons.hideModals($('#modal-ldap-remove'));
         });
-	});
+    });
 
     $('#btn-save-certificate').on('click', function (event) {
         event.preventDefault();
@@ -345,13 +362,13 @@ function buildClusterPage() {
         url: '../rest/settings/ldap',
         cache: false,
         success: function (data) {
-	        if (!data) {
-	            return;
-	        }
+            if (!data) {
+                return;
+            }
             setLdapData(data);
-	        $('#btn-confirm-remove-ldap').removeAttr('disabled');
-	    }
-	});
+            $('#btn-confirm-remove-ldap').removeAttr('disabled');
+        }
+    });
 
     $.ajax({
         type: 'GET',
@@ -425,26 +442,26 @@ function buildClusterPage() {
                 }
                 commons.showNotification(context + ' configuration saved.', 'success');
             }
-        });    		
-	}
-	
-	function saveLdap() {
+        });
+    }
+
+    function saveLdap() {
         const ldapData = createLdapData();
-		$.ajax({
+        $.ajax({
             type: 'PUT',
             contentType: 'application/json',
             url: '../rest/settings/ldap',
             cache: false,
             data: JSON.stringify(ldapData),
-            success: function(data) {
+            success: function (data) {
                 if (!data) {
                     return;
                 }
-				commons.showNotification('Ldap configuration saved.', 'success');
-        		$('#btn-confirm-remove-ldap').removeAttr('disabled');
+                commons.showNotification('Ldap configuration saved.', 'success');
+                $('#btn-confirm-remove-ldap').removeAttr('disabled');
             }
-        });    		
-	}
+        });
+    }
 
     function enableOrDisableCertificateButtons() {
         if (Object.keys(certificateMap).length) {
@@ -455,8 +472,8 @@ function buildClusterPage() {
             $('#btn-save-certificate').attr('disabled', 'disabled');
         }
     }
-	
-	function setClusterData(data) {
+
+    function setClusterData(data) {
         $("#input-session-timeout").val(data.session_timeout);
         $("#input-import-profile-cache-size").val(data.import_profile_cache_size);
         $("#input-shards-per-index").val(data.shards_per_index);
@@ -486,18 +503,18 @@ function buildClusterPage() {
         $("#input-persisting-bulk-time").val(data.persisting_bulk_time);
         $("#input-persisting-bulk-threads").val(data.persisting_bulk_threads);
     }
-	
-	function createClusterData(context) {
+
+    function createClusterData(context) {
         const clusterData = {};
         if ('General' === context) {
-			clusterData.session_timeout = Number($("#input-session-timeout").val());
+            clusterData.session_timeout = Number($("#input-session-timeout").val());
             clusterData.endpoint_configuration_cache_size = Number($("#input-endpoint-configuration-cache-size").val());
-			clusterData.max_search_result_download_rows = Number($("#input-search-export-max-rows").val());
-			clusterData.max_search_template_count = Number($("#input-search-max-templates").val());
-			clusterData.max_search_history_count = Number($("#input-search-max-history-size").val());
-			clusterData.max_graph_count = Number($("#input-visualization-max-graph-count").val());
-			clusterData.max_dashboard_count = Number($("#input-visualization-max-dashboard-count").val());
-			clusterData.max_signal_count = Number($("#input-signal-max-signal-count").val());
+            clusterData.max_search_result_download_rows = Number($("#input-search-export-max-rows").val());
+            clusterData.max_search_template_count = Number($("#input-search-max-templates").val());
+            clusterData.max_search_history_count = Number($("#input-search-max-history-size").val());
+            clusterData.max_graph_count = Number($("#input-visualization-max-graph-count").val());
+            clusterData.max_dashboard_count = Number($("#input-visualization-max-dashboard-count").val());
+            clusterData.max_signal_count = Number($("#input-signal-max-signal-count").val());
         } else if ('Elasticsearch' === context) {
             clusterData.shards_per_index = Number($("#input-shards-per-index").val());
             clusterData.replicas_per_index = Number($("#input-replicas-per-index").val());
@@ -537,66 +554,66 @@ function buildClusterPage() {
                 }
             });
         } else if ('Persisting' === context) {
-			clusterData.enhancing_handler_count = Number($("#input-enhancing-handler-count").val());
-			clusterData.persisting_handler_count = Number($("#input-persisting-handler-count").val());
-			clusterData.event_buffer_size = Number($("#input-event-buffer-size").val());
-			clusterData.wait_strategy = $("#sel-wait-strategy").val();
-			clusterData.persisting_bulk_count = Number($("#input-persisting-bulk-count").val());
-			clusterData.persisting_bulk_size = Number($("#input-persisting-bulk-size").val());
-			clusterData.persisting_bulk_time = Number($("#input-persisting-bulk-time").val());
-			clusterData.persisting_bulk_threads = Number($("#input-persisting-bulk-threads").val());
-		}
-		return clusterData;
-	}
-	
-	function setLdapData(data) {
-		$('#input-ldap-host').val(data.host);
-		$('#input-ldap-port').val(data.port);
-		$('#sel-ldap-connection-security').val(data.connection_security);
-		$('#input-ldap-bind-dn').val(data.bind_dn);
-		$('#input-ldap-bind-password').val(decode(data.bind_password));
-		$('#input-ldap-connection-pool-min').val(data.min_pool_size);
-		$('#input-ldap-connection-pool-max').val(data.max_pool_size);
-		$('#input-ldap-connection-test-base-dn').val(data.connection_test_base_dn);
-		$('#input-ldap-connection-test-search-filter').val(data.connection_test_search_filter);
-		$('#input-ldap-user-base-dn').val(data.user_base_dn);
-		$('#input-ldap-user-search-filter').val(data.user_search_filter);
-		$('#sel-ldap-user-search-in-subtree').val(data.user_search_in_subtree ? 'true' : 'false');
-		$('#input-ldap-user-id-attribute').val(data.user_identifier_attribute);
-		$('#input-ldap-user-fullname-attribute').val(data.user_full_name_attribute);
-		$('#input-ldap-user-email-attribute').val(data.user_email_attribute);
-		$('#input-ldap-user-member-of-groups-attribute').val(data.user_member_of_groups_attribute);
-		$('#input-ldap-user-groups-query-base-dn').val(data.user_groups_query_base_dn);
-		$('#input-ldap-user-groups-query-filter').val(data.user_groups_query_filter);
-		$('#input-ldap-group-base-dn').val(data.group_base_dn);
-		$('#input-ldap-group-search-filter').val(data.group_search_filter);
-	}
-	
-	function createLdapData() {
-        const ldapData = {};
-		ldapData.host = $('#input-ldap-host').val();
-		ldapData.port = Number($('#input-ldap-port').val());
-		ldapData.connection_security = $('#sel-ldap-connection-security').val() ? $('#sel-ldap-connection-security').val() : null;
-		ldapData.bind_dn = $('#input-ldap-bind-dn').val();
-		ldapData.bind_password = encode($('#input-ldap-bind-password').val());
-		ldapData.min_pool_size = Number($('#input-ldap-connection-pool-min').val());
-		ldapData.max_pool_size = Number($('#input-ldap-connection-pool-max').val());
-		ldapData.connection_test_base_dn = $('#input-ldap-connection-test-base-dn').val();
-		ldapData.connection_test_search_filter = $('#input-ldap-connection-test-search-filter').val();
-		ldapData.user_base_dn = $('#input-ldap-user-base-dn').val();
-		ldapData.user_search_filter = $('#input-ldap-user-search-filter').val();
-        ldapData.user_search_in_subtree = $('#sel-ldap-user-search-in-subtree').val() === 'true';
-		ldapData.user_identifier_attribute = $('#input-ldap-user-id-attribute').val();
-		ldapData.user_full_name_attribute = $('#input-ldap-user-fullname-attribute').val();
-		ldapData.user_email_attribute = $('#input-ldap-user-email-attribute').val();
-		ldapData.user_member_of_groups_attribute = $('#input-ldap-user-member-of-groups-attribute').val();
-		ldapData.user_groups_query_base_dn = $('#input-ldap-user-groups-query-base-dn').val();
-		ldapData.user_groups_query_filter = $('#input-ldap-user-groups-query-filter').val();
-		ldapData.group_base_dn = $('#input-ldap-group-base-dn').val();
-		ldapData.group_search_filter = $('#input-ldap-group-search-filter').val();
+            clusterData.enhancing_handler_count = Number($("#input-enhancing-handler-count").val());
+            clusterData.persisting_handler_count = Number($("#input-persisting-handler-count").val());
+            clusterData.event_buffer_size = Number($("#input-event-buffer-size").val());
+            clusterData.wait_strategy = $("#sel-wait-strategy").val();
+            clusterData.persisting_bulk_count = Number($("#input-persisting-bulk-count").val());
+            clusterData.persisting_bulk_size = Number($("#input-persisting-bulk-size").val());
+            clusterData.persisting_bulk_time = Number($("#input-persisting-bulk-time").val());
+            clusterData.persisting_bulk_threads = Number($("#input-persisting-bulk-threads").val());
+        }
+        return clusterData;
+    }
 
-		return ldapData;
-	}
+    function setLdapData(data) {
+        $('#input-ldap-host').val(data.host);
+        $('#input-ldap-port').val(data.port);
+        $('#sel-ldap-connection-security').val(data.connection_security);
+        $('#input-ldap-bind-dn').val(data.bind_dn);
+        $('#input-ldap-bind-password').val(decode(data.bind_password));
+        $('#input-ldap-connection-pool-min').val(data.min_pool_size);
+        $('#input-ldap-connection-pool-max').val(data.max_pool_size);
+        $('#input-ldap-connection-test-base-dn').val(data.connection_test_base_dn);
+        $('#input-ldap-connection-test-search-filter').val(data.connection_test_search_filter);
+        $('#input-ldap-user-base-dn').val(data.user_base_dn);
+        $('#input-ldap-user-search-filter').val(data.user_search_filter);
+        $('#sel-ldap-user-search-in-subtree').val(data.user_search_in_subtree ? 'true' : 'false');
+        $('#input-ldap-user-id-attribute').val(data.user_identifier_attribute);
+        $('#input-ldap-user-fullname-attribute').val(data.user_full_name_attribute);
+        $('#input-ldap-user-email-attribute').val(data.user_email_attribute);
+        $('#input-ldap-user-member-of-groups-attribute').val(data.user_member_of_groups_attribute);
+        $('#input-ldap-user-groups-query-base-dn').val(data.user_groups_query_base_dn);
+        $('#input-ldap-user-groups-query-filter').val(data.user_groups_query_filter);
+        $('#input-ldap-group-base-dn').val(data.group_base_dn);
+        $('#input-ldap-group-search-filter').val(data.group_search_filter);
+    }
+
+    function createLdapData() {
+        const ldapData = {};
+        ldapData.host = $('#input-ldap-host').val();
+        ldapData.port = Number($('#input-ldap-port').val());
+        ldapData.connection_security = $('#sel-ldap-connection-security').val() ? $('#sel-ldap-connection-security').val() : null;
+        ldapData.bind_dn = $('#input-ldap-bind-dn').val();
+        ldapData.bind_password = encode($('#input-ldap-bind-password').val());
+        ldapData.min_pool_size = Number($('#input-ldap-connection-pool-min').val());
+        ldapData.max_pool_size = Number($('#input-ldap-connection-pool-max').val());
+        ldapData.connection_test_base_dn = $('#input-ldap-connection-test-base-dn').val();
+        ldapData.connection_test_search_filter = $('#input-ldap-connection-test-search-filter').val();
+        ldapData.user_base_dn = $('#input-ldap-user-base-dn').val();
+        ldapData.user_search_filter = $('#input-ldap-user-search-filter').val();
+        ldapData.user_search_in_subtree = $('#sel-ldap-user-search-in-subtree').val() === 'true';
+        ldapData.user_identifier_attribute = $('#input-ldap-user-id-attribute').val();
+        ldapData.user_full_name_attribute = $('#input-ldap-user-fullname-attribute').val();
+        ldapData.user_email_attribute = $('#input-ldap-user-email-attribute').val();
+        ldapData.user_member_of_groups_attribute = $('#input-ldap-user-member-of-groups-attribute').val();
+        ldapData.user_groups_query_base_dn = $('#input-ldap-user-groups-query-base-dn').val();
+        ldapData.user_groups_query_filter = $('#input-ldap-user-groups-query-filter').val();
+        ldapData.group_base_dn = $('#input-ldap-group-base-dn').val();
+        ldapData.group_search_filter = $('#input-ldap-group-search-filter').val();
+
+        return ldapData;
+    }
 
     function setCertificateData(data) {
         $('#input-certificate-distinguished-name').val(data.dn);
@@ -630,26 +647,26 @@ function buildClusterPage() {
         };
         return certData;
     }
-	
-	function decode(data) {
-		if (!data) {
-			return null;
-		}
+
+    function decode(data) {
+        if (!data) {
+            return null;
+        }
         for (let i = 0; i < 7; i++) {
             data = commons.base64Decode(data);
-		}
-		return data;
-	}
-	
-	function encode(data) {
-		if (!data) {
-			return null;
-		}
+        }
+        return data;
+    }
+
+    function encode(data) {
+        if (!data) {
+            return null;
+        }
         for (let i = 0; i < 7; i++) {
             data = commons.base64Encode(data);
-		}
-		return data;
-	}
+        }
+        return data;
+    }
 
     function validateForm(formId) {
         const $form = $('#' + formId);

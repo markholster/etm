@@ -1,3 +1,20 @@
+/*
+ * Licensed to Jecstar Innovation under one or more contributor
+ * license agreements. Jecstar Innovation licenses this file to you
+ * under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing,
+ *  software distributed under the License is distributed on an
+ *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ *  KIND, either express or implied. See the License for the
+ *  specific language governing permissions and limitations
+ *  under the License.
+ */
+
 function buildNodePage() {
     const nodeMap = {};
     $('#sel-node').change(function (event) {
@@ -75,7 +92,7 @@ function buildNodePage() {
         }
     });
 
-	function enableOrDisableButtons() {
+    function enableOrDisableButtons() {
         const nodeName = $('#input-node-name').val();
         if (nodeName) {
             $('#btn-confirm-save-node').removeAttr('disabled');
@@ -88,12 +105,12 @@ function buildNodePage() {
             $('#btn-confirm-save-node, #btn-confirm-remove-node').attr('disabled', 'disabled');
         }
     }
-	
-	function isNodeExistent(nodeName) {
-		return "undefined" != typeof nodeMap[nodeName];
-	}
-	
-	function saveNode() {
+
+    function isNodeExistent(nodeName) {
+        return "undefined" != typeof nodeMap[nodeName];
+    }
+
+    function saveNode() {
         const nodeData = createNodeData();
         $.ajax({
             type: 'PUT',
@@ -116,15 +133,15 @@ function buildNodePage() {
         }).always(function () {
             commons.hideModals($('#modal-node-overwrite'));
         });
-	}
-	
-	function removeNode(nodeName) {
-		$.ajax({
+    }
+
+    function removeNode(nodeName) {
+        $.ajax({
             type: 'DELETE',
             contentType: 'application/json',
             url: '../rest/settings/node/' + encodeURIComponent(nodeName),
             cache: false,
-            success: function(data) {
+            success: function (data) {
                 if (!data) {
                     return;
                 }
@@ -134,12 +151,12 @@ function buildNodePage() {
                 }).remove();
                 commons.showNotification('Node \'' + nodeName + '\' removed.', 'success');
             }
-        }).always(function() {
+        }).always(function () {
             commons.hideModals($('#modal-node-remove'));
         });
-	}
-	
-	function createNodeData() {
+    }
+
+    function createNodeData() {
         const nodeData = {
             name: $('#input-node-name').val()
         }
@@ -167,22 +184,22 @@ function buildNodePage() {
         }
         return nodeData;
     }
-	
-	function setNodeData(nodeData) {
-		$('#input-node-name').val(nodeData.name);
-		$("#input-import-profile-cache-size").val(nodeData.import_profile_cache_size);
-		$("#input-enhancing-handler-count").val(nodeData.enhancing_handler_count);
-		$("#input-persisting-handler-count").val(nodeData.persisting_handler_count);
-		$("#input-event-buffer-size").val(nodeData.event_buffer_size);
-		if (nodeData.wait_strategy) {
-			$("#sel-wait-strategy").val(nodeData.wait_strategy);
-		}
-		$("#input-persisting-bulk-count").val(nodeData.persisting_bulk_count);
-		$("#input-persisting-bulk-size").val(nodeData.persisting_bulk_size);
-		$("#input-persisting-bulk-time").val(nodeData.persisting_bulk_time);
-	}
-	
-	function setPlaceholderData(clusterData) {
+
+    function setNodeData(nodeData) {
+        $('#input-node-name').val(nodeData.name);
+        $("#input-import-profile-cache-size").val(nodeData.import_profile_cache_size);
+        $("#input-enhancing-handler-count").val(nodeData.enhancing_handler_count);
+        $("#input-persisting-handler-count").val(nodeData.persisting_handler_count);
+        $("#input-event-buffer-size").val(nodeData.event_buffer_size);
+        if (nodeData.wait_strategy) {
+            $("#sel-wait-strategy").val(nodeData.wait_strategy);
+        }
+        $("#input-persisting-bulk-count").val(nodeData.persisting_bulk_count);
+        $("#input-persisting-bulk-size").val(nodeData.persisting_bulk_size);
+        $("#input-persisting-bulk-time").val(nodeData.persisting_bulk_time);
+    }
+
+    function setPlaceholderData(clusterData) {
         $("#input-import-profile-cache-size").attr('placeholder', clusterData.import_profile_cache_size);
         $("#input-enhancing-handler-count").attr('placeholder', clusterData.enhancing_handler_count);
         $("#input-persisting-handler-count").attr('placeholder', clusterData.persisting_handler_count);
@@ -199,8 +216,8 @@ function buildNodePage() {
         $("#input-persisting-bulk-time").attr('placeholder', clusterData.persisting_bulk_time);
     }
 
-	function resetValues() {
-		document.getElementById("node_form").reset();
-		enableOrDisableButtons();
-	}
+    function resetValues() {
+        document.getElementById("node_form").reset();
+        enableOrDisableButtons();
+    }
 }

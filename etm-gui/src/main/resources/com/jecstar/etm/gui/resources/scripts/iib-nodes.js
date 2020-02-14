@@ -1,6 +1,23 @@
+/*
+ * Licensed to Jecstar Innovation under one or more contributor
+ * license agreements. Jecstar Innovation licenses this file to you
+ * under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing,
+ *  software distributed under the License is distributed on an
+ *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ *  KIND, either express or implied. See the License for the
+ *  specific language governing permissions and limitations
+ *  under the License.
+ */
+
 function buildNodePage() {
 	var nodeMap = {};
-	$('#sel-node').change(function(event) {
+	$('#sel-node').change(function (event) {
 		event.preventDefault();
 		var nodeData = nodeMap[$(this).val()];
 		if ('undefined' == typeof nodeData) {
@@ -16,7 +33,7 @@ function buildNodePage() {
 		$('#input-channel').val(nodeData.channel);
 		enableOrDisableButtons();
 	});
-	
+
 	$('#btn-confirm-save-node').click(function(event) {
 		event.preventDefault();
 		if (!document.getElementById('node_form').checkValidity()) {
@@ -30,43 +47,43 @@ function buildNodePage() {
 			saveNode();
 		}
 	});
-	
+
 	$('#btn-save-node').click(function(event) {
 		saveNode();
 	});
-	
-	$('#btn-confirm-remove-node').click(function(event) {
+
+	$('#btn-confirm-remove-node').click(function (event) {
 		event.preventDefault();
 		$('#remove-node-name').text($('#input-node-name').val());
-        $('#modal-node-remove').modal();
-	});	
+		$('#modal-node-remove').modal();
+	});
 
 	$('#btn-remove-node').click(function(event) {
 		removeNode($('#input-node-name').val());
 	});
 
-	
+
 	$('#input-node-name').on('input', enableOrDisableButtons);
-	
+
 	$.ajax({
-	    type: 'GET',
-	    contentType: 'application/json',
-	    url: '../rest/iib/nodes',
-	    cache: false,
-	    success: function(data) {
-	        if (!data) {
-	            return;
-	        }
-            const $nodeSelect = $('#sel-node');
-	        $.each(data.nodes, function(index, node) {
-	        	$nodeSelect.append($('<option>').attr('value', node.name).text(node.name));
-	        	nodeMap[node.name] = node;
-	        });
-            commons.sortSelectOptions($nodeSelect)
-	        $nodeSelect.val('');
-	    }
+		type: 'GET',
+		contentType: 'application/json',
+		url: '../rest/iib/nodes',
+		cache: false,
+		success: function (data) {
+			if (!data) {
+				return;
+			}
+			const $nodeSelect = $('#sel-node');
+			$.each(data.nodes, function (index, node) {
+				$nodeSelect.append($('<option>').attr('value', node.name).text(node.name));
+				nodeMap[node.name] = node;
+			});
+			commons.sortSelectOptions($nodeSelect)
+			$nodeSelect.val('');
+		}
 	});
-	
+
 	function enableOrDisableButtons() {
 		var nodeName = $('#input-node-name').val();
 		if (nodeName) {
@@ -80,57 +97,57 @@ function buildNodePage() {
 			$('#btn-confirm-save-node, #btn-confirm-remove-node').attr('disabled', 'disabled');
 		}
 	}
-	
+
 	function isNodeExistent(nodeName) {
 		return "undefined" != typeof nodeMap[nodeName];
 	}
-	
+
 	function saveNode() {
 		var nodeData = createNodeData();
 		$.ajax({
-            type: 'PUT',
-            contentType: 'application/json',
-            url: '../rest/iib/node/' + encodeURIComponent(nodeData.name),
-            cache: false,
-            data: JSON.stringify(nodeData),
-            success: function(data) {
-                if (!data) {
-                    return;
-                }
-        		if (!isNodeExistent(nodeData.name)) {
-                    const $nodeSelect = $('#sel-node');
-        			$nodeSelect.append($('<option>').attr('value', nodeData.name).text(nodeData.name));
-                    commons.sortSelectOptions($nodeSelect);
-        		}
-        		nodeMap[nodeData.name] = nodeData;
+			type: 'PUT',
+			contentType: 'application/json',
+			url: '../rest/iib/node/' + encodeURIComponent(nodeData.name),
+			cache: false,
+			data: JSON.stringify(nodeData),
+			success: function (data) {
+				if (!data) {
+					return;
+				}
+				if (!isNodeExistent(nodeData.name)) {
+					const $nodeSelect = $('#sel-node');
+					$nodeSelect.append($('<option>').attr('value', nodeData.name).text(nodeData.name));
+					commons.sortSelectOptions($nodeSelect);
+				}
+				nodeMap[nodeData.name] = nodeData;
 				commons.showNotification('Node \'' + nodeData.name + '\' saved.', 'success');
-            }
-        }).always(function () {
-            commons.hideModals($('#modal-node-overwrite'));
-        });
+			}
+		}).always(function () {
+			commons.hideModals($('#modal-node-overwrite'));
+		});
 	}
-	
+
 	function removeNode(nodeName) {
 		$.ajax({
-            type: 'DELETE',
-            contentType: 'application/json',
-            url: '../rest/iib/node/' + encodeURIComponent(nodeName),
-            cache: false,
-            success: function(data) {
-                if (!data) {
-                    return;
-                }
-        		delete nodeMap[nodeName];
-        		$("#sel-node > option").filter(function(i){
-        		       return $(this).attr("value") == nodeName;
-        		}).remove();
+			type: 'DELETE',
+			contentType: 'application/json',
+			url: '../rest/iib/node/' + encodeURIComponent(nodeName),
+			cache: false,
+			success: function (data) {
+				if (!data) {
+					return;
+				}
+				delete nodeMap[nodeName];
+				$("#sel-node > option").filter(function (i) {
+					return $(this).attr("value") == nodeName;
+				}).remove();
 				commons.showNotification('Node \'' + nodeName + '\' removed.', 'success');
-            }
-        }).always(function() {
-            commons.hideModals($('#modal-node-remove'));
-        });
+			}
+		}).always(function () {
+			commons.hideModals($('#modal-node-remove'));
+		});
 	}
-	
+
 	function createNodeData() {
 		var nodeData = {
 			name: $('#input-node-name').val(),
@@ -154,23 +171,23 @@ function buildNodePage() {
 		$('#input-channel').val('');
 		enableOrDisableButtons();
 	}
-	
+
 	function decode(data) {
 		if (!data) {
 			return null;
 		}
 		for (i = 0; i < 7; i++) {
-            data = commons.base64Decode(data);
+			data = commons.base64Decode(data);
 		}
 		return data;
 	}
-	
+
 	function encode(data) {
 		if (!data) {
 			return null;
 		}
 		for (i = 0; i < 7; i++) {
-            data = commons.base64Decode(data);
+			data = commons.base64Decode(data);
 		}
 		return data;
 	}

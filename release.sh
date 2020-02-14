@@ -31,31 +31,14 @@ then
 fi
 logOk "Version not a SNAPSHOT."
 
-ETM_PUBLIC_VERSION=$(etm-public/gradlew properties -b etm-public/build.gradle | grep ^version: | sed 's/^.*: //')
-if [[ "$VERSION" != "$ETM_PUBLIC_VERSION" ]]
-then
-  logError "etm-public has a different version: $ETM_PUBLIC_VERSION. Expected version $VERSION."
-  exit 1
-fi
-logOk "etm-public has same version."
+checkVersionInDocumentation "$SCRIPT_DIR"/etm-documentation/docs/getting-started/installation.md 4
+checkVersionInDocumentation "$SCRIPT_DIR"/etm-documentation/docs/setup/installation-on-windows.md 2
+checkVersionInDocumentation "$SCRIPT_DIR"/etm-documentation/docs/setup/installation-with-tgz.md 4
+checkVersionInDocumentation "$SCRIPT_DIR"/etm-documentation/docs/setup/installation-with-zip.md 4
+checkVersionInDocumentation "$SCRIPT_DIR"/etm-documentation/docs/setup/installation-with-docker.md 2
+checkVersionInDocumentation "$SCRIPT_DIR"/etm-documentation/docs/setup/installation-with-kubernetes.md 1
 
-ES_VERSION=$(./gradlew properties | grep ^version_elasticsearch: | sed 's/^.*: //')
-ES_PUBLIC_VERSION=$(etm-public/gradlew properties -b etm-public/build.gradle | grep ^version_elasticsearch: | sed 's/^.*: //')
-if [[ "$ES_VERSION" != "$ES_PUBLIC_VERSION" ]]
-then
-  logError "etm-public has a different elasticsearch version: $ES_PUBLIC_VERSION. Expected version $ES_VERSION."
-  exit 1
-fi
-logOk "etm-public has same elasticsearch version."
-
-checkVersionInDocumentation "$SCRIPT_DIR"/etm-public/etm-documentation/docs/getting-started/installation.md 4
-checkVersionInDocumentation "$SCRIPT_DIR"/etm-public/etm-documentation/docs/setup/installation-on-windows.md 2
-checkVersionInDocumentation "$SCRIPT_DIR"/etm-public/etm-documentation/docs/setup/installation-with-tgz.md 4
-checkVersionInDocumentation "$SCRIPT_DIR"/etm-public/etm-documentation/docs/setup/installation-with-zip.md 4
-checkVersionInDocumentation "$SCRIPT_DIR"/etm-public/etm-documentation/docs/setup/installation-with-docker.md 2
-checkVersionInDocumentation "$SCRIPT_DIR"/etm-public/etm-documentation/docs/setup/installation-with-kubernetes.md 1
-
-RELEASE_DATE=$(cat "$SCRIPT_DIR"/etm-public/etm-documentation/docs/support-matrix/README.md | grep "ETM $VERSION_WILDCARD_BUGFIX" | cut -d'|' -f2)
+RELEASE_DATE=$(cat "$SCRIPT_DIR"/etm-documentation/docs/support-matrix/README.md | grep "ETM $VERSION_WILDCARD_BUGFIX" | cut -d'|' -f2)
 if [[ -z "${RELEASE_DATE// }" ]]
 then
   logError "Release date in support matrix documentation is empty."
@@ -63,7 +46,7 @@ then
 fi
 logOk "Release date fount in support matrix."
 
-EOL_DATE=$(cat "$SCRIPT_DIR"/etm-public/etm-documentation/docs/support-matrix/README.md | grep "ETM $VERSION_WILDCARD_BUGFIX" | cut -d'|' -f6)
+EOL_DATE=$(cat "$SCRIPT_DIR"/etm-documentation/docs/support-matrix/README.md | grep "ETM $VERSION_WILDCARD_BUGFIX" | cut -d'|' -f6)
 if [[ -z "${EOL_DATE// }" ]]
 then
   logError "End of life date in support matrix documentation is empty."
@@ -93,7 +76,7 @@ fi
 logOk "Distributions uploaded to server."
 cd "$SCRIPT_DIR" || exit
 
-cd "$SCRIPT_DIR"/etm-public/etm-documentation || exit
+cd "$SCRIPT_DIR"/etm-documentation || exit
 yarn docs:build
 if [ $? -ne 0 ]; then
   logError "Generating documentation failed."
@@ -111,7 +94,7 @@ logOk "Documentation uploaded to server."
 cd "$SCRIPT_DIR" || exit
 
 podman rmi docker.io/adoptopenjdk/openjdk11:alpine-slim
-buildah unshare "$SCRIPT_DIR"/etm-public/etm-buildah/build-oci.sh "$VERSION"
+buildah unshare "$SCRIPT_DIR"/etm-buildah/build-oci.sh "$VERSION"
 if [ $? -ne 0 ]; then
     logError "Generating OCI image failed."
     exit 1
@@ -124,13 +107,3 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 logOk "OCI image pushed."
-
-#==== Push subtree
-#git subtree push --prefix=etm-public git@github.com:jecstarinnovations/etm.git develop
-#cd ../etm-public
-#git checkout develop
-#git pull
-#git checkout master
-#git merge develop
-#git tag -a v$VERSION
-#git push --tags
