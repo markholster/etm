@@ -12,6 +12,8 @@ A few sample usecases that Enterprise Telemetry Monitor could be used for:
 
 * Combining several event types to get a neat overview of what is happening. With Enterprise Telemetry Monitor you are able to see which log lines of any application are belonging to a single user or request. You no longer need to struggle to hundreds of log lines to find what you are searching for.
 
+* Send an alert when something special happens. Of course your are the one who decides what's special and what not. 
+
 ### Some pictures are worth a thousand words
 The endpoint overview will give you extensive insight in how your applications are connected.
 !["Endpoint overview"](etm-documentation/docs/assets/images/etm-endpoints-overview.png)
@@ -22,8 +24,7 @@ And where most of the time is consumed.
 You're more a dashboard person? We've got you covered ;)
 !["Chain times"](etm-documentation/docs/assets/images/etm-dashboard.png)
 
-### Installing
-
+## Installation
 1. [Download](https://www.jecstar.com/downloads/) Enterprise Telemetry Monitor.
 2. [Download](https://www.elastic.co/downloads/elasticsearch-oss/) Elasticsearch.
 3. Start Elasticsearch by running <es_dir>/bin/elasticsearch.sh
@@ -31,5 +32,6 @@ You're more a dashboard person? We've got you covered ;)
 5. Browse to [http://127.0.0.1:8080/gui/](http://127.0.0.1:8080/gui/) and read the [manuals](https://www.jecstar.com/docs/enterprise-telemetry-monitor).
 
 ## License
-
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details
+The sources of this project are licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details. Enterprise
+Telemetry Monitor is completely free to use with 10 [request units](etm-documentation/docs/administrating/license-registration.md#request-units) per 
+second. If you need more request units , please contact sales@jecstar.com.
