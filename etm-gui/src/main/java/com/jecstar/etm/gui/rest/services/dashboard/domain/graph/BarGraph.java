@@ -48,7 +48,7 @@ public class BarGraph extends AxesGraph<BarGraph> {
     @Override
     public void appendHighchartsConfig(JsonBuilder builder) {
         super.appendHighchartsConfig(builder);
-        String chartType = Orientation.HORIZONTAL.equals(getOrientation()) ? "bar" : "column";
+        var chartType = Orientation.HORIZONTAL.equals(getOrientation()) ? "bar" : "column";
         builder.startObject("chart").field("type", chartType).endObject();
         builder.startObject("plotOptions").startObject(chartType);
         if ("percentage".equals(getSubType())) {
@@ -60,8 +60,12 @@ public class BarGraph extends AxesGraph<BarGraph> {
     }
 
     @Override
-    public void mergeFromColumn(BarGraph graph) {
+    public BarGraph mergeFromColumn(Graph<?> graph) {
         super.mergeFromColumn(graph);
-        this.subType = graph.getSubType();
+        if (graph instanceof BarGraph) {
+            var other = (BarGraph) graph;
+            this.subType = other.getSubType();
+        }
+        return this;
     }
 }

@@ -85,7 +85,7 @@ public class AreaGraph extends AxesGraph<AreaGraph> {
     @Override
     public void appendHighchartsConfig(JsonBuilder builder) {
         super.appendHighchartsConfig(builder);
-        boolean inverted = Orientation.HORIZONTAL.equals(getOrientation());
+        var inverted = Orientation.HORIZONTAL.equals(getOrientation());
         builder.startObject("chart").field("type", getChartType()).field("inverted", inverted).endObject();
         builder.startObject("plotOptions").startObject(getChartType());
         builder.startObject("marker").field("enabled", isShowMarkers()).endObject();
@@ -107,11 +107,15 @@ public class AreaGraph extends AxesGraph<AreaGraph> {
     }
 
     @Override
-    public void mergeFromColumn(AreaGraph graph) {
+    public AreaGraph mergeFromColumn(Graph<?> graph) {
         super.mergeFromColumn(graph);
-        this.subType = graph.getSubType();
-        this.lineType = graph.getLineType();
-        this.showMarkers = graph.isShowMarkers();
-        this.showDataLabels = graph.isShowDataLabels();
+        if (graph instanceof AreaGraph) {
+            var other = (AreaGraph) graph;
+            this.subType = other.getSubType();
+            this.lineType = other.getLineType();
+            this.showMarkers = other.isShowMarkers();
+            this.showDataLabels = other.isShowDataLabels();
+        }
+        return this;
     }
 }

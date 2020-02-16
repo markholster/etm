@@ -34,4 +34,4 @@ You're more a dashboard person? We've got you covered ;)
 ## License
 The sources of this project are licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details. Enterprise
 Telemetry Monitor is completely free to use with 10 [request units](etm-documentation/docs/administrating/license-registration.md#request-units) per 
-second. If you need more request units , please contact sales@jecstar.com.
+second. If you need more request units, please contact sales@jecstar.com.

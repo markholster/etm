@@ -76,7 +76,7 @@ public class PieGraph extends Graph<PieGraph> {
 
     @Override
     public void addAggregators(SearchRequestBuilder searchRequest) {
-        BucketAggregator bucketAggregator = getXAxis().getBucketAggregator().clone();
+        var bucketAggregator = getXAxis().getBucketAggregator().clone();
         bucketAggregator.addAggregators(getYAxis().getAggregators().stream().map(Aggregator::clone).collect(Collectors.toList()));
         searchRequest.addAggregation(bucketAggregator.toAggregationBuilder());
     }
@@ -107,10 +107,14 @@ public class PieGraph extends Graph<PieGraph> {
     }
 
     @Override
-    public void mergeFromColumn(PieGraph graph) {
-        this.subType = graph.getSubType();
-        this.showLegend = graph.isShowLegend();
-        this.showDataLabels = graph.isShowDataLabels();
+    public PieGraph mergeFromColumn(Graph<?> graph) {
+        if (graph instanceof PieGraph) {
+            var other = (PieGraph) graph;
+            this.subType = other.getSubType();
+            this.showLegend = other.isShowLegend();
+            this.showDataLabels = other.isShowDataLabels();
+        }
+        return this;
     }
 
     @Override

@@ -73,7 +73,7 @@ public class LineGraph extends AxesGraph<LineGraph> {
     @Override
     public void appendHighchartsConfig(JsonBuilder builder) {
         super.appendHighchartsConfig(builder);
-        boolean inverted = Orientation.HORIZONTAL.equals(getOrientation());
+        var inverted = Orientation.HORIZONTAL.equals(getOrientation());
         builder.startObject("chart").field("type", getChartType()).field("inverted", inverted).endObject();
         builder.startObject("plotOptions").startObject(getChartType()).startObject("marker").field("enabled", isShowMarkers()).endObject();
         builder.startObject("dataLabels").field("enabled", isShowDataLabels()).endObject();
@@ -86,10 +86,14 @@ public class LineGraph extends AxesGraph<LineGraph> {
     }
 
     @Override
-    public void mergeFromColumn(LineGraph graph) {
+    public LineGraph mergeFromColumn(Graph<?> graph) {
         super.mergeFromColumn(graph);
-        this.lineType = graph.getLineType();
-        this.showMarkers = graph.isShowMarkers();
-        this.showDataLabels = graph.isShowDataLabels();
+        if (graph instanceof LineGraph) {
+            var other = (LineGraph) graph;
+            this.lineType = other.getLineType();
+            this.showMarkers = other.isShowMarkers();
+            this.showDataLabels = other.isShowDataLabels();
+        }
+        return this;
     }
 }

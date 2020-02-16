@@ -721,8 +721,10 @@ function showOrHideGraphFontSize(graphContainer, graphFontSize) {
 function showOrHideGraphVerticalAlignment(graphContainer, graphVerticalAlignment) {
     const $grpGraphVerticalAlignment = $('#grp-graph-vertical-alignment').hide();
     if ('undefined' !== typeof graphContainer) {
-        $("#sel-graph-vertical-alignment").val(graphVerticalAlignment !== undefined ? graphVerticalAlignment : graphContainer.graph.vertical_alignment);
-        $grpGraphVerticalAlignment.show();
+        if ('number' === graphContainer.graph.type) {
+            $("#sel-graph-vertical-alignment").val(graphVerticalAlignment !== undefined ? graphVerticalAlignment : graphContainer.graph.vertical_alignment);
+            $grpGraphVerticalAlignment.show();
+        }
     }
 }
 

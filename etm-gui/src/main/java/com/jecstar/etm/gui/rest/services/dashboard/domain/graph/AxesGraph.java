@@ -108,7 +108,7 @@ public abstract class AxesGraph<T extends AxesGraph> extends Graph<T> {
 
     @Override
     public void addAggregators(SearchRequestBuilder searchRequestBuilder) {
-        BucketAggregator bucketAggregator = getXAxis().getBucketAggregator().clone();
+        var bucketAggregator = getXAxis().getBucketAggregator().clone();
         bucketAggregator.addAggregators(getYAxis().getAggregators().stream().map(Aggregator::clone).collect(Collectors.toList()));
         searchRequestBuilder.addAggregation(bucketAggregator.toAggregationBuilder());
     }
@@ -130,10 +130,15 @@ public abstract class AxesGraph<T extends AxesGraph> extends Graph<T> {
         return getYAxis().getFormat();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public void mergeFromColumn(T graph) {
-        this.orientation = graph.getOrientation();
-        this.showLegend = graph.isShowLegend();
+    public T mergeFromColumn(Graph<?> graph) {
+        if (graph instanceof AxesGraph) {
+            var other = (AxesGraph) graph;
+            this.orientation = other.getOrientation();
+            this.showLegend = other.isShowLegend();
+        }
+        return (T) this;
     }
 
     @Override

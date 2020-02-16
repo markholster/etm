@@ -21,12 +21,10 @@ import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.gui.rest.services.dashboard.domain.converter.YAxisConverter;
 import com.jecstar.etm.server.core.converter.JsonField;
 import com.jecstar.etm.server.core.converter.custom.EnumConverter;
-import com.jecstar.etm.server.core.domain.aggregator.Aggregator;
 import com.jecstar.etm.server.core.domain.aggregator.bucket.BucketAggregator;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
-import org.elasticsearch.search.aggregations.BaseAggregationBuilder;
 import org.elasticsearch.search.aggregations.PipelineAggregationBuilder;
 
 public class NumberGraph extends Graph<NumberGraph> {
@@ -94,8 +92,8 @@ public class NumberGraph extends Graph<NumberGraph> {
 
     @Override
     public void addAggregators(SearchRequestBuilder searchRequest) {
-        for (Aggregator aggregator : getYAxis().getAggregators()) {
-            BaseAggregationBuilder baseAggregationBuilder = aggregator.toAggregationBuilder();
+        for (var aggregator : getYAxis().getAggregators()) {
+            var baseAggregationBuilder = aggregator.toAggregationBuilder();
             if (baseAggregationBuilder instanceof AggregationBuilder) {
                 searchRequest.addAggregation((AggregationBuilder) baseAggregationBuilder);
             } else if (baseAggregationBuilder instanceof PipelineAggregationBuilder) {
@@ -121,9 +119,13 @@ public class NumberGraph extends Graph<NumberGraph> {
     }
 
     @Override
-    public void mergeFromColumn(NumberGraph graph) {
-        this.fontSize = graph.getFontSize();
-        this.verticalAlignment = graph.getVerticalAlignment();
+    public NumberGraph mergeFromColumn(Graph<?> graph) {
+        if (graph instanceof NumberGraph) {
+            var other = (NumberGraph) graph;
+            this.fontSize = other.getFontSize();
+            this.verticalAlignment = other.getVerticalAlignment();
+        }
+        return this;
     }
 
     @Override

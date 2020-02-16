@@ -61,10 +61,16 @@ public abstract class Graph<T extends Graph> {
 
     /**
      * Merge an other <code>Graph</code> instance configured at a <code>Dashboard</code>'s <code>Column</code>.
+     * <p>
+     * Note that the Graph instance type on the graph page may differ than the one configured at the dashboard. This
+     * happens when a  graph is created, added to a dashboard an then altered to another type. This alteration on the
+     * graphs page won't update every dashboard entry. To prevent ClassCastExceptions every Graph needs to check the
+     * instance type before setting additional parameters.
      *
      * @param graph The <code>Graph</code> to merge from.
+     * @return The <code>Graph</code> instance for chaining.
      */
-    public abstract void mergeFromColumn(T graph);
+    public abstract T mergeFromColumn(Graph<?> graph);
 
     /**
      * Prepares the <code>Graph</code> for the search to be executed. This gives <code>Aggregator</code>s the option

@@ -43,15 +43,19 @@ public class ScatterGraph extends AxesGraph<ScatterGraph> {
     @Override
     public void appendHighchartsConfig(JsonBuilder builder) {
         super.appendHighchartsConfig(builder);
-        boolean inverted = Orientation.HORIZONTAL.equals(getOrientation());
+        var inverted = Orientation.HORIZONTAL.equals(getOrientation());
         builder.startObject("chart").field("type", "scatter").field("inverted", inverted).endObject();
         builder.startObject("plotOptions").startObject("scatter").startObject("dataLabels").field("enabled", isShowDataLabels()).endObject();
         builder.endObject().endObject();
     }
 
     @Override
-    public void mergeFromColumn(ScatterGraph graph) {
+    public ScatterGraph mergeFromColumn(Graph<?> graph) {
         super.mergeFromColumn(graph);
-        this.showDataLabels = graph.isShowDataLabels();
+        if (graph instanceof ScatterGraph) {
+            var other = (ScatterGraph) graph;
+            this.showDataLabels = other.isShowDataLabels();
+        }
+        return this;
     }
 }
