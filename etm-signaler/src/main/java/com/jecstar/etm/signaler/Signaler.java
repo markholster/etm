@@ -31,6 +31,7 @@ import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalConverterJsonImpl;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.elasticsearch.builder.GetRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.MultiGetRequestBuilder;
 import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
 import com.jecstar.etm.server.core.elasticsearch.builder.UpdateRequestBuilder;
 import com.jecstar.etm.server.core.logging.LogFactory;
@@ -427,18 +428,34 @@ public class Signaler extends AbstractJsonService implements Runnable {
      * @param username The name of the <code>EtmPrincipal</code> to load.
      * @return The <code>EtmPrincipal</code> with the given username, or <code>null</code> when no such user exists.
      */
+    @SuppressWarnings("unchecked")
     private EtmPrincipal getEtmPrincipal(String username) {
         if (username == null) {
             return null;
         }
-        GetRequestBuilder requestBuilder = new GetRequestBuilder(
+        var requestBuilder = new GetRequestBuilder(
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME,
                 ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + username);
-        GetResponse getResponse = this.dataRepository.get(requestBuilder);
+        var getResponse = this.dataRepository.get(requestBuilder);
         if (!getResponse.isExists()) {
             return null;
         }
-        return this.etmPrincipalConverter.readPrincipal(getResponse.getSourceAsMap());
+        var principal = this.etmPrincipalConverter.readPrincipal(getResponse.getSourceAsString());
+        var objectMap = getResponse.getSourceAsMap();
+        var userMap = (Map<String, Object>) objectMap.get(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER);
+        Collection<String> groups = getArray(this.etmPrincipalTags.getGroupsTag(), userMap);
+        if (groups != null && !groups.isEmpty()) {
+            var multiGetBuilder = new MultiGetRequestBuilder();
+            for (var group : groups) {
+                multiGetBuilder.add(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + group);
+            }
+            var multiGetResponse = this.dataRepository.get(multiGetBuilder);
+            for (var item : multiGetResponse) {
+                EtmGroup etmGroup = this.etmPrincipalConverter.readGroup(item.getResponse().getSourceAsString());
+                principal.addGroup(etmGroup);
+            }
+        }
+        return principal;
     }
 
     /**
