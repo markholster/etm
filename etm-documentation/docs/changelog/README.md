@@ -11,6 +11,7 @@
 * [ETM-3](https://github.com/jecstarinnovations/etm/issues/3) Elasticsearch exception in MetricReporter.
 * [ETM-5](https://github.com/jecstarinnovations/etm/issues/5) Number graphs should have a bottom margin.
 * [ETM-6](https://github.com/jecstarinnovations/etm/issues/6) Graph borders should be removed.
+* [ETM-13](https://github.com/jecstarinnovations/etm/issues/13) Unable to sort results on handling_time.
 * [ETM-14](https://github.com/jecstarinnovations/etm/issues/14) Search endpoint returns duplicate keys.
 
 ## Version 4.0.1

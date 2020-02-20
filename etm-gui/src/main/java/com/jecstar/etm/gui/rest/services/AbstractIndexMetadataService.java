@@ -63,7 +63,15 @@ public abstract class AbstractIndexMetadataService extends AbstractGuiService {
         // Iterate over all mappings trying to find a field definition.
         for (var indexMap : response.mappings().values()) {
             for (var fieldMappingMetaData : indexMap.values()) {
-                var type = getString("type", getObject(propertyName, fieldMappingMetaData.sourceAsMap(), Collections.emptyMap()));
+                if (!propertyName.equals(fieldMappingMetaData.fullName())) {
+                    continue;
+                }
+                var metadataMapping = fieldMappingMetaData.sourceAsMap();
+                var iterator = metadataMapping.keySet().iterator();
+                if (!iterator.hasNext()) {
+                    continue;
+                }
+                var type = getString("type", getObject(iterator.next(), fieldMappingMetaData.sourceAsMap(), Collections.emptyMap()));
                 if (type != null) {
                     return "text".equals(type) ? propertyName + KEYWORD_SUFFIX : propertyName;
                 }
