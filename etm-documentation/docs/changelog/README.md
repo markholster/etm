@@ -11,6 +11,7 @@
 * [ETM-3](https://github.com/jecstarinnovations/etm/issues/3) Elasticsearch exception in MetricReporter.
 * [ETM-5](https://github.com/jecstarinnovations/etm/issues/5) Number graphs should have a bottom margin.
 * [ETM-6](https://github.com/jecstarinnovations/etm/issues/6) Graph borders should be removed.
+* [ETM-14](https://github.com/jecstarinnovations/etm/issues/14) Search endpoint returns duplicate keys.
 
 ## Version 4.0.1
 * [ETM-132](https://jecstar.atlassian.net/browse/ETM-132) Use UnboundID provider for LDAP connection.

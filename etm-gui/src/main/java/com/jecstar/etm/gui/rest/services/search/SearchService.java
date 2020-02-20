@@ -231,7 +231,6 @@ public class SearchService extends AbstractIndexMetadataService {
         builder.field("hits", response.getHits().getTotalHits().value);
         builder.field("hits_relation", response.getHits().getTotalHits().relation.name());
         builder.field("hits_as_string", numberFormat.format(response.getHits().getTotalHits().value) + (TotalHits.Relation.GREATER_THAN_OR_EQUAL_TO.equals(response.getHits().getTotalHits().relation) ? "+" : ""));
-        builder.field("time_zone", etmPrincipal.getTimeZone().getID());
         builder.field("start_ix", parameters.getStartIndex());
         builder.field("end_ix", parameters.getStartIndex() + response.getHits().getHits().length - 1);
         // TODO has_more_results is inaccurate in etm 4 because totalhits is a GTE value.
