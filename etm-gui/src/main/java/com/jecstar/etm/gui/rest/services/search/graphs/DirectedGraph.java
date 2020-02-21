@@ -317,7 +317,7 @@ public class DirectedGraph {
                         highestEndTime = maxEvent.get().getEventEndTime().toEpochMilli();
                     }
                     final var latency = eventTime.minus((highestEndTime - lowestStartTime), ChronoUnit.MILLIS);
-                    event.calculateAbsoluteTransactionMetrics(latency, totalEventTime);
+                    event.calculateAbsoluteTransactionMetrics(latency, this.totalEventTime);
                 }
             } else {
                 // A reader -> search for event from the same application that are written after the current event.
@@ -332,7 +332,7 @@ public class DirectedGraph {
                         .mapToLong(e -> e.getTotalEventTime().toMillis())
                         .sum();
                 var absoluteTime = eventTime.minusMillis(backendTime);
-                event.calculateAbsoluteTransactionMetrics(absoluteTime, totalEventTime);
+                event.calculateAbsoluteTransactionMetrics(absoluteTime, this.totalEventTime);
             }
         }
         return this;

@@ -63,7 +63,12 @@ public class Event extends AbstractVertex {
 
     public void calculateAbsoluteTransactionMetrics(Duration absoluteDuration, Duration totalTransactionDuration) {
         this.absoluteDuration = absoluteDuration;
-        this.absoluteTransactionPercentage = new BigDecimal(Float.toString((float) absoluteDuration.toMillis() / (float) totalTransactionDuration.toMillis()));
+        if (totalTransactionDuration.toMillis() <= 0) {
+            return;
+        }
+        var abs = (double) absoluteDuration.toMillis();
+        var total = (double) totalTransactionDuration.toMillis();
+        this.absoluteTransactionPercentage = new BigDecimal(abs / total);
         this.absoluteTransactionPercentage = this.absoluteTransactionPercentage.setScale(4, RoundingMode.HALF_UP);
     }
 
