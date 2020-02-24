@@ -16,10 +16,10 @@
  */
 
 function buildNodePage() {
-	var nodeMap = {};
+	const nodeMap = {};
 	$('#sel-node').change(function (event) {
 		event.preventDefault();
-		var nodeData = nodeMap[$(this).val()];
+		const nodeData = nodeMap[$(this).val()];
 		if ('undefined' == typeof nodeData) {
 			resetValues();
 			return;
@@ -39,7 +39,7 @@ function buildNodePage() {
 		if (!document.getElementById('node_form').checkValidity()) {
 			return;
 		}
-		var nodeName = $('#input-node-name').val();
+		const nodeName = $('#input-node-name').val();
 		if (isNodeExistent(nodeName)) {
 			$('#overwrite-node-name').text(nodeName);
 			$('#modal-node-overwrite').modal();
@@ -48,17 +48,17 @@ function buildNodePage() {
 		}
 	});
 
-	$('#btn-save-node').click(function(event) {
+	$('#btn-save-node').on('click', function () {
 		saveNode();
 	});
 
-	$('#btn-confirm-remove-node').click(function (event) {
+	$('#btn-confirm-remove-node').on('click', function (event) {
 		event.preventDefault();
 		$('#remove-node-name').text($('#input-node-name').val());
 		$('#modal-node-remove').modal();
 	});
 
-	$('#btn-remove-node').click(function(event) {
+	$('#btn-remove-node').on('click', function () {
 		removeNode($('#input-node-name').val());
 	});
 
@@ -79,13 +79,13 @@ function buildNodePage() {
 				$nodeSelect.append($('<option>').attr('value', node.name).text(node.name));
 				nodeMap[node.name] = node;
 			});
-			commons.sortSelectOptions($nodeSelect)
+			commons.sortSelectOptions($nodeSelect);
 			$nodeSelect.val('');
 		}
 	});
 
 	function enableOrDisableButtons() {
-		var nodeName = $('#input-node-name').val();
+		const nodeName = $('#input-node-name').val();
 		if (nodeName) {
 			$('#btn-confirm-save-node').removeAttr('disabled');
 			if (isNodeExistent(nodeName)) {
@@ -103,7 +103,7 @@ function buildNodePage() {
 	}
 
 	function saveNode() {
-		var nodeData = createNodeData();
+		const nodeData = createNodeData();
 		$.ajax({
 			type: 'PUT',
 			contentType: 'application/json',
@@ -139,7 +139,7 @@ function buildNodePage() {
 				}
 				delete nodeMap[nodeName];
 				$("#sel-node > option").filter(function (i) {
-					return $(this).attr("value") == nodeName;
+					return $(this).attr("value") === nodeName;
 				}).remove();
 				commons.showNotification('Node \'' + nodeName + '\' removed.', 'success');
 			}
@@ -149,7 +149,7 @@ function buildNodePage() {
 	}
 
 	function createNodeData() {
-		var nodeData = {
+		return {
 			name: $('#input-node-name').val(),
 			host: $('#input-host').val(),
 			port: Number($('#input-port').val()),
@@ -157,8 +157,7 @@ function buildNodePage() {
 			password: encode($('#input-password').val()),
 			queue_manager: $('#input-queue-manager').val(),
 			channel: $('#input-channel').val() ? $('#input-channel').val() : null
-		}
-		return nodeData;
+		};
 	}
 
 	function resetValues() {
@@ -176,7 +175,7 @@ function buildNodePage() {
 		if (!data) {
 			return null;
 		}
-		for (i = 0; i < 7; i++) {
+		for (let i = 0; i < 7; i++) {
 			data = commons.base64Decode(data);
 		}
 		return data;
@@ -186,8 +185,8 @@ function buildNodePage() {
 		if (!data) {
 			return null;
 		}
-		for (i = 0; i < 7; i++) {
-			data = commons.base64Decode(data);
+		for (let i = 0; i < 7; i++) {
+			data = commons.base64Encode(data);
 		}
 		return data;
 	}
