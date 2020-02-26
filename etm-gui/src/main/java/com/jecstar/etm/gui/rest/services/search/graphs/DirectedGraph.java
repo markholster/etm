@@ -1,4 +1,24 @@
+/*
+ * Licensed to Jecstar Innovation under one or more contributor
+ * license agreements. Jecstar Innovation licenses this file to you
+ * under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing,
+ *  software distributed under the License is distributed on an
+ *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ *  KIND, either express or implied. See the License for the
+ *  specific language governing permissions and limitations
+ *  under the License.
+ */
+
 package com.jecstar.etm.gui.rest.services.search.graphs;
+
+import com.jecstar.etm.server.core.logging.LogFactory;
+import com.jecstar.etm.server.core.logging.LogWrapper;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -13,7 +33,12 @@ import java.util.stream.Collectors;
 public class DirectedGraph {
 
     /**
-     * The outdegreem map of all <code>Vertex</code> instances present in this <code>DirectedGraph</code>.
+     * The <code>LogWrapper</code> for this class.
+     */
+    private static final LogWrapper log = LogFactory.getLogger(DirectedGraph.class);
+
+    /**
+     * The outdegree map of all <code>Vertex</code> instances present in this <code>DirectedGraph</code>.
      */
     private final Map<Vertex, LinkedList<Vertex>> outdegreeMap = new LinkedHashMap<>();
     /**
@@ -156,6 +181,9 @@ public class DirectedGraph {
         var cycleFinder = new CycleFinder(this);
         if (cycleFinder.hasCycle()) {
             // TODO dit moet nog opgelost worden. Op zoek naar de kortste cycle en deze negeren o.i.d.
+            if (log.isErrorLevelEnabled()) {
+                log.logErrorMessage("Found a cycle in the event order: \n" + toString());
+            }
             throw new IllegalStateException("Found a cycle in the event order. It is impossible to display the endpoints overview.");
         }
         var depthFirstOrder = new DepthFirstOrder(this);
@@ -514,5 +542,17 @@ public class DirectedGraph {
             path.add(v);
             return path;
         }
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder stack = new StringBuilder();
+        for (var entry : this.outdegreeMap.entrySet()) {
+            if (stack.length() > 0) {
+                stack.append("\n");
+            }
+            stack.append(entry.getKey().toString() + " references " + entry.getValue().stream().map(Object::toString).collect(Collectors.joining(", ")));
+        }
+        return stack.toString();
     }
 }
