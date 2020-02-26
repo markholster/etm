@@ -131,4 +131,13 @@ public class Endpoint extends AbstractVertex {
     public int hashCode() {
         return Objects.hash(super.hashCode(), name, eventId);
     }
+
+    @Override
+    public String toString() {
+        return "Endpoint{" +
+                "vertexId='" + getVertexId() + '\'' +
+                ", name='" + name + '\'' +
+                ", eventId='" + eventId + '\'' +
+                '}';
+    }
 }

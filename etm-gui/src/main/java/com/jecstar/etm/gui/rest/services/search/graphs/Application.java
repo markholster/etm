@@ -69,4 +69,13 @@ public class Application extends AbstractVertex {
     public int hashCode() {
         return Objects.hash(super.hashCode(), this.name, this.instance);
     }
+
+    @Override
+    public String toString() {
+        return "Application{" +
+                "vertexId='" + getVertexId() + '\'' +
+                ", name='" + name + '\'' +
+                ", instance='" + instance + '\'' +
+                '}';
+    }
 }

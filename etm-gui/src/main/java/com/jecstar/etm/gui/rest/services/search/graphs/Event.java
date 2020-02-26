@@ -1,20 +1,3 @@
-/*
- * Licensed to Jecstar Innovation under one or more contributor
- * license agreements. Jecstar Innovation licenses this file to you
- * under the Apache License, Version 2.0 (the "License"); you may
- * not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing,
- *  software distributed under the License is distributed on an
- *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- *  KIND, either express or implied. See the License for the
- *  specific language governing permissions and limitations
- *  under the License.
- */
-
 package com.jecstar.etm.gui.rest.services.search.graphs;
 
 import com.jecstar.etm.domain.writer.json.JsonBuilder;
@@ -214,6 +197,17 @@ public class Event extends AbstractVertex {
         if (getAbsoluteDuration() != null) {
             builder.field("absolute_duration", getAbsoluteDuration().toMillis());
         }
+    }
+
+    @Override
+    public String toString() {
+        return "Event{" +
+                "vertexId='" + getVertexId() + '\'' +
+                ", eventId='" + eventId + '\'' +
+                ", name='" + name + '\'' +
+                ", correlationEventId='" + correlationEventId + '\'' +
+                ", transactionId='" + transactionId + '\'' +
+                '}';
     }
 
 }
