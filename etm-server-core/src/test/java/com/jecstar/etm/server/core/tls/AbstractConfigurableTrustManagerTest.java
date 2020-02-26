@@ -1,3 +1,20 @@
+/*
+ * Licensed to Jecstar Innovation under one or more contributor
+ * license agreements. Jecstar Innovation licenses this file to you
+ * under the Apache License, Version 2.0 (the "License"); you may
+ * not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing,
+ *  software distributed under the License is distributed on an
+ *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ *  KIND, either express or implied. See the License for the
+ *  specific language governing permissions and limitations
+ *  under the License.
+ */
+
 package com.jecstar.etm.server.core.tls;
 
 import com.jecstar.etm.server.core.domain.cluster.certificate.Certificate;
@@ -112,10 +129,10 @@ public class AbstractConfigurableTrustManagerTest {
             "-----END CERTIFICATE-----";
 
     private static final String BADSSL_SELF_SIGNED = "-----BEGIN CERTIFICATE-----\n" +
-            "MIIDeTCCAmGgAwIBAgIJAK32hhGBHramMA0GCSqGSIb3DQEBCwUAMGIxCzAJBgNV\n" +
+            "MIIDeTCCAmGgAwIBAgIJAPziuikCTox4MA0GCSqGSIb3DQEBCwUAMGIxCzAJBgNV\n" +
             "BAYTAlVTMRMwEQYDVQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNp\n" +
             "c2NvMQ8wDQYDVQQKDAZCYWRTU0wxFTATBgNVBAMMDCouYmFkc3NsLmNvbTAeFw0x\n" +
-            "OTA2MTIxNTMxNTlaFw0yMTA2MTExNTMxNTlaMGIxCzAJBgNVBAYTAlVTMRMwEQYD\n" +
+            "OTEwMDkyMzQxNTJaFw0yMTEwMDgyMzQxNTJaMGIxCzAJBgNVBAYTAlVTMRMwEQYD\n" +
             "VQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMQ8wDQYDVQQK\n" +
             "DAZCYWRTU0wxFTATBgNVBAMMDCouYmFkc3NsLmNvbTCCASIwDQYJKoZIhvcNAQEB\n" +
             "BQADggEPADCCAQoCggEBAMIE7PiM7gTCs9hQ1XBYzJMY61yoaEmwIrX5lZ6xKyx2\n" +
@@ -125,12 +142,12 @@ public class AbstractConfigurableTrustManagerTest {
             "ww9HdFxBIuGa+RuT5q0iBikusbpJHAwnnqP7i/dAcgCskgjZjFeEU4EFy+b+a1SY\n" +
             "QCeFxxC7c3DvaRhBB0VVfPlkPz0sw6l865MaTIbRyoUCAwEAAaMyMDAwCQYDVR0T\n" +
             "BAIwADAjBgNVHREEHDAaggwqLmJhZHNzbC5jb22CCmJhZHNzbC5jb20wDQYJKoZI\n" +
-            "hvcNAQELBQADggEBAIi5u9w8mgT6ppCc7xsG+A9fI3W4z+qSKaphr5ls70GBKbiY\n" +
-            "YLJUYZhPfWph1qtkkU0LHFPm83Va52eIHrjXT0Ve4KtO1n0IAfItFaW62CJghGYn\n" +
-            "jzw0ryzgC4PyFpNMnNtBroPu/bPgWiMgLONpEZhigx4Q8wf1Y/U9s+zCCxoJlaKR\n" +
-            "MXbuQ87X7m/9VRnxxo6Nz5Zf7OTHTpNOI6Vja0BxbmIAU6yriw9UrgibXfOj3j6n\n" +
-            "MTLBugUVIB0bBaasJsAMK+w4LANvapeZ0DOSnOR4KK24J0OyoF5fHmp59eM17IoF\n" +
-            "QqBhzpmQUgunecEW8BTqrNpG79R1u+V+4wwckPc=\n" +
+            "hvcNAQELBQADggEBAGlwCdbPxflZfYOaukZGCaxYK6gpincX4Lla4Ui2WdeQxE95\n" +
+            "w7fChXvP3YkE3UYUE7mupZ0eg4ZILr/A0e7JQDsgIu/SRTUE0domCKgPZ8v99k3A\n" +
+            "vka4LpLK51jHJJK7EFgo3ca2nldd97GM0MU41xHFk8qaK1tWJkfrrfcGwDJ4GQPI\n" +
+            "iLlm6i0yHq1Qg1RypAXJy5dTlRXlCLd8ufWhhiwW0W75Va5AEnJuqpQrKwl3KQVe\n" +
+            "wGj67WWRgLfSr+4QG1mNvCZb2CkjZWmxkGPuoP40/y7Yu5OFqxP5tAjj4YixCYTW\n" +
+            "EVA0pmzIzgBg+JIe3PdRy27T0asgQW/F4TY61Yk=\n" +
             "-----END CERTIFICATE-----";
 
     @Test
