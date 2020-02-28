@@ -27,7 +27,10 @@ import com.jecstar.etm.gui.rest.export.FileType;
 import com.jecstar.etm.gui.rest.export.QueryExporter;
 import com.jecstar.etm.gui.rest.services.AbstractIndexMetadataService;
 import com.jecstar.etm.gui.rest.services.Keyword;
-import com.jecstar.etm.gui.rest.services.search.graphs.*;
+import com.jecstar.etm.gui.rest.services.search.graphs.Application;
+import com.jecstar.etm.gui.rest.services.search.graphs.DirectedGraph;
+import com.jecstar.etm.gui.rest.services.search.graphs.Endpoint;
+import com.jecstar.etm.gui.rest.services.search.graphs.Event;
 import com.jecstar.etm.server.core.domain.audit.AuditLog;
 import com.jecstar.etm.server.core.domain.audit.GetEventAuditLog;
 import com.jecstar.etm.server.core.domain.audit.builder.GetEventAuditLogBuilder;
@@ -906,73 +909,7 @@ public class SearchService extends AbstractIndexMetadataService {
                 }
             }
         }
-        // Add edges within a transaction.
-        var vertices = directedGraph.getVertices();
-        for (var vertex : vertices) {
-            if (!(vertex instanceof Event)) {
-                continue;
-            }
-            if (!directedGraph.getAdjacentOutVertices(vertex).isEmpty()) {
-                continue;
-            }
-            // We've found an event without a connection to a next vertex. Let's see if we can make some connections.
-            var event = (Event) vertex;
-            if (event.getTransactionId() != null) {
-                var transactionEvents = directedGraph.findEvents(e -> event.getTransactionId().equals(e.getTransactionId()));
-                transactionEvents.sort(Comparator.comparing(Event::getEventStartTime));
-                for (var transactionEvent : transactionEvents) {
-                    if (!transactionEvent.getEventStartTime().isBefore(event.getEventStartTime()) && !event.getEventId().equals(transactionEvent.getEventId())) {
-                        directedGraph.addEdge(event, transactionEvent);
-                        break;
-                    }
-                }
-            }
-        }
-        // See if all requests are connected to responses. If not, try to add the connection.
-        for (var vertex : vertices) {
-            if (!(vertex instanceof Event)) {
-                continue;
-            }
-            var event = (Event) vertex;
-            // Check if this event is a response and has a correlation to a request.
-            if (!event.isResponse() || event.getCorrelationEventId() == null) {
-                continue;
-            }
-            // Find the corresponding request of the response.
-            Optional<Event> first = vertices.stream().filter(v -> v instanceof Event).map(e -> (Event) e).filter(e -> e.getEventId().equals(event.getCorrelationEventId())).findFirst();
-            if (first.isEmpty()) {
-                continue;
-            }
-            var requestEvent = first.get();
-            if (directedGraph.hasPathTo(requestEvent, event)) {
-                // There's a path from the request to the response. Nothing to do...
-                continue;
-            }
-            // Let's see if we can find the end of the path seen from the request.
-            Vertex lastAfterRequest = requestEvent;
-            while (directedGraph.getAdjacentOutVertices(lastAfterRequest) != null && !directedGraph.getAdjacentOutVertices(lastAfterRequest).isEmpty()) {
-                var next = directedGraph.getAdjacentOutVertices(lastAfterRequest).get(0);
-                if (next.equals(requestEvent)) {
-                    // Somehow a cycle has introduced into the DAG. This should not be possible.
-                    break;
-                }
-                lastAfterRequest = next;
-            }
-            if (lastAfterRequest.equals(requestEvent)) {
-                // Nothing found...
-                continue;
-            }
-            Vertex firstBeforeResponse = event;
-            while (directedGraph.getAdjacentInVertices(firstBeforeResponse) != null && !directedGraph.getAdjacentInVertices(firstBeforeResponse).isEmpty()) {
-                var next = directedGraph.getAdjacentInVertices(firstBeforeResponse).get(0);
-                if (next.equals(event)) {
-                    // Somehow a cycle has introduced into the DAG. This should not be possible.
-                    break;
-                }
-                firstBeforeResponse = next;
-            }
-            directedGraph.addEdge(lastAfterRequest, firstBeforeResponse);
-        }
+        directedGraph.finishGraph();
         return directedGraph.calculateAbsoluteMetrics();
     }
 

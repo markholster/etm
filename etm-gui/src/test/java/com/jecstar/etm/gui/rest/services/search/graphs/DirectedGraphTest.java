@@ -19,6 +19,9 @@ package com.jecstar.etm.gui.rest.services.search.graphs;
 
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -101,5 +104,94 @@ public class DirectedGraphTest {
         assertEquals("3B", vertices.get(0).getVertexId());
         assertEquals("4B", vertices.get(1).getVertexId());
         assertEquals("app2", vertices.get(2).getVertexId());
+    }
+
+    @Test
+    public void testFinishGraph() {
+        var directedGraph = new DirectedGraph();
+
+        var now = Instant.now();
+        var event1 = new Event("1", "getMessage")
+                .setResponse(false)
+                .setSent(false)
+                .setTransactionId("123")
+                .setEventStartTime(now)
+                .setEventEndTime(now.plus(7, ChronoUnit.SECONDS));
+        var event2 = new Event("2", "getCustomerRequest")
+                .setResponse(false)
+                .setSent(true)
+                .setTransactionId("123")
+                .setEventStartTime(now.plus(1, ChronoUnit.SECONDS))
+                .setEventEndTime(now.plus(2, ChronoUnit.SECONDS));
+        var event3 = new Event("3", "getCustomerResponse")
+                .setResponse(true)
+                .setSent(false)
+                .setTransactionId("123")
+                .setCorrelationEventId("2")
+                .setEventStartTime(now.plus(2, ChronoUnit.SECONDS));
+        var event4 = new Event("4", "getStockRequest")
+                .setResponse(false)
+                .setSent(true)
+                .setTransactionId("123")
+                .setEventStartTime(now.plus(3, ChronoUnit.SECONDS))
+                .setEventEndTime(now.plus(4, ChronoUnit.SECONDS));
+        var event5 = new Event("5", "getStockRequest")
+                .setResponse(true)
+                .setSent(false)
+                .setTransactionId("123")
+                .setCorrelationEventId("4")
+                .setEventStartTime(now.plus(4, ChronoUnit.SECONDS));
+        var event6 = new Event("6", "getStockRequest")
+                .setResponse(false)
+                .setSent(true)
+                .setTransactionId("123")
+                .setEventStartTime(now.plus(5, ChronoUnit.SECONDS))
+                .setEventEndTime(now.plus(6, ChronoUnit.SECONDS));
+        var event7 = new Event("7", "getStockResponse")
+                .setResponse(true)
+                .setSent(false)
+                .setTransactionId("123")
+                .setCorrelationEventId("6")
+                .setEventStartTime(now.plus(6, ChronoUnit.SECONDS));
+        var event8 = new Event("8", "responseMessage")
+                .setResponse(true)
+                .setSent(true)
+                .setTransactionId("123")
+                .setCorrelationEventId("1")
+                .setEventStartTime(now.plus(7, ChronoUnit.SECONDS));
+
+        directedGraph.addEdge(new Endpoint("e1", "http://webshop.com/getMessage").setEventId(event1.getEventId()), event1);
+        directedGraph.addEdge(event8, new Endpoint("e8", "http://webshop.com/getMessage").setEventId(event8.getEventId()));
+
+        directedGraph.addEdge(event2, new Endpoint("e2", "http://backend.com/getCustomer").setEventId(event2.getEventId()));
+        directedGraph.addEdge(new Endpoint("e3", "http://backend.com/getCustomer").setEventId(event3.getEventId()), event3);
+
+        directedGraph.addEdge(event4, new Endpoint("e4", "http://backend.com/getStock").setEventId(event4.getEventId()));
+        directedGraph.addEdge(new Endpoint("e5", "http://backend.com/getStock").setEventId(event5.getEventId()), event5);
+
+        directedGraph.addEdge(event6, new Endpoint("e6", "http://backend.com/getStock").setEventId(event6.getEventId()));
+        directedGraph.addEdge(new Endpoint("e7", "http://backend.com/getStock").setEventId(event7.getEventId()), event7);
+
+        var order = directedGraph.getDirectedAcyclicOrder();
+        // Test the order when the DAG is not finished
+        for (var vertex : order) {
+            int vertexIx = order.indexOf(vertex);
+            var adjacentVertices = directedGraph.getAdjacentOutVertices(vertex);
+            for (var adjacentVertex : adjacentVertices) {
+                assertTrue(vertexIx < order.indexOf(adjacentVertex));
+            }
+        }
+
+        // Now finish the DAG. This should correlate several endpoints and events.
+        order = directedGraph.finishGraph().getDirectedAcyclicOrder();
+
+        // Test the finished DAG
+        for (var vertex : order) {
+            int vertexIx = order.indexOf(vertex);
+            var adjacentVertices = directedGraph.getAdjacentOutVertices(vertex);
+            for (var adjacentVertex : adjacentVertices) {
+                assertTrue(vertexIx < order.indexOf(adjacentVertex));
+            }
+        }
     }
 }

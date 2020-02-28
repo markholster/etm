@@ -350,6 +350,141 @@ public class DirectedGraph {
     }
 
     /**
+     * Method that finished the graph by connecting the unconnected <code>Vertex</code> instances where possible.
+     * <p>
+     * This method has nothing to do with the mathematical principal behind a DAG. It has ETM specific knowledge.
+     *
+     * @return This <code>DirectedGraph</code> for chaining.
+     */
+    public DirectedGraph finishGraph() {
+        // Add edges within a transaction.
+        var vertices = getVertices();
+        for (var vertex : vertices) {
+            if (!(vertex instanceof Event)) {
+                continue;
+            }
+            if (!getAdjacentOutVertices(vertex).isEmpty()) {
+                continue;
+            }
+            // We've found an event without a connection to a next vertex. Let's see if we can make some connections.
+            var event = (Event) vertex;
+            if (event.getTransactionId() != null) {
+                var transactionEvents = findEvents(e -> event.getTransactionId().equals(e.getTransactionId()));
+                transactionEvents.sort(Comparator.comparing(Event::getEventStartTime));
+                for (var transactionEvent : transactionEvents) {
+                    if (!transactionEvent.getEventStartTime().isBefore(event.getEventStartTime()) && !event.getEventId().equals(transactionEvent.getEventId())) {
+                        addEdge(event, transactionEvent);
+                        break;
+                    }
+                }
+            }
+        }
+        // See if all requests are connected to responses. If not, try to add the connection.
+        for (var vertex : vertices) {
+            if (!(vertex instanceof Event)) {
+                continue;
+            }
+            var responseEvent = (Event) vertex;
+            // Check if this responseEvent is a response and has a correlation to a request.
+            if (!responseEvent.isResponse() || responseEvent.getCorrelationEventId() == null) {
+                continue;
+            }
+            // Find the corresponding request of the response.
+            Optional<Event> first = vertices.stream().filter(v -> v instanceof Event).map(e -> (Event) e).filter(e -> Objects.equals(e.getEventId(), responseEvent.getCorrelationEventId())).findFirst();
+            if (first.isEmpty()) {
+                continue;
+            }
+            var requestEvent = first.get();
+            if (hasPathTo(requestEvent, responseEvent)) {
+                // There's a path from the request to the response. Nothing to do...
+                continue;
+            }
+            createPath(requestEvent, responseEvent);
+        }
+        return this;
+    }
+
+    /**
+     * Method that tries to create a path from a request <ccode>Event</ccode> to a corresponding response <code>Event</code>.
+     *
+     * @param requestEvent  The request <code>Event</code> that needs to have a path to the corresponding response <code>Event</code>.
+     * @param responseEvent The response <code>Event</code> that needs to have a path to the corresponding request <code>Event</code>.
+     */
+    private void createPath(Event requestEvent, Event responseEvent) {
+        if (!Objects.equals(requestEvent.getEventId(), responseEvent.getCorrelationEventId())) {
+            // Objects not related.
+            return;
+        }
+        if (hasPathTo(requestEvent, responseEvent)) {
+            // Path already present.
+            return;
+        }
+        // Let's see if we can find the end of the path seen from the request.
+        Vertex lastAfterRequest = requestEvent;
+        while (getAdjacentOutVertices(lastAfterRequest) != null && !getAdjacentOutVertices(lastAfterRequest).isEmpty()) {
+            var next = getAdjacentOutVertices(lastAfterRequest).get(0);
+            if (next.equals(requestEvent)) {
+                // Somehow a cycle has introduced into the DAG. This should not be possible.
+                break;
+            }
+            if (next instanceof Event) {
+                var nextEvent = (Event) next;
+                if (!nextEvent.isResponse()) {
+                    // We've found another request. Let's make sure there is a path from this request to the response otherwise the wrong dots will be connected.
+                    Optional<Event> optionalResponse = getVertices().stream()
+                            .filter(v -> v instanceof Event)
+                            .map(e -> (Event) e)
+                            .filter(e -> Objects.equals(nextEvent.getEventId(), e.getCorrelationEventId()) && e.isResponse())
+                            .findFirst();
+                    if (!optionalResponse.isEmpty()) {
+                        createPath(nextEvent, optionalResponse.get());
+                        var cycleFinder = new CycleFinder(this);
+                        if (cycleFinder.hasCycle()) {
+                            // Should be impossible, but we need to stop here otherwise we might create a stack overflow.
+                            if (log.isErrorLevelEnabled()) {
+                                log.logErrorMessage("Found a cycle in the event order: \n" + toString());
+                            }
+                            return;
+                        }
+                        if (hasPathTo(requestEvent, responseEvent)) {
+                            // Check again if the path is created now. This might happen because of a request down the chain is connected now.
+                            return;
+                        }
+                    }
+                }
+            }
+            lastAfterRequest = next;
+        }
+        if (lastAfterRequest.equals(requestEvent)) {
+            // Nothing found...
+            return;
+        }
+        Vertex firstBeforeResponse = responseEvent;
+        while (getAdjacentInVertices(firstBeforeResponse) != null && !getAdjacentInVertices(firstBeforeResponse).isEmpty()) {
+            var next = getAdjacentInVertices(firstBeforeResponse).get(0);
+            if (next.equals(responseEvent)) {
+                // Somehow a cycle has introduced into the DAG. This should not be possible.
+                break;
+            }
+            firstBeforeResponse = next;
+        }
+        addEdge(lastAfterRequest, firstBeforeResponse);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder stack = new StringBuilder();
+        for (var entry : this.outdegreeMap.entrySet()) {
+            if (stack.length() > 0) {
+                stack.append("\n");
+            }
+            stack.append(entry.getKey().toString() + " references " + entry.getValue().stream().map(Object::toString).collect(Collectors.joining(", ")));
+        }
+        return stack.toString();
+    }
+
+
+    /**
      * Class that can find a cyclic order of the edges in a <code>DirectedGraph</code> instance.
      */
     private static class CycleFinder {
@@ -544,15 +679,4 @@ public class DirectedGraph {
         }
     }
 
-    @Override
-    public String toString() {
-        StringBuilder stack = new StringBuilder();
-        for (var entry : this.outdegreeMap.entrySet()) {
-            if (stack.length() > 0) {
-                stack.append("\n");
-            }
-            stack.append(entry.getKey().toString() + " references " + entry.getValue().stream().map(Object::toString).collect(Collectors.joining(", ")));
-        }
-        return stack.toString();
-    }
 }
