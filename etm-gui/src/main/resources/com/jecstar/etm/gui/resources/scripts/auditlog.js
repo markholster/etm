@@ -50,12 +50,10 @@ function buildAuditLogPage() {
 					}
 				})
 				.bind('keydown', function (event) {
-					if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
-						event.stopPropagation();
-					} else if (event.keyCode === $.ui.keyCode.ENTER && !$(this).autocomplete('instance').menu.active && $(this).val()) {
-						startNewQuery();
-					}
-				})
+                    if (event.which === $.ui.keyCode.SPACE && event.ctrlKey && !$(this).autocomplete('instance').menu.active) {
+                        $(this).autocomplete("search", $(this).val());
+                    }
+                })
 				.autocompleteFieldQuery(
 					{
 						queryKeywords: data.keywords

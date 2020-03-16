@@ -158,6 +158,8 @@ function initialize(doneFunction, readonly) {
                     $('#input-graph-query').on('keydown', function (event) {
                         if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
                             event.stopPropagation();
+                        } else if (event.which === $.ui.keyCode.SPACE && event.ctrlKey && !$(this).autocomplete('instance').menu.active) {
+                            $(this).autocomplete("search", $(this).val());
                         }
                     }).autocompleteFieldQuery(
                         {

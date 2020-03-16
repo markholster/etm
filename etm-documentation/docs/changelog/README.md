@@ -16,6 +16,7 @@
 * [ETM-15](https://github.com/jecstarinnovations/etm/issues/15) NumberFormatException in Endpoints and Chain time tabs.
 * [ETM-17](https://github.com/jecstarinnovations/etm/issues/17) IIB Node password not set.
 * [ETM-18](https://github.com/jecstarinnovations/etm/issues/18) Unexplainable error: Found a cycle in the event order.
+* [ETM-19](https://github.com/jecstarinnovations/etm/issues/19) All query input fields should be textareas.
 
 ## Version 4.0.1
 * [ETM-132](https://jecstar.atlassian.net/browse/ETM-132) Use UnboundID provider for LDAP connection.

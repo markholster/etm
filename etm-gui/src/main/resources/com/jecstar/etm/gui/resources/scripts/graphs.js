@@ -288,12 +288,12 @@ function buildGraphsPage(groupName) {
             keywords: keywords,
             enableOrDisableButtons: enableOrDisableButtons
         });
-        $page.on('input autocomplete:selected', 'input', enableOrDisableButtons);
+        $page.on('input autocomplete:selected', 'input, textarea', enableOrDisableButtons);
         $page.on('change', 'select', enableOrDisableButtons);
 
         $('#input-graph-query').on('keydown', function (event) {
-            if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
-                event.stopPropagation();
+            if (event.which === $.ui.keyCode.SPACE && event.ctrlKey && !$(this).autocomplete('instance').menu.active) {
+                $(this).autocomplete("search", $(this).val());
             }
         }).autocompleteFieldQuery(
             {

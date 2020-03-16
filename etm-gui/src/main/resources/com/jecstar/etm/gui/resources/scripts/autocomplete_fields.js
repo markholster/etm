@@ -109,8 +109,8 @@
                 if (queryOperators.indexOf(lastTerm) !== -1 && endsWith(query, ' ')) {
                     return {"queryTerm": '', "queryType": "field"};
                 }
+                let returnValue;
                 if (settings.allowJoins) {
-                    let returnValue;
                     const joinIndices = [];
                     $.each(joinOperators, function (ix, operator) {
                         const termIx = terms.indexOf(operator);
@@ -152,7 +152,7 @@
             $(this).autocomplete({
                 minLength: 0,
                 source: function (request, response) {
-                    const query = extractAutocompleteTerm(request.term);
+                    const query = extractAutocompleteTerm(request.term.replace(/[\n\r]/g, ' '));
                     if (query.queryTerm === null) {
                         return;
                     }
@@ -170,7 +170,7 @@
                     return false;
                 },
                 select: function (event, ui) {
-                    const query = extractAutocompleteTerm(this.value);
+                    const query = extractAutocompleteTerm(this.value.replace(/[\n\r]/g, ' '));
                     if ('' === query.queryTerm) {
                         this.value += ui.item.value;
                     } else {

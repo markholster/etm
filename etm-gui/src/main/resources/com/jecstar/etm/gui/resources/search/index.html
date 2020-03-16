@@ -365,9 +365,9 @@
                                             </div>
                                             <div class="row form-group">
                                                 <div class="col-sm">
-                                                    <input id="query-string" type="text" class="form-control"
-                                                           placeholder="Search for..."
-                                                           autocomplete="off" autofocus="autofocus">
+                                                    <textarea id="query-string" wrap="hard" class="form-control"
+                                                              placeholder="Search for..."
+                                                              autocomplete="off" autofocus="autofocus"></textarea>
                                                 </div>
                                             </div>
                                             <br/>
@@ -689,14 +689,8 @@
         // Disable or enable the search button, template name inputfield and save button if the query field contains data.
         $('#query-string').on('input', enableOrDisableSearchButton)
             .bind('keydown', function (event) {
-                if (event.keyCode === $.ui.keyCode.TAB && $(this).autocomplete('instance').menu.active) {
-                    event.preventDefault();
-                } else if (event.keyCode === $.ui.keyCode.DOWN && !$(this).autocomplete('instance').menu.active) {
-                    if ($(this).val() === '') {
-                        $(this).autocomplete("search", "");
-                    }
-                } else if (event.keyCode === $.ui.keyCode.ENTER && !$(this).autocomplete('instance').menu.active && $(this).val()) {
-                    startNewQuery();
+                if (event.which === $.ui.keyCode.SPACE && event.ctrlKey && !$(this).autocomplete('instance').menu.active) {
+                    $(this).autocomplete("search", $(this).val());
                 }
             }).autocompleteFieldQuery(
             {
