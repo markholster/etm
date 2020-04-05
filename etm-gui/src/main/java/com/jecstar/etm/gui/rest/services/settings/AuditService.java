@@ -146,9 +146,9 @@ public class AuditService extends AbstractIndexMetadataService {
                 .setSize(parameters.getMaxResults() > 500 ? 500 : parameters.getMaxResults())
                 .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()));
         if (parameters.getSortField() != null && parameters.getSortField().trim().length() > 0) {
-            String sortProperty = getSortProperty(dataRepository, ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL, parameters.getSortField());
-            if (sortProperty != null) {
-                requestBuilder.setSort(sortProperty, "desc".equals(parameters.getSortOrder()) ? SortOrder.DESC : SortOrder.ASC);
+            var fieldData = getFieldData(dataRepository, ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL, parameters.getSortField());
+            if (fieldData != null) {
+                requestBuilder.setSort(fieldData.sortProperty, "desc".equals(parameters.getSortOrder()) ? SortOrder.DESC : SortOrder.ASC);
             }
         }
         return requestBuilder;

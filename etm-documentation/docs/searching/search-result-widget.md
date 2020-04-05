@@ -7,7 +7,7 @@ As soon as a query is executed the Search result widget will show up. This widge
 The sorting order can be adjusted by clicking on the column header and auto-scrolling through the results will kick in as soon as your browser hit the end of the page. The top of the result table is showing the number of events that match the query and the ones that are shown. 
 
 ## Editing the result table layout
-By default only the lowest handling time of any of the writing event handlers and the name of the event will be shown. This may be a good starting point for most of the queries, but is most likely not covering all of your needs. Fortunately all table settings can be adjusted by clicking on the edit table icon in the result table header. This is the right most icon next to the download icon. The following screen will show up when you click on the button:
+By default only the lowest handling time of any of the writing event handlers and the name of the event will be shown. This may be a good starting point for most of the queries, but is most likely not covering all of your needs. Fortunately all table settings can be adjusted by selecting `Edit result table` from the Search result widget context menu. The context menu is accessible by clicking on the three horizontal bars at the top right corner of the widget. The following screen will show up when you click on the button:
 
 **Edit search results table**
 !["Edit search results table"](../assets/images/etm-edit-search-results-table.png)
@@ -26,7 +26,7 @@ Link | A checkbox that should be checked if the value should be clickable. If a 
 When clicking on the apply button the query will be automatically executed again and the results are then presented in the way you desired. The layout of your result table will also be stored in a search template and in the queries stored in the [Search history widget](search-result-widget.md).
 
 ## Downloading results
-If you want to export your search results you can download them as .csv or .xlsx file. By clicking the download icon in the result table header a screen will be shown that gives you some download options. You can select to include the payload in the download and change the number of rows you want to be exported. Besides the payload the columns that are configured in the result table will be included. Be aware that an Enterprise Telemetry Monitor administrator can set a maximum number of rows that can be exported. 
+If you want to export your search results you can download them as .csv or .xlsx file. When selecting `Download results` from the context menu a popup will be shown giving you some download options. You can select to include the payload in the download and change the number of rows you want to be exported. Besides the payload the columns that are configured in the result table will be included. Be aware that an Enterprise Telemetry Monitor administrator can set a maximum number of rows that can be exported. 
 
 When clicking the Download button your export will be presented as downloadable file.
 

@@ -855,7 +855,7 @@ public class DashboardService extends AbstractUserAttributeService {
         SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder()).setIndices(etmConfiguration.mergeRemoteIndices(data.getDataSource()))
                 .setFetchSource(false)
                 .setSize(0);
-        var etmQueryBuilder = new EtmQueryBuilder(data.getQuery(), null, dataRepository, requestEnhancer).setTimeZone(etmPrincipal.getTimeZone().getID());
+        var etmQueryBuilder = new EtmQueryBuilder(data.getQuery(), dataRepository, requestEnhancer).setTimeZone(etmPrincipal.getTimeZone().getID());
 
         if (data.getFrom() != null || data.getTill() != null) {
             RangeQueryBuilder timestampFilter = new RangeQueryBuilder(data.getTimeFilterField() != null ? data.getTimeFilterField() : "timestamp");

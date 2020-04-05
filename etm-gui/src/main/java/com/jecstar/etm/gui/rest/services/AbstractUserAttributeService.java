@@ -86,20 +86,16 @@ public abstract class AbstractUserAttributeService extends AbstractIndexMetadata
      * @param source           The contents of the user or group.
      */
     protected void updateEntity(DataRepository dataRepository, EtmConfiguration etmConfiguration, String groupName, Map<String, Object> source) {
-        Map<String, Object> objectMap = new HashMap<>();
-        UpdateRequestBuilder builder;
+        var objectMap = new HashMap<String, Object>();
+        var builder = new UpdateRequestBuilder().setIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME);
         if (groupName != null) {
             if (!getEtmPrincipal().isInGroup(groupName)) {
                 throw new EtmException(EtmException.UNAUTHORIZED);
             }
-            builder = new UpdateRequestBuilder()
-                    .setIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
-                    .setId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName);
+            builder.setId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName);
             objectMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP, source);
         } else {
-            builder = new UpdateRequestBuilder()
-                    .setIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
-                    .setId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId());
+            builder.setId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId());
             objectMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, source);
         }
         new RequestEnhancer(etmConfiguration).enhance(builder)

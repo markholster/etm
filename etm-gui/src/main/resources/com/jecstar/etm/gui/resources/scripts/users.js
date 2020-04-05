@@ -24,7 +24,7 @@ function buildUserPage() {
         $.ajax({
             type: 'GET',
             contentType: 'application/json',
-            url: '../rest/search/keywords/etm_event_all',
+            url: '../rest/settings/keywords/etm_event_all',
             cache: false,
             success: function (data) {
                 if (!data || !data.keywords) {
@@ -178,7 +178,6 @@ function buildUserPage() {
         $('#sel-locale').val(userData.locale);
         $('#sel-time-zone').val(userData.time_zone);
         $('#input-search-history-size').val(userData.search_history_size);
-        $('#input-default-search-range').val(userData.default_search_range ? userData.default_search_range / 1000 : null);
         $('#sel-change-password-on-logon').val(userData.change_password_on_logon ? 'true' : 'false');
         $('#user-roles-container > label > input').prop('checked', false);
         if (userData.roles) {
@@ -547,7 +546,6 @@ function buildUserPage() {
             locale: $('#sel-locale').val(),
             time_zone: $('sel-time-zone').val(),
             search_history_size: $('#input-search-history-size').val() ? Number($('#input-search-history-size').val()) : 0,
-            default_search_range: $('#input-default-search-range').val() ? Number($('#input-default-search-range').val()) * 1000 : null,
             change_password_on_logon: $('#sel-change-password-on-logon').val() === 'true' ? true : false,
             roles: [],
             groups: [],

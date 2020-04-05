@@ -28,7 +28,6 @@ import org.elasticsearch.index.query.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -46,16 +45,14 @@ public class EtmQueryBuilder {
     private final TelemetryEventTags eventTags = new TelemetryEventTagsJsonImpl();
 
     private final String queryString;
-    private final Set<String> objectTypes;
     private final DataRepository dataRepository;
     private final RequestEnhancer requestEnhancer;
     private List<QueryBuilder> joinFilters = new ArrayList<>();
     private List<QueryBuilder> rootFilters = new ArrayList<>();
     private String timeZoneId;
 
-    public EtmQueryBuilder(String queryString, Set<String> objectTypes, DataRepository dataRepository, RequestEnhancer requestEnhancer) {
+    public EtmQueryBuilder(String queryString, DataRepository dataRepository, RequestEnhancer requestEnhancer) {
         this.queryString = queryString;
-        this.objectTypes = objectTypes;
         this.dataRepository = dataRepository;
         this.requestEnhancer = requestEnhancer;
     }
@@ -94,9 +91,6 @@ public class EtmQueryBuilder {
         var joinQueryBuilder = new BoolQueryBuilder();
         joinQueryBuilder.must(parseQuery(joinQueryString));
         var joinElement = JOIN_ELEMENTS.get(JOIN_ELEMENTS.indexOf(elements.get(joinIx + 1)));
-        if (this.objectTypes != null && this.objectTypes.size() > 0) {
-            joinQueryBuilder.filter(QueryBuilders.termsQuery(this.eventTags.getObjectTypeTag(), this.objectTypes));
-        }
         for (var filterQuery : this.joinFilters) {
             joinQueryBuilder.filter(filterQuery);
         }

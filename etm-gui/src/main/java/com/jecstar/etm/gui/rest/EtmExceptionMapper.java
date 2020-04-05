@@ -88,7 +88,7 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
                     errorMessage.setMessage("Invalid xslt template");
                     break;
                 case EtmException.INVALID_JSON_EXPRESSION:
-                    errorMessage.setMessage("Invalid json path expression");
+                    errorMessage.setMessage("Invalid json (path) expression");
                     break;
                 case EtmException.INVALID_REGULAR_EXPRESSION:
                     errorMessage.setMessage("Invalid regular expression");
@@ -140,6 +140,9 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
                     break;
                 case EtmException.NOT_AUTHORIZED_FOR_NOTIFIER:
                     errorMessage.setMessage("Not authorized for notifier");
+                    break;
+                case EtmException.MAX_NR_OF_SEARCH_TEMPLATES_REACHED:
+                    errorMessage.setMessage("Maximum number of search templates reached");
                     break;
                 default:
                     break;

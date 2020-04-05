@@ -198,7 +198,7 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
         createTemporaryIndexTemplates(dataRepository, migrationIndexPrefix, 1);
     }
 
-    protected boolean migrateEntity(SearchRequestBuilder searchRequestBuilder, String entityName, DataRepository dataRepository, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener, Function<SearchHit, DocWriteRequest> processor) {
+    protected boolean migrateEntity(SearchRequestBuilder searchRequestBuilder, String entityName, DataRepository dataRepository, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener, Function<SearchHit, DocWriteRequest<?>> processor) {
         System.out.println("Start migrating " + entityName + " to temporary index.");
         listener.reset();
         ScrollableSearch searchHits = new ScrollableSearch(dataRepository, searchRequestBuilder);

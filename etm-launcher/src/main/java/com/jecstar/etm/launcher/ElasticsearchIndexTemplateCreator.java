@@ -132,31 +132,7 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
     }
 
     private void insertPainlessScripts() throws IOException {
-        PutStoredScriptRequestBuilder builder = new PutStoredScriptRequestBuilder()
-                .setId("etm_update-search-template").setContent(BytesReference.bytes(JsonXContent.contentBuilder().startObject()
-                        .field("script").startObject()
-                        .field("lang", "painless")
-                        .field("source", createUpdateSearchTemplateScript())
-                        .endObject()
-                        .endObject()), XContentType.JSON);
-        this.dataRepository.putStoredScript(builder);
-        builder = new PutStoredScriptRequestBuilder()
-                .setId("etm_remove-search-template").setContent(BytesReference.bytes(JsonXContent.contentBuilder().startObject()
-                        .field("script").startObject()
-                        .field("lang", "painless")
-                        .field("source", createRemoveSearchTemplateScript())
-                        .endObject()
-                        .endObject()), XContentType.JSON);
-        this.dataRepository.putStoredScript(builder);
-        builder = new PutStoredScriptRequestBuilder()
-                .setId("etm_update-search-history").setContent(BytesReference.bytes(JsonXContent.contentBuilder().startObject()
-                        .field("script").startObject()
-                        .field("lang", "painless")
-                        .field("source", createUpdateSearchHistoryScript())
-                        .endObject()
-                        .endObject()), XContentType.JSON);
-        this.dataRepository.putStoredScript(builder);
-        builder = new PutStoredScriptRequestBuilder()
+        var builder = new PutStoredScriptRequestBuilder()
                 .setId("etm_update-event").setContent(BytesReference.bytes(JsonXContent.contentBuilder().startObject()
                         .field("script").startObject()
                         .field("lang", "painless")
@@ -300,15 +276,16 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
                 + ", { \"" + Signal.LAST_PASSED + "\": { \"match\": \"" + Signal.LAST_PASSED + "\", \"mapping\": {\"type\": \"date\"}}}"
                 + ", { \"" + Data.FROM + "\": { \"match\": \"" + Data.FROM + "\", \"mapping\": {\"type\": \"keyword\"}}}"
                 + ", { \"" + Data.TILL + "\": { \"match\": \"" + Data.TILL + "\", \"mapping\": {\"type\": \"keyword\"}}}"
-                + ", { \"" + this.configurationTags.getStartTimeTag() + "\": { \"match\": \"" + this.configurationTags.getStartTimeTag() + "\", \"mapping\": {\"type\": \"keyword\"}}}"
-                + ", { \"" + this.configurationTags.getEndTimeTag() + "\": { \"match\": \"" + this.configurationTags.getEndTimeTag() + "\", \"mapping\": {\"type\": \"keyword\"}}}"
+                + ", { \"search_history_value\": { \"path_match\": \"user.search_history.additional_query_parameters.value\", \"mapping\": {\"type\": \"keyword\"}}}"
+                + ", { \"search_template_value\": { \"path_match\": \"user.search_templates.additional_query_parameters.value\", \"mapping\": {\"type\": \"keyword\"}}}"
+                + ", { \"query_parameter_default_value\": { \"path_match\": \"user.additional_query_parameters.default_value\", \"mapping\": {\"type\": \"keyword\"}}}"
                 + ", { \"string_as_keyword\": { \"match_mapping_type\": \"string\", \"mapping\": {\"type\": \"keyword\"}}}"
                 + "]}";
     }
 
     private String createEtmStateMapping() {
         return "{\"dynamic_templates\": ["
-                + "{ \"" + this.configurationTags.getStartTimeTag() + "\": { \"path_match\": \"" + ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION + "." + this.sessionTags.getLastAccessedTag() + "\", \"mapping\": {\"type\": \"date\"}}}"
+                + "{ \"" + this.sessionTags.getLastAccessedTag() + "\": { \"path_match\": \"" + ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION + "." + this.sessionTags.getLastAccessedTag() + "\", \"mapping\": {\"type\": \"date\"}}}"
                 + "]}";
     }
 
@@ -330,63 +307,6 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
                 .setWaitForActiveShards(ActiveShardCount.ALL)
                 .setSource(this.etmPrincipalConverter.writePrincipal(adminUser), XContentType.JSON);
         dataRepository.index(builder);
-    }
-
-
-    private String createUpdateSearchTemplateScript() {
-        return "if (params.template != null) {\n" +
-                "    if (ctx._source.user.search_templates != null) {\n" +
-                "        boolean found = false;\n" +
-                "        for (int i=0; i < ctx._source.user.search_templates.size(); i++) {\n" +
-                "            if (ctx._source.user.search_templates[i].name.equals(params.template.name)) {\n" +
-                "                ctx._source.user.search_templates[i] = params.template;\n" +
-                "                found = true;\n" +
-                "             }\n" +
-                "        }\n" +
-                "        if (!found && ctx._source.user.search_templates.size() < params.max_templates) {\n" +
-                "            ctx._source.user.search_templates.add(params.template);\n" +
-                "        }\n" +
-                "    } else if (params.max_templates > 0) {\n" +
-                "        ctx._source.user.search_templates = new ArrayList();\n" +
-                "        ctx._source.user.search_templates.add(params.template);\n" +
-                "    }\n" +
-                "}\n";
-    }
-
-    private String createRemoveSearchTemplateScript() {
-        return "if (params.name != null) {\n" +
-                "    if (ctx._source.user.search_templates != null) {\n" +
-                "		 Iterator it = ctx._source.user.search_templates.iterator();\n" +
-                "        while (it.hasNext()) {\n" +
-                "            def item = it.next()\n;" +
-                "            if (item.name.equals(params.name)) {\n" +
-                "                it.remove();\n" +
-                "            }\n" +
-                "        }\n" +
-                "    }\n" +
-                "}\n";
-    }
-
-    private String createUpdateSearchHistoryScript() {
-        return "if (params.query != null) {\n" +
-                "    if (ctx._source.user.search_history != null) {\n" +
-                "        for (int i=0; i < ctx._source.user.search_history.size(); i++) {\n" +
-                "            if (ctx._source.user.search_history[i].query.equals(params.query.query)) {\n" +
-                "                ctx._source.user.search_history.remove(i);\n" +
-                "            }\n" +
-                "        }\n" +
-                "        ctx._source.user.search_history.add(params.query);\n" +
-                "    } else {\n" +
-                "        ctx._source.user.search_history = new ArrayList();\n" +
-                "        ctx._source.user.search_history.add(params.query);\n" +
-                "    }\n" +
-                "}\n" +
-                "if (ctx._source.user.search_history != null && params.history_size != null) {\n" +
-                "    int removeCount = ctx._source.user.search_history.size() - params.history_size;\n" +
-                "    for (int i=0; i < removeCount; i++) {\n" +
-                "        ctx._source.user.search_history.remove(0);\n" +
-                "    }\n" +
-                "}\n";
     }
 
     private String createUpdateEventWithCorrelationScript() {

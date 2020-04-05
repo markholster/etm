@@ -17,7 +17,7 @@
 
 package com.jecstar.etm.launcher.http;
 
-import com.jecstar.etm.gui.rest.services.search.DefaultSearchTemplates;
+import com.jecstar.etm.gui.rest.services.search.DefaultUserSettings;
 import com.jecstar.etm.launcher.http.auth.ApiKeyCredentials;
 import com.jecstar.etm.server.core.domain.audit.builder.LoginAuditLogBuilder;
 import com.jecstar.etm.server.core.domain.audit.converter.LoginAuditLogConverter;
@@ -163,9 +163,9 @@ public class ElasticsearchIdentityManager implements IdentityManager {
                 .setSource(this.etmPrincipalConverter.writePrincipal(principal), XContentType.JSON)
                 .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
                 .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout())));
-        if (this.etmConfiguration.getMaxSearchTemplateCount() >= 3) {
+        if (this.etmConfiguration.getMaxSearchTemplateCount() >= 1) {
             this.dataRepository.update(new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + principal.getId())
-                    .setDoc(new DefaultSearchTemplates().toJson(principal), XContentType.JSON)
+                    .setDoc(new DefaultUserSettings().toJson(principal, this.etmConfiguration.getMaxSearchTemplateCount()), XContentType.JSON)
                     .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
                     .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
                     .setRetryOnConflict(etmConfiguration.getRetryOnConflictCount()));

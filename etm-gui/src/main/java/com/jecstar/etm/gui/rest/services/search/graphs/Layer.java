@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 /**
  * The <code>Layer</code> class represents a horizontal row in a directed graph.
  */
-public class Layer {
+public class Layer<V extends Vertex> {
 
     /**
      * The layer index starting a zero for the top layer.
@@ -33,12 +33,12 @@ public class Layer {
     /**
      * A list of <code>Vertex</code> instances.
      */
-    private final List<Vertex> vertices = new ArrayList<>();
+    private final List<V> vertices = new ArrayList<>();
 
     /**
      * A map with patent <code>Vertex</code> keys and their corresponding child <code>Vertex</code> instances.
      */
-    private final Map<Vertex, List<Vertex>> parentMap = new HashMap<>();
+    private final Map<V, List<V>> parentMap = new HashMap<>();
 
     /**
      * Creates a new <code>Layer</code> instance.
@@ -64,7 +64,7 @@ public class Layer {
      * @param vertex The <code>Vertex</code> to add to this <code>Layer</code>.
      * @return This <code>Layer</code> instance for chaining methods.
      */
-    public Layer addVertex(Vertex vertex) {
+    public Layer<V> addVertex(V vertex) {
         this.vertices.add(vertex);
         return this;
     }
@@ -76,7 +76,7 @@ public class Layer {
      * @param childVertices The <code>Vertex</code> instances that have a reference to the given vertex as parent.
      * @return This <code>Layer</code> instance for chaining methods.
      */
-    private Layer addVertex(Vertex vertex, List<Vertex> childVertices) {
+    private Layer<V> addVertex(V vertex, List<V> childVertices) {
         addVertex(vertex);
         this.parentMap.put(vertex, childVertices);
         return this;
@@ -88,7 +88,7 @@ public class Layer {
      *
      * @return The <code>Vertex</code> instances of this <code>Layer</code>.
      */
-    public List<Vertex> getVertices() {
+    public List<V> getVertices() {
         return this.vertices;
     }
 
@@ -98,7 +98,7 @@ public class Layer {
      * @param vertex The parent <code>Vertex</code>
      * @return The child <code>Vertext</code> instances, or <code>null</code> when the give <code>Vertex</code> isn't a parent <code>Vertex</code>.
      */
-    public List<Vertex> getChildVertices(Vertex vertex) {
+    public List<V> getChildVertices(V vertex) {
         return this.parentMap.get(vertex);
     }
 
@@ -108,7 +108,8 @@ public class Layer {
      * @param layers          The current available <code>Layer</code> instances.
      * @param orderedVertices The <code>Vertex</code> instances that should be added to this or a lower <code>Layer</code>.
      */
-    public void addAndOptimize(ArrayList<Layer> layers, List<Vertex> orderedVertices) {
+    @SuppressWarnings("unchecked")
+    public void addAndOptimize(List<Layer<V>> layers, List<V> orderedVertices) {
         if (orderedVertices == null || orderedVertices.isEmpty()) {
             return;
         }
@@ -132,7 +133,7 @@ public class Layer {
             // 1. Add the start of the chain to this layer.
             // 2. Then handle all events from first event with parent until last event with parent.
             // 3. Finally add the end of the chain to this layer.
-            List<Vertex> withParent = orderedVertices.stream().filter(p -> p.getParent() != null).collect(Collectors.toList());
+            List<V> withParent = orderedVertices.stream().filter(p -> p.getParent() != null).collect(Collectors.toList());
             var head = new ArrayList<>(orderedVertices.subList(0, orderedVertices.indexOf(withParent.get(0))));
             var tail = new ArrayList<>(orderedVertices.subList(orderedVertices.indexOf(withParent.get(withParent.size() - 1)) + 1, orderedVertices.size()));
             orderedVertices.removeAll(head);
@@ -145,15 +146,15 @@ public class Layer {
             addAndOptimize(layers, tail);
         } else if (orderedVertices.get(0).getParent() != null) {
             // Container at start of chain.
-            var parent = orderedVertices.get(0).getParent();
+            var parent = (V) orderedVertices.get(0).getParent();
             var childVertices = orderedVertices.stream().filter(p -> p.getParent() != null && p.getParent().equals(parent)).collect(Collectors.toList());
             var lastVertexWithParent = childVertices.get(childVertices.size() - 1);
             // Find all vertices within the first and last vertex of the parent.
             var parentScopedVertices = new ArrayList<>(orderedVertices.subList(0, orderedVertices.indexOf(lastVertexWithParent) + 1));
             orderedVertices.removeAll(parentScopedVertices);
             // subVertices contains all vertices that are not within the parent, but called directly or indirectly from the parent.
-            var subVertices = new ArrayList<List<Vertex>>();
-            var currentSubs = new ArrayList<Vertex>();
+            var subVertices = new ArrayList<List<V>>();
+            var currentSubs = new ArrayList<V>();
             for (var parentScopedVertex : parentScopedVertices) {
                 if (parentScopedVertex.getParent() != null && parentScopedVertex.getParent().equals(parent)) {
                     if (currentSubs.size() > 0) {
@@ -164,7 +165,7 @@ public class Layer {
                 }
                 currentSubs.add(parentScopedVertex);
             }
-            Optional<Layer> optionalLayer = layers.stream().filter(p -> p.getVertices().contains(parent)).findFirst();
+            Optional<Layer<V>> optionalLayer = layers.stream().filter(p -> p.getVertices().contains(parent)).findFirst();
             // Find the layer that has the parent, or create a new one.
             if (optionalLayer.isPresent()) {
                 // Container is already known on a layar.
@@ -205,10 +206,10 @@ public class Layer {
      * @param currentLayers The current available <code>Layer</code> instances.
      * @return The <code>Layer</code> instance with the given index.
      */
-    private Layer getOrCreateLayer(int index, List<Layer> currentLayers) {
+    private Layer<V> getOrCreateLayer(int index, List<Layer<V>> currentLayers) {
         if (index >= currentLayers.size()) {
             // Create the next layer if not present.
-            var childLayer = new Layer(index);
+            var childLayer = new Layer<V>(index);
             currentLayers.add(childLayer);
         }
         return currentLayers.get(index);

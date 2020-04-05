@@ -42,13 +42,21 @@ function buildAuditLogPage() {
 				return;
 			}
 			$('#input-query-string')
-				.on('input', function (event) {
-					if ($(this).val()) {
-						$('#btn-search').removeAttr("disabled");
-					} else {
-						$('#btn-search').attr('disabled', 'disabled');
-					}
-				})
+                .on('input', function (event) {
+                    if ($(this).val()) {
+                        $('#btn-search').removeAttr("disabled");
+                    } else {
+                        $('#btn-search').attr('disabled', 'disabled');
+                    }
+                }).on('keydown', function (event) {
+                if (event.keyCode === 13 && !event.shiftKey) {
+                    event.preventDefault();
+                    const $searchButton = $('#btn-search');
+                    if ($searchButton.is(':enabled')) {
+                        $searchButton.trigger('click');
+                    }
+                }
+            })
 				.bind('keydown', function (event) {
                     if (event.which === $.ui.keyCode.SPACE && event.ctrlKey && !$(this).autocomplete('instance').menu.active) {
                         $(this).autocomplete("search", $(this).val());

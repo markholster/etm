@@ -18,9 +18,10 @@
 package com.jecstar.etm.gui.rest.services.settings;
 
 import com.jecstar.etm.domain.writer.json.JsonBuilder;
-import com.jecstar.etm.gui.rest.AbstractGuiService;
 import com.jecstar.etm.gui.rest.export.*;
-import com.jecstar.etm.gui.rest.services.search.DefaultSearchTemplates;
+import com.jecstar.etm.gui.rest.services.AbstractIndexMetadataService;
+import com.jecstar.etm.gui.rest.services.Keyword;
+import com.jecstar.etm.gui.rest.services.search.DefaultUserSettings;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.ImportProfile;
 import com.jecstar.etm.server.core.domain.cluster.certificate.converter.CertificateConverter;
@@ -89,7 +90,7 @@ import java.util.stream.Collectors;
 
 @Path("/settings")
 @DeclareRoles(SecurityRoles.ALL_ROLES)
-public class SettingsService extends AbstractGuiService {
+public class SettingsService extends AbstractIndexMetadataService {
 
     private final LogWrapper log = LogFactory.getLogger(SettingsService.class);
 
@@ -129,6 +130,33 @@ public class SettingsService extends AbstractGuiService {
         SettingsService.dataRepository = dataRepository;
         SettingsService.etmConfiguration = etmConfiguration;
         SettingsService.requestEnhancer = new RequestEnhancer(etmConfiguration);
+    }
+
+    @GET
+    @Path("/keywords/{indexName}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({SecurityRoles.USER_SETTINGS_READ_WRITE, SecurityRoles.USER_SETTINGS_READ, SecurityRoles.GROUP_SETTINGS_READ_WRITE, SecurityRoles.GROUP_SETTINGS_READ})
+    public String getKeywords(@PathParam("indexName") String indexName) {
+        var builder = new JsonBuilder();
+        List<Keyword> keywords = getIndexFields(SettingsService.dataRepository, indexName);
+        builder.startObject();
+        builder.startArray("keywords");
+        builder.startObject();
+        builder.field("index", indexName);
+        builder.startArray("keywords");
+        for (var keyword : keywords) {
+            builder.startObject();
+            builder.field("name", keyword.getName());
+            builder.field("type", keyword.getType());
+            builder.field("date", keyword.isDate());
+            builder.field("number", keyword.isNumber());
+            builder.endObject();
+        }
+        builder.endArray();
+        builder.endObject();
+        builder.endArray();
+        builder.endObject();
+        return builder.build();
     }
 
     @GET
@@ -1155,11 +1183,11 @@ public class SettingsService extends AbstractGuiService {
                 .setDocAsUpsert(true)
                 .setDetectNoop(true);
         dataRepository.update(builder);
-        if (currentPrincipal == null && etmConfiguration.getMaxSearchTemplateCount() >= 3) {
+        if (currentPrincipal == null) {
             // Add some default templates to the user if he/she is able to search.
             builder = requestEnhancer.enhance(
                     new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId)
-            ).setDoc(new DefaultSearchTemplates().toJson(newPrincipal), XContentType.JSON);
+            ).setDoc(new DefaultUserSettings().toJson(newPrincipal, etmConfiguration.getMaxSearchTemplateCount()), XContentType.JSON);
             dataRepository.update(builder);
         }
         if (userId.equals(getEtmPrincipal().getId())) {

@@ -72,7 +72,7 @@ public class SignalSearchRequestBuilderBuilder {
                 .setTimeout(TimeValue.timeValueMillis(this.etmConfiguration.getQueryTimeout()))
                 .setSize(0);
 
-        var etmQueryBuilder = new EtmQueryBuilder(data.getQuery(), null, dataRepository, requestEnhancer);
+        var etmQueryBuilder = new EtmQueryBuilder(data.getQuery(), dataRepository, requestEnhancer);
 
         if (etmPrincipal != null) {
             etmQueryBuilder.setTimeZone(etmPrincipal.getTimeZone().getID());

@@ -240,49 +240,54 @@ public class JsonEntityConverter<T> implements EntityConverter<T, String> {
     }
 
     private void addElementToJson(Class entityClass, Object value, String jsonKey, boolean writeWhenNull, boolean asArrayValue, JsonBuilder builder) {
-        if (entityClass.equals(String.class)) {
+        Class<?> classToTest = entityClass;
+        if (value != null) {
+            classToTest = value.getClass();
+        }
+
+        if (String.class.isAssignableFrom(classToTest)) {
             if (asArrayValue) {
                 builder.rawElement(JsonBuilder.escapeToJson((String) value, true));
             } else {
                 builder.field(jsonKey, (String) value, writeWhenNull);
             }
-        } else if (entityClass.equals(Long.class) || entityClass.equals(long.class)) {
+        } else if (Long.class.isAssignableFrom(classToTest) || long.class.isAssignableFrom(classToTest)) {
             if (asArrayValue) {
                 builder.rawElement(value.toString());
             } else {
                 builder.field(jsonKey, (Long) value, writeWhenNull);
             }
-        } else if (entityClass.equals(Double.class) || entityClass.equals(double.class)) {
+        } else if (Double.class.isAssignableFrom(classToTest) || double.class.isAssignableFrom(classToTest)) {
             if (asArrayValue) {
                 builder.rawElement(value.toString());
             } else {
                 builder.field(jsonKey, (Double) value, writeWhenNull);
             }
-        } else if (entityClass.equals(Float.class) || entityClass.equals(float.class)) {
+        } else if (Float.class.isAssignableFrom(classToTest) || float.class.isAssignableFrom(classToTest)) {
             if (asArrayValue) {
                 builder.rawElement(value.toString());
             } else {
                 builder.field(jsonKey, (Float) value, writeWhenNull);
             }
-        } else if (entityClass.equals(Integer.class) || entityClass.equals(int.class)) {
+        } else if (Integer.class.isAssignableFrom(classToTest) || int.class.isAssignableFrom(classToTest)) {
             if (asArrayValue) {
                 builder.rawElement(value.toString());
             } else {
                 builder.field(jsonKey, (Integer) value, writeWhenNull);
             }
-        } else if (entityClass.equals(Boolean.class) || entityClass.equals(boolean.class)) {
+        } else if (Boolean.class.isAssignableFrom(classToTest) || boolean.class.isAssignableFrom(classToTest)) {
             if (asArrayValue) {
                 builder.rawElement(value.toString());
             } else {
                 builder.field(jsonKey, (Boolean) value, writeWhenNull);
             }
-        } else if (entityClass.equals(Instant.class)) {
+        } else if (Instant.class.isAssignableFrom(classToTest)) {
             if (asArrayValue) {
                 builder.rawElement("" + ((Instant) value).toEpochMilli());
             } else {
                 builder.field(jsonKey, (Instant) value, writeWhenNull);
             }
-        } else if (entityClass.equals(List.class)) {
+        } else if (List.class.isAssignableFrom(classToTest)) {
             List<?> list = (List<?>) value;
             if (list == null) {
                 if (writeWhenNull) {

@@ -22,15 +22,28 @@ let transactionMap = {};
 let eventMap = {};
 let clipboards = [];
 
-function showEvent(scrollTo, id) {
-	$('#search-container').hide();
-	$('#event-tabs').children().slice(1).remove();
-	$('#tabcontents').children().slice(1).remove();
-	$('#event-tab').empty();
-	$('#event-tabs a:first').tab('show');
-	initialize();
+$('#event-container').on('click', '#btn-back-to-results, #link-back-to-results', function (event) {
+    event.preventDefault();
+    $('#event-container').hide();
+    $('#search-container').show();
+    $('html,body').animate({scrollTop: Number($(this).attr('data-scroll-to'))}, 'fast');
+}).on('click', "a[data-link-type='show-event']", function (event) {
+    event.preventDefault();
+    showEvent(Number($(this).attr('data-scroll-to')), $(this).attr('data-event-id'))
+}).on('click', "a[data-link-type='toggle-detail-map']", function (event) {
+    event.preventDefault();
+    $('#' + $(this).attr('data-panel-id')).collapse('toggle');
+});
 
-	$.ajax({
+function showEvent(scrollTo, id) {
+    $('#search-container').hide();
+    $('#event-tabs').children().slice(1).remove();
+    $('#tabcontents').children().slice(1).remove();
+    $('#event-tab').empty();
+    $('#event-tabs a:first').tab('show');
+    initialize();
+
+    $.ajax({
 		type: 'GET',
 		contentType: 'application/json',
 		url: '../rest/search/event/' + encodeURIComponent(id),
@@ -622,8 +635,10 @@ function showEvent(scrollTo, id) {
 													} else if ('MQ' === vertex.protocol) {
 														image = '../images/chain/queue.svg';
 													} else if ('KAFKA' === vertex.protocol) {
-														image = '../images/chain/kafka.svg';
-													}
+                                                        image = '../images/chain/kafka.svg';
+                                                    } else {
+                                                        image = '../images/chain/question-mark.svg';
+                                                    }
 													ren.image(image, -halfEndpointSize, 0, endpointSize, endpointSize)
 														.attr({
 															'data-event-id': vertex.event_id,

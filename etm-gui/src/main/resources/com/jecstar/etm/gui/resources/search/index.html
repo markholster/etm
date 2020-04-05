@@ -20,6 +20,7 @@
     <link rel="stylesheet" href="../styles/etm-commons.css">
     <link rel="stylesheet" href="../styles/highlightjs-googlecode.css">
     <link rel="stylesheet" href="../styles/flatpickr.min.css">
+    <link rel="stylesheet" href="../styles/bootstrap-multiselect.css">
     <style type="text/css">
         .tooltip-inner {
             text-align: left;
@@ -56,6 +57,12 @@
             font-weight: bold;
         }
 
+        .result-row > .col {
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
         .moving-path {
             stroke-dasharray: 4;
             animation-name: dash;
@@ -70,16 +77,6 @@
             }
         }
     </style>
-    <!-- jQuery first, then Bootstrap JS. -->
-    <script src="../scripts/d3-format.v1.min.js"></script>
-    <script src="../scripts/highcharts/highcharts.js"></script>
-    <script src="../scripts/highcharts/xrange.js"></script>
-    <script src="../scripts/highcharts/sankey.js"></script>
-    <script src="../scripts/highcharts/exporting.js"></script>
-    <script src="../scripts/highcharts/offline-exporting.js"></script>
-    <script src="../scripts/highcharts/export-data.js"></script>
-    <script src="../scripts/svg-pan-zoom.min.js"></script>
-
 </head>
 <body>
 <div class="wrapper">
@@ -148,7 +145,7 @@
                                             <ul id="list-template-links" class="pl-1"
                                                 style="word-wrap: break-word;"></ul>
                                         </div>
-                                        <p id="no-more-tenplates-allowed" style="display: none;">Maximum number of
+                                        <p id="no-more-templates-allowed" style="display: none;">Maximum number of
                                             templates
                                             reached!</p>
                                         <div id="template-save-group" class="input-group input-group-sm">
@@ -184,11 +181,24 @@
                                 <div id="search-card" class="card card-block">
                                     <div class="card-body">
                                         <h3 class="card-title">Search
-                                            <small>
-                                                <a id="lnk-export-query" href="#"
-                                                   class="mr-1 fa fa-file-export float-right"
-                                                   title="Export query" style="display: none;"></a>
-                                            </small>
+                                            <div class="dropdown mr-1 float-right">
+                                                <a type="button" id="search-dropdown-menu" data-toggle="dropdown"
+                                                   aria-haspopup="true" aria-expanded="false">
+                                                    <span class="fa fa-bars"></span>
+                                                </a>
+                                                <div class="dropdown-menu" aria-labelledby="search-dropdown-menu">
+                                                    <a class="dropdown-item"
+                                                       data-action="edit-additional-search-parameters"
+                                                       href="#">Edit search parameters</a>
+                                                    <a class="dropdown-item"
+                                                       data-action="edit-result-table"
+                                                       href="#">Edit result table</a>
+                                                    <a class="dropdown-item" href="#" data-action="import-query">Import
+                                                        query</a>
+                                                    <a class="dropdown-item" href="#" data-action="export-query">Export
+                                                        query</a>
+                                                </div>
+                                            </div>
                                         </h3>
                                         <div class="card-text">
                                             <p>
@@ -197,7 +207,12 @@
                                                                     href="#search-example-collapse" role="button"
                                                                     aria-expanded="false"
                                                                     aria-controls="search-example-collapse">Show some
-                                                examples!</a>
+                                                examples!</a> <br/>
+                                            <div id="block-additional-search-parameters-explanation">
+                                                <b>Additional search parameters can be added to this card</b> by
+                                                selecting the '<i>Search parameters</i>' option in the context menu of
+                                                this card.
+                                            </div>
                                             </p>
                                             <div class="collapse" id="search-example-collapse">
                                                 <div class="card card-body">
@@ -283,87 +298,15 @@
                                                     <p>
                                                         For more options like <b>Fuzziness</b>, <b>Ranges</b>, <b>Boolean
                                                         operators</b>, <b>Proximity searches</b> etc etc see the
-                                                        documentation at <a href="https://www.jecstar.com"
-                                                                            target="_blank">https://www.jecstar.com</a>.
+                                                        documentation at <a
+                                                            href="https://www.jecstar.com/docs/enterprise-telemetry-monitor"
+                                                            target="_blank">https://www.jecstar.com</a>.
                                                     </p>
                                                 </div>
                                             </div>
-                                            <div class="custom-control custom-checkbox custom-control-inline">
-                                                <input type="checkbox" id="check-type-business" value="business"
-                                                       checked="checked"
-                                                       class="custom-control-input">
-                                                <label class="custom-control-label"
-                                                       for="check-type-business">Business</label>
+                                            <div id="block-additional-parameters">
                                             </div>
-                                            <div class="custom-control custom-checkbox custom-control-inline">
-                                                <input type="checkbox" id="check-type-http" value="http"
-                                                       checked="checked"
-                                                       class="custom-control-input">
-                                                <label class="custom-control-label" for="check-type-http">Http</label>
-                                            </div>
-                                            <div class="custom-control custom-checkbox custom-control-inline">
-                                                <input type="checkbox" id="check-type-log" value="log" checked="checked"
-                                                       class="custom-control-input">
-                                                <label class="custom-control-label" for="check-type-log">Log</label>
-                                            </div>
-                                            <div class="custom-control custom-checkbox custom-control-inline">
-                                                <input type="checkbox" id="check-type-messaging" value="messaging"
-                                                       checked="checked"
-                                                       class="custom-control-input">
-                                                <label class="custom-control-label"
-                                                       for="check-type-messaging">Messaging</label>
-                                            </div>
-                                            <div class="custom-control custom-checkbox custom-control-inline">
-                                                <input type="checkbox" id="check-type-sql" value="sql" checked="checked"
-                                                       class="custom-control-input">
-                                                <label class="custom-control-label" for="check-type-sql">SQL</label>
-                                            </div>
-                                            <div class="row form-group" style="margin-top: 5px;">
-                                                <label for="query-string-from" class="col-sm-3 col-form-label-sm">Start
-                                                    date</label>
-                                                <div class="col-sm-3">
-                                                    <div class="input-group flatpickr">
-                                                        <input id="query-string-from" type="text"
-                                                               class="form-control form-control-sm" data-input/>
-                                                        <div class="input-group-append">
-                                                            <a class="btn btn-outline-secondary btn-sm form-control-sm"
-                                                               title="Toggle calendar"
-                                                               data-toggle>
-                                                                <i class="fa fa-calendar"></i>
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="row form-group">
-                                                <label for="query-string-till" class="col-sm-3 col-form-label-sm">End
-                                                    date</label>
-                                                <div class="col-sm-3">
-                                                    <div class="input-group flatpickr">
-                                                        <input id="query-string-till" type="text"
-                                                               class="form-control form-control-sm" data-input/>
-                                                        <div class="input-group-append">
-                                                            <a class="btn btn-outline-secondary btn-sm form-control-sm"
-                                                               title="Toggle calendar"
-                                                               data-toggle>
-                                                                <i class="fa fa-calendar"></i>
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="row form-group">
-                                                <label for="query-string-time-filter-field"
-                                                       class="col-sm-3 col-form-label-sm">Time
-                                                    field</label>
-                                                <div class="col-sm-3">
-                                                    <div class="input-group">
-                                                        <input id="query-string-time-filter-field" type="text"
-                                                               class="form-control form-control-sm" value="timestamp"/>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="row form-group">
+                                            <div class="row form-group mt-1">
                                                 <div class="col-sm">
                                                     <textarea id="query-string" wrap="hard" class="form-control"
                                                               placeholder="Search for..."
@@ -372,9 +315,6 @@
                                             </div>
                                             <br/>
                                             <div class="modal-footer">
-                                                <button id="btn-select-import-file"
-                                                        class="btn btn-secondary">Import
-                                                </button>
                                                 <button id="btn-search" class="btn btn-primary" type="button"
                                                         disabled="disabled">
                                                     Search
@@ -391,12 +331,20 @@
                                     <div class="card-body">
                                         <h3 class="card-title">Search results
                                             <small id="search-stats"></small>
-                                            <small style="font-size: 100%;"><a id="link-edit-table" href="#"
-                                                                               class="fa fa-edit float-right"
-                                                                               title="Edit result table"></a>&nbsp;<a
-                                                    id="link-request-download" href="#"
-                                                    class="mr-1 fa fa-download float-right"
-                                                    title="Download results"></a></small>
+                                            <div class="dropdown mr-1 float-right">
+                                                <a type="button" id="searchresult-dropdown-menu" data-toggle="dropdown"
+                                                   aria-haspopup="true" aria-expanded="false">
+                                                    <span class="fa fa-bars"></span>
+                                                </a>
+                                                <div class="dropdown-menu" aria-labelledby="searchresult">
+                                                    <a class="dropdown-item"
+                                                       data-action="edit-result-table"
+                                                       href="#">Edit result table</a>
+                                                    <a class="dropdown-item"
+                                                       data-action="download-results"
+                                                       href="#">Download results</a>
+                                                </div>
+                                            </div>
                                         </h3>
                                         <div id="result_card" class="card-text">
                                         </div>
@@ -486,6 +434,31 @@
         </div>
     </div>
 </div>
+<div class="modal fade" id="modal-additional-search-parameters">
+    <div class="modal-dialog modal-lg" role="document" style="max-width: 60%;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Additional search parameters</h2>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>You can extend the search screen with default input fields to search on by defining entries in the
+                    table below.</p>
+                <div id="block-param-fields"></div>
+                <hr/>
+                <p>Pre filled fields may depend on other fields (like time ranges). You can define the relations in the
+                    table below to minimize the predefined values in the search screen.</p>
+                <div id="block-param-relations"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button id="btn-apply-additional-search-parameters" type="button" class="btn btn-primary">Apply</button>
+            </div>
+        </div>
+    </div>
+</div>
 <div class="modal fade" id="modal-table-settings">
     <div class="modal-dialog modal-lg" role="document" style="max-width: 60%;">
         <div class="modal-content">
@@ -506,8 +479,8 @@
                     <label for="table-settings-sort-order" class="col-sm-3 col-form-label">Sort order</label>
                     <div class="col-sm-9">
                         <select id="table-settings-sort-order" class="form-control custom-select">
-                            <option value="asc">Ascending</option>
-                            <option value="desc">Descending</option>
+                            <option value="ASC">Ascending</option>
+                            <option value="DESC">Descending</option>
                         </select>
                     </div>
                 </div>
@@ -644,12 +617,21 @@
     </div>
 </div>
 
+<script src="../scripts/d3-format.v1.min.js"></script>
+<script src="../scripts/highcharts/highcharts.js"></script>
+<script src="../scripts/highcharts/xrange.js"></script>
+<script src="../scripts/highcharts/sankey.js"></script>
+<script src="../scripts/highcharts/exporting.js"></script>
+<script src="../scripts/highcharts/offline-exporting.js"></script>
+<script src="../scripts/highcharts/export-data.js"></script>
+<script src="../scripts/svg-pan-zoom.min.js"></script>
 <script src="../scripts/jquery.min.js"></script>
 <script src="../scripts/popper.min.js"></script>
 <script src="../scripts/bootstrap.min.js"></script>
 <script src="../scripts/bootstrap-notify.min.js"></script>
 <script src="../scripts/jquery.scrollbar.min.js"></script>
 <script src="../scripts/jquery-ui.min.js"></script>
+<script src="../scripts/bootstrap-multiselect.js"></script>
 <script src="../scripts/atlantis.min.js"></script>
 <script src="../scripts/flatpickr.min.js"></script>
 <script src="../scripts/moment.min.js"></script>
@@ -657,6 +639,9 @@
 <script src="../scripts/vkbeautify.js"></script>
 <script src="../scripts/clipboard.min.js"></script>
 <script src="../scripts/etm-commons.js"></script>
+<script src="../scripts/autocomplete_fields.js"></script>
+<script src="../scripts/search.js"></script>
+<script src="../scripts/event-details.js"></script>
 
 <script>
     commons.addAjaxHandlers(
@@ -671,400 +656,12 @@
         },
         null
     );
-    let queryKeywords = null;
-    $.when(
-        $.ajax({
-            type: 'GET',
-            contentType: 'application/json',
-            url: '../rest/search/keywords/etm_event_all',
-            cache: false,
-            success: function (data) {
-                if (!data || !data.keywords) {
-                    return;
-                }
-                queryKeywords = data.keywords;
-            }
-        })
-    ).done(function () {
-        // Disable or enable the search button, template name inputfield and save button if the query field contains data.
-        $('#query-string').on('input', enableOrDisableSearchButton)
-            .bind('keydown', function (event) {
-                if (event.which === $.ui.keyCode.SPACE && event.ctrlKey && !$(this).autocomplete('instance').menu.active) {
-                    $(this).autocomplete("search", $(this).val());
-                }
-            }).autocompleteFieldQuery(
-            {
-                queryKeywords: queryKeywords,
-                allowJoins: true
-            }
-        );
-        $('#query-string-time-filter-field')
-            .bind('keydown', function (event) {
-                if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
-                    event.stopPropagation();
-                }
-            }).autocompleteFieldQuery(
-            {
-                queryKeywords: queryKeywords,
-                mode: 'field',
-                keywordFilter: function (index, group, keyword) {
-                    return !keyword.date;
-                }
-            }
-        );
-        $('#table-settings-sort-field').bind('keydown', function (event) {
-            if (event.keyCode === $.ui.keyCode.TAB && $(this).autocomplete('instance').menu.active) {
-                event.preventDefault();
-            } else if (event.keyCode === $.ui.keyCode.DOWN && !$(this).autocomplete('instance').menu.active) {
-                if ($(this).val() === '') {
-                    $(this).autocomplete("search", "");
-                }
-            } else if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
-                event.stopPropagation();
-            }
-        }).autocompleteFieldQuery(
-            {
-                queryKeywords: queryKeywords,
-                mode: 'field'
-            });
-    });
-    const flatPickrStartDate = $('#query-string-from').parent()
-        .flatpickr({
-            dateFormat: "Y-m-dTH:i:S",
-            enableTime: true,
-            enableSeconds: true,
-            time_24hr: true,
-            allowInput: true,
-            defaultHour: 0,
-            defaultMinute: 0,
-            clickOpens: false,
-            wrap: true
-        });
-    const flatPickrEndDate = $('#query-string-till').parent()
-        .flatpickr({
-            dateFormat: "Y-m-dTH:i:S",
-            enableTime: true,
-            enableSeconds: true,
-            time_24hr: true,
-            allowInput: true,
-            defaultHour: 23,
-            defaultMinute: 59,
-            clickOpens: false,
-            wrap: true
-        });
-
-</script>
-<script src="../scripts/autocomplete_fields.js"></script>
-<script src="../scripts/searchresults-layout.js"></script>
-<script src="../scripts/event-details.js"></script>
-<script src="../scripts/search-templates.js"></script>
-<script>
-    let maxDownloads;
-    $('[id^=check-type-]').on('change', function () {
-        enableOrDisableSearchButton();
-        if ($('[id^=check-type-]:checked').length === 0) {
-            $('#query-string').attr('disabled', 'disabled');
-        } else {
-            $('#query-string').removeAttr('disabled');
-        }
-    });
-
-    $('#btn-search').click(function () {
-        startNewQuery();
-    });
-
-    $('#link-request-download').on('click', function (event) {
-        event.preventDefault();
-        $('#modal-download-results').modal();
-    });
-
-    $('#btn-download-results').on('click', function (event) {
-        event.preventDefault();
-        $('#modal-download-results').modal('hide');
-        const q = createQuery(true);
-        q.start_ix = Number($('#input-download-start-row').val()) - 1;
-        q.max_results = Number($('#input-download-number-of-rows').val());
-        q.fileType = $('#sel-download-type').val();
-        q.includePayload = $('#sel-download-include-payload').val() === 'true';
-        window.location.href = '../rest/search/download?q=' + encodeURIComponent(JSON.stringify(q));
-    });
-
-    $('#result_card').on('click', '#search_result_table a', function (event) {
-        event.preventDefault();
-        if ('show-event' === $(this).attr('data-link-type')) {
-            showEvent($(window).scrollTop(), $(this).attr('id'));
-            $('#search_result_table div.event-selected').removeClass('event-selected');
-            $(event.target).parent().parent().addClass('event-selected');
-        } else if ('set-as-start-for-query' === $(this).attr('data-link-type')) {
-            const value = $(this).parent().children(":first").text();
-            $('#query-string-from').val(value);
-        } else if ('set-as-end-for-query' === $(this).attr('data-link-type')) {
-            const value = $(this).parent().children(":first").text();
-            $('#query-string-till').val(value);
-        }
-    }).on('mouseenter mouseleave', '#search_result_table .result-row', function () {
-        $(this).toggleClass('bg-light');
-        $(this).find("[data-link-type='set-as-start-for-query'], [data-link-type='set-as-end-for-query']").toggleClass('invisible');
-    }).on('click', '#search_result_table .header-row div', function (event) {
-        event.preventDefault();
-        sortResultTable($(this).attr('data-event-field'));
-    }).on('click', '#search_result_table .footer-row a', function (event) {
-        event.preventDefault();
-        $('#search_result_table .footer-row').remove();
-        const query = createQuery(true);
-        query.start_ix = tableLayout.current_ix + tableLayout.results_per_page;
-        executeQuery(query, true);
-    });
-
-    $('#event-container').on('click', '#btn-back-to-results, #link-back-to-results', function (event) {
-        event.preventDefault();
-        $('#event-container').hide();
-        $('#search-container').show();
-        $('html,body').animate({scrollTop: Number($(this).attr('data-scroll-to'))}, 'fast');
-    }).on('click', "a[data-link-type='show-event']", function (event) {
-        event.preventDefault();
-        showEvent(Number($(this).attr('data-scroll-to')), $(this).attr('data-event-id'))
-    }).on('click', "a[data-link-type='toggle-detail-map']", function (event) {
-        event.preventDefault();
-        $('#' + $(this).attr('data-panel-id')).collapse('toggle');
-    });
-
-    function startNewQuery() {
-        tableLayout.timestamp = new Date().getTime();
-        const queryParams = createQuery(false);
-        queryParams.start_ix = 0;
-        executeQuery(queryParams);
-    }
-
-    function enableOrDisableSearchButton() {
-        if (!$('#query-string').val() || $('[id^=check-type-]:checked').length === 0) {
-            $('#btn-search, #template-name, #btn-save-template').attr('disabled', 'disabled');
-            $('#link-edit-table, #link-request-download').hide();
-        } else {
-            $('#btn-search, #template-name').removeAttr("disabled");
-            $('#link-edit-table').show();
-            if (maxDownloads && maxDownloads > 0) {
-                $('#link-request-download').show();
-            }
-            if ($('#template-name').val()) {
-                $('#btn-save-template').removeAttr("disabled");
-            }
-        }
-    }
-
-    function createQuery(reusePreviousQueryString) {
-        if (!reusePreviousQueryString) {
-            if (!$('#query-string').val() || $('[id^=check-type-]:checked').length === 0) {
-                return null;
-            }
-            tableLayout.current_query = $('#query-string').val();
-        } else if (!tableLayout.current_query) {
-            return null;
-        }
-        let dateValue = $('#query-string-from').val();
-        if (dateValue) {
-            tableLayout.start_time = dateValue;
-        } else {
-            tableLayout.start_time = null;
-        }
-        dateValue = $('#query-string-till').val();
-        if (dateValue) {
-            tableLayout.end_time = dateValue;
-        } else {
-            tableLayout.end_time = null;
-        }
-        tableLayout.time_filter_field = $('#query-string-time-filter-field').val() ? $('#query-string-time-filter-field').val() : 'timestamp';
-        return {
-            query: tableLayout.current_query,
-            types: $('[id^=check-type-]:checked').map(function () {
-                return $(this).val();
-            }).get(),
-            fields: tableLayout.getInternalFieldNames(),
-            start_ix: tableLayout.current_ix,
-            max_results: tableLayout.results_per_page,
-            sort_field: tableLayout.sort_field,
-            sort_order: tableLayout.sort_order,
-            fieldsLayout: tableLayout.fields,
-            timestamp: tableLayout.timestamp,
-            start_time: tableLayout.start_time,
-            end_time: tableLayout.end_time,
-            time_filter_field: tableLayout.time_filter_field
-        };
-    }
-
-    let queryInProgress = false;
-
-    function executeQuery(queryParameters, appendToCurrent) {
-        if (!queryParameters || queryInProgress) {
-            return;
-        }
-        queryInProgress = true;
-        $('#result_block').show();
-        $.ajax({
-            type: 'POST',
-            contentType: 'application/json',
-            url: '../rest/search/query',
-            cache: false,
-            data: JSON.stringify(queryParameters),
-            success: function (data) {
-                if (!data) {
-                    return;
-                }
-                $('#lnk-export-query').show();
-                maxDownloads = data.max_downloads;
-                if (maxDownloads > 0) {
-                    $('#link-request-download').show();
-                    $('#input-download-number-of-rows').attr('max', maxDownloads);
-                }
-                if (data.may_see_payload) {
-                    $('#sel-download-include-payload').removeAttr('disabled').val('true');
-                } else {
-                    $('#sel-download-include-payload').attr('disabled', 'disabled').val('false');
-                }
-                tableLayout.current_ix = data.start_ix;
-                if (appendToCurrent) {
-                    const endIx = $('#search-stats').text().lastIndexOf(' ');
-                    $('#search-stats').text($('#search-stats').text().substring(0, endIx + 1) + (data.end_ix + 1) + '.');
-                    const $results = $('#search_result_table');
-                    $(data.results).each(function (index, searchResult) {
-                        $results.append(function () {
-                            return createResultTableRow(searchResult, data.time_zone);
-                        })
-                    });
-                    if (data.has_more_results) {
-                        $results.append(
-                            $('<div class="row footer-row">')
-                                .append($('<div class="col">').addClass('text-center').attr('colspan', $(tableLayout.fields).length)
-                                    .append($('<a href="#">').attr('id', 'lnk_show_more').text('Show more'))
-                                )
-                        )
-                    }
-                } else {
-                    $('#result_card').empty();
-                    if (data.hits === 0) {
-                        $('#search-stats').text(':  No results found in ' + data.query_time_as_string + 'ms.');
-                        $('#result_card').append($('<p>').text('No results found'));
-                    } else {
-                        $('#search-stats').text(':  Found ' + data.hits_as_string + ' results in ' + data.query_time_as_string + 'ms. Showing results ' + (data.start_ix + 1) + ' to ' + (data.end_ix + 1) + '.');
-                        const $resultTable = $('<div id="search_result_table" class="container">');
-                        $resultTable.append(function () {
-                            const $row = $('<div class="row header-row">');
-                            $(tableLayout.fields).each(function (index, tableColumn) {
-                                const $col = $('<div style="cursor: pointer;" class="col font-weight-bold">').text(tableColumn.name).attr('data-event-field', tableColumn.field);
-                                if (tableColumn.field === tableLayout.sort_field) {
-                                    if ('asc' === tableLayout.sort_order) {
-                                        $col.addClass('headerSortAsc')
-                                    } else {
-                                        $col.addClass('headerSortDesc')
-                                    }
-                                }
-                                $row.append($col)
-                            });
-                            return $row;
-                        });
-                        $(data.results).each(function (index, searchResult) {
-                            $resultTable.append(function () {
-                                return createResultTableRow(searchResult, data.time_zone);
-                            })
-                        });
-                        if (data.has_more_results) {
-                            $resultTable.append(
-                                $('<div class="row footer-row">')
-                                    .append($('<div class="col">').addClass('text-center').attr('colspan', $(tableLayout.fields).length)
-                                        .append($('<a href="#">').attr('id', 'lnk_show_more').text('Show more'))
-                                    )
-                            )
-                        }
-                        $('#result_card').append($resultTable);
-                        if (!commons.isInViewport($('#result_card'))) {
-                            $('html,body').animate({scrollTop: $('#query-string').offset().top}, 'slow');
-                        }
-                    }
-                    // Update recent queries
-                    const query = {
-                        types: queryParameters.types,
-                        query: queryParameters.query,
-                        fields: queryParameters.fieldsLayout,
-                        results_per_page: queryParameters.max_results,
-                        sort_field: queryParameters.sort_field,
-                        sort_order: queryParameters.sort_order,
-                        start_time: queryParameters.start_time,
-                        end_time: queryParameters.end_time,
-                        time_filter_field: queryParameters.time_filter_field
-                    };
-                    updateHistory(query, data.history_size);
-                }
-            },
-            complete: function () {
-                queryInProgress = false;
-            }
-        });
-    }
-
-    function createResultTableRow(searchResult, timeZone) {
-        const $row = $('<div class="row result-row">');
-        $(tableLayout.fields).each(function (index, field) {
-            const $col = $('<div class="col">');
-            if (field.link) {
-                $col.append(
-                    $('<a>')
-                        .attr('href', '?id=' + encodeURIComponent(searchResult.id))
-                        .attr('id', searchResult.id)
-                        .attr('data-link-type', 'show-event')
-                        .text(tableLayout.getValueFromSearchResult(searchResult, field, timeZone))
-                );
-            } else {
-                $col.append($('<span>').text(tableLayout.getValueFromSearchResult(searchResult, field, timeZone)));
-            }
-            if ('isotimestamp' === field.format || 'isoutctimestamp' === field.format) {
-                $col.append(
-                    $('<a>')
-                        .addClass('fa fa-hourglass-end float-right invisible')
-                        .attr('data-link-type', 'set-as-end-for-query')
-                        .attr('title', "Set as 'End date' for query")
-                        .attr('href', '#'),
-                    $('<a>')
-                        .addClass('fa fa-hourglass-start float-right pr-1 invisible')
-                        .attr('data-link-type', 'set-as-start-for-query')
-                        .attr('title', "Set as 'Start date' for query")
-                        .attr('href', '#')
-                );
-            }
-            $row.append($col);
-        });
-        return $row;
-    }
-
-    function sortResultTable(fieldName) {
-        if (queryInProgress) {
-            return false;
-        }
-        if (tableLayout.sort_field === fieldName) {
-            if (tableLayout.sort_order === 'asc') {
-                tableLayout.sort_order = 'desc';
-            } else {
-                tableLayout.sort_order = 'asc';
-            }
-        } else {
-            tableLayout.sort_field = fieldName;
-        }
-        tableLayout.current_ix = 0;
-        executeQuery(createQuery(true));
-    }
-
-    $(window).scroll(function (event) {
-        const $showMoreLink = $('#lnk_show_more');
-        if (commons.isInViewport($showMoreLink)) {
-            $showMoreLink.click();
-        }
-    });
-
+    buildSearchPage();
     if (commons.queryString['id']) {
         showEvent(null, commons.queryString['id']);
     } else if (commons.queryString['q']) {
-        $('#query-string').val(commons.queryString['q']);
-        executeQuery(createQuery(false));
-        enableOrDisableSearchButton();
+        $('#query-string').val(commons.queryString['q']).trigger('input');
+        $('#btn-search').trigger('click');
     }
 </script>
 

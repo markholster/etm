@@ -234,21 +234,6 @@ public class EtmConfigurationTagsJsonImpl implements EtmConfigurationTags {
     }
 
     @Override
-    public String getStartTimeTag() {
-        return "start_time";
-    }
-
-    @Override
-    public String getEndTimeTag() {
-        return "end_time";
-    }
-
-    @Override
-    public String getTimeFilterFieldTag() {
-        return "time_filter_field";
-    }
-
-    @Override
     public String getInstancesTag() {
         return "instances";
     }

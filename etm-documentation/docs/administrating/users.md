@@ -20,7 +20,6 @@ Always show correlated events | Always show directly correlated events in the ev
 Locale | The locale of the user.
 Time zone | The time zone the user is in. Time based properties will be converted to the selected time zone.
 Search history size | The number of queries that need to be remembered.
-Default search time range | The default time range (in seconds) on the search screen to query. For example, if you set this value to 60 the last 60 seconds will be queried by default when entering the search screen.
 Dashboards datasources | The datasources available to the user when creating a graph/dashboard. Note that when an authorization to a datasource is revoked and the user has stored a graph that uses the datasource the graph will no longer ouput data and renders into an error state.
 Signal datasources | The datasources available to the user when creating a signal. Note that when an authorization to a datasource is revoked and the user has stored a signal that uses the datasource the signal will no longer be checked for threshold exceedances.
 Notifiers | The [Notifiers](../administrating/notifiers.md) available to the user. A notifier can be used for sending alerts configured in [Signals](../signals/README.md).

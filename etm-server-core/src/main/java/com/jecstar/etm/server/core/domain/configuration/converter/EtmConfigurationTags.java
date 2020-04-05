@@ -100,12 +100,6 @@ public interface EtmConfigurationTags {
 
     String getSortOrderTag();
 
-    String getStartTimeTag();
-
-    String getEndTimeTag();
-
-    String getTimeFilterFieldTag();
-
     // Node instances tags
     String getInstancesTag();
 

@@ -35,8 +35,6 @@ public interface EtmPrincipalTags {
 
     String getSearchHistorySizeTag();
 
-    String getDefaultSearchRangeTag();
-
     String getLocaleTag();
 
     String getNameTag();

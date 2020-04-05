@@ -14,7 +14,7 @@ Code | Reason | Solution
 201010 | Error creating XML unmarshaller. |
 201011 | Invalid xpath expression. The provided input is an invalid XPath expression. | Change your input to a valid XPath expression.
 201012 | Invalid xslt template. The provided input is an invalid XSLT template. | Change your input to a valid XSLT template.
-201013 | Invalid json path expression. The provided input is an invalid JSON path expression or is not definite. | Change your input to a valid definite JSON path expression.
+201013 | Invalid json (path) expression. The provided input is an invalid JSON (path) expression or is not definite. | Change your input to a valid definite JSON (path) expression.
 201014 | Invalid regular expression. The provided input is an invalid regular expression or is not definite. | Change your input to a valid regular expression.
 201015 | Invalid javascript expression. The provided input is invalid javascript. | Correct the script to be a valid ECMAScript.
 201029 | Invalid expression parser type. |
@@ -32,3 +32,4 @@ Code | Reason | Solution
 500000 | Maximum number of signals reached. | You are not allowed to store more signals. Delete a signal, or ask your Enterprise Telemetry Monitor administrator to raise the maximum number of signals that can be stored.
 500001 | Not authorized for signal data source. | 
 500002 | Not authorized for notifier. | 
+600000 | Maximum number of search templates reached. | You are not allowed to store more search templates. Delete a search template, or ask your Enterprise Telemetry Monitor administrator to raise the maximum number of search templates that can be stored.

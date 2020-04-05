@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 /**
  * Class representing a Directed Graph.
  */
-public class DirectedGraph {
+public class DirectedGraph<V extends Vertex> {
 
     /**
      * The <code>LogWrapper</code> for this class.
@@ -40,16 +40,16 @@ public class DirectedGraph {
     /**
      * The outdegree map of all <code>Vertex</code> instances present in this <code>DirectedGraph</code>.
      */
-    private final Map<Vertex, LinkedList<Vertex>> outdegreeMap = new LinkedHashMap<>();
+    private final Map<V, LinkedList<V>> outdegreeMap = new LinkedHashMap<>();
     /**
      * The indegree map that holds the connections to a certain <code>Vertex</code>.
      */
-    private final Map<Vertex, LinkedList<Vertex>> indegreeMap = new LinkedHashMap<>();
+    private final Map<V, LinkedList<V>> indegreeMap = new LinkedHashMap<>();
 
     /**
      * The parent map that holds all <code>Vertex</code> instances per parent.
      */
-    private final Map<Vertex, Set<Vertex>> parentMap = new HashMap<>();
+    private final Map<V, Set<V>> parentMap = new HashMap<>();
 
     /**
      * The number of edges;
@@ -67,14 +67,15 @@ public class DirectedGraph {
      * @param vertex The <code>Vertex</code> to add.
      * @return The <code> DirectedGraph</code> used for chaining.
      */
-    private DirectedGraph addVertex(Vertex vertex) {
+    @SuppressWarnings("unchecked")
+    public DirectedGraph<V> addVertex(V vertex) {
         if (this.outdegreeMap.containsKey(vertex)) {
             return this;
         }
         this.outdegreeMap.put(vertex, new LinkedList<>());
         this.indegreeMap.put(vertex, new LinkedList<>());
         if (vertex.getParent() != null) {
-            this.parentMap.computeIfAbsent(vertex.getParent(), k -> new HashSet<>()).add(vertex);
+            this.parentMap.computeIfAbsent((V) vertex.getParent(), k -> new HashSet<>()).add(vertex);
         }
         return this;
     }
@@ -86,7 +87,7 @@ public class DirectedGraph {
      * @param head The head <code>Vertex</code>.
      * @return The <code> DirectedGraph</code> used for chaining.
      */
-    public DirectedGraph addEdge(Vertex tail, Vertex head) {
+    public DirectedGraph<V> addEdge(V tail, V head) {
         addVertex(tail).addVertex(head);
         if (tail instanceof Event && head instanceof Endpoint) {
             var eventStartTime = ((Event) tail).getEventStartTime();
@@ -106,7 +107,7 @@ public class DirectedGraph {
      *
      * @return The <coder>Vertex</coder> instances.
      */
-    public Set<Vertex> getVertices() {
+    public Set<V> getVertices() {
         return this.outdegreeMap.keySet();
     }
 
@@ -116,7 +117,7 @@ public class DirectedGraph {
      * @param vertex The parent <code>Vertex</code>
      * @return The child <code>Vertext</code> instances, or <code>null</code> when the give <code>Vertex</code> isn't a parent <code>Vertex</code>.
      */
-    public Set<Vertex> getChildVertices(Vertex vertex) {
+    public Set<V> getChildVertices(V vertex) {
         return this.parentMap.get(vertex);
     }
 
@@ -128,7 +129,7 @@ public class DirectedGraph {
      * @return The outdegree of the given <code>Vertex</code>
      * @throws IllegalArgumentException when the given <code>Vertex</code> is not part of this <code>DirectedGraph</code>
      */
-    public int outdegree(Vertex vertex) {
+    public int outdegree(V vertex) {
         var adjacencyList = this.outdegreeMap.get(vertex);
         if (adjacencyList == null) {
             throw new IllegalArgumentException("Vertex with id '" + vertex.getVertexId() + "' not part of this DirectedGraph");
@@ -144,7 +145,7 @@ public class DirectedGraph {
      * @return The indegree of the given <code>Vertex</code>
      * @throws IllegalArgumentException when the given <code>Vertex</code> is not part of this <code>DirectedGraph</code>
      */
-    public int indegree(Vertex vertex) {
+    public int indegree(V vertex) {
         var indegreeList = this.indegreeMap.get(vertex);
         if (indegreeList == null) {
             throw new IllegalArgumentException("Vertex with id '" + vertex.getVertexId() + "' not part of this DirectedGraph");
@@ -158,7 +159,7 @@ public class DirectedGraph {
      * @param vertex The <code>Vertex</code> to return the adjacent vertices from.
      * @return A <code>List</code> with adjacent <code>Vertex</code> instances, or <code>null</code> if the given <code>Vertex</code> is not part of this <code>DirectedGraph</code>.
      */
-    public List<Vertex> getAdjacentOutVertices(Vertex vertex) {
+    public List<V> getAdjacentOutVertices(V vertex) {
         return this.outdegreeMap.get(vertex);
     }
 
@@ -168,7 +169,7 @@ public class DirectedGraph {
      * @param vertex The <code>Vertex</code> to return the adjacent vertices from.
      * @return A <code>List</code> with adjacent <code>Vertex</code> instances, or <code>null</code> if the given <code>Vertex</code> is not part of this <code>DirectedGraph</code>.
      */
-    public List<Vertex> getAdjacentInVertices(Vertex vertex) {
+    public List<V> getAdjacentInVertices(V vertex) {
         return this.indegreeMap.get(vertex);
     }
 
@@ -177,8 +178,8 @@ public class DirectedGraph {
      *
      * @return The code>List</code> of ordered <code>Vertex</code> instances.
      */
-    public List<Vertex> getDirectedAcyclicOrder() {
-        var cycleFinder = new CycleFinder(this);
+    public List<V> getDirectedAcyclicOrder() {
+        var cycleFinder = new CycleFinder<V>(this);
         if (cycleFinder.hasCycle()) {
             // TODO dit moet nog opgelost worden. Op zoek naar de kortste cycle en deze negeren o.i.d.
             if (log.isErrorLevelEnabled()) {
@@ -186,7 +187,7 @@ public class DirectedGraph {
             }
             throw new IllegalStateException("Found a cycle in the event order. It is impossible to display the endpoints overview.");
         }
-        var depthFirstOrder = new DepthFirstOrder(this);
+        var depthFirstOrder = new DepthFirstOrder<V>(this);
         return depthFirstOrder.reversePostOrder();
     }
 
@@ -197,8 +198,8 @@ public class DirectedGraph {
      * @param target The target <code>Vertex</code>.
      * @return <code>true</code> if there is a path from the <em>source</em> <code>Vertex</code> to the <em>target</em> <code>Vertex</code>, <code>false</code> otherwise.
      */
-    public boolean hasPathTo(Vertex source, Vertex target) {
-        return new BreadthFirstDirectedPath(this, source).hasPathTo(target);
+    public boolean hasPathTo(V source, V target) {
+        return new BreadthFirstDirectedPath<V>(this, source).hasPathTo(target);
     }
 
     /**
@@ -226,9 +227,9 @@ public class DirectedGraph {
      *
      * @return The <code>Layer</code> instances of this <code>DirectedGraph</code>.
      */
-    public List<Layer> getLayers() {
-        var layers = new ArrayList<Layer>();
-        var layer = new Layer(0);
+    public List<Layer<V>> getLayers() {
+        var layers = new ArrayList<Layer<V>>();
+        var layer = new Layer<V>(0);
         layers.add(layer);
         layer.addAndOptimize(layers, getDirectedAcyclicOrder());
         return layers;
@@ -248,8 +249,8 @@ public class DirectedGraph {
      *
      * @return This <code>DirectedGraph</code> for chaining.
      */
-    public DirectedGraph calculateAbsoluteMetrics() {
-        List<Vertex> orderedVertices = getDirectedAcyclicOrder();
+    public DirectedGraph<V> calculateAbsoluteMetrics() {
+        List<V> orderedVertices = getDirectedAcyclicOrder();
         if (orderedVertices.size() == 0) {
             return this;
         }
@@ -356,7 +357,8 @@ public class DirectedGraph {
      *
      * @return This <code>DirectedGraph</code> for chaining.
      */
-    public DirectedGraph finishGraph() {
+    @SuppressWarnings("unchecked")
+    public DirectedGraph<V> finishGraph() {
         // Add edges within a transaction.
         var vertices = getVertices();
         for (var vertex : vertices) {
@@ -373,7 +375,7 @@ public class DirectedGraph {
                 transactionEvents.sort(Comparator.comparing(Event::getEventStartTime));
                 for (var transactionEvent : transactionEvents) {
                     if (!transactionEvent.getEventStartTime().isBefore(event.getEventStartTime()) && !event.getEventId().equals(transactionEvent.getEventId())) {
-                        addEdge(event, transactionEvent);
+                        addEdge((V) event, (V) transactionEvent);
                         break;
                     }
                 }
@@ -395,7 +397,7 @@ public class DirectedGraph {
                 continue;
             }
             var requestEvent = first.get();
-            if (hasPathTo(requestEvent, responseEvent)) {
+            if (hasPathTo((V) requestEvent, (V) responseEvent)) {
                 // There's a path from the request to the response. Nothing to do...
                 continue;
             }
@@ -405,22 +407,23 @@ public class DirectedGraph {
     }
 
     /**
-     * Method that tries to create a path from a request <ccode>Event</ccode> to a corresponding response <code>Event</code>.
+     * Method that tries to create a path from a request <code>Event</code> to a corresponding response <code>Event</code>.
      *
      * @param requestEvent  The request <code>Event</code> that needs to have a path to the corresponding response <code>Event</code>.
      * @param responseEvent The response <code>Event</code> that needs to have a path to the corresponding request <code>Event</code>.
      */
+    @SuppressWarnings("unchecked")
     private void createPath(Event requestEvent, Event responseEvent) {
         if (!Objects.equals(requestEvent.getEventId(), responseEvent.getCorrelationEventId())) {
             // Objects not related.
             return;
         }
-        if (hasPathTo(requestEvent, responseEvent)) {
+        if (hasPathTo((V) requestEvent, (V) responseEvent)) {
             // Path already present.
             return;
         }
         // Let's see if we can find the end of the path seen from the request.
-        Vertex lastAfterRequest = requestEvent;
+        V lastAfterRequest = (V) requestEvent;
         while (getAdjacentOutVertices(lastAfterRequest) != null && !getAdjacentOutVertices(lastAfterRequest).isEmpty()) {
             var next = getAdjacentOutVertices(lastAfterRequest).get(0);
             if (next.equals(requestEvent)) {
@@ -436,9 +439,9 @@ public class DirectedGraph {
                             .map(e -> (Event) e)
                             .filter(e -> Objects.equals(nextEvent.getEventId(), e.getCorrelationEventId()) && e.isResponse())
                             .findFirst();
-                    if (!optionalResponse.isEmpty()) {
+                    if (optionalResponse.isPresent()) {
                         createPath(nextEvent, optionalResponse.get());
-                        var cycleFinder = new CycleFinder(this);
+                        var cycleFinder = new CycleFinder<>(this);
                         if (cycleFinder.hasCycle()) {
                             // Should be impossible, but we need to stop here otherwise we might create a stack overflow.
                             if (log.isErrorLevelEnabled()) {
@@ -446,7 +449,7 @@ public class DirectedGraph {
                             }
                             return;
                         }
-                        if (hasPathTo(requestEvent, responseEvent)) {
+                        if (hasPathTo((V) requestEvent, (V) responseEvent)) {
                             // Check again if the path is created now. This might happen because of a request down the chain is connected now.
                             return;
                         }
@@ -459,7 +462,7 @@ public class DirectedGraph {
             // Nothing found...
             return;
         }
-        Vertex firstBeforeResponse = responseEvent;
+        V firstBeforeResponse = (V) responseEvent;
         while (getAdjacentInVertices(firstBeforeResponse) != null && !getAdjacentInVertices(firstBeforeResponse).isEmpty()) {
             var next = getAdjacentInVertices(firstBeforeResponse).get(0);
             if (next.equals(responseEvent)) {
@@ -487,13 +490,13 @@ public class DirectedGraph {
     /**
      * Class that can find a cyclic order of the edges in a <code>DirectedGraph</code> instance.
      */
-    private static class CycleFinder {
+    private static class CycleFinder<V extends Vertex> {
         private boolean[] marked;
         private int[] edgeTo;
         private boolean[] onStack;
-        private LinkedList<Vertex> cycle;
+        private LinkedList<V> cycle;
 
-        private CycleFinder(DirectedGraph directedGraph) {
+        private CycleFinder(DirectedGraph<V> directedGraph) {
             var verticesCount = directedGraph.getVertices().size();
             this.marked = new boolean[verticesCount];
             this.edgeTo = new int[verticesCount];
@@ -506,7 +509,7 @@ public class DirectedGraph {
             }
         }
 
-        private void checkCycle(List<Vertex> vertices, Map<Vertex, LinkedList<Vertex>> adjacencyMap, Vertex vertex) {
+        private void checkCycle(List<V> vertices, Map<V, LinkedList<V>> adjacencyMap, V vertex) {
             var vertexIx = vertices.indexOf(vertex);
             this.onStack[vertexIx] = true;
             this.marked[vertexIx] = true;
@@ -542,12 +545,12 @@ public class DirectedGraph {
     /**
      * Class that determines the <em>preorder</em>, <em>postorder</em> and <code>reverse postorder</code> of a given <code>DirectedGraph</code>.
      */
-    private static class DepthFirstOrder {
+    private static class DepthFirstOrder<V extends Vertex> {
         private boolean[] marked;
-        private List<Vertex> preOrder = new ArrayList<>();
-        private List<Vertex> postOrder = new ArrayList<>();
+        private List<V> preOrder = new ArrayList<>();
+        private List<V> postOrder = new ArrayList<>();
 
-        DepthFirstOrder(DirectedGraph directedGraph) {
+        DepthFirstOrder(DirectedGraph<V> directedGraph) {
             var vertices = new ArrayList<>(directedGraph.getVertices());
             this.marked = new boolean[vertices.size()];
             for (int vertexIx = 0; vertexIx < vertices.size(); vertexIx++) {
@@ -557,7 +560,7 @@ public class DirectedGraph {
             }
         }
 
-        private void setOrder(List<Vertex> vertices, Map<Vertex, LinkedList<Vertex>> adjacencyMap, Vertex vertex) {
+        private void setOrder(List<V> vertices, Map<V, LinkedList<V>> adjacencyMap, V vertex) {
             var vertexIx = vertices.indexOf(vertex);
             this.marked[vertexIx] = true;
             this.preOrder.add(vertex);
@@ -575,7 +578,7 @@ public class DirectedGraph {
          *
          * @return The vertices in post order.
          */
-        public List<Vertex> postOrder() {
+        public List<V> postOrder() {
             return this.postOrder;
         }
 
@@ -584,7 +587,7 @@ public class DirectedGraph {
          *
          * @return The vertices in pre order.
          */
-        public List<Vertex> preOrder() {
+        public List<V> preOrder() {
             return this.preOrder;
         }
 
@@ -593,8 +596,8 @@ public class DirectedGraph {
          *
          * @return the vertices in reverse post order.
          */
-        public List<Vertex> reversePostOrder() {
-            var reverse = new LinkedList<Vertex>();
+        public List<V> reversePostOrder() {
+            var reverse = new LinkedList<V>();
             for (var vertex : this.postOrder) {
                 reverse.addFirst(vertex);
             }
@@ -605,21 +608,21 @@ public class DirectedGraph {
     /**
      * The <code>BreadthDirectedFirstPaths</code> class represents a data type for finding shortest paths (number of edges) from a source vertex <em>s</em> to every other vertex in the digraph.
      */
-    private static class BreadthFirstDirectedPath {
+    private static class BreadthFirstDirectedPath<V extends Vertex> {
 
-        private List<Vertex> marked;
-        private Map<Vertex, Vertex> edgeTo;
-        private Map<Vertex, Integer> distanceTo;
+        private List<V> marked;
+        private Map<V, V> edgeTo;
+        private Map<V, Integer> distanceTo;
 
-        BreadthFirstDirectedPath(DirectedGraph directedGraph, Vertex sourceVertex) {
+        BreadthFirstDirectedPath(DirectedGraph<V> directedGraph, V sourceVertex) {
             this.marked = new ArrayList<>();
             this.edgeTo = new HashMap<>();
             this.distanceTo = new HashMap<>();
             setPaths(directedGraph.outdegreeMap, sourceVertex);
         }
 
-        private void setPaths(Map<Vertex, LinkedList<Vertex>> adjacencyMap, Vertex sourceVertex) {
-            var queue = new ArrayList<Vertex>();
+        private void setPaths(Map<V, LinkedList<V>> adjacencyMap, V sourceVertex) {
+            var queue = new ArrayList<V>();
             this.marked.add(sourceVertex);
             this.distanceTo.put(sourceVertex, 0);
             queue.add(sourceVertex);
@@ -642,7 +645,7 @@ public class DirectedGraph {
          * @param vertex The <code>vertex</code>
          * @return <code>true</code> if there is a directed path,<code>false</code>> otherwise.
          */
-        public boolean hasPathTo(Vertex vertex) {
+        public boolean hasPathTo(V vertex) {
             return this.marked.contains(vertex);
         }
 
@@ -652,7 +655,7 @@ public class DirectedGraph {
          * @param vertex The <code>vertex</code>
          * @return The number of edges in a shortest path, or -1 if there's no path.
          */
-        public int distanceTo(Vertex vertex) {
+        public int distanceTo(V vertex) {
             if (!hasPathTo(vertex)) {
                 return -1;
             }
@@ -665,12 +668,12 @@ public class DirectedGraph {
          * @param vertex The <code>>vertex</code.
          * @return A <code>List</code> of <code>Vertex</code> instances on a shortest path, or <code>null</code> if there's no path.
          */
-        public List<Vertex> pathTo(Vertex vertex) {
+        public List<V> pathTo(V vertex) {
             if (!hasPathTo(vertex)) {
                 return null;
             }
-            var path = new ArrayList<Vertex>();
-            Vertex v;
+            var path = new ArrayList<V>();
+            V v;
             for (v = vertex; distanceTo(v) > 0; v = this.edgeTo.get(v)) {
                 path.add(v);
             }

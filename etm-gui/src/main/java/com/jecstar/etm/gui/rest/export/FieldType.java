@@ -21,52 +21,87 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.stream.Collectors;
 
 public enum FieldType {
 
     ISO_UTC_TIMESTAMP() {
+        @SuppressWarnings("unchecked")
         @Override
         String formatValue(Object value, ZoneId zoneId) {
             if (value == null) {
                 return null;
             }
-            if (value instanceof Number) {
-                return ISO_UTC_FORMATTER.format(Instant.ofEpochMilli(((Number) value).longValue()));
+            Collection<Object> values = new ArrayList<>();
+            if (value instanceof Collection<?>) {
+                values = (Collection<Object>) value;
+            } else {
+                values.add(value);
             }
-            return value.toString();
+            return values.stream().map(f -> {
+                if (f instanceof Number) {
+                    return ISO_UTC_FORMATTER.format(Instant.ofEpochMilli(((Number) f).longValue()));
+                }
+                return f.toString();
+            }).collect(Collectors.joining(", "));
         }
     }, ISO_TIMESTAMP() {
+        @SuppressWarnings("unchecked")
         @Override
         String formatValue(Object value, ZoneId zoneId) {
             if (value == null) {
                 return null;
             }
-            if (value instanceof Number) {
-                return ISO_FORMATTER.withZone(zoneId).format(Instant.ofEpochMilli(((Number) value).longValue()));
+            Collection<Object> values = new ArrayList<>();
+            if (value instanceof Collection<?>) {
+                values = (Collection<Object>) value;
+            } else {
+                values.add(value);
             }
-            return value.toString();
+            return values.stream().map(f -> {
+                if (f instanceof Number) {
+                    return ISO_FORMATTER.withZone(zoneId).format(Instant.ofEpochMilli(((Number) f).longValue()));
+                }
+                return f.toString();
+            }).collect(Collectors.joining(", "));
         }
     }, PLAIN() {
+        @SuppressWarnings("unchecked")
         @Override
         String formatValue(Object value, ZoneId zoneId) {
             if (value == null) {
                 return null;
             }
-            return value.toString();
+            Collection<Object> values = new ArrayList<>();
+            if (value instanceof Collection<?>) {
+                values = (Collection<Object>) value;
+            } else {
+                values.add(value);
+            }
+            return values.stream().map(Object::toString).collect(Collectors.joining(", "));
         }
     };
 
     private static final DateTimeFormatter ISO_UTC_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ").withZone(ZoneOffset.UTC);
     private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 
+    /**
+     * Format the gives value to a <code>String</code>.
+     *
+     * @param value  The value to be formatted. This can also be a <code>Collection</code> instance.
+     * @param zoneId The <code>ZoneId</code> to format date instances.
+     * @return The formatted value.
+     */
     abstract String formatValue(Object value, ZoneId zoneId);
 
     public static FieldType fromJsonValue(String jsonValue) {
-        if ("plain".equals(jsonValue)) {
+        if ("PLAIN".equals(jsonValue)) {
             return PLAIN;
-        } else if ("isoutctimestamp".equals(jsonValue)) {
+        } else if ("ISOUTCTIMESTAMP".equals(jsonValue)) {
             return ISO_UTC_TIMESTAMP;
-        } else if ("isotimestamp".equals(jsonValue)) {
+        } else if ("ISOTIMESTAMP".equals(jsonValue)) {
             return ISO_TIMESTAMP;
         }
         return null;

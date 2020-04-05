@@ -27,10 +27,14 @@ import com.jecstar.etm.gui.rest.export.FileType;
 import com.jecstar.etm.gui.rest.export.QueryExporter;
 import com.jecstar.etm.gui.rest.services.AbstractIndexMetadataService;
 import com.jecstar.etm.gui.rest.services.Keyword;
-import com.jecstar.etm.gui.rest.services.search.graphs.Application;
-import com.jecstar.etm.gui.rest.services.search.graphs.DirectedGraph;
-import com.jecstar.etm.gui.rest.services.search.graphs.Endpoint;
-import com.jecstar.etm.gui.rest.services.search.graphs.Event;
+import com.jecstar.etm.gui.rest.services.dashboard.domain.GraphContainer;
+import com.jecstar.etm.gui.rest.services.search.graphs.*;
+import com.jecstar.etm.gui.rest.services.search.query.AdditionalQueryParameter;
+import com.jecstar.etm.gui.rest.services.search.query.EtmQuery;
+import com.jecstar.etm.gui.rest.services.search.query.Field;
+import com.jecstar.etm.gui.rest.services.search.query.ResultLayout;
+import com.jecstar.etm.gui.rest.services.search.query.converter.EtmQueryConverter;
+import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.audit.AuditLog;
 import com.jecstar.etm.server.core.domain.audit.GetEventAuditLog;
 import com.jecstar.etm.server.core.domain.audit.builder.GetEventAuditLogBuilder;
@@ -62,14 +66,15 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.xcontent.ToXContent;
-import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.*;
-import org.elasticsearch.script.Script;
-import org.elasticsearch.script.ScriptType;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.BucketOrder;
+import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
+import org.elasticsearch.search.aggregations.bucket.terms.ParsedTerms;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 
@@ -107,6 +112,8 @@ public class SearchService extends AbstractIndexMetadataService {
     private final EtmConfigurationTags configurationTags = new EtmConfigurationTagsJsonImpl();
     private final QueryAuditLogConverter queryAuditLogConverter = new QueryAuditLogConverter();
     private final GetEventAuditLogConverter getEventAuditLogConverter = new GetEventAuditLogConverter();
+    private final EtmQueryConverter etmQueryConverter = new EtmQueryConverter();
+    private final String transactionIdPath = eventTags.getEndpointsTag() + "." + eventTags.getEndpointHandlersTag() + "." + eventTags.getEndpointHandlerTransactionIdTag();
 
     public static void initialize(DataRepository dataRepository, EtmConfiguration etmConfiguration) {
         SearchService.dataRepository = dataRepository;
@@ -118,82 +125,18 @@ public class SearchService extends AbstractIndexMetadataService {
     @Path("/userdata")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
-    public String getSearchTemplates() {
-        EtmPrincipal etmPrincipal = getEtmPrincipal();
-        GetResponse getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + etmPrincipal.getId())
-                .setFetchSource(new String[]{
-                        ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + ".search_templates",
-                        ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.configurationTags.getSearchHistoryTag(),
-                }, null));
-        Map<String, Object> valueMap;
-        if (getResponse.isSourceEmpty() || getResponse.getSourceAsMap().isEmpty() || !getResponse.getSourceAsMap().containsKey(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER)) {
-            valueMap = new HashMap<>();
-        } else {
-            valueMap = getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, getResponse.getSourceAsMap(), Collections.emptyMap());
-
-        }
-        valueMap.put("max_search_templates", etmConfiguration.getMaxSearchTemplateCount());
-        valueMap.put("default_search_range", etmPrincipal.getDefaultSearchRange());
-        valueMap.put("timeZone", etmPrincipal.getTimeZone().getID());
-        return toString(valueMap);
-    }
-
-    @PUT
-    @Path("/templates/{templateName}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
-    public String addSearchTemplate(@PathParam("templateName") String templateName, String json) {
-        Map<String, Object> requestValues = toMap(json);
-        Map<String, Object> scriptParams = new HashMap<>();
-        Map<String, Object> template = new HashMap<>();
-        template.put("name", templateName);
-        template.put("query", getString("query", requestValues));
-        template.put("types", getArray("types", requestValues));
-        template.put("fields", getArray("fields", requestValues));
-        template.put("results_per_page", getInteger("results_per_page", requestValues, 50));
-        template.put("sort_field", getString("sort_field", requestValues));
-        template.put("sort_order", getString("sort_order", requestValues));
-        template.put("start_time", getString("start_time", requestValues));
-        template.put("end_time", getString("end_time", requestValues));
-        template.put("time_filter_field", getString("time_filter_field", requestValues));
-
-        scriptParams.put("template", template);
-        scriptParams.put("max_templates", etmConfiguration.getMaxSearchTemplateCount());
-        UpdateRequestBuilder builder = requestEnhancer.enhance(
-                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId())
-        )
-                .setScript(new Script(ScriptType.STORED, null, "etm_update-search-template", scriptParams));
-        dataRepository.update(builder);
-        return "{ \"status\": \"success\" }";
-    }
-
-    @DELETE
-    @Path("/templates/{templateName}")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
-    public String removeSearchTemplate(@PathParam("templateName") String templateName) {
-        Map<String, Object> scriptParams = new HashMap<>();
-        scriptParams.put("name", templateName);
-        UpdateRequestBuilder builder = requestEnhancer.enhance(
-                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId())
-        )
-                .setScript(new Script(ScriptType.STORED, null, "etm_remove-search-template", scriptParams));
-        dataRepository.update(builder);
-        return "{ \"status\": \"success\" }";
-    }
-
-    @GET
-    @Path("/keywords/{indexName}")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
-    public String getKeywords(@PathParam("indexName") String indexName) {
+    public String getUserData() {
+        var etmPrincipal = getEtmPrincipal();
         var builder = new JsonBuilder();
-        List<Keyword> keywords = getIndexFields(SearchService.dataRepository, indexName);
+        List<Keyword> keywords = getIndexFields(SearchService.dataRepository, ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL);
         builder.startObject();
+        builder.field("max_number_of_search_templates", etmConfiguration.getMaxSearchTemplateCount());
+        builder.field("max_number_of_historical_queries", Math.min(etmPrincipal.getHistorySize(), etmConfiguration.getMaxSearchHistoryCount()));
+        builder.field("max_number_of_events_in_download", etmConfiguration.getMaxSearchResultDownloadRows());
+        builder.field("timeZone", etmPrincipal.getTimeZone().getID());
         builder.startArray("keywords");
         builder.startObject();
-        builder.field("index", indexName);
+        builder.field("index", ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL);
         builder.startArray("keywords");
         for (var keyword : keywords) {
             builder.startObject();
@@ -205,9 +148,201 @@ public class SearchService extends AbstractIndexMetadataService {
         }
         builder.endArray();
         builder.endObject();
-        builder.endArray();
+        builder.endArray(); //End  Keywords
+
+        var userData = getCurrentUser(
+                ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + ".search_templates",
+                ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + ".additional_query_parameters",
+                ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.configurationTags.getSearchHistoryTag()
+        );
+        builder.rawField("search_templates", toString(userData.get("search_templates")));
+        if (userData.containsKey("additional_query_parameters")) {
+            builder.rawField("additional_query_parameters", toString(userData.get("additional_query_parameters")));
+        }
+        builder.rawField(this.configurationTags.getSearchHistoryTag(), toString(userData.get(this.configurationTags.getSearchHistoryTag())));
         builder.endObject();
         return builder.build();
+    }
+
+    @SuppressWarnings("unchecked")
+    @POST
+    @Path("/distinctvalues")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
+    public String getDistinctValues(String json) {
+        var etmPrincipal = getEtmPrincipal();
+        var fieldsMap = (List<Map<String, Object>>) getArray("fields", toMap(json));
+        var params = new ArrayList<AdditionalSearchParameter>();
+        var directedGraph = new DirectedGraph<AdditionalSearchParameter>();
+        for (int i = 0; i < fieldsMap.size(); i++) {
+            Map<String, Object> fieldMap = fieldsMap.get(i);
+            AdditionalSearchParameter additionalSearchParameter = new AdditionalSearchParameter(i);
+            additionalSearchParameter.setField(getString("field", fieldMap));
+            additionalSearchParameter.setType(getString("type", fieldMap));
+            additionalSearchParameter.setValue(fieldMap.get("value"));
+            if (AdditionalQueryParameter.FieldType.SELECT.name().equals(additionalSearchParameter.getType()) || AdditionalQueryParameter.FieldType.SELECT_MULTI.name().equals(additionalSearchParameter.getType())) {
+                directedGraph.addVertex(additionalSearchParameter);
+            }
+            params.add(additionalSearchParameter);
+        }
+
+        for (int i = 0; i < fieldsMap.size(); i++) {
+            Map<String, Object> fieldMap = fieldsMap.get(i);
+            final int index = i;
+            var relatesToList = (List<Integer>) fieldMap.get("relates_to");
+            if (relatesToList != null && !relatesToList.isEmpty()) {
+                relatesToList.forEach(c -> directedGraph.addEdge(params.get(index), params.get(c)));
+            }
+        }
+
+        List<AdditionalSearchParameter> directedAcyclicOrder = directedGraph.getDirectedAcyclicOrder();
+        Collections.reverse(directedAcyclicOrder);
+        for (AdditionalSearchParameter vertex : directedAcyclicOrder) {
+            if (!AdditionalQueryParameter.FieldType.SELECT.name().equals(vertex.getType()) && !AdditionalQueryParameter.FieldType.SELECT_MULTI.name().equals(vertex.getType())) {
+                continue;
+            }
+            BoolQueryBuilder rootQuery = new BoolQueryBuilder();
+            addFilterQuery(etmPrincipal, rootQuery);
+
+            for (var filterVertex : directedGraph.getAdjacentOutVertices(vertex)) {
+                QueryBuilder filterQuery = createFilterQueryBuilder(filterVertex.getField(), filterVertex.getType(), filterVertex.getValue(), etmPrincipal);
+                if (filterQuery != null) {
+                    rootQuery.must(filterQuery);
+                }
+            }
+            var termField = getFieldData(dataRepository, ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL, vertex.getField());
+            if (termField == null) {
+                continue;
+            }
+            var builder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL))
+                    .setSize(0)
+                    .setFetchSource(false)
+                    .setQuery(rootQuery)
+                    .addAggregation(
+                            AggregationBuilders.terms("distinct")
+                                    .field(termField.sortProperty)
+                                    .order(BucketOrder.key(true))
+                                    .size(100)
+                    );
+            var searchResponse = dataRepository.search(builder);
+            var distinct = (ParsedTerms) searchResponse.getAggregations().get("distinct");
+            var distinctValues = distinct.getBuckets().stream().map(MultiBucketsAggregation.Bucket::getKeyAsString).collect(Collectors.toList());
+            if (vertex.hasValue()) {
+                if (vertex.getValue() instanceof Collection<?>) {
+                    ((Collection<?>) vertex.getValue()).removeIf(o -> !distinctValues.contains(o));
+                } else if (!distinctValues.contains(vertex.getValue())) {
+                    vertex.setValue(null);
+                }
+            }
+            vertex.addDistinctValues(distinctValues);
+        }
+
+
+        JsonBuilder jsonBuilder = new JsonBuilder();
+        jsonBuilder.startObject();
+        jsonBuilder.startArray("fields");
+        for (var vertex : directedAcyclicOrder) {
+            jsonBuilder.startObject();
+            jsonBuilder.field("id", vertex.getId());
+            if (vertex.hasValue()) {
+                if (vertex.getValue() instanceof Collection<?>) {
+                    jsonBuilder.field("value", (Collection<?>) vertex.getValue());
+                } else {
+                    jsonBuilder.field("value", vertex.getValue().toString());
+                }
+            }
+            jsonBuilder.field("distinct_values", vertex.getDistinctValues());
+            jsonBuilder.endObject();
+        }
+        jsonBuilder.endArray();
+        jsonBuilder.endObject();
+        return jsonBuilder.build();
+    }
+
+    @PUT
+    @Path("/templates/{templateName}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
+    public String addSearchTemplate(@PathParam("templateName") String templateName, String json) {
+        EtmQuery query = this.etmQueryConverter.read(json);
+        query.setName(templateName);
+
+        Map<String, Object> userData = getCurrentUser(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + ".search_templates");
+        List<Map<String, Object>> currentSearchTemplates = new ArrayList<>();
+        if (userData.containsKey("search_templates")) {
+            currentSearchTemplates = getArray("search_templates", userData, new ArrayList<>());
+        }
+        ListIterator<Map<String, Object>> iterator = currentSearchTemplates.listIterator();
+        boolean updated = false;
+        while (iterator.hasNext()) {
+            Map<String, Object> searchtemplateMap = iterator.next();
+            if (templateName.equals(getString("name", searchtemplateMap))) {
+                iterator.set(toMap(this.etmQueryConverter.write(query)));
+                updated = true;
+                break;
+            }
+        }
+        if (!updated) {
+            if (currentSearchTemplates.size() >= etmConfiguration.getMaxSearchTemplateCount()) {
+                throw new EtmException(EtmException.MAX_NR_OF_SEARCH_TEMPLATES_REACHED);
+            }
+            currentSearchTemplates.add(toMap(this.etmQueryConverter.write(query)));
+        }
+        Map<String, Object> source = new HashMap<>();
+        source.put("search_templates", currentSearchTemplates);
+        updateCurrentUser(source, false);
+        return "{\"status\":\"success\"}";
+    }
+
+    @DELETE
+    @Path("/templates/{templateName}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
+    public String removeSearchTemplate(@PathParam("templateName") String templateName) {
+        Map<String, Object> userData = getCurrentUser(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + ".search_templates");
+
+        if (userData.isEmpty()) {
+            return "{\"status\":\"success\"}";
+        }
+        List<Map<String, Object>> currentSearchTemplates = new ArrayList<>();
+        if (userData.containsKey("search_templates")) {
+            currentSearchTemplates = getArray("search_templates", userData);
+        }
+        ListIterator<Map<String, Object>> iterator = currentSearchTemplates.listIterator();
+        while (iterator.hasNext()) {
+            Map<String, Object> searchTemplateValues = iterator.next();
+            if (templateName.equals(getString(GraphContainer.NAME, searchTemplateValues))) {
+                iterator.remove();
+                break;
+            }
+        }
+
+        Map<String, Object> source = new HashMap<>();
+        // Prepare new source map with the remaining search templates.
+        source.put("search_templates", currentSearchTemplates);
+        updateCurrentUser(source, false);
+        return "{\"status\":\"success\"}";
+
+    }
+
+    @PUT
+    @Path("/additionalparameters")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
+    public String addAdditionalSearchParameters(String json) {
+        var requestValues = toMap(json);
+        var objectMap = new HashMap<String, Object>();
+        var paramsMap = new HashMap<String, Object>();
+        paramsMap.put("additional_query_parameters", requestValues.get("params"));
+        objectMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, paramsMap);
+        var builder = requestEnhancer.enhance(
+                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId())
+        ).setDoc(objectMap).setDocAsUpsert(true);
+        dataRepository.update(builder);
+        return "{ \"status\": \"success\" }";
     }
 
     @POST
@@ -223,23 +358,38 @@ public class SearchService extends AbstractIndexMetadataService {
         var now = Instant.now();
         var auditLogBuilder = new QueryAuditLogBuilder().setTimestamp(now).setHandlingTime(now).setPrincipalId(etmPrincipal.getId());
 
-        var parameters = new SearchRequestParameters(toMap(json), etmPrincipal);
-        var requestBuilder = createRequestFromInput(parameters, etmPrincipal);
+        var etmQuery = this.etmQueryConverter.read(json);
+        var requestBuilder = createRequestFromInput(etmQuery, etmPrincipal);
         var numberFormat = NumberFormat.getInstance(etmPrincipal.getLocale());
         var response = dataRepository.search(requestBuilder);
         var builder = new JsonBuilder();
         builder.startObject();
         builder.field("status", "success");
-        builder.field("history_size", etmPrincipal.getHistorySize());
+        if (response.getShardFailures() != null && response.getShardFailures().length > 0) {
+            try {
+                var contentBuilder = XContentFactory.jsonBuilder();
+                contentBuilder.startObject();
+                response.getShardFailures()[0].toXContent(contentBuilder, ToXContent.EMPTY_PARAMS);
+                contentBuilder.endObject();
+                var errorMap = toMap(Strings.toString(contentBuilder));
+                var reason = getObject("reason", errorMap);
+                if (reason != null) {
+                    builder.field("warning", getString("reason", reason, "unknown error"));
+                }
+            } catch (IOException e) {
+                if (log.isWarningLevelEnabled()) {
+                    log.logWarningMessage(e.getMessage(), e);
+                }
+            }
+
+        }
         builder.field("hits", response.getHits().getTotalHits().value);
         builder.field("hits_relation", response.getHits().getTotalHits().relation.name());
         builder.field("hits_as_string", numberFormat.format(response.getHits().getTotalHits().value) + (TotalHits.Relation.GREATER_THAN_OR_EQUAL_TO.equals(response.getHits().getTotalHits().relation) ? "+" : ""));
-        builder.field("start_ix", parameters.getStartIndex());
-        builder.field("end_ix", parameters.getStartIndex() + response.getHits().getHits().length - 1);
-        // TODO has_more_results is inaccurate in etm 4 because totalhits is a GTE value.
-        builder.field("has_more_results", parameters.getStartIndex() + response.getHits().getHits().length < response.getHits().getTotalHits().value - 1);
+        builder.field("start_ix", etmQuery.getResultLayout().getStartIndex());
+        builder.field("end_ix", etmQuery.getResultLayout().getStartIndex() + response.getHits().getHits().length - 1);
+        builder.field("has_more_results", etmQuery.getResultLayout().getStartIndex() + response.getHits().getHits().length < response.getHits().getTotalHits().value - 1);
         builder.field("time_zone", etmPrincipal.getTimeZone().getID());
-        builder.field("max_downloads", etmConfiguration.getMaxSearchResultDownloadRows());
         builder.field("may_see_payload", payloadVisible);
         builder.startArray("results");
         addSearchHits(builder, response.getHits());
@@ -249,15 +399,15 @@ public class SearchService extends AbstractIndexMetadataService {
         builder.field("query_time_as_string", numberFormat.format(queryTime));
         builder.endObject();
 
-        if (parameters.getStartIndex() == 0) {
-            writeQueryHistory(startTime,
-                    parameters,
-                    etmPrincipal,
-                    Math.min(etmPrincipal.getHistorySize(), etmConfiguration.getMaxSearchHistoryCount()));
+        if (etmQuery.getResultLayout().getStartIndex() == 0) {
+            writeQueryHistory(
+                    etmQuery,
+                    Math.min(etmPrincipal.getHistorySize(), etmConfiguration.getMaxSearchHistoryCount())
+            );
             // Log the query request to the audit logs.
             String executedQuery = null;
             try {
-                XContentBuilder contentBuilder = XContentFactory.jsonBuilder();
+                var contentBuilder = XContentFactory.jsonBuilder();
                 requestBuilder.build().source().query().toXContent(contentBuilder, ToXContent.EMPTY_PARAMS);
                 executedQuery = Strings.toString(contentBuilder);
             } catch (IOException e) {
@@ -266,7 +416,7 @@ public class SearchService extends AbstractIndexMetadataService {
                 }
             }
             auditLogBuilder
-                    .setUserQuery(parameters.getQueryString())
+                    .setUserQuery(etmQuery.getResultLayout().getQuery())
                     .setExectuedQuery(executedQuery)
                     .setNumberOfResults(response.getHits().getTotalHits().value)
                     .setNumberOfResultsRelation(response.getHits().getTotalHits().relation.name())
@@ -280,97 +430,111 @@ public class SearchService extends AbstractIndexMetadataService {
         return builder.build();
     }
 
-    private SearchRequestBuilder createRequestFromInput(SearchRequestParameters parameters, EtmPrincipal etmPrincipal) {
-        if (!parameters.hasFields()) {
-            parameters.addField(this.eventTags.getEndpointsTag() + "." + this.eventTags.getEndpointHandlersTag() + "." + this.eventTags.getEndpointHandlerHandlingTimeTag());
-            parameters.addField(this.eventTags.getNameTag());
-        }
-        EtmQueryBuilder etmQueryBuilder = new EtmQueryBuilder(parameters.getQueryString(), parameters.getTypes(), dataRepository, SearchService.requestEnhancer)
+    private SearchRequestBuilder createRequestFromInput(EtmQuery etmQuery, EtmPrincipal etmPrincipal) {
+        EtmQueryBuilder etmQueryBuilder = new EtmQueryBuilder(etmQuery.getResultLayout().getQuery(), dataRepository, SearchService.requestEnhancer)
                 .setTimeZone(etmPrincipal.getTimeZone().getID());
-
-        var notAfterFilterNecessary = true;
-        var needsUtcZone = false;
-        if (parameters.getEndTime() != null || parameters.getStartTime() != null) {
-            var timestampFilter = new RangeQueryBuilder(parameters.getTimeFilterField());
-            if (parameters.getEndTime() != null) {
-                try {
-                    // Check if the endtime is given as an exact timestamp or an elasticsearch date math.
-                    var endTime = Long.parseLong(parameters.getEndTime());
-                    timestampFilter.lte(endTime < parameters.getNotAfterTimestamp() ? endTime : parameters.getNotAfterTimestamp());
-                    notAfterFilterNecessary = false;
-                    needsUtcZone = true;
-                } catch (NumberFormatException e) {
-                    // Endtime was an elasticsearch date math. Check if it is the exact value of "now"
-                    if ("now" .equalsIgnoreCase(parameters.getEndTime())) {
-                        // Replace "now" with the notAfter timestamp which is in essence the same
-                        timestampFilter.lte(parameters.getNotAfterTimestamp());
-                        notAfterFilterNecessary = false;
-                        needsUtcZone = true;
-                    } else {
-                        timestampFilter.lte(parameters.getEndTime());
-                    }
-                }
-            } else {
-                timestampFilter.lte(parameters.getNotAfterTimestamp());
-                needsUtcZone = true;
+        List<AdditionalQueryParameter> filterFields = etmQuery.getAdditionalQueryParameters();
+        for (var filterField : filterFields) {
+            QueryBuilder filterQuery = createFilterQueryBuilder(filterField.getField(), filterField.getFieldType().name(), filterField.getValue(), etmPrincipal);
+            if (filterQuery != null) {
+                etmQueryBuilder.filterRoot(filterQuery);
             }
-            if (parameters.getStartTime() != null) {
-                try {
-                    // Check if the start time is given as an exact timestamp or an elasticsearch date math.
-                    var endTime = Long.parseLong(parameters.getStartTime());
-                    timestampFilter.gte(endTime);
-                    needsUtcZone = true;
-                } catch (NumberFormatException e) {
-                    timestampFilter.gte(parameters.getStartTime());
-                }
-            }
-            if (!needsUtcZone) {
-                timestampFilter.timeZone(etmPrincipal.getTimeZone().getID());
-            }
-            etmQueryBuilder.filterRoot(timestampFilter).filterJoin(timestampFilter);
         }
-        if (notAfterFilterNecessary) {
-            // the given parameters.getStartTime() & parameters.getEndTime() were zero or an elasticsearch math date. We have to apply the notAfterTime filter as well.
-            var rangeQueryFilter = new RangeQueryBuilder("timestamp").lte(parameters.getNotAfterTimestamp());
-            etmQueryBuilder.filterRoot(rangeQueryFilter).filterJoin(rangeQueryFilter);
-        }
-        if (parameters.getTypes().size() != 5) {
-            etmQueryBuilder.filterRoot(QueryBuilders.termsQuery(this.eventTags.getObjectTypeTag(), parameters.getTypes().toArray()));
+        var rangeQueryFilter = new RangeQueryBuilder("timestamp").lte(etmQuery.getResultLayout().getTimestamp());
+        etmQueryBuilder.filterRoot(rangeQueryFilter).filterJoin(rangeQueryFilter);
+        var requestedFields = etmQuery.getResultLayout().getFieldNames();
+        if (!requestedFields.contains(this.transactionIdPath)) {
+            requestedFields.add(this.transactionIdPath);
         }
         var requestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(etmConfiguration.mergeRemoteIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL)))
                 .setQuery(addFilterQuery(getEtmPrincipal(), etmQueryBuilder.buildRootQuery()))
-                .setFetchSource(parameters.getFields().toArray(new String[0]), null)
-                .setFrom(parameters.getStartIndex())
-                .setSize(parameters.getMaxResults() > 500 ? 500 : parameters.getMaxResults());
-        if (parameters.getSortField() != null && parameters.getSortField().trim().length() > 0) {
-            String sortProperty = getSortProperty(dataRepository, ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL, parameters.getSortField());
-            if (sortProperty != null) {
-                requestBuilder.setSort(sortProperty, "desc".equals(parameters.getSortOrder()) ? SortOrder.DESC : SortOrder.ASC);
+                .setFetchSource(requestedFields.toArray(new String[0]), null)
+                .setFrom(etmQuery.getResultLayout().getStartIndex())
+                .setSize(Math.min(etmQuery.getResultLayout().getMaxResults(), 500));
+        if (etmQuery.getResultLayout().getSortField() != null && etmQuery.getResultLayout().getSortField().trim().length() > 0) {
+            var fieldData = getFieldData(dataRepository, ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL, etmQuery.getResultLayout().getSortField());
+            if (fieldData != null) {
+                requestBuilder.setSort(fieldData.sortProperty, ResultLayout.SortOrder.DESC.equals(etmQuery.getResultLayout().getSortOrder()) ? SortOrder.DESC : SortOrder.ASC);
             }
         }
         return requestBuilder;
     }
 
-    private void writeQueryHistory(long timestamp, SearchRequestParameters parameters, EtmPrincipal etmPrincipal, int history_size) {
-        var scriptParams = new HashMap<String, Object>();
-        var query = new HashMap<String, Object>();
-        query.put(this.configurationTags.getTimestampTag(), timestamp);
-        query.put(this.configurationTags.getQueryTag(), parameters.getQueryString());
-        query.put(this.configurationTags.getTypesTag(), parameters.getTypes());
-        query.put(this.configurationTags.getFieldsTag(), parameters.getFieldsLayout());
-        query.put(this.configurationTags.getResultsPerPageTag(), parameters.getMaxResults());
-        query.put(this.configurationTags.getSortFieldTag(), parameters.getSortField());
-        query.put(this.configurationTags.getSortOrderTag(), parameters.getSortOrder());
-        query.put(this.configurationTags.getStartTimeTag(), parameters.getStartTime());
-        query.put(this.configurationTags.getEndTimeTag(), parameters.getEndTime());
-        query.put(this.configurationTags.getTimeFilterFieldTag(), parameters.getTimeFilterField());
+    private QueryBuilder createFilterQueryBuilder(String field, String fieldType, Object fieldValue, EtmPrincipal etmPrincipal) {
+        if (fieldValue == null || (fieldValue instanceof Collection<?> && ((Collection<?>) fieldValue).isEmpty())) {
+            return null;
+        }
+        var fieldData = getFieldData(dataRepository, ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL, field);
+        if (fieldData == null) {
+            return null;
+        }
+        if (AdditionalQueryParameter.FieldType.RANGE_START.name().equals(fieldType)) {
+            var rangeFilter = QueryBuilders.rangeQuery(fieldData.sortProperty);
+            if (fieldData.isDate()) {
+                var instant = DateUtils.parseDateString(fieldValue.toString(), etmPrincipal.getTimeZone().toZoneId(), true);
+                if (instant != null) {
+                    rangeFilter.gte("" + instant.toEpochMilli());
+                } else {
+                    rangeFilter.gte(fieldValue.toString());
+                }
+                rangeFilter.timeZone(etmPrincipal.getTimeZone().getID());
+            } else {
+                rangeFilter.gte(fieldValue);
+            }
+            return rangeFilter;
+        } else if (AdditionalQueryParameter.FieldType.RANGE_END.name().equals(fieldType)) {
+            var rangeFilter = QueryBuilders.rangeQuery(fieldData.sortProperty);
+            if (fieldData.isDate()) {
+                var instant = DateUtils.parseDateString(fieldValue.toString(), etmPrincipal.getTimeZone().toZoneId(), false);
+                if (instant != null) {
+                    rangeFilter.lte("" + instant.toEpochMilli());
+                } else {
+                    rangeFilter.lte(fieldValue.toString());
+                }
+                rangeFilter.timeZone(etmPrincipal.getTimeZone().getID());
+            } else {
+                rangeFilter.lte(fieldValue);
+            }
+            return rangeFilter;
+        } else {
+            if (fieldValue instanceof Collection) {
+                return QueryBuilders.termsQuery(fieldData.sortProperty, (Collection<?>) fieldValue);
+            } else {
+                return QueryBuilders.termQuery(fieldData.sortProperty, fieldValue);
+            }
+        }
+    }
 
-        scriptParams.put("query", query);
-        scriptParams.put("history_size", history_size);
-        var builder = requestEnhancer.enhance(
-                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + etmPrincipal.getId())
-        ).setScript(new Script(ScriptType.STORED, null, "etm_update-search-history", scriptParams));
-        dataRepository.updateAsync(builder, DataRepository.noopActionListener());
+    private void writeQueryHistory(EtmQuery etmQuery, int maxHistorySize) {
+        Map<String, Object> userData = getCurrentUser(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.configurationTags.getSearchHistoryTag());
+        List<Map<String, Object>> currentSearchHistories = new ArrayList<>();
+        if (userData.containsKey(this.configurationTags.getSearchHistoryTag())) {
+            currentSearchHistories = getArray("search_history", userData, new ArrayList<>());
+        }
+        int ixOfQuery = -1;
+        for (int i = 0; i < currentSearchHistories.size(); i++) {
+            var searchHistory = currentSearchHistories.get(i);
+            var resultLayout = getObject(EtmQuery.RESULT_LAYOUT, searchHistory);
+            if (resultLayout == null) {
+                continue;
+            }
+            if (etmQuery.getResultLayout().getQuery().equals(getString("current_query", resultLayout))) {
+                ixOfQuery = i;
+                break;
+            }
+        }
+        if (ixOfQuery >= 0) {
+            currentSearchHistories.remove(ixOfQuery);
+        }
+        var origTimestamp = etmQuery.getResultLayout().getTimestamp();
+        currentSearchHistories.add(0, toMap(this.etmQueryConverter.write(etmQuery)));
+        etmQuery.getResultLayout().setTimestamp(origTimestamp);
+        if (currentSearchHistories.size() > maxHistorySize) {
+            currentSearchHistories = currentSearchHistories.subList(0, maxHistorySize);
+        }
+        Map<String, Object> source = new HashMap<>();
+        source.put(this.configurationTags.getSearchHistoryTag(), currentSearchHistories);
+        updateCurrentUser(source, true);
     }
 
 
@@ -379,31 +543,26 @@ public class SearchService extends AbstractIndexMetadataService {
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
     public Response getDownload(@QueryParam("q") String json) {
-        EtmPrincipal etmPrincipal = getEtmPrincipal();
-        Map<String, Object> valueMap = toMap(json);
-        SearchRequestParameters parameters = new SearchRequestParameters(valueMap, etmPrincipal);
+        var etmPrincipal = getEtmPrincipal();
+        var valueMap = toMap(json);
+        var etmQuery = this.etmQueryConverter.read(valueMap);
         if (getBoolean("includePayload", valueMap)
-                && !parameters.getFields().contains(this.eventTags.getPayloadTag())) {
-            parameters.addField(this.eventTags.getPayloadTag());
-            Map<String, Object> payloadFieldLayout = new HashMap<>();
-            payloadFieldLayout.put("name", "Payload");
-            payloadFieldLayout.put("field", "payload");
-            payloadFieldLayout.put("format", "plain");
-            payloadFieldLayout.put("array", "first");
-            parameters.addFieldLayout(payloadFieldLayout);
+                && !etmQuery.getResultLayout().getFieldNames().contains(this.eventTags.getPayloadTag())) {
+            Field field = new Field().setName("Payload").setField("payload").setFormat(Field.Format.PLAIN).setArraySelector(Field.ArraySelector.FIRST);
+            etmQuery.getResultLayout().addField(field, etmPrincipal);
 
         }
-        SearchRequestBuilder requestBuilder = createRequestFromInput(parameters, etmPrincipal);
+        SearchRequestBuilder requestBuilder = createRequestFromInput(etmQuery, etmPrincipal);
 
-        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, requestBuilder, parameters.getStartIndex());
+        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, requestBuilder, etmQuery.getResultLayout().getStartIndex());
         FileType fileType = FileType.valueOf(getString("fileType", valueMap).toUpperCase());
         File result = new QueryExporter().exportToFile(
                 scrollableSearch,
                 fileType,
-                Math.min(parameters.getMaxResults(),
+                Math.min(etmQuery.getResultLayout().getMaxResults(),
                         etmConfiguration.getMaxSearchResultDownloadRows()),
                 etmPrincipal,
-                parameters.toFieldLayouts(),
+                etmQuery.getResultLayout().toFieldLayouts(),
                 c -> dataRepository.indexAsync(
                         requestEnhancer.enhance(
                                 new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(c.getTimestamp()))
@@ -878,7 +1037,7 @@ public class SearchService extends AbstractIndexMetadataService {
      * @return The <code>DirectedGraph</code> for the event.
      */
     @SuppressWarnings("unchecked")
-    private DirectedGraph calculateDirectedGraph(String eventId) {
+    private DirectedGraph<AbstractVertex> calculateDirectedGraph(String eventId) {
         IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder()
                 .addIds(eventId);
         // No principal filtered query. We would like to show the entire event chain, but the user should not be able to retrieve all information.
@@ -891,7 +1050,7 @@ public class SearchService extends AbstractIndexMetadataService {
         if (response.getHits().getHits().length == 0) {
             return null;
         }
-        var directedGraph = new DirectedGraph();
+        DirectedGraph<AbstractVertex> directedGraph = new DirectedGraph<>();
         var handledTransactions = new HashSet<String>();
         var searchHit = response.getHits().getAt(0);
         var source = searchHit.getSourceAsMap();
@@ -920,7 +1079,7 @@ public class SearchService extends AbstractIndexMetadataService {
      * @param directedGraph       The <code>DirectedGraph</code> to add the transaction data to.
      * @param handledTransactions A set of transaction id's on which the recursive transaction id's that are covered by this method are added.
      */
-    private void addTransactionToDirectedGraph(String transactionId, DirectedGraph directedGraph, Set<String> handledTransactions) {
+    private void addTransactionToDirectedGraph(String transactionId, DirectedGraph<AbstractVertex> directedGraph, Set<String> handledTransactions) {
         if (transactionId == null || handledTransactions.contains(transactionId)) {
             return;
         }
@@ -953,7 +1112,7 @@ public class SearchService extends AbstractIndexMetadataService {
      * @param directedGraph The <code>DirectedGraph</code> to add the <code>SearchHit</code> to.
      * @return A <code>Set</code> of transaction id's that are stored within this <code>SearchHit</code>. This list can be used to create a full event chain.
      */
-    private Set<String> addSearchHitToDirectedGraph(SearchHit searchHit, DirectedGraph directedGraph) {
+    private Set<String> addSearchHitToDirectedGraph(SearchHit searchHit, DirectedGraph<AbstractVertex> directedGraph) {
         if (directedGraph.containsEvent(e -> searchHit.getId().equals(e.getEventId()))) {
             return Collections.emptySet();
         }
@@ -1044,6 +1203,41 @@ public class SearchService extends AbstractIndexMetadataService {
             }
         }
         return transactionIds;
+    }
+
+    /**
+     * Loads the current calling user from Elasticsearch.
+     *
+     * @param attributes The attributes to be loaded.
+     * @return A <code>Map</code> containing the requested attributes. The user namespace is already stripped from this <code>Map</code>.
+     */
+    private Map<String, Object> getCurrentUser(String... attributes) {
+        GetResponse getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId())
+                .setFetchSource(attributes, null));
+        if (getResponse.isSourceEmpty() || getResponse.getSourceAsMap().isEmpty()) {
+            return new HashMap<>();
+        }
+        return getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, getResponse.getSourceAsMap());
+    }
+
+    /**
+     * Updates the current user.
+     *
+     * @param source The source map without a namespace with the values to be updated.
+     */
+    private void updateCurrentUser(Map<String, Object> source, boolean async) {
+        var objectMap = new HashMap<String, Object>();
+        var builder = new UpdateRequestBuilder().setIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME);
+        builder.setId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + getEtmPrincipal().getId());
+        objectMap.put(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, source);
+        new RequestEnhancer(etmConfiguration).enhance(builder)
+                .setDoc(objectMap)
+                .setDocAsUpsert(true);
+        if (async) {
+            dataRepository.updateAsync(builder, DataRepository.noopActionListener());
+        } else {
+            dataRepository.update(builder);
+        }
     }
 
     @SuppressWarnings("unchecked")

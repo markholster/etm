@@ -51,7 +51,6 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
         builder.field(this.tags.getFilterQueryOccurrenceTag(), etmPrincipal.getFilterQueryOccurrence().name());
         builder.field(this.tags.getAlwaysShowCorrelatedEventsTag(), etmPrincipal.isAlwaysShowCorrelatedEvents());
         builder.field(this.tags.getSearchHistorySizeTag(), etmPrincipal.getHistorySize());
-        builder.field(this.tags.getDefaultSearchRangeTag(), etmPrincipal.getDefaultSearchRange(), true);
         builder.field(this.tags.getLocaleTag(), etmPrincipal.getLocale().toLanguageTag());
         builder.field(this.tags.getNameTag(), etmPrincipal.getName(), true);
         builder.field(this.tags.getPasswordHashTag(), etmPrincipal.getPasswordHash());
@@ -108,7 +107,6 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
         principal.setFilterQueryOccurrence(QueryOccurrence.valueOf(this.converter.getString(this.tags.getFilterQueryOccurrenceTag(), valueMap)));
         principal.setAlwaysShowCorrelatedEvents(this.converter.getBoolean(this.tags.getAlwaysShowCorrelatedEventsTag(), valueMap));
         principal.setHistorySize(this.converter.getInteger(this.tags.getSearchHistorySizeTag(), valueMap, EtmPrincipal.DEFAULT_HISTORY_SIZE));
-        principal.setDefaultSearchRange(this.converter.getLong(this.tags.getDefaultSearchRangeTag(), valueMap));
         principal.setChangePasswordOnLogon(this.converter.getBoolean(this.tags.getChangePasswordOnLogonTag(), valueMap, Boolean.FALSE));
         principal.setLdapBase(this.converter.getBoolean(this.tags.getLdapBaseTag(), valueMap, Boolean.FALSE));
         String value = this.converter.getString(this.tags.getLocaleTag(), valueMap);

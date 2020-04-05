@@ -119,14 +119,7 @@ public class SearchIntegrationTest extends AbstractCitrusSeleniumTest {
 
         runner.selenium(action -> action.navigate(getEtmUrl() + searchPath));
         runner.selenium(action -> action.waitUntil().visible().element(By.id("search-container")));
-        // Deselect all event types except the logs.
-        runner.selenium(action -> action.click().element(By.xpath("//label[@for='check-type-business']")));
-        runner.selenium(action -> action.click().element(By.xpath("//label[@for='check-type-http']")));
-        runner.selenium(action -> action.click().element(By.xpath("//label[@for='check-type-messaging']")));
-        runner.selenium(action -> action.click().element(By.xpath("//label[@for='check-type-sql']")));
         // Set the query input
-        runner.selenium(action -> action.setInput("").element(By.id("query-string-from")));
-        runner.selenium(action -> action.setInput("").element(By.id("query-string-till")));
         runner.selenium(action -> action.setInput(query).element(By.id("query-string")));
         waitForClickable(browser, By.id("btn-search"));
         runner.selenium(action -> action.click().element(By.id("btn-search")));
@@ -134,16 +127,17 @@ public class SearchIntegrationTest extends AbstractCitrusSeleniumTest {
         // Check the response table
         runner.selenium(action -> action.waitUntil().visible().element(By.id("result_card")));
         runner.selenium(action -> action.waitUntil().visible().element(By.id("search_result_table")));
-        runner.selenium(action -> action.find().element(By.xpath("(//*[@id='search_result_table']/thead/tr/th)[1]")).text("Timestamp"));
-        runner.selenium(action -> action.find().element(By.xpath("(//*[@id='search_result_table']/thead/tr/th)[2]")).text("Name"));
+        runner.selenium(action -> action.find().element(By.xpath("(//*[@id='search_result_table']/div[@class='row header-row']/div)[1]")).text("Timestamp"));
+        runner.selenium(action -> action.find().element(By.xpath("(//*[@id='search_result_table']/div[@class='row header-row']/div)[2]")).text("Name"));
         // Check the search history
         runner.selenium(action -> action.find().element(By.xpath("//*[@id='list-search-history-links']/li[1]/a[1]")).attribute("title", query));
         // Sort the result table by name
-        runner.selenium(action -> action.click().element(By.xpath("//*[@id='search_result_table']/thead/tr/th[text()='Name']")));
+        runner.selenium(action -> action.click().element(By.xpath("//*[@id='search_result_table']/div[@class='row header-row']/div[text()='Name']")));
         waitForAjaxToComplete(runner);
-        runner.selenium(action -> action.find().element(By.xpath("//*[@id='search_result_table']/thead/tr/th[@class='headerSortDesc' and text()='Name']")));
+        runner.selenium(action -> action.find().element(By.xpath("//*[@id='search_result_table']/div[@class='row header-row']/div[@class='col font-weight-bold headerSortDesc' and text()='Name']")));
         // Add a columnt to the result table
-        runner.selenium(action -> action.click().element(By.id("link-edit-table")));
+        runner.selenium(action -> action.click().element(By.id("searchresult-dropdown-menu")));
+        runner.selenium(action -> action.click().element(By.xpath("//*[@id='search-result-card']//a[@data-action='edit-result-table']")));
         waitForModalToShow(runner, "Table settings");
         runner.selenium(action -> action.click().element(By.id("link-add-result-row")));
         runner.selenium(action -> action.setInput("Log level").element(By.xpath("//*[@id='table-settings-columns']/*[4]/*[1]/*[1]")));
@@ -152,7 +146,7 @@ public class SearchIntegrationTest extends AbstractCitrusSeleniumTest {
         waitForModalToHide(runner, "Table settings");
         // Check if the new column is present
         waitForAjaxToComplete(runner);
-        runner.selenium(action -> action.find().element(By.xpath("(//*[@id='search_result_table']/thead/tr/th)[3]")).text("Log level"));
+        runner.selenium(action -> action.find().element(By.xpath("(//*[@id='search_result_table']/div[@class='row header-row']/div)[3]")).text("Log level"));
     }
 
     private void testSearchTemplates(TestRunner runner, SeleniumBrowser browser) {

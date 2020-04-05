@@ -66,6 +66,9 @@ public class EtmException extends RuntimeException {
     public static final int NOT_AUTHORIZED_FOR_SIGNAL_DATA_SOURCE = 500_001;
     public static final int NOT_AUTHORIZED_FOR_NOTIFIER = 500_002;
 
+    // 600_* reserved for search errors.
+    public static final int MAX_NR_OF_SEARCH_TEMPLATES_REACHED = 600_000;
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     // When adding an code, also add the code to com.jecstar.etm.gui.rest.EtmExceptionMapper and to the user manual!!!!!
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

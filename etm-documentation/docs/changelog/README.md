@@ -11,12 +11,14 @@
 * [ETM-3](https://github.com/jecstarinnovations/etm/issues/3) Elasticsearch exception in MetricReporter.
 * [ETM-5](https://github.com/jecstarinnovations/etm/issues/5) Number graphs should have a bottom margin.
 * [ETM-6](https://github.com/jecstarinnovations/etm/issues/6) Graph borders should be removed.
+* [ETM-11](https://github.com/jecstarinnovations/etm/issues/11) Enhance search screen with custom fields.
 * [ETM-13](https://github.com/jecstarinnovations/etm/issues/13) Unable to sort results on handling_time.
 * [ETM-14](https://github.com/jecstarinnovations/etm/issues/14) Search endpoint returns duplicate keys.
 * [ETM-15](https://github.com/jecstarinnovations/etm/issues/15) NumberFormatException in Endpoints and Chain time tabs.
 * [ETM-17](https://github.com/jecstarinnovations/etm/issues/17) IIB Node password not set.
 * [ETM-18](https://github.com/jecstarinnovations/etm/issues/18) Unexplainable error: Found a cycle in the event order.
 * [ETM-19](https://github.com/jecstarinnovations/etm/issues/19) All query input fields should be textareas.
+* [ETM-20](https://github.com/jecstarinnovations/etm/issues/20) Script error when using escaped query.
 
 ## Version 4.0.1
 * [ETM-132](https://jecstar.atlassian.net/browse/ETM-132) Use UnboundID provider for LDAP connection.

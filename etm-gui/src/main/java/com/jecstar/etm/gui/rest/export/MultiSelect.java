@@ -56,9 +56,17 @@ public enum MultiSelect {
             }
             return values.get(values.size() - 1);
         }
+    }, ALL() {
+        @Override
+        Object select(List<Object> values) {
+            if (values == null || values.isEmpty()) {
+                return null;
+            }
+            return values;
+        }
     };
 
     abstract Object select(List<Object> values);
 
-    private static final Comparator<Object> objectComparator = (o1, o2) -> o1.toString().compareTo(o2.toString());
+    private static final Comparator<Object> objectComparator = Comparator.comparing(Object::toString);
 }

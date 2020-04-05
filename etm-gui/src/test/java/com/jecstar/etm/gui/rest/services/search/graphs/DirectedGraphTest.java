@@ -35,7 +35,7 @@ public class DirectedGraphTest {
      */
     @Test
     public void testGetDirectedAcyclicOrder() {
-        var directedGraph = new DirectedGraph();
+        var directedGraph = new DirectedGraph<AbstractVertex>();
         var frontendApp = new Application("app1", "Frontend app");
         var backendApp = new Application("app2", "Backend app");
 
@@ -108,7 +108,7 @@ public class DirectedGraphTest {
 
     @Test
     public void testFinishGraph() {
-        var directedGraph = new DirectedGraph();
+        var directedGraph = new DirectedGraph<AbstractVertex>();
 
         var now = Instant.now();
         var event1 = new Event("1", "getMessage")

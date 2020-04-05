@@ -77,7 +77,7 @@ public class Version4Migrator extends AbstractEtmMigrator {
 
         checkAndCleanupPreviousRun(this.dataRepository, this.migrationIndexPrefix);
 
-        Function<SearchHit, DocWriteRequest> processor = searchHit -> {
+        Function<SearchHit, DocWriteRequest<?>> processor = searchHit -> {
             IndexRequestBuilder builder = new IndexRequestBuilder(
                     Version4Migrator.this.migrationIndexPrefix + searchHit.getIndex(), determineId(searchHit.getId())
             ).setSource(determineSource(searchHit));
@@ -149,13 +149,12 @@ public class Version4Migrator extends AbstractEtmMigrator {
         return sourceAsMap;
     }
 
-    private boolean migrateEtmConfiguration(DataRepository dataRepository, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener, Function<SearchHit, DocWriteRequest> processor) {
+    private boolean migrateEtmConfiguration(DataRepository dataRepository, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener, Function<SearchHit, DocWriteRequest<?>> processor) {
         SearchRequestBuilder searchRequestBuilder = new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
                 .setQuery(QueryBuilders.matchAllQuery())
                 .setTimeout(TimeValue.timeValueSeconds(30))
                 .setFetchSource(true);
         return migrateEntity(searchRequestBuilder, "configuration", dataRepository, bulkProcessor, listener, processor);
-
     }
 
 }

@@ -54,7 +54,7 @@ public abstract class AbstractIndexMetadataService extends AbstractGuiService {
         return keywords;
     }
 
-    protected String getSortProperty(DataRepository dataRepository, String indexName, String propertyName) {
+    protected FieldData getFieldData(DataRepository dataRepository, String indexName, String propertyName) {
         var response = dataRepository.indicesGetFieldMappings(new GetFieldMappingsRequestBuilder().setIndices(indexName).setFields(propertyName));
 
         if (response.mappings().isEmpty()) {
@@ -73,7 +73,10 @@ public abstract class AbstractIndexMetadataService extends AbstractGuiService {
                 }
                 var type = getString("type", getObject(iterator.next(), fieldMappingMetaData.sourceAsMap(), Collections.emptyMap()));
                 if (type != null) {
-                    return "text".equals(type) ? propertyName + KEYWORD_SUFFIX : propertyName;
+                    var fieldData = new FieldData();
+                    fieldData.type = type;
+                    fieldData.sortProperty = "text".equals(type) ? propertyName + KEYWORD_SUFFIX : propertyName;
+                    return fieldData;
                 }
             }
         }
@@ -109,6 +112,18 @@ public abstract class AbstractIndexMetadataService extends AbstractGuiService {
             return name;
         }
         return prefix + "." + name;
+    }
+
+    public static class FieldData {
+
+        public String sortProperty;
+        // text, keyword, date, long, double, boolean or ip.
+        public String type;
+
+        public boolean isDate() {
+            return "date".equals(type);
+        }
+
     }
 
 }

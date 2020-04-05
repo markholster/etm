@@ -114,7 +114,6 @@ public class UserService extends AbstractGuiService {
             newHistorySize = etmConfiguration.getMaxSearchHistoryCount();
         }
         userObject.put(this.tags.getSearchHistorySizeTag(), newHistorySize);
-        userObject.put(this.tags.getDefaultSearchRangeTag(), valueMap.get(this.tags.getDefaultSearchRangeTag()));
         userObject.put(this.tags.getApiKeyTag(), valueMap.get(this.tags.getApiKeyTag()));
         userObject.put(this.tags.getSecondaryApiKeyTag(), valueMap.get(this.tags.getSecondaryApiKeyTag()));
 

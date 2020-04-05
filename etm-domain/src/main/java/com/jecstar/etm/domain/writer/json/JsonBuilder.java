@@ -206,17 +206,6 @@ public class JsonBuilder {
     }
 
     /**
-     * Adds a Collection of Strings as field to a json object. This method can be called within the {@link Context#IN_OBJECT} context.
-     *
-     * @param name   The name of the array field.
-     * @param values The values that are added as array.
-     * @return This instance for chaining
-     */
-    public JsonBuilder field(String name, Collection<String> values) {
-        return field(name, values == null ? null : values.toArray(new String[0]));
-    }
-
-    /**
      * Adds an Integer field to a json object. This method can be called within the {@link Context#IN_OBJECT} context.
      *
      * @param name  The name of the field.
@@ -237,6 +226,18 @@ public class JsonBuilder {
      */
     public JsonBuilder field(String name, Integer value, boolean writeWhenNull) {
         fieldWithSupplier(name, () -> value == null ? null : value.toString(), writeWhenNull);
+        return this;
+    }
+
+    /**
+     * Adds an array of Integers as field to a json object. This method can be called within the {@link Context#IN_OBJECT} context.
+     *
+     * @param name   The name of the array field.
+     * @param values The values that are added as array.
+     * @return This instance for chaining
+     */
+    public JsonBuilder field(String name, Integer... values) {
+        arrayFieldWithSupplier(name, values == null ? null : () -> Arrays.stream(values).map(Objects::toString).toArray(String[]::new), false);
         return this;
     }
 
@@ -301,6 +302,18 @@ public class JsonBuilder {
     }
 
     /**
+     * Adds an array of Doubles as field to a json object. This method can be called within the {@link Context#IN_OBJECT} context.
+     *
+     * @param name   The name of the array field.
+     * @param values The values that are added as array.
+     * @return This instance for chaining
+     */
+    public JsonBuilder field(String name, Double... values) {
+        arrayFieldWithSupplier(name, values == null ? null : () -> Arrays.stream(values).map(Objects::toString).toArray(String[]::new), false);
+        return this;
+    }
+
+    /**
      * Adds a Float field to a json object. This method can be called within the {@link Context#IN_OBJECT} context.
      *
      * @param name  The name of the field.
@@ -321,6 +334,18 @@ public class JsonBuilder {
      */
     public JsonBuilder field(String name, Float value, boolean writeWhenNull) {
         fieldWithSupplier(name, () -> (value == null || value.isNaN()) ? null : value.toString(), writeWhenNull);
+        return this;
+    }
+
+    /**
+     * Adds an array of Floats as field to a json object. This method can be called within the {@link Context#IN_OBJECT} context.
+     *
+     * @param name   The name of the array field.
+     * @param values The values that are added as array.
+     * @return This instance for chaining
+     */
+    public JsonBuilder field(String name, Float... values) {
+        arrayFieldWithSupplier(name, values == null ? null : () -> Arrays.stream(values).map(Objects::toString).toArray(String[]::new), false);
         return this;
     }
 
@@ -349,6 +374,18 @@ public class JsonBuilder {
     }
 
     /**
+     * Adds an array of Booleans as field to a json object. This method can be called within the {@link Context#IN_OBJECT} context.
+     *
+     * @param name   The name of the array field.
+     * @param values The values that are added as array.
+     * @return This instance for chaining
+     */
+    public JsonBuilder field(String name, Boolean... values) {
+        arrayFieldWithSupplier(name, values == null ? null : () -> Arrays.stream(values).map(Objects::toString).toArray(String[]::new), false);
+        return this;
+    }
+
+    /**
      * Adds an Instant field to a json object. This method can be called within the {@link Context#IN_OBJECT} context.
      *
      * @param name  The name of the field.
@@ -369,6 +406,50 @@ public class JsonBuilder {
      */
     public JsonBuilder field(String name, Instant value, boolean writeWhenNull) {
         return field(name, value == null ? null : value.toEpochMilli(), writeWhenNull);
+    }
+
+    /**
+     * Adds an array of Instant as field to a json object. This method can be called within the {@link Context#IN_OBJECT} context.
+     *
+     * @param name   The name of the array field.
+     * @param values The values that are added as array.
+     * @return This instance for chaining
+     */
+    public JsonBuilder field(String name, Instant... values) {
+        arrayFieldWithSupplier(name, values == null ? null : () -> Arrays.stream(values).map(Instant::toEpochMilli).map(Objects::toString).toArray(String[]::new), false);
+        return this;
+    }
+
+    /**
+     * Adds a Collection as field to a json object. This method can be called within the {@link Context#IN_OBJECT} context.
+     *
+     * @param name   The name of the array field.
+     * @param values The values that are added as array.
+     * @return This instance for chaining
+     */
+    public JsonBuilder field(String name, Collection<?> values) {
+        if (values == null) {
+            return field(name, (String) null);
+        } else if (values.isEmpty()) {
+            return field(name, new String[0]);
+        }
+        Object object = values.iterator().next();
+        if (object instanceof String) {
+            return field(name, values.toArray(new String[0]));
+        } else if (object instanceof Boolean) {
+            return field(name, values.toArray(new Boolean[0]));
+        } else if (object instanceof Integer) {
+            return field(name, values.toArray(new Integer[0]));
+        } else if (object instanceof Long) {
+            return field(name, values.toArray(new Long[0]));
+        } else if (object instanceof Float) {
+            return field(name, values.toArray(new Float[0]));
+        } else if (object instanceof Double) {
+            return field(name, values.toArray(new Double[0]));
+        } else if (object instanceof Instant) {
+            return field(name, values.toArray(new Instant[0]));
+        }
+        return field(name, values.stream().map(Object::toString).toArray(String[]::new));
     }
 
     /**
@@ -412,7 +493,7 @@ public class JsonBuilder {
             buffer.append(",");
         }
         // Set a custom name so the next object is prefixed with a comma.
-        context.name = "AFTER_ARRAY_OBJECT";
+        context.name = "AFTER_RAW_ELEMENT";
         buffer.append(object);
         return this;
     }

@@ -50,7 +50,7 @@ public class JsonConverter {
         }
     }
 
-    public String toString(Map<String, Object> object) {
+    public String toString(Object object) {
         try {
             return this.objectMapper.writeValueAsString(object);
         } catch (JsonProcessingException e) {

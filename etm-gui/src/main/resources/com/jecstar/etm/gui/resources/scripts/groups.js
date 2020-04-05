@@ -20,19 +20,19 @@ function buildGroupPage() {
 
 	$.when(
 		$.ajax({
-			type: 'GET',
-			contentType: 'application/json',
-			url: '../rest/search/keywords/etm_event_all',
-			cache: false,
-			success: function (data) {
-				if (!data || !data.keywords) {
-					return;
-				}
-				$('#input-filter-query').bind('keydown', function (event) {
-					if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
-						event.stopPropagation();
-					}
-				}).autocompleteFieldQuery({queryKeywords: data.keywords});
+            type: 'GET',
+            contentType: 'application/json',
+            url: '../rest/settings/keywords/etm_event_all',
+            cache: false,
+            success: function (data) {
+                if (!data || !data.keywords) {
+                    return;
+                }
+                $('#input-filter-query').bind('keydown', function (event) {
+                    if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
+                        event.stopPropagation();
+                    }
+                }).autocompleteFieldQuery({queryKeywords: data.keywords});
 			}
 		}),
 		$.ajax({
