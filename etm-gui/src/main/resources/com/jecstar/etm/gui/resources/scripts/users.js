@@ -542,7 +542,7 @@ function buildUserPage() {
             secondary_api_key: $('#input-user-secondary-api-key').text() ? $('#input-user-secondary-api-key').text() : null,
             filter_query: $('#input-filter-query').val() ? $('#input-filter-query').val() : null,
             filter_query_occurrence: $('#sel-filter-query-occurrence').val(),
-            always_show_correlated_events: $('#sel-always-show-correlated-events').val() == 'true' ? true : false,
+            always_show_correlated_events: $('#sel-always-show-correlated-events').val() === 'true' ? true : false,
             locale: $('#sel-locale').val(),
             time_zone: $('sel-time-zone').val(),
             search_history_size: $('#input-search-history-size').val() ? Number($('#input-search-history-size').val()) : 0,

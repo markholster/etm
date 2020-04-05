@@ -27,6 +27,7 @@ function buildNodePage() {
 		$('#input-node-name').val(nodeData.name);
 		$('#input-host').val(nodeData.host);
 		$('#input-port').val(nodeData.port);
+		$('#sel-use-tls').val(nodeData.use_tls ? 'true' : 'false');
 		$('#input-username').val(nodeData.username);
 		$('#input-password').val(decode(nodeData.password));
 		$('#input-queue-manager').val(nodeData.queue_manager);
@@ -153,6 +154,7 @@ function buildNodePage() {
 			name: $('#input-node-name').val(),
 			host: $('#input-host').val(),
 			port: Number($('#input-port').val()),
+			use_tls: $('#sel-use-tls').val() == 'true' ? true : false,
 			username: $('#input-username').val(),
 			password: encode($('#input-password').val()),
 			queue_manager: $('#input-queue-manager').val(),
@@ -164,6 +166,7 @@ function buildNodePage() {
 		$('#input-node-name').val('');
 		$('#input-host').val('');
 		$('#input-port').val(1414);
+		$('#sel-use-tls').val('false');
 		$('#input-username').val('');
 		$('#input-password').val('');
 		$('#input-queue-manager').val('');

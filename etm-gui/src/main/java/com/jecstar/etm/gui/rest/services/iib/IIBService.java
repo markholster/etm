@@ -64,7 +64,7 @@ public class IIBService extends AbstractGuiService {
     private static DataRepository dataRepository;
     private static RequestEnhancer requestEnhancer;
 
-    private final NodeConverterJsonImpl nodeConverter = new NodeConverterJsonImpl();
+    private final NodeConverter nodeConverter = new NodeConverter();
 
     public static void initialize(DataRepository dataRepository, EtmConfiguration etmConfiguration) {
         IIBService.dataRepository = dataRepository;

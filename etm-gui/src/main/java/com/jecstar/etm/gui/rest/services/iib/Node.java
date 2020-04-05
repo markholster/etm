@@ -17,22 +17,30 @@
 
 package com.jecstar.etm.gui.rest.services.iib;
 
+import com.jecstar.etm.server.core.converter.JsonField;
+import com.jecstar.etm.server.core.converter.JsonNamespace;
+import com.jecstar.etm.server.core.converter.custom.Base64Converter;
+import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
+
+@JsonNamespace(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE)
 public class Node {
 
-    private final String name;
-    private final String host;
-    private final int port;
+    @JsonField("name")
+    private String name;
+    @JsonField("host")
+    private String host;
+    @JsonField("port")
+    private int port;
+    @JsonField("use_tls")
+    private boolean useTls;
+    @JsonField("username")
     private String username;
+    @JsonField(value = "password", converterClass = Base64Converter.class)
     private String password;
+    @JsonField("queue_manager")
     private String queueManager;
+    @JsonField("channel")
     private String channel;
-
-
-    Node(String name, String host, int port) {
-        this.name = name;
-        this.host = host;
-        this.port = port;
-    }
 
     public String getName() {
         return this.name;
@@ -46,35 +54,48 @@ public class Node {
         return this.port;
     }
 
+    public boolean isUseTls() {
+        return this.useTls;
+    }
+
+    public Node setUseTls(boolean useTls) {
+        this.useTls = useTls;
+        return this;
+    }
+
     public String getUsername() {
         return this.username;
     }
 
-    public void setUsername(String username) {
+    public Node setUsername(String username) {
         this.username = username;
+        return this;
     }
 
     public String getPassword() {
         return this.password;
     }
 
-    public void setPassword(String password) {
+    public Node setPassword(String password) {
         this.password = password;
+        return this;
     }
 
     public String getQueueManager() {
         return this.queueManager;
     }
 
-    public void setQueueManager(String queueManager) {
+    public Node setQueueManager(String queueManager) {
         this.queueManager = queueManager;
+        return this;
     }
 
     public String getChannel() {
         return this.channel;
     }
 
-    public void setChannel(String channel) {
+    public Node setChannel(String channel) {
         this.channel = channel;
+        return this;
     }
 }

@@ -15,6 +15,7 @@
 * [ETM-13](https://github.com/jecstarinnovations/etm/issues/13) Unable to sort results on handling_time.
 * [ETM-14](https://github.com/jecstarinnovations/etm/issues/14) Search endpoint returns duplicate keys.
 * [ETM-15](https://github.com/jecstarinnovations/etm/issues/15) NumberFormatException in Endpoints and Chain time tabs.
+* [ETM-16](https://github.com/jecstarinnovations/etm/issues/16) IIB Node should support SSL.
 * [ETM-17](https://github.com/jecstarinnovations/etm/issues/17) IIB Node password not set.
 * [ETM-18](https://github.com/jecstarinnovations/etm/issues/18) Unexplainable error: Found a cycle in the event order.
 * [ETM-19](https://github.com/jecstarinnovations/etm/issues/19) All query input fields should be textareas.

@@ -17,11 +17,11 @@
 
 package com.jecstar.etm.gui.rest.services.iib;
 
-interface NodeConverter<T> {
+import com.jecstar.etm.server.core.converter.JsonEntityConverter;
 
-    Node read(T content);
+public class NodeConverter extends JsonEntityConverter<Node> {
 
-    T write(Node node);
-
-    NodeTags getTags();
+    public NodeConverter() {
+        super(f -> new Node());
+    }
 }

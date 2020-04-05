@@ -4,3 +4,8 @@ To add, modify or delete IIB Nodes browse to <http://localhost:8080/gui/iib/node
 This option might not available to you, depending on the integration options chosen by your administrator. See [Integration with IBM MQ and/or IBM Integration Bus](../setup/integration-with-ibm.md) for information how to enable the IIB integration.
 
 If you don't know the values that need to be filled into the screen please contact your IIB and/or MQ administrator. By hitting the *Save* button Enterprise Telemetry Monitor will try to connect to the IIB Node so your connection is tested immediately. When connection to an IIB version 10+ node the fields *Queue manager* and *Channel* should be left empty.
+
+:::warning Note
+A TLS connection is only supported with IIB version 10+ nodes. Due to the lack of configuration options in the IBM libraries it is not possible to manage the 
+truststore via the internal [Truststore](cluster.md#certificate-settings). The truststore must be configured via the Java `javax.net.ssl.trustStore` system property. 
+:::
