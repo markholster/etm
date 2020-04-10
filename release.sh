@@ -93,7 +93,7 @@ fi
 logOk "Documentation uploaded to server."
 cd "$SCRIPT_DIR" || exit
 
-podman rmi docker.io/adoptopenjdk/openjdk11:alpine-slim
+podman rmi docker.io/adoptopenjdk/openjdk14:alpine-slim
 buildah unshare "$SCRIPT_DIR"/etm-buildah/build-oci.sh "$VERSION"
 if [ $? -ne 0 ]; then
     logError "Generating OCI image failed."

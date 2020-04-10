@@ -6,7 +6,7 @@ fi
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 VERSION=$1
 # SETUP ALPINE LINUX
-container=$(buildah from adoptopenjdk/openjdk11:alpine-slim)
+container=$(buildah from adoptopenjdk/openjdk14:alpine-slim)
 buildah config --created-by "Jecstar Innovation" $container
 
 # INSTALL ETM
