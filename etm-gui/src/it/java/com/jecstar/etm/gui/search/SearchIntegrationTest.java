@@ -202,12 +202,12 @@ public class SearchIntegrationTest extends AbstractCitrusSeleniumTest {
         runner.selenium(action -> action.setInput("_id: " + eventId).element(By.id("query-string")));
         // Wait for elasticsearch to make the event searchable
         waitForClickable(browser, By.id("btn-search"));
-        while (browser.getWebDriver().findElements(By.id(eventId)).size() == 0) {
+        while (browser.getWebDriver().findElements(By.xpath("//div[@data-event-id='" + eventId + "']")).size() == 0) {
             runner.selenium(action -> action.click().element(By.id("btn-search")));
             waitForAjaxToComplete(runner);
         }
         // Select the item and click on the Endpoints tab
-        runner.selenium(action -> action.click().element(By.id(eventId)));
+        runner.selenium(action -> action.click().element(By.xpath("//div[@data-event-id='" + eventId + "']/div/a")));
         waitForAjaxToComplete(runner);
         runner.selenium(action -> action.click().element(By.xpath("//ul[@id='event-tabs']/li/a[text()='Endpoints']")));
         runner.selenium(action -> action.waitUntil().visible().element(By.id("endpoint-overview")));

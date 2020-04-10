@@ -8,7 +8,7 @@ dependencies {
 
 mainClassName = 'com.jecstar.etm.launcher.Startup'
 applicationName = 'etm'
-def javaVersion = '11'
+def javaVersion = '14'
 
 distributions {
     main {

@@ -150,12 +150,12 @@ public class ParsersAndImportProfilesIntegrationTest extends AbstractCitrusSelen
         // Search for the given event id.
         runner.selenium(action -> action.setInput("_id: " + eventId1).element(By.id("query-string")));
         // Wait for elasticsearch to make the event searchable
-        while (browser.getWebDriver().findElements(By.id(eventId1)).size() == 0) {
+        while (browser.getWebDriver().findElements(By.xpath("//div[@data-event-id='" + eventId1 + "']")).size() == 0) {
             runner.selenium(action -> action.click().element(By.id("btn-search")));
             waitForAjaxToComplete(runner);
         }
         // Select the event
-        runner.selenium(action -> action.click().element(By.id(eventId1)));
+        runner.selenium(action -> action.click().element(By.xpath("//div[@data-event-id='" + eventId1 + "']/div/a")));
         waitForAjaxToComplete(runner);
         // The first event is processed without an attached import profile
         assertSame(0, browser.getWebDriver().findElements(By.xpath("//a[text()='Extracted data']")).size());
@@ -166,12 +166,12 @@ public class ParsersAndImportProfilesIntegrationTest extends AbstractCitrusSelen
         // Search for the given event id.
         runner.selenium(action -> action.setInput("_id: " + eventId2).element(By.id("query-string")));
         // Wait for elasticsearch to make the event searchable
-        while (browser.getWebDriver().findElements(By.id(eventId2)).size() == 0) {
+        while (browser.getWebDriver().findElements(By.xpath("//div[@data-event-id='" + eventId2 + "']")).size() == 0) {
             runner.selenium(action -> action.click().element(By.id("btn-search")));
             waitForAjaxToComplete(runner);
         }
         // Select the event
-        runner.selenium(action -> action.click().element(By.id(eventId2)));
+        runner.selenium(action -> action.click().element(By.xpath("//div[@data-event-id='" + eventId2 + "']/div/a")));
         waitForAjaxToComplete(runner);
         // The second event is processed with an attached import profile
         assertSame(1, browser.getWebDriver().findElements(By.xpath("//a[text()='Extracted data']")).size());
