@@ -181,11 +181,9 @@ public class DirectedGraph<V extends Vertex> {
     public List<V> getDirectedAcyclicOrder() {
         var cycleFinder = new CycleFinder<V>(this);
         if (cycleFinder.hasCycle()) {
-            // TODO dit moet nog opgelost worden. Op zoek naar de kortste cycle en deze negeren o.i.d.
-            if (log.isErrorLevelEnabled()) {
-                log.logErrorMessage("Found a cycle in the event order: \n" + toString());
+            if (log.isWarningLevelEnabled()) {
+                log.logWarningMessage("Found a cycle in the event order: \n" + toString());
             }
-            throw new IllegalStateException("Found a cycle in the event order. It is impossible to display the endpoints overview.");
         }
         var depthFirstOrder = new DepthFirstOrder<V>(this);
         return depthFirstOrder.reversePostOrder();
@@ -442,7 +440,9 @@ public class DirectedGraph<V extends Vertex> {
                     if (optionalResponse.isPresent()) {
                         createPath(nextEvent, optionalResponse.get());
                         var cycleFinder = new CycleFinder<>(this);
-                        if (cycleFinder.hasCycle()) {
+                        if (cycleFinder.hasCycle()
+                                && cycleFinder.getCyclicVertices().contains(optionalResponse.get())
+                        ) {
                             // Should be impossible, but we need to stop here otherwise we might create a stack overflow.
                             if (log.isErrorLevelEnabled()) {
                                 log.logErrorMessage("Found a cycle in the event order: \n" + toString());
@@ -539,6 +539,15 @@ public class DirectedGraph<V extends Vertex> {
          */
         boolean hasCycle() {
             return this.cycle != null;
+        }
+
+        /**
+         * Returns the <code>Vertex</code> instances that form a cycle.
+         *
+         * @return A <code>List</code> with <code>Vertex</code> instances forming a cycle, or <code>null</code> when no cycle exists.
+         */
+        List<V> getCyclicVertices() {
+            return this.cycle;
         }
     }
 

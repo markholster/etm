@@ -194,4 +194,18 @@ public class DirectedGraphTest {
             }
         }
     }
+
+    @Test
+    public void testGetDirectedAcyclicOrderWithCycle() {
+        var event1 = new Event("1", "Event 1");
+        var event2 = new Event("2", "Event 2");
+        var event3 = new Event("3", "Event 3");
+
+        var directedGraph = new DirectedGraph<AbstractVertex>();
+        directedGraph.addEdge(event1, event2);
+        directedGraph.addEdge(event2, event3);
+        directedGraph.addEdge(event3, event1);
+        var order = directedGraph.finishGraph().getDirectedAcyclicOrder();
+
+    }
 }
