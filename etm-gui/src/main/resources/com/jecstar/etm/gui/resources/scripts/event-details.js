@@ -23,27 +23,56 @@ let eventMap = {};
 let clipboards = [];
 
 $('#event-container').on('click', '#btn-back-to-results, #link-back-to-results', function (event) {
-    event.preventDefault();
-    $('#event-container').hide();
-    $('#search-container').show();
-    $('html,body').animate({scrollTop: Number($(this).attr('data-scroll-to'))}, 'fast');
+	event.preventDefault();
+	$('#event-container').hide();
+	$('#search-container').show();
+	$('html,body').animate({scrollTop: ($('#search_result_table').children('.event-selected').first().offset().top - $('.main-header').height())}, 'fast');
 }).on('click', "a[data-link-type='show-event']", function (event) {
-    event.preventDefault();
-    showEvent(Number($(this).attr('data-scroll-to')), $(this).attr('data-event-id'))
+	event.preventDefault();
+	showEvent($(this).attr('data-event-id'))
 }).on('click', "a[data-link-type='toggle-detail-map']", function (event) {
-    event.preventDefault();
-    $('#' + $(this).attr('data-panel-id')).collapse('toggle');
+	event.preventDefault();
+	$('#' + $(this).attr('data-panel-id')).collapse('toggle');
+}).on('click', '#btn-prev-event, #btn-next-event', function (event) {
+	event.preventDefault();
+	const $selectedRow = $('#search_result_table').children('.event-selected').first();
+	const idToFind = $(this).attr('data-event-id');
+	if ('load-more-events' === idToFind) {
+		showMoreResults(function () {
+			$selectedRow.next().find('a').first().trigger('click');
+		});
+	} else if (idToFind === $selectedRow.next().attr("data-event-id")) {
+		$selectedRow.next().find('a').first().trigger('click');
+	} else if (idToFind === $selectedRow.prev().attr("data-event-id")) {
+		$selectedRow.prev().find('a').first().trigger('click')
+	}
 });
 
-function showEvent(scrollTo, id) {
-    $('#search-container').hide();
-    $('#event-tabs').children().slice(1).remove();
-    $('#tabcontents').children().slice(1).remove();
-    $('#event-tab').empty();
-    $('#event-tabs a:first').tab('show');
-    initialize();
+function showEvent(id) {
+	$('#search-container').hide();
+	$('#event-tabs').children().slice(1).remove();
+	$('#tabcontents').children().slice(1).remove();
+	$('#event-tab').empty();
+	$('#event-tabs a:first').tab('show');
+	initialize();
 
-    $.ajax({
+	const $selectedRow = $('#search_result_table').children('.event-selected').first();
+	const nextId = $selectedRow.next().attr("data-event-id");
+	if (nextId) {
+		$('#btn-next-event').removeClass('d-none').attr('data-event-id', nextId);
+	} else if ($('#lnk_show_more').length) {
+		$('#btn-next-event').removeClass('d-none').attr('data-event-id', 'load-more-events');
+	} else {
+		$('#btn-next-event').addClass('d-none').removeAttr('data-event-id');
+	}
+	const prevId = $selectedRow.prev().attr("data-event-id");
+	if (prevId) {
+		$('#btn-prev-event').removeClass('d-none').attr('data-event-id', prevId);
+	} else {
+		$('#btn-prev-event').addClass('d-none').removeAttr('data-event-id');
+	}
+
+	$.ajax({
 		type: 'GET',
 		contentType: 'application/json',
 		url: '../rest/search/event/' + encodeURIComponent(id),
@@ -56,7 +85,7 @@ function showEvent(scrollTo, id) {
 		}
 	});
 
-	$('#btn-back-to-results, #link-back-to-results').attr('data-scroll-to', scrollTo);
+	$('#btn-back-to-results, #link-back-to-results');
 
 	$('#event-container').show();
 
@@ -167,7 +196,6 @@ function showEvent(scrollTo, id) {
 			.attr('href', '?id=' + encodeURIComponent(data.id))
 			.attr('style', 'display: inline-block;')
 			.attr('data-link-type', 'show-event')
-			.attr('data-scroll-to', scrollTo)
 			.attr('data-event-id', data.id);
 		appendElementToContainerInRow($eventTab, 'Id', dataLink);
 		appendToContainerInRow($eventTab, 'Name', data.source.name);
@@ -178,7 +206,6 @@ function showEvent(scrollTo, id) {
 				.attr('href', '?id=' + encodeURIComponent(data.source.correlation_id))
 				.attr('style', 'display: inline-block;')
 				.attr('data-link-type', 'show-event')
-				.attr('data-scroll-to', scrollTo)
 				.attr('data-event-id', data.source.correlation_id);
 			appendElementToContainerInRow($eventTab, 'Correlation id', correlationDataLink);
 		}
@@ -1048,7 +1075,6 @@ function showEvent(scrollTo, id) {
 								.attr('href', '?id=' + encodeURIComponent(event.id))
 								.text(event.id)
 								.attr('data-link-type', 'show-event')
-								.attr('data-scroll-to', scrollTo)
 								.attr('data-event-id', event.id);
 							$tbody.append(
 								$('<tr>').append(

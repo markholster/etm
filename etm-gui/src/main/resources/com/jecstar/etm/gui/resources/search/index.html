@@ -383,8 +383,13 @@
                                     </div>
                                 </div>
                                 <hr/>
-                                <div class="text-center">
-                                    <a id="btn-back-to-results" href="#" class="btn btn-primary">Back</a>
+                                <div class="d-flex justify-content-center">
+                                    <a id="btn-prev-event" href="#" class="btn btn-secondary mr-3 d-none"
+                                       title="Previous event"><i class="fa fa-chevron-circle-left"></i></a>
+                                    <a id="btn-back-to-results" href="#" class="btn btn-primary"
+                                       title="Back to search results">Back</a>
+                                    <a id="btn-next-event" href="#" class="btn btn-secondary ml-3 d-none"
+                                       title="Next event"><i class="fa fa-chevron-circle-right"></i></a>
                                 </div>
                             </div>
                         </div>
@@ -658,7 +663,7 @@
     );
     buildSearchPage();
     if (commons.queryString['id']) {
-        showEvent(null, commons.queryString['id']);
+        showEvent(commons.queryString['id']);
     } else if (commons.queryString['q']) {
         $('#query-string').val(commons.queryString['q']).trigger('input');
         $('#btn-search').trigger('click');

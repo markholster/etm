@@ -169,9 +169,9 @@ $('body').on('click', 'a', function (event) {
         event.preventDefault();
     }
     if ('show-event' === $anchor.attr('data-action')) {
-        showEvent($(window).scrollTop(), $(this).attr('id'));
         $('#search_result_table div.event-selected').removeClass('event-selected');
         $(event.target).parent().parent().addClass('event-selected');
+        showEvent($(this).parent().parent().attr('data-event-id'));
     } else if ('edit-additional-search-parameters' === $anchor.attr('data-action')) {
         editAdditionalSearchParameters();
     } else if ('edit-result-table' === $anchor.attr('data-action')) {
@@ -183,10 +183,7 @@ $('body').on('click', 'a', function (event) {
     } else if ('download-results' === $anchor.attr('data-action')) {
         $('#modal-download-results').modal();
     } else if ('show-more-results' === $anchor.attr('data-action')) {
-        $('#search_result_table .footer-row').remove();
-        searchResultLayout.current_ix += searchResultLayout.results_per_page;
-        const query = createQuery(false);
-        executeQuery(query);
+        showMoreResults();
     } else if ('search-history-selection' === $anchor.attr('data-action')) {
         const ix = $('#list-search-history-links > li > a').index($anchor);
         if (ix >= 0) {
@@ -1250,8 +1247,9 @@ function startNewQuery() {
 /**
  * Execute a query.
  * @param queryParameters The query parameters.
+ * @param successCallback The function to be executed when te result table is appended with the received results.
  */
-function executeQuery(queryParameters) {
+function executeQuery(queryParameters, successCallback) {
     if (!queryParameters || queryInProgress) {
         return;
     }
@@ -1338,6 +1336,9 @@ function executeQuery(queryParameters) {
             if (queryParameters.result_layout.current_ix === 0) {
                 addQueryHistory(queryParameters);
             }
+            if (successCallback) {
+                successCallback();
+            }
         },
         complete: function () {
             queryInProgress = false;
@@ -1345,7 +1346,7 @@ function executeQuery(queryParameters) {
     });
 
     function createResultTableRow(searchResult, timeZone) {
-        const $row = $('<div class="row result-row">');
+        const $row = $('<div class="row result-row">').attr('data-event-id', searchResult.id);
         $(searchResultLayout.fields).each(function (index, field) {
             const $col = $('<div class="col">');
             const fieldValue = searchResultLayout.getValueFromSearchResult(searchResult, field, timeZone);
@@ -1353,7 +1354,6 @@ function executeQuery(queryParameters) {
                 $col.append(
                     $('<a>')
                         .attr('href', '?id=' + encodeURIComponent(searchResult.id))
-                        .attr('id', searchResult.id)
                         .attr('data-action', 'show-event')
                         .attr('title', fieldValue)
                         .text(fieldValue)
@@ -1405,6 +1405,17 @@ function executeQuery(queryParameters) {
         });
         return $row;
     }
+}
+
+/**
+ * Load the next batch of matching results.
+ * @param callback A callback function that will be called when the results are added to the result table.
+ */
+function showMoreResults(callback) {
+    $('#search_result_table .footer-row').remove();
+    searchResultLayout.current_ix += searchResultLayout.results_per_page;
+    const query = createQuery(false);
+    executeQuery(query, callback);
 }
 
 $(window).scroll(function () {

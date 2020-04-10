@@ -56,7 +56,7 @@ public class DefaultUserSettings {
         builder.startArray("additional_query_parameters");
         builder.rawElement(this.paramConverter.write(
                 new AdditionalQueryParameter()
-                        .setName("From")
+                        .setName("Start date")
                         .setField("timestamp")
                         .setFieldType(AdditionalQueryParameter.FieldType.RANGE_START)
                         .setDefaultValue("now-1h")
@@ -64,7 +64,7 @@ public class DefaultUserSettings {
         ));
         builder.rawElement(this.paramConverter.write(
                 new AdditionalQueryParameter()
-                        .setName("Till")
+                        .setName("End date")
                         .setField("timestamp")
                         .setFieldType(AdditionalQueryParameter.FieldType.RANGE_END)
                         .setDefaultValue("now")

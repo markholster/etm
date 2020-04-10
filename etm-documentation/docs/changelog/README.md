@@ -20,6 +20,7 @@
 * [ETM-18](https://github.com/jecstarinnovations/etm/issues/18) Unexplainable error: Found a cycle in the event order.
 * [ETM-19](https://github.com/jecstarinnovations/etm/issues/19) All query input fields should be textareas.
 * [ETM-20](https://github.com/jecstarinnovations/etm/issues/20) Script error when using escaped query.
+* [ETM-21](https://github.com/jecstarinnovations/etm/issues/21) Option to move to next/previous event in event details screen.
 
 ## Version 4.0.1
 * [ETM-132](https://jecstar.atlassian.net/browse/ETM-132) Use UnboundID provider for LDAP connection.

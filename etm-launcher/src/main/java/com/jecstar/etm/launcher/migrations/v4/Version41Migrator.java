@@ -132,13 +132,13 @@ public class Version41Migrator extends AbstractEtmMigrator {
             var additionalQueryParams = new ArrayList<Map<String, Object>>();
             var fromObject = new HashMap<String, Object>();
             fromObject.put("field", "timestamp");
-            fromObject.put("name", "From");
+            fromObject.put("name", "Start date");
             fromObject.put("default_value", "now-1h");
             fromObject.put("type", "RANGE_START");
 
             var tillObject = new HashMap<String, Object>();
             tillObject.put("field", "timestamp");
-            tillObject.put("name", "Till");
+            tillObject.put("name", "End date");
             tillObject.put("default_value", "now");
             tillObject.put("type", "RANGE_END");
 
@@ -176,13 +176,13 @@ public class Version41Migrator extends AbstractEtmMigrator {
 
     private void mergeMapToEtmQuery(Map<String, Object> valueMap, EtmQuery etmQuery) {
         etmQuery.getAdditionalQueryParameters().add(new AdditionalQueryParameter()
-                .setName("From")
+                .setName("Start date")
                 .setField(this.jsonConverter.getString("time_filter_field", valueMap, "timestamp"))
                 .setValue(valueMap.get("start_time"))
                 .setFieldType(AdditionalQueryParameter.FieldType.RANGE_START)
         );
         etmQuery.getAdditionalQueryParameters().add(new AdditionalQueryParameter()
-                .setName("Till")
+                .setName("End date")
                 .setField(this.jsonConverter.getString("time_filter_field", valueMap, "timestamp"))
                 .setValue(valueMap.get("end_time"))
                 .setFieldType(AdditionalQueryParameter.FieldType.RANGE_END)
