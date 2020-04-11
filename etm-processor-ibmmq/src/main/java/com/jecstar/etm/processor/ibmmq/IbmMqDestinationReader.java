@@ -36,7 +36,6 @@ import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.persisting.internal.BusinessEventLogger;
 import com.jecstar.etm.server.core.tls.SSLContextBuilder;
 
-import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
@@ -104,7 +103,7 @@ class IbmMqDestinationReader implements DestinationReader {
     @Override
     public void run() {
         connect();
-        MQGetMessageOptions getOptions = new MQGetMessageOptions();
+        var getOptions = new MQGetMessageOptions();
         getOptions.waitInterval = this.getMessageWaitInterval; // Wait interval in milliseconds.
         getOptions.options = this.destination.getDestinationGetOptions();
         this.lastCommitTime = System.currentTimeMillis();
@@ -170,6 +169,9 @@ class IbmMqDestinationReader implements DestinationReader {
                     try {
                         message.clearMessage();
                     } catch (IOException e) {
+                        if (log.isDebugLevelEnabled()) {
+                            log.logDebugMessage("Enable to clear message", e);
+                        }
                     }
                 }
                 checkPoolSize();
@@ -246,15 +248,15 @@ class IbmMqDestinationReader implements DestinationReader {
         if (this.mqQueueManager != null) {
             try {
                 if (log.isDebugLevelEnabled()) {
-                    log.logDebugMessage("Committing messages from queuemanager '" + this.mqQueueManager.getName() + "'.");
+                    log.logDebugMessage("Committing messages from queue manager '" + this.mqQueueManager.getName() + "'.");
                 }
                 this.mqQueueManager.commit();
                 if (log.isDebugLevelEnabled()) {
-                    log.logDebugMessage("Messages from queuemanager '" + this.mqQueueManager.getName() + "' committed.");
+                    log.logDebugMessage("Messages from queue manager '" + this.mqQueueManager.getName() + "' committed.");
                 }
             } catch (MQException e) {
                 if (log.isErrorLevelEnabled()) {
-                    log.logErrorMessage("Unable to execute commit on queuemanager.", e);
+                    log.logErrorMessage("Unable to execute commit on queue manager.", e);
                 }
             }
         }
@@ -268,10 +270,10 @@ class IbmMqDestinationReader implements DestinationReader {
 
     private void connect() {
         if (log.isDebugLevelEnabled()) {
-            log.logDebugMessage("Connecting to queuemanager '" + this.queueManager.getName() + "' and " + this.destination.getType() + " '" + this.destination.getName() + "'");
+            log.logDebugMessage("Connecting to queue manager '" + this.queueManager.getName() + "' and " + this.destination.getType() + " '" + this.destination.getName() + "'");
         }
         try {
-            Hashtable<String, Object> connectionProperties = new Hashtable<>();
+            var connectionProperties = new Hashtable<String, Object>();
             connectionProperties.put(CMQC.TRANSPORT_PROPERTY, CMQC.TRANSPORT_MQSERIES_CLIENT);
             connectionProperties.put(CMQC.HOST_NAME_PROPERTY, this.queueManager.getHost());
             connectionProperties.put(CMQC.APPNAME_PROPERTY, "ETM-" + this.configurationName);
@@ -281,7 +283,7 @@ class IbmMqDestinationReader implements DestinationReader {
             setConnectionPropertyWhenNotEmpty(CMQC.CHANNEL_PROPERTY, this.queueManager.getChannel(), connectionProperties);
             if (queueManager.getSslTruststoreLocation() != null) {
                 try {
-                    SSLContext sslContext = new SSLContextBuilder().createSslContext(
+                    var sslContext = new SSLContextBuilder().createSslContext(
                             queueManager.getSslProtocol(),
                             queueManager.getSslKeystoreLocation(),
                             queueManager.getSslKeystoreType(),
@@ -295,7 +297,7 @@ class IbmMqDestinationReader implements DestinationReader {
                     connectionProperties.put(CMQC.SSL_SOCKET_FACTORY_PROPERTY, sslContext.getSocketFactory());
                 } catch (KeyManagementException | UnrecoverableKeyException | NoSuchAlgorithmException | CertificateException | KeyStoreException | IOException e) {
                     if (log.isErrorLevelEnabled()) {
-                        log.logErrorMessage("Unable to create SSL context. Fallback to insecure connection to queuemanager '" + this.queueManager.getName() + "'.", e);
+                        log.logErrorMessage("Unable to create SSL context. Fallback to insecure connection to queue manager '" + this.queueManager.getName() + "'.", e);
                     }
                 }
             }
@@ -306,11 +308,11 @@ class IbmMqDestinationReader implements DestinationReader {
                 this.mqDestination = this.mqQueueManager.accessQueue(this.destination.getName(), this.destination.getDestinationOpenOptions());
             }
             if (log.isDebugLevelEnabled()) {
-                log.logDebugMessage("Connected to queuemanager '" + this.queueManager.getName() + "' and " + this.destination.getType() + " '" + this.destination.getName() + "'");
+                log.logDebugMessage("Connected to queue manager '" + this.queueManager.getName() + "' and " + this.destination.getType() + " '" + this.destination.getName() + "'");
             }
         } catch (MQException e) {
             if (log.isWarningLevelEnabled()) {
-                log.logWarningMessage("Failed to connect to queuemanager '" + this.queueManager.getName() + "' and/or " + this.destination.getType() + " '" + this.destination.getName() + "'", e);
+                log.logWarningMessage("Failed to connect to queue manager '" + this.queueManager.getName() + "' and/or " + this.destination.getType() + " '" + this.destination.getName() + "'", e);
             }
         }
     }
@@ -323,7 +325,7 @@ class IbmMqDestinationReader implements DestinationReader {
 
     private void disconnect() {
         if (log.isDebugLevelEnabled()) {
-            log.logDebugMessage("Disconnecting from queuemanager");
+            log.logDebugMessage("Disconnecting from queue manager");
         }
         if (this.mqDestination != null) {
             try {
@@ -341,19 +343,19 @@ class IbmMqDestinationReader implements DestinationReader {
                 this.mqQueueManager.commit();
             } catch (MQException e1) {
                 if (log.isErrorLevelEnabled()) {
-                    log.logErrorMessage("Unable to execute commit on queuemanager", e1);
+                    log.logErrorMessage("Unable to execute commit on queue manager", e1);
                 }
             }
             try {
-                this.mqQueueManager.close();
+                this.mqQueueManager.disconnect();
             } catch (MQException e) {
                 if (log.isDebugLevelEnabled()) {
-                    log.logDebugMessage("Unable to close queuemanager", e);
+                    log.logDebugMessage("Unable to disconnect from queue manager", e);
                 }
             }
         }
         if (log.isDebugLevelEnabled()) {
-            log.logDebugMessage("Disconnected from queuemanager");
+            log.logDebugMessage("Disconnected from queue manager");
         }
     }
 
@@ -366,7 +368,7 @@ class IbmMqDestinationReader implements DestinationReader {
         if (messageId == null) {
             return;
         }
-        MQGetMessageOptions getOptions = new MQGetMessageOptions();
+        var getOptions = new MQGetMessageOptions();
         getOptions.waitInterval = this.getMessageWaitInterval;
         getOptions.options = Destination.DEFAULT_GET_OPTIONS + CMQC.MQGMO_ACCEPT_TRUNCATED_MSG;
         getOptions.matchOptions = CMQC.MQMO_MATCH_MSG_ID;
@@ -395,7 +397,7 @@ class IbmMqDestinationReader implements DestinationReader {
     private boolean tryBackout(MQMessage message) {
         MQQueue backoutQueue = null;
         try {
-            String backoutQueueName = this.mqDestination.getAttributeString(CMQC.MQCA_BACKOUT_REQ_Q_NAME, 48);
+            var backoutQueueName = this.mqDestination.getAttributeString(CMQC.MQCA_BACKOUT_REQ_Q_NAME, 48);
             if (backoutQueueName != null && backoutQueueName.trim().length() > 0) {
                 backoutQueue = this.mqQueueManager.accessQueue(backoutQueueName.trim(), CMQC.MQOO_OUTPUT + CMQC.MQOO_FAIL_IF_QUIESCING);
                 backoutQueue.put(message);
@@ -414,7 +416,10 @@ class IbmMqDestinationReader implements DestinationReader {
             if (backoutQueue != null) {
                 try {
                     backoutQueue.close();
-                } catch (MQException e1) {
+                } catch (MQException e) {
+                    if (log.isDebugLevelEnabled()) {
+                        log.logDebugMessage("Unable to close backout queue", e);
+                    }
                 }
             }
         }
@@ -435,7 +440,7 @@ class IbmMqDestinationReader implements DestinationReader {
             return;
         }
         this.lastPoolCheckTime = System.currentTimeMillis();
-        MQQueue queue = (MQQueue) this.mqDestination;
+        var queue = (MQQueue) this.mqDestination;
         try {
             if (CMQC.MQQT_LOCAL != queue.getQueueType() && CMQC.MQQT_CLUSTER != queue.getQueueType()) {
                 return;
@@ -458,7 +463,7 @@ class IbmMqDestinationReader implements DestinationReader {
             return null;
         }
         this.byteArrayBuilder.setLength(0);
-        boolean allZero = true;
+        var allZero = true;
         for (byte aByte : bytes) {
             this.byteArrayBuilder.append(String.format("%02x", aByte));
             if (aByte != 0) {
