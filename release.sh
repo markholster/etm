@@ -15,10 +15,10 @@ function logOk() {
 }
 
 function checkVersionInDocumentation() {
-  VERSION_COUNT=$(grep -o "$VERSION" "$1" | wc -w)
+  VERSION_COUNT=$(grep -o "$3" "$1" | wc -w)
   if [[ "$VERSION_COUNT" != "$2" ]]
   then
-    logError "'$1' seems to mention the old version because we expected mentioning version $VERSION $2 times but found it $VERSION_COUNT times."
+    logError "'$1' seems to mention the old version because we expected mentioning version $3 $2 times but found it $VERSION_COUNT times."
     exit 1
   fi
   logOk "'$1' contains correct version."
@@ -31,12 +31,13 @@ then
 fi
 logOk "Version not a SNAPSHOT."
 
-checkVersionInDocumentation "$SCRIPT_DIR"/etm-documentation/docs/getting-started/installation.md 4
-checkVersionInDocumentation "$SCRIPT_DIR"/etm-documentation/docs/setup/installation-on-windows.md 3
-checkVersionInDocumentation "$SCRIPT_DIR"/etm-documentation/docs/setup/installation-with-docker.md 2
-checkVersionInDocumentation "$SCRIPT_DIR"/etm-documentation/docs/setup/installation-with-kubernetes.md 1
-checkVersionInDocumentation "$SCRIPT_DIR"/etm-documentation/docs/setup/installation-with-tgz.md 4
-checkVersionInDocumentation "$SCRIPT_DIR"/etm-documentation/docs/setup/installation-with-zip.md 4
+checkVersionInDocumentation "$SCRIPT_DIR"/etm-documentation/docs/getting-started/installation.md 4 "$VERSION"
+checkVersionInDocumentation "$SCRIPT_DIR"/etm-documentation/docs/setup/installation-on-windows.md 3 "$VERSION"
+checkVersionInDocumentation "$SCRIPT_DIR"/etm-documentation/docs/setup/installation-with-docker.md 2 "$VERSION"
+checkVersionInDocumentation "$SCRIPT_DIR"/etm-documentation/docs/setup/installation-with-kubernetes.md 1 "$VERSION"
+checkVersionInDocumentation "$SCRIPT_DIR"/etm-documentation/docs/setup/installation-with-tgz.md 4 "$VERSION"
+checkVersionInDocumentation "$SCRIPT_DIR"/etm-documentation/docs/setup/installation-with-zip.md 4 "$VERSION"
+checkVersionInDocumentation "$SCRIPT_DIR"/etm-documentation/docs/.vuepress/config.js 2 "$VERSION_WILDCARD_BUGFIX"
 
 RELEASE_DATE=$(cat "$SCRIPT_DIR"/etm-documentation/docs/support-matrix/README.md | grep "ETM $VERSION_WILDCARD_BUGFIX" | cut -d'|' -f2)
 if [[ -z "${RELEASE_DATE// }" ]]

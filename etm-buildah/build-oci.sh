@@ -11,7 +11,7 @@ buildah config --created-by "Jecstar Innovation" $container
 
 # INSTALL ETM
 dir=$(buildah mount $container)
-tar -zxvf $SCRIPT_DIR/../../etm-distribution/build/distributions/etm-$VERSION.tgz -C $dir/opt
+tar -zxvf $SCRIPT_DIR/../etm-distribution/build/distributions/etm-$VERSION.tgz -C $dir/opt
 cp -f $SCRIPT_DIR/config/etm.yml $dir/opt/etm-$VERSION/config
 
 ## CONFIGURE ETM

@@ -16,8 +16,8 @@
  */
 
 module.exports = {
-    base: '/documentation/enterprise-telemetry-monitor/4.0.x/',
-    title: 'Enterprise Telemetry Monitor - 4.0.x',
+    base: '/documentation/enterprise-telemetry-monitor/4.1.x/',
+    title: 'Enterprise Telemetry Monitor - 4.1.x',
     description: 'Finding without searching',
     themeConfig: {
         logo: '/jecstar-logo-512x512.png',
