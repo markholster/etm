@@ -12,14 +12,14 @@ If you want to make your query more readable you can hit the `shift + enter` key
 
 ## Additional search parameters
 When you use certain query parameters a lot, it makes sense to add them as a separate query field on the search widget. To add or remove input field visible on the search 
-widget you can click on the three horizontal bars at the top right corner of the search widget. Select the `Edit search parameters` option and a popup with a similar content
+widget you can click on the three horizontal bars at the top right corner of the search widget. Select the *Edit search parameters* option and a popup with a similar content
 will appear.
 
 **Manage search parameters**
 !["Search parameters"](../assets/images/etm-manage-search-parameters.png)
 
-To add a new input field click on the `Add row` header in the table. You can give the field a representable name and put the field you want to add in the `Field` column.
-Depending on the `Type` you select the query will act as follow:
+To add a new input field click on the *Add row* header in the table. You can give the field a representable name and put the field you want to add in the *Field* column.
+Depending on the *Type* you select the query will act as follow:
 
 Field type | Description
 --- | ---
@@ -30,17 +30,17 @@ Select | The field will be a drop down box from which you can select a single va
 Select multi | The field will be a drop down box from which you can select one or more values.
 
 :::warning Note
-There will never be more than 100 distinct values in a `Select` or `Select multi` field. A `Free format` field should be used in those case where there are 
+There will never be more than 100 distinct values in a *Select* or *Select multi* field. A *Free format* field should be used in those case where there are 
 more that 100 distinct values.
 :::
 
-Finally you can add a default value for the field. When you want to provide multiple default values for a `Select multi` typed field you should provide the appropriate values as a comma separated list. 
+Finally, you can add a default value for the field. When you want to provide multiple default values for a *Select multi* typed field you should provide the appropriate values as a comma separated list. 
 
-The distinct values loaded in the `Select` and `Select multi` fields can be made dependant on other fields. If you, for example, want to add a `Select` field on the name
-of an application you can make the values of the drop down box dependent of the time range you've provided. For all field that have the appropriate `Field type` a row will
+The distinct values loaded in the *Select* and *Select multi* fields can be made dependent on other fields. If you, for example, want to add a *Select* field on the name
+of an application you can make the values of the drop down box dependent of the time range you've provided. For all field that have the appropriate *Field type* a row will
 be added at the bottom of the popup screen. You can select the dependency from that field to the other fields. Make sure you won't provide a cyclic dependency!
 
-If you, for example, want to be able to add a filter on the application name and application instance in the search widget you could configure it as follow:
+If you, for example, want to be able to add a filter on the application name and application instance in the search widget you could configure it as follows:
 
 **Application search parameters**
 !["Application search parameters"](../assets/images/etm-manage-search-parameters-app.png)
@@ -49,7 +49,7 @@ The application field will be dependant on the time range you provide, and the a
 
 ## Export and import queries
 Besides storing frequently used queries as [template](search-template-widget.md) you can also export and import a query to a file. Exporting a query is as simple as selecting 
-the `Export query` option in the context menu of the widget. The export will contain all options you provided in the query, including any additional search parameters. 
+the *Export query* option in the context menu of the widget. The export will contain all options you provided in the query, including any additional search parameters. 
 
-When a user imports that resulting file via the `Import query` context menu Enterprise Telemetry Monitor will try to map the additional search parameters from the file to
+When a user imports that resulting file via the *Import query* context menu Enterprise Telemetry Monitor will try to map the additional search parameters from the file to
 the additional search parameters of the user. When no field can be found the additional search parameter will be converted and added to the query input field. 
