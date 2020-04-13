@@ -23,10 +23,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Class parses the relevant APM json schema's and generates domain objects.
@@ -81,6 +79,8 @@ public class DomainGenerator {
             } else if (attributeValues.containsKey("properties")) {
                 var properties = this.converter.getObject("properties", attributeValues);
                 for (var jsonKey : properties.keySet()) {
+                    var javaName = Arrays.stream(jsonKey.split("_")).map(f -> f.substring(0, 1).toUpperCase() + f.substring(1).toLowerCase()).collect(Collectors.joining());
+                    javaName = javaName.substring(0, 1).toLowerCase() + javaName.substring(1);
                     var propertyValues = this.converter.getObject(jsonKey, properties);
                     if (propertyValues.containsKey("type")) {
                         Object type = propertyValues.get("type");
@@ -91,9 +91,13 @@ public class DomainGenerator {
                             types.addAll((Collection<? extends String>) type);
                         }
                         if (types.contains("string")) {
-                            System.out.println(jsonKey + " => String");
+                            classToGenerate.addField("String", javaName, jsonKey, this.converter.getString("description", propertyValues));
                         } else if (types.contains("number")) {
-                            System.out.println(jsonKey + " => Long");
+                            classToGenerate.addField("Long", javaName, jsonKey, this.converter.getString("description", propertyValues));
+                        } else if (types.contains("boolean")) {
+                            classToGenerate.addField("Boolean", javaName, jsonKey, this.converter.getString("description", propertyValues));
+                        } else {
+                            System.out.println("unknown types: " + types.stream().collect(Collectors.joining(", ")));
                         }
                     } else if (propertyValues.containsKey("$ref")) {
                         var reference = this.converter.getString("$ref", propertyValues);
@@ -102,8 +106,7 @@ public class DomainGenerator {
                 }
             }
         }
-
-        System.out.println(classToGenerate.description);
+        System.out.println(classToGenerate.toString());
     }
 
     private String loadContent(URL url) throws IOException {
@@ -133,6 +136,39 @@ public class DomainGenerator {
             public String type;
             public String jsonName;
             public String description;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder data = new StringBuilder();
+            data.append("package " + this.packageName + ";\n");
+            data.append("\n");
+            data.append("import com.jecstar.etm.server.core.converter.JsonField;\n");
+            data.append("\n");
+            if (this.description != null) {
+                data.append("/**\n");
+                data.append(" * " + this.description + "\n");
+                data.append(" */\n");
+            }
+            data.append("public class " + this.name + " {\n");
+            data.append("\n");
+            for (var field : this.fields) {
+                data.append("    @JsonField(\"" + field.jsonName + "\")\n");
+                data.append("    private " + field.type + " " + field.name + ";\n");
+            }
+            for (var field : this.fields) {
+                data.append("\n");
+                if (field.description != null) {
+                    data.append("    /**\n");
+                    data.append("     * " + field.description + "\n");
+                    data.append("     */\n");
+                }
+                data.append("    public " + field.type + ("Boolean".equals(field.type) ? " is" : " get") + field.name.substring(0, 1).toUpperCase() + field.name.substring(1) + "() {\n");
+                data.append("        return this." + field.name + ";\n");
+                data.append("    }\n");
+            }
+            data.append("}");
+            return data.toString();
         }
     }
 }
