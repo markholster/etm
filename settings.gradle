@@ -15,4 +15,5 @@ include 'etm-domain',
         'etm-license-generator',
         'etm-integration-test-core',
         'etm-license-generator',
-        'etm-distribution'
+        'etm-distribution',
+        'etm-apm-server'
