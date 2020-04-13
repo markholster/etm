@@ -41,7 +41,7 @@ public class DomainGenerator {
     }
 
     private void create(String entityPath) throws IOException {
-        var url = new URL(BASE_SOURCE_URL + entityPath);
+        var url = new URL(new URL(BASE_SOURCE_URL), entityPath);
         var entityBaseUrl = url.toString().substring(0, url.toString().lastIndexOf("/") + 1);
         var entityName = url.toString().substring(url.toString().lastIndexOf("/") + 1, url.toString().lastIndexOf("."));
         var content = loadContent(url);
@@ -50,8 +50,15 @@ public class DomainGenerator {
     }
 
     @SuppressWarnings("unchecked")
-    private void createClass(Map<String, Object> objectValues, String entityBaseUrl, String entityName) {
-        if (!"object".equals(this.converter.getString("type", objectValues))) {
+    private ClassToGenerate createClass(Map<String, Object> objectValues, String entityBaseUrl, String entityName) throws IOException {
+        Object type = objectValues.get("type");
+        var types = new ArrayList<String>();
+        if (type instanceof String) {
+            types.add((String) type);
+        } else if (type instanceof ArrayList) {
+            types.addAll((Collection<? extends String>) type);
+        }
+        if (!types.contains("object")) {
             throw new RuntimeException("Entity '" + entityName + "' @ '" + entityBaseUrl + "' is not an object.");
         }
         if (!entityBaseUrl.startsWith(BASE_SOURCE_URL)) {
@@ -72,41 +79,61 @@ public class DomainGenerator {
         classToGenerate.description = this.converter.getString("description", objectValues);
 
         var attributeValuesList = (List<Map<String, Object>>) this.converter.getArray("allOf", objectValues);
-        for (var attributeValues : attributeValuesList) {
-            if (attributeValues.containsKey("$ref")) {
-                var reference = this.converter.getString("$ref", attributeValues);
-                System.out.println(reference);
-            } else if (attributeValues.containsKey("properties")) {
-                var properties = this.converter.getObject("properties", attributeValues);
-                for (var jsonKey : properties.keySet()) {
-                    var javaName = Arrays.stream(jsonKey.split("_")).map(f -> f.substring(0, 1).toUpperCase() + f.substring(1).toLowerCase()).collect(Collectors.joining());
-                    javaName = javaName.substring(0, 1).toLowerCase() + javaName.substring(1);
-                    var propertyValues = this.converter.getObject(jsonKey, properties);
-                    if (propertyValues.containsKey("type")) {
-                        Object type = propertyValues.get("type");
-                        var types = new ArrayList<String>();
-                        if (type instanceof String) {
-                            types.add((String) type);
-                        } else if (type instanceof ArrayList) {
-                            types.addAll((Collection<? extends String>) type);
-                        }
-                        if (types.contains("string")) {
-                            classToGenerate.addField("String", javaName, jsonKey, this.converter.getString("description", propertyValues));
-                        } else if (types.contains("number")) {
-                            classToGenerate.addField("Long", javaName, jsonKey, this.converter.getString("description", propertyValues));
-                        } else if (types.contains("boolean")) {
-                            classToGenerate.addField("Boolean", javaName, jsonKey, this.converter.getString("description", propertyValues));
-                        } else {
-                            System.out.println("unknown types: " + types.stream().collect(Collectors.joining(", ")));
-                        }
-                    } else if (propertyValues.containsKey("$ref")) {
-                        var reference = this.converter.getString("$ref", propertyValues);
-                        System.out.println(reference);
+        if (attributeValuesList != null) {
+            for (var attributeValues : attributeValuesList) {
+                if (attributeValues.containsKey("$ref")) {
+                    var reference = this.converter.getString("$ref", attributeValues);
+                    Map<String, Object> referenceValues = this.converter.toMap(loadContent(new URL(new URL(entityBaseUrl), reference)));
+                    if (referenceValues.containsKey("properties")) {
+                        var properties = this.converter.getObject("properties", referenceValues);
+                        addPropertiesToClass(properties, classToGenerate, entityBaseUrl);
                     }
+                } else if (attributeValues.containsKey("properties")) {
+                    var properties = this.converter.getObject("properties", attributeValues);
+                    addPropertiesToClass(properties, classToGenerate, entityBaseUrl);
                 }
             }
         }
+        if (objectValues.containsKey("properties")) {
+            var properties = this.converter.getObject("properties", objectValues);
+            addPropertiesToClass(properties, classToGenerate, entityBaseUrl);
+        }
         System.out.println(classToGenerate.toString());
+        return classToGenerate;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void addPropertiesToClass(Map<String, Object> properties, ClassToGenerate classToGenerate, String entityBaseUrl) throws IOException {
+        for (var jsonKey : properties.keySet()) {
+            var javaName = Arrays.stream(jsonKey.split("_")).map(f -> f.substring(0, 1).toUpperCase() + f.substring(1).toLowerCase()).collect(Collectors.joining());
+            javaName = javaName.substring(0, 1).toLowerCase() + javaName.substring(1);
+            var propertyValues = this.converter.getObject(jsonKey, properties);
+            if (propertyValues.containsKey("type")) {
+                Object type = propertyValues.get("type");
+                var types = new ArrayList<String>();
+                if (type instanceof String) {
+                    types.add((String) type);
+                } else if (type instanceof ArrayList) {
+                    types.addAll((Collection<? extends String>) type);
+                }
+                if (types.contains("string")) {
+                    classToGenerate.addField("String", javaName, jsonKey, this.converter.getString("description", propertyValues));
+                } else if (types.contains("number") || types.contains("integer")) {
+                    classToGenerate.addField("Long", javaName, jsonKey, this.converter.getString("description", propertyValues));
+                } else if (types.contains("boolean")) {
+                    classToGenerate.addField("Boolean", javaName, jsonKey, this.converter.getString("description", propertyValues));
+                } else {
+                    System.out.println("unknown types: " + types.stream().collect(Collectors.joining(", ")));
+                }
+            } else if (propertyValues.containsKey("$ref")) {
+                var reference = this.converter.getString("$ref", propertyValues);
+                var url = new URL(new URL(entityBaseUrl), reference);
+                var referenceValues = this.converter.toMap(loadContent(url));
+                var entityName = url.toString().substring(url.toString().lastIndexOf("/") + 1, url.toString().lastIndexOf("."));
+                ClassToGenerate generatedClass = createClass(referenceValues, url.toString().substring(0, url.toString().lastIndexOf("/") + 1), entityName);
+                classToGenerate.addField(generatedClass.packageName + "." + generatedClass.name, javaName, javaName, generatedClass.description);
+            }
+        }
     }
 
     private String loadContent(URL url) throws IOException {
