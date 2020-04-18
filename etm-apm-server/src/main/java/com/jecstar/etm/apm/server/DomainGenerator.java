@@ -20,6 +20,7 @@ package com.jecstar.etm.apm.server;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -37,6 +38,10 @@ public class DomainGenerator {
     private final JsonConverter converter = new JsonConverter();
 
     public static void main(String[] args) throws IOException {
+        new DomainGenerator().create("errors/error.json");
+        new DomainGenerator().create("metricsets/metricset.json");
+        new DomainGenerator().create("sourcemaps/payload.json");
+        new DomainGenerator().create("spans/span.json");
         new DomainGenerator().create("transactions/transaction.json");
     }
 
@@ -46,11 +51,11 @@ public class DomainGenerator {
         var entityName = url.toString().substring(url.toString().lastIndexOf("/") + 1, url.toString().lastIndexOf("."));
         var content = loadContent(url);
         var schemaMap = this.converter.toMap(content);
-        createClass(schemaMap, entityBaseUrl, entityName);
+        createClass(schemaMap, entityBaseUrl, entityName, true);
     }
 
     @SuppressWarnings("unchecked")
-    private ClassToGenerate createClass(Map<String, Object> objectValues, String entityBaseUrl, String entityName) throws IOException {
+    private GenerationResult createClass(Map<String, Object> objectValues, String entityBaseUrl, String entityName, boolean topLevelClass) throws IOException {
         Object type = objectValues.get("type");
         var types = new ArrayList<String>();
         if (type instanceof String) {
@@ -65,18 +70,24 @@ public class DomainGenerator {
             throw new RuntimeException("Entity outside of base source url: '" + entityBaseUrl + "'.");
         }
         var packageName = BASE_TARGET_PACKAGE;
+        var converterPackageName = BASE_TARGET_PACKAGE + ".converter";
         if (!entityBaseUrl.equals(BASE_SOURCE_URL)) {
-            packageName = BASE_TARGET_PACKAGE + "." + entityBaseUrl.substring(BASE_SOURCE_URL.length(), entityBaseUrl.length() - 1).replaceAll("/", ".");
+            var subPackage = entityBaseUrl.substring(BASE_SOURCE_URL.length(), entityBaseUrl.length() - 1).replaceAll("/", ".");
+            packageName += "." + subPackage;
+            converterPackageName += "." + subPackage;
         }
-        File packageDirectory = new File("./etm-apm-server/src/main/java", packageName.replaceAll("\\.", "/"));
+        var packageDirectory = new File("./etm-apm-server/src/main/java", packageName.replaceAll("\\.", "/"));
         if (!packageDirectory.exists()) {
             packageDirectory.mkdirs();
         }
-        var classToGenerate = new ClassToGenerate();
-        classToGenerate.packageName = packageName;
-        classToGenerate.name = this.converter.getString("title", objectValues, entityName).replaceAll(" ", "");
-        classToGenerate.name = classToGenerate.name.substring(0, 1).toUpperCase() + classToGenerate.name.substring(1);
-        classToGenerate.description = this.converter.getString("description", objectValues);
+        var converterPackageDirectory = new File("./etm-apm-server/src/main/java", converterPackageName.replaceAll("\\.", "/"));
+        if (!converterPackageDirectory.exists()) {
+            converterPackageDirectory.mkdirs();
+        }
+        var jsonDataClass = new JsonDataClass();
+        jsonDataClass.packageName = packageName;
+        jsonDataClass.name = toJavaName(this.converter.getString("title", objectValues, entityName), true);
+        jsonDataClass.description = this.converter.getString("description", objectValues);
 
         var attributeValuesList = (List<Map<String, Object>>) this.converter.getArray("allOf", objectValues);
         if (attributeValuesList != null) {
@@ -86,27 +97,44 @@ public class DomainGenerator {
                     Map<String, Object> referenceValues = this.converter.toMap(loadContent(new URL(new URL(entityBaseUrl), reference)));
                     if (referenceValues.containsKey("properties")) {
                         var properties = this.converter.getObject("properties", referenceValues);
-                        addPropertiesToClass(properties, classToGenerate, entityBaseUrl);
+                        addPropertiesToClass(properties, jsonDataClass, entityBaseUrl);
                     }
                 } else if (attributeValues.containsKey("properties")) {
                     var properties = this.converter.getObject("properties", attributeValues);
-                    addPropertiesToClass(properties, classToGenerate, entityBaseUrl);
+                    addPropertiesToClass(properties, jsonDataClass, entityBaseUrl);
                 }
             }
         }
         if (objectValues.containsKey("properties")) {
             var properties = this.converter.getObject("properties", objectValues);
-            addPropertiesToClass(properties, classToGenerate, entityBaseUrl);
+            addPropertiesToClass(properties, jsonDataClass, entityBaseUrl);
         }
-        System.out.println(classToGenerate.toString());
-        return classToGenerate;
+        var targetFile = new File(packageDirectory, jsonDataClass.name + ".java");
+        if (targetFile.exists()) {
+            targetFile.delete();
+        }
+        try (var writer = new FileWriter(targetFile)) {
+            writer.write(jsonDataClass.getContent());
+        }
+
+        var converterClass = jsonDataClass.createConverterClass(converterPackageName, topLevelClass);
+        targetFile = new File(converterPackageDirectory, converterClass.name + ".java");
+        if (targetFile.exists()) {
+            targetFile.delete();
+        }
+        try (var writer = new FileWriter(targetFile)) {
+            writer.write(converterClass.getContent());
+        }
+        var result = new GenerationResult();
+        result.jsonDataClass = jsonDataClass;
+        result.jsonConverterClass = converterClass;
+        return result;
     }
 
     @SuppressWarnings("unchecked")
-    private void addPropertiesToClass(Map<String, Object> properties, ClassToGenerate classToGenerate, String entityBaseUrl) throws IOException {
+    private void addPropertiesToClass(Map<String, Object> properties, JsonDataClass classToGenerate, String entityBaseUrl) throws IOException {
         for (var jsonKey : properties.keySet()) {
-            var javaName = Arrays.stream(jsonKey.split("_")).map(f -> f.substring(0, 1).toUpperCase() + f.substring(1).toLowerCase()).collect(Collectors.joining());
-            javaName = javaName.substring(0, 1).toLowerCase() + javaName.substring(1);
+            var javaName = DomainGenerator.toJavaName(jsonKey, false);
             var propertyValues = this.converter.getObject(jsonKey, properties);
             if (propertyValues.containsKey("type")) {
                 Object type = propertyValues.get("type");
@@ -117,21 +145,24 @@ public class DomainGenerator {
                     types.addAll((Collection<? extends String>) type);
                 }
                 if (types.contains("string")) {
-                    classToGenerate.addField("String", javaName, jsonKey, this.converter.getString("description", propertyValues));
+                    classToGenerate.addField("String", javaName, jsonKey, this.converter.getString("description", propertyValues), null);
                 } else if (types.contains("number") || types.contains("integer")) {
-                    classToGenerate.addField("Long", javaName, jsonKey, this.converter.getString("description", propertyValues));
+                    classToGenerate.addField("Long", javaName, jsonKey, this.converter.getString("description", propertyValues), null);
                 } else if (types.contains("boolean")) {
-                    classToGenerate.addField("Boolean", javaName, jsonKey, this.converter.getString("description", propertyValues));
+                    classToGenerate.addField("Boolean", javaName, jsonKey, this.converter.getString("description", propertyValues), null);
+                } else if (types.contains("object") && propertyValues.containsKey("properties")) {
+                    var generationResult = createClass(propertyValues, entityBaseUrl, jsonKey, false);
+                    classToGenerate.addField(generationResult.jsonDataClass.packageName + "." + generationResult.jsonDataClass.name, javaName, jsonKey, generationResult.jsonDataClass.description, generationResult.jsonConverterClass.packageName + "." + generationResult.jsonConverterClass.name + ".class");
                 } else {
-                    System.out.println("unknown types: " + types.stream().collect(Collectors.joining(", ")));
+                    System.out.println("Element '" + jsonKey + "' has unknown types: " + types.stream().collect(Collectors.joining(", ")));
                 }
             } else if (propertyValues.containsKey("$ref")) {
                 var reference = this.converter.getString("$ref", propertyValues);
                 var url = new URL(new URL(entityBaseUrl), reference);
                 var referenceValues = this.converter.toMap(loadContent(url));
                 var entityName = url.toString().substring(url.toString().lastIndexOf("/") + 1, url.toString().lastIndexOf("."));
-                ClassToGenerate generatedClass = createClass(referenceValues, url.toString().substring(0, url.toString().lastIndexOf("/") + 1), entityName);
-                classToGenerate.addField(generatedClass.packageName + "." + generatedClass.name, javaName, javaName, generatedClass.description);
+                var generationResult = createClass(referenceValues, url.toString().substring(0, url.toString().lastIndexOf("/") + 1), entityName, false);
+                classToGenerate.addField(generationResult.jsonDataClass.packageName + "." + generationResult.jsonDataClass.name, javaName, jsonKey, generationResult.jsonDataClass.description, generationResult.jsonConverterClass.packageName + "." + generationResult.jsonConverterClass.name + ".class");
             }
         }
     }
@@ -142,60 +173,15 @@ public class DomainGenerator {
         }
     }
 
-    private class ClassToGenerate {
-
-        public String packageName;
-        public String name;
-        public String description;
-        public List<Field> fields = new ArrayList<>();
-
-        public void addField(String type, String name, String jsonName, String description) {
-            var field = new Field();
-            field.type = type;
-            field.name = name;
-            field.jsonName = jsonName;
-            field.description = description;
-            this.fields.add(field);
+    public static String toJavaName(String name, boolean startWithUppercase) {
+        var elements = name.replace(" ", "_").split("_");
+        if (startWithUppercase) {
+            return Arrays.stream(elements).map(e -> e.substring(0, 1).toUpperCase() + e.substring(1)).collect(Collectors.joining());
         }
-
-        private class Field {
-            public String name;
-            public String type;
-            public String jsonName;
-            public String description;
+        elements[0] = elements[0].substring(0, 1).toLowerCase() + elements[0].substring(1);
+        if (elements.length == 1) {
+            return elements[0];
         }
-
-        @Override
-        public String toString() {
-            StringBuilder data = new StringBuilder();
-            data.append("package " + this.packageName + ";\n");
-            data.append("\n");
-            data.append("import com.jecstar.etm.server.core.converter.JsonField;\n");
-            data.append("\n");
-            if (this.description != null) {
-                data.append("/**\n");
-                data.append(" * " + this.description + "\n");
-                data.append(" */\n");
-            }
-            data.append("public class " + this.name + " {\n");
-            data.append("\n");
-            for (var field : this.fields) {
-                data.append("    @JsonField(\"" + field.jsonName + "\")\n");
-                data.append("    private " + field.type + " " + field.name + ";\n");
-            }
-            for (var field : this.fields) {
-                data.append("\n");
-                if (field.description != null) {
-                    data.append("    /**\n");
-                    data.append("     * " + field.description + "\n");
-                    data.append("     */\n");
-                }
-                data.append("    public " + field.type + ("Boolean".equals(field.type) ? " is" : " get") + field.name.substring(0, 1).toUpperCase() + field.name.substring(1) + "() {\n");
-                data.append("        return this." + field.name + ";\n");
-                data.append("    }\n");
-            }
-            data.append("}");
-            return data.toString();
-        }
+        return elements[0] + Arrays.stream(Arrays.copyOfRange(elements, 1, elements.length)).map(e -> e.substring(0, 1).toUpperCase() + e.substring(1)).collect(Collectors.joining());
     }
 }
