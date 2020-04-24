@@ -39,7 +39,7 @@ public abstract class AbstractJsonHandler {
      */
     protected final LogWrapper log = LogFactory.getLogger(getClass());
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    protected final ObjectMapper objectMapper = new ObjectMapper();
     private final TelemetryEventTags tags = new TelemetryEventTagsJsonImpl();
 
     private final BusinessTelemetryEventConverterJsonImpl businessConverter = new BusinessTelemetryEventConverterJsonImpl();

@@ -3,5 +3,5 @@ plugins {
 }
 
 dependencies {
-    implementation project(":etm-server-core"), project(":etm-domain")
+    implementation project(":etm-processor"), project(":etm-server-core"), dep_resteasyJaxrs, dep_jacksonDatabind
 }

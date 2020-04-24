@@ -15,7 +15,7 @@
  *  under the License.
  */
 
-package com.jecstar.etm.apm.server;
+package com.jecstar.etm.apm.server.generator;
 
 import java.util.ArrayList;
 import java.util.List;

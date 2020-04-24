@@ -15,7 +15,7 @@
  *  under the License.
  */
 
-package com.jecstar.etm.apm.server;
+package com.jecstar.etm.apm.server.generator;
 
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 

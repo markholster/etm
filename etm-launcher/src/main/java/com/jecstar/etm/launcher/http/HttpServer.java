@@ -17,6 +17,7 @@
 
 package com.jecstar.etm.launcher.http;
 
+import com.jecstar.etm.apm.server.ApmTelemetryEventProcessorApplication;
 import com.jecstar.etm.gui.rest.EtmExceptionMapper;
 import com.jecstar.etm.gui.rest.RestGuiApplication;
 import com.jecstar.etm.launcher.configuration.Configuration;
@@ -125,15 +126,15 @@ public class HttpServer {
             }
         }
         this.server = builder.setHandler(root).build();
-        SessionListenerAuditLogger sessionListenerAuditLogger = new SessionListenerAuditLogger(dataRepository, etmConfiguration);
-        final ServletSessionConfig servletSessionConfig = new ServletSessionConfig();
+        var sessionListenerAuditLogger = new SessionListenerAuditLogger(dataRepository, etmConfiguration);
+        final var servletSessionConfig = new ServletSessionConfig();
         servletSessionConfig.setHttpOnly(true).setSecure(configuration.http.secureCookies);
 
         if (configuration.http.restProcessorEnabled) {
-            DeploymentInfo di = createProcessorDeploymentInfo(configuration.http.getContextRoot(), processor, identityManager);
+            var di = createProcessorDeploymentInfo(configuration.http.getContextRoot(), processor, identityManager);
             di.setDefaultSessionTimeout(Long.valueOf(etmConfiguration.getSessionTimeout() / 1000).intValue());
             di.setServletSessionConfig(servletSessionConfig);
-            DeploymentManager manager = container.addDeployment(di);
+            var manager = container.addDeployment(di);
             manager.deploy();
             manager.getDeployment().getSessionManager().registerSessionListener(sessionListenerAuditLogger);
             try {
@@ -158,15 +159,46 @@ public class HttpServer {
                 }
             }
         }
-        if (configuration.http.guiEnabled) {
-            DeploymentInfo di = createGuiDeploymentInfo(configuration.http.getContextRoot(), dataRepository, identityManager, etmConfiguration);
+        if (true) {
+            var di = createApmDeploymentInfo(configuration.http.getContextRoot(), processor, identityManager);
             di.setDefaultSessionTimeout(Long.valueOf(etmConfiguration.getSessionTimeout() / 1000).intValue());
             di.setServletSessionConfig(servletSessionConfig);
-            DeploymentManager manager = container.addDeployment(di);
+            var manager = container.addDeployment(di);
             manager.deploy();
             manager.getDeployment().getSessionManager().registerSessionListener(sessionListenerAuditLogger);
             try {
-                EncodingHandler encodigHandler = new EncodingHandler(new ContentEncodingRepository()
+                root.addPrefixPath(
+                        di.getContextPath(),
+                        Handlers.requestLimitingHandler(
+                                configuration.http.restProcessorMaxConcurrentRequests,
+                                configuration.http.restProcessorMaxQueuedRequests,
+                                manager.start()
+//                                new SessionAttachmentHandler(
+//                                        manager.start(),
+//                                        manager.getDeployment().getSessionManager(),
+//                                        manager.getDeployment().getServletContext().getSessionConfig()
+//                                )
+                        )
+                );
+                if (log.isInfoLevelEnabled()) {
+                    log.logInfoMessage("Bound APM processor to '" + di.getContextPath() + "'.");
+                }
+            } catch (ServletException e) {
+                if (log.isErrorLevelEnabled()) {
+                    log.logErrorMessage("Error deploying rest processor", e);
+                }
+            }
+        }
+
+        if (configuration.http.guiEnabled) {
+            var di = createGuiDeploymentInfo(configuration.http.getContextRoot(), dataRepository, identityManager, etmConfiguration);
+            di.setDefaultSessionTimeout(Long.valueOf(etmConfiguration.getSessionTimeout() / 1000).intValue());
+            di.setServletSessionConfig(servletSessionConfig);
+            var manager = container.addDeployment(di);
+            manager.deploy();
+            manager.getDeployment().getSessionManager().registerSessionListener(sessionListenerAuditLogger);
+            try {
+                var encodigHandler = new EncodingHandler(new ContentEncodingRepository()
                         .addEncodingHandler("gzip", new GzipEncodingProvider(), 100, Predicates.maxContentSize(1024))
                         .addEncodingHandler("deflate", new DeflateEncodingProvider(), 50, Predicates.maxContentSize(1024)))
                         .setNext(manager.start());
@@ -260,6 +292,28 @@ public class HttpServer {
                 .setAsyncSupported(false)
                 .addMapping("/logout");
         di.addServlet(logoutServlet);
+        return di;
+    }
+
+    private DeploymentInfo createApmDeploymentInfo(String contextRoot, TelemetryCommandProcessor processor, IdentityManager identityManager) {
+        var application = new ApmTelemetryEventProcessorApplication(processor);
+        var deployment = new ResteasyDeployment();
+        deployment.setApplication(application);
+        DeploymentInfo di = undertowRestDeployment(deployment, "/*");
+        di.setContextPath(contextRoot + "rest/apm/");
+        di.setSessionManagerFactory(this.sessionManagerFactory);
+//        di.getAuthenticationMechanisms().put(ApiKeyAuthenticationMechanism.NAME, ApiKeyAuthenticationMechanism.FACTORY);
+//        if (identityManager != null) {
+//            deployment.setSecurityEnabled(true);
+//            di.addSecurityConstraint(new SecurityConstraint()
+//                    .addRolesAllowed(SecurityRoles.ETM_EVENT_WRITE, SecurityRoles.ETM_EVENT_READ_WRITE)
+//                    .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/*")));
+//            di.addSecurityRoles(SecurityRoles.ETM_EVENT_WRITE, SecurityRoles.ETM_EVENT_READ_WRITE);
+//            di.setIdentityManager(identityManager);
+//            di.setLoginConfig(new LoginConfig(HttpServletRequest.BASIC_AUTH, "Enterprise Telemetry Monitor").addFirstAuthMethod(ApiKeyAuthenticationMechanism.NAME));
+//        }
+        di.setClassLoader(application.getClass().getClassLoader());
+        di.setDeploymentName("APM event processor - " + di.getContextPath());
         return di;
     }
 
