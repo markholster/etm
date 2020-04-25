@@ -15,7 +15,7 @@
  *  under the License.
  */
 
-package com.jecstar.etm.apm.server.generator;
+package com.jecstar.etm.processor.elastic.apm.generator;
 
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 
@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  */
 public class DomainGenerator {
 
-    private static final String BASE_TARGET_PACKAGE = "com.jecstar.etm.apm.server.domain";
+    private static final String BASE_TARGET_PACKAGE = "com.jecstar.etm.processor.elastic.apm.domain";
     private static final String BASE_SOURCE_URL = "https://raw.githubusercontent.com/elastic/apm-server/7.6/docs/spec/";
 
     private final JsonConverter converter = new JsonConverter();

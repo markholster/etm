@@ -15,7 +15,7 @@
  *  under the License.
  */
 
-package com.jecstar.etm.apm.server;
+package com.jecstar.etm.processor.elastic.apm;
 
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.handler.AbstractJsonHandler;

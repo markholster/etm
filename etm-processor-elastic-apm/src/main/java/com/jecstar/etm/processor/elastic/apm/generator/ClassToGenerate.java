@@ -15,10 +15,8 @@
  *  under the License.
  */
 
-package com.jecstar.etm.apm.server.generator;
+package com.jecstar.etm.processor.elastic.apm.generator;
 
-public class GenerationResult {
-
-    public JsonDataClass jsonDataClass;
-    public JsonConverterClass jsonConverterClass;
+public interface ClassToGenerate {
+    String getContent();
 }

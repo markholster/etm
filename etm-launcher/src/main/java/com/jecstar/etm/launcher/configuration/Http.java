@@ -37,6 +37,10 @@ public class Http {
     public int restProcessorMaxConcurrentRequests = 50;
     public int restProcessorMaxQueuedRequests = 50;
 
+    public boolean elasticApmProcessorEnabled = true;
+    public int elasticApmProcessorMaxConcurrentRequests = 50;
+    public int elasticApmProcessorMaxQueuedRequests = 50;
+
     public String sslProtocol = "TLSv1.2";
     public File sslKeystoreLocation;
     public String sslKeystoreType = "PKCS12";

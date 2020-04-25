@@ -15,8 +15,24 @@
  *  under the License.
  */
 
-package com.jecstar.etm.apm.server.generator;
+package com.jecstar.etm.processor.elastic.apm;
 
-public interface ClassToGenerate {
-    String getContent();
+import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
+
+import javax.ws.rs.core.Application;
+import java.util.HashSet;
+import java.util.Set;
+
+public class ApmTelemetryEventProcessorApplication extends Application {
+
+    public ApmTelemetryEventProcessorApplication(TelemetryCommandProcessor processor) {
+        ApmTelemetryEventProcessor.setProcessor(processor);
+    }
+
+    @Override
+    public Set<Class<?>> getClasses() {
+        HashSet<Class<?>> classes = new HashSet<>();
+        classes.add(ApmTelemetryEventProcessor.class);
+        return classes;
+    }
 }

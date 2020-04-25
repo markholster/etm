@@ -17,13 +17,13 @@
 
 package com.jecstar.etm.launcher.http;
 
-import com.jecstar.etm.apm.server.ApmTelemetryEventProcessorApplication;
 import com.jecstar.etm.gui.rest.EtmExceptionMapper;
 import com.jecstar.etm.gui.rest.RestGuiApplication;
 import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.launcher.http.auth.ApiKeyAuthenticationMechanism;
 import com.jecstar.etm.launcher.http.session.ElasticsearchSessionManagerFactory;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
+import com.jecstar.etm.processor.elastic.apm.ApmTelemetryEventProcessorApplication;
 import com.jecstar.etm.processor.rest.RestTelemetryEventProcessorApplication;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
