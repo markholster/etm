@@ -17,6 +17,8 @@
 
 package com.jecstar.etm.launcher.configuration;
 
+import com.jecstar.etm.processor.elastic.apm.configuration.ElasticApm;
+
 import java.io.File;
 
 public class Http {
@@ -37,10 +39,6 @@ public class Http {
     public int restProcessorMaxConcurrentRequests = 50;
     public int restProcessorMaxQueuedRequests = 50;
 
-    public boolean elasticApmProcessorEnabled = true;
-    public int elasticApmProcessorMaxConcurrentRequests = 50;
-    public int elasticApmProcessorMaxQueuedRequests = 50;
-
     public String sslProtocol = "TLSv1.2";
     public File sslKeystoreLocation;
     public String sslKeystoreType = "PKCS12";
@@ -48,6 +46,8 @@ public class Http {
     public File sslTruststoreLocation;
     public String sslTruststoreType = "JKS";
     public String sslTruststorePassword;
+
+    public ElasticApm elasticApm = new ElasticApm();
 
     public String getContextRoot() {
         if (this.contextRoot == null) {

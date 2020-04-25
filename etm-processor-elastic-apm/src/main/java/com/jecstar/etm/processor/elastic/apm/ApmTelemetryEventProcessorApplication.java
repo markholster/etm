@@ -18,6 +18,7 @@
 package com.jecstar.etm.processor.elastic.apm;
 
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
+import com.jecstar.etm.processor.elastic.apm.configuration.ElasticApm;
 
 import javax.ws.rs.core.Application;
 import java.util.HashSet;
@@ -25,8 +26,8 @@ import java.util.Set;
 
 public class ApmTelemetryEventProcessorApplication extends Application {
 
-    public ApmTelemetryEventProcessorApplication(TelemetryCommandProcessor processor) {
-        ApmTelemetryEventProcessor.setProcessor(processor);
+    public ApmTelemetryEventProcessorApplication(TelemetryCommandProcessor processor, ElasticApm elasticApmProcessor) {
+        ApmTelemetryEventProcessor.initialize(processor, elasticApmProcessor);
     }
 
     @Override

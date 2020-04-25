@@ -24,6 +24,7 @@ import com.jecstar.etm.launcher.http.auth.ApiKeyAuthenticationMechanism;
 import com.jecstar.etm.launcher.http.session.ElasticsearchSessionManagerFactory;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.elastic.apm.ApmTelemetryEventProcessorApplication;
+import com.jecstar.etm.processor.elastic.apm.configuration.ElasticApm;
 import com.jecstar.etm.processor.rest.RestTelemetryEventProcessorApplication;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
@@ -159,8 +160,8 @@ public class HttpServer {
                 }
             }
         }
-        if (true) {
-            var di = createApmDeploymentInfo(configuration.http.getContextRoot(), processor, identityManager);
+        if (configuration.http.elasticApm.enabled) {
+            var di = createApmDeploymentInfo(configuration.http.getContextRoot(), processor, configuration.http.elasticApm, identityManager);
             di.setDefaultSessionTimeout(Long.valueOf(etmConfiguration.getSessionTimeout() / 1000).intValue());
             di.setServletSessionConfig(servletSessionConfig);
             var manager = container.addDeployment(di);
@@ -170,8 +171,8 @@ public class HttpServer {
                 root.addPrefixPath(
                         di.getContextPath(),
                         Handlers.requestLimitingHandler(
-                                configuration.http.restProcessorMaxConcurrentRequests,
-                                configuration.http.restProcessorMaxQueuedRequests,
+                                configuration.http.elasticApm.maxConcurrentRequests,
+                                configuration.http.elasticApm.maxQueuedRequests,
                                 manager.start()
 //                                new SessionAttachmentHandler(
 //                                        manager.start(),
@@ -295,8 +296,8 @@ public class HttpServer {
         return di;
     }
 
-    private DeploymentInfo createApmDeploymentInfo(String contextRoot, TelemetryCommandProcessor processor, IdentityManager identityManager) {
-        var application = new ApmTelemetryEventProcessorApplication(processor);
+    private DeploymentInfo createApmDeploymentInfo(String contextRoot, TelemetryCommandProcessor processor, ElasticApm elasticApmProcessor, IdentityManager identityManager) {
+        var application = new ApmTelemetryEventProcessorApplication(processor, elasticApmProcessor);
         var deployment = new ResteasyDeployment();
         deployment.setApplication(application);
         DeploymentInfo di = undertowRestDeployment(deployment, "/*");

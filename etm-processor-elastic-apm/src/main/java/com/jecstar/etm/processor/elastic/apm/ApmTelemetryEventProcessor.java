@@ -17,12 +17,14 @@
 
 package com.jecstar.etm.processor.elastic.apm;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
-import com.jecstar.etm.processor.handler.AbstractJsonHandler;
+import com.jecstar.etm.processor.elastic.apm.configuration.ElasticApm;
 import com.jecstar.etm.server.core.Etm;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -32,26 +34,30 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.zip.InflaterInputStream;
 
 @Path("/")
-public class ApmTelemetryEventProcessor extends AbstractJsonHandler {
-
-    public ApmTelemetryEventProcessor() {
-        super(null);
-    }
+public class ApmTelemetryEventProcessor {
 
     private static TelemetryCommandProcessor telemetryCommandProcessor;
+    private static ElasticApm elasticApm;
+    private static Set<String> allowedHeaders = new HashSet<>();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    static void setProcessor(TelemetryCommandProcessor processor) {
+
+    static void initialize(TelemetryCommandProcessor processor, ElasticApm elasticApm) {
         ApmTelemetryEventProcessor.telemetryCommandProcessor = processor;
+        ApmTelemetryEventProcessor.elasticApm = elasticApm;
+        allowedHeaders.add(HttpHeaders.ACCEPT);
+        allowedHeaders.add(HttpHeaders.CONTENT_ENCODING);
+        allowedHeaders.add(HttpHeaders.CONTENT_TYPE);
+        if (elasticApm.allowedHeaders != null) {
+            allowedHeaders.addAll(elasticApm.allowedHeaders);
+        }
     }
-
-    @Override
-    protected TelemetryCommandProcessor getProcessor() {
-        return ApmTelemetryEventProcessor.telemetryCommandProcessor;
-    }
-
 
     @POST
     @Path("/assets/v1/sourcemaps")
@@ -70,20 +76,24 @@ public class ApmTelemetryEventProcessor extends AbstractJsonHandler {
     @OPTIONS
     @Path("/intake/v2/rum/events")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response optionsApmRumEvents() {
-        return Response.ok()
+    public Response optionsApmRumEvents(@Context HttpHeaders headers) {
+        List<String> origins = headers.getRequestHeader("Origin");
+        var response = Response.ok()
                 .header(HttpHeaders.VARY, "Origin")
-                .header("Access-Control-Allow-Origin", "*")
                 .header("Access-Control-Max-Age", "3600")
                 .header("Access-Control-Allow-Methods",
                         HttpMethod.POST +
                                 ", " + HttpMethod.OPTIONS)
                 .header("Access-Control-Allow-Headers",
-                        HttpHeaders.CONTENT_TYPE +
-                                ", " + HttpHeaders.CONTENT_ENCODING +
-                                ", " + HttpHeaders.ACCEPT)
-                .header("Access-Control-Expose-Headers", "Etag")
-                .build();
+                        String.join(", ", ApmTelemetryEventProcessor.allowedHeaders))
+                .header("Access-Control-Expose-Headers", "Etag");
+        if (origins != null && origins.size() > 0 && elasticApm.allowedOrigins != null) {
+            var origin = origins.get(0);
+            if (elasticApm.allowedOrigins.contains(origin)) {
+                response.header("Access-Control-Allow-Origin", origin);
+            }
+        }
+        return response.build();
     }
 
     @POST
