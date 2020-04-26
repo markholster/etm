@@ -57,5 +57,4 @@ public class ApplicationBuilder {
         this.application.version = version;
         return this;
     }
-
 }

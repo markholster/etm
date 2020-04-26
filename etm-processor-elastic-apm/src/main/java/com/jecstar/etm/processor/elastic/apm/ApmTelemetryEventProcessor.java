@@ -18,10 +18,24 @@
 package com.jecstar.etm.processor.elastic.apm;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jecstar.etm.domain.Application;
+import com.jecstar.etm.domain.EndpointHandler;
+import com.jecstar.etm.domain.HttpTelemetryEvent;
+import com.jecstar.etm.domain.builder.ApplicationBuilder;
+import com.jecstar.etm.domain.builder.EndpointBuilder;
+import com.jecstar.etm.domain.builder.EndpointHandlerBuilder;
+import com.jecstar.etm.domain.builder.HttpTelemetryEventBuilder;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.elastic.apm.configuration.ElasticApm;
+import com.jecstar.etm.processor.elastic.apm.domain.Metadata;
+import com.jecstar.etm.processor.elastic.apm.domain.converter.MetadataConverter;
+import com.jecstar.etm.processor.elastic.apm.domain.converter.errors.ErrorConverter;
+import com.jecstar.etm.processor.elastic.apm.domain.converter.spans.SpanConverter;
+import com.jecstar.etm.processor.elastic.apm.domain.converter.transactions.TransactionConverter;
 import com.jecstar.etm.server.core.Etm;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
+import com.jecstar.etm.server.core.logging.LogFactory;
+import com.jecstar.etm.server.core.logging.LogWrapper;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -32,21 +46,30 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.InflaterInputStream;
 
 @Path("/")
 public class ApmTelemetryEventProcessor {
 
+    /**
+     * The <code>LogWrapper</code> for this class.
+     */
+    private static final LogWrapper log = LogFactory.getLogger(ApmTelemetryEventProcessor.class);
     private static TelemetryCommandProcessor telemetryCommandProcessor;
     private static ElasticApm elasticApm;
-    private static Set<String> allowedHeaders = new HashSet<>();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private static final Set<String> allowedHeaders = new HashSet<>();
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final MetadataConverter metadataConverter = new MetadataConverter();
+    private final TransactionConverter transactionConverter = new TransactionConverter();
+    private final ErrorConverter errorConverter = new ErrorConverter();
+    private final SpanConverter spanConverter = new SpanConverter();
 
     static void initialize(TelemetryCommandProcessor processor, ElasticApm elasticApm) {
         ApmTelemetryEventProcessor.telemetryCommandProcessor = processor;
@@ -63,14 +86,14 @@ public class ApmTelemetryEventProcessor {
     @Path("/assets/v1/sourcemaps")
     @Produces(MediaType.APPLICATION_JSON)
     public Response addApmAssets(InputStream data) {
-        return printEvent(data, false);
+        return handleEvent(data, false);
     }
 
     @POST
     @Path("/intake/v2/events")
     @Produces(MediaType.APPLICATION_JSON)
     public Response addApmEvents(InputStream data) {
-        return printEvent(data, true);
+        return handleEvent(data, true);
     }
 
     @OPTIONS
@@ -100,26 +123,107 @@ public class ApmTelemetryEventProcessor {
     @Path("/intake/v2/rum/events")
     @Produces(MediaType.APPLICATION_JSON)
     public Response addApmRumEvents(InputStream data) {
-        return printEvent(data, false);
+        return handleEvent(data, false);
     }
 
-    private Response printEvent(InputStream data, boolean compressedStream) {
+    @SuppressWarnings("unchecked")
+    private Response handleEvent(InputStream data, boolean compressedStream) {
         JsonConverter jsonConverter = new JsonConverter();
         try (BufferedReader bufferedReader = new BufferedReader(compressedStream ? new InputStreamReader(new InflaterInputStream(data), StandardCharsets.UTF_8) : new InputStreamReader(data, StandardCharsets.UTF_8))) {
-            bufferedReader
+            var lines = bufferedReader
                     .lines()
                     .filter(str -> !str.isEmpty())
-                    .forEach(c -> {
-                        try {
-                            var event = this.objectMapper.readValue(c, HashMap.class);
-                            System.out.println(jsonConverter.toString(event));
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    });
+                    .collect(Collectors.toList());
+            Application application = null;
+            if (lines.size() >= 1) {
+                var event = this.objectMapper.readValue(lines.get(0), HashMap.class);
 
+                Metadata metadata = this.metadataConverter.read((Map<String, Object>) event.get("metadata"));
+                var applicationBuilder = new ApplicationBuilder();
+                if (metadata.getService() != null) {
+                    var service = metadata.getService();
+                    applicationBuilder.setName(service.getName());
+                    applicationBuilder.setVersion(service.getVersion());
+                }
+                if (metadata.getSystem() != null) {
+                    var system = metadata.getSystem();
+                    if (system.getHostname() != null) {
+                        applicationBuilder.setHostAddress(InetAddress.getByName(system.getHostname()));
+                    } else if (system.getConfiguredHostname() != null) {
+                        applicationBuilder.setHostAddress(InetAddress.getByName(system.getConfiguredHostname()));
+                    } else if (system.getDetectedHostname() != null) {
+                        applicationBuilder.setHostAddress(InetAddress.getByName(system.getDetectedHostname()));
+                    }
+                }
+                if (metadata.getUser() != null) {
+                    applicationBuilder.setPrincipal(metadata.getUser().getId());
+                }
+                application = applicationBuilder.build();
+            }
+            System.out.println("=== " + application.name + " ===");
+            for (int i = 1; i < lines.size(); i++) {
+                var event = this.objectMapper.readValue(lines.get(i), HashMap.class);
+                if (event.containsKey("metricset")) {
+                    // Skip metricsets for now..
+                    continue;
+                } else if (event.containsKey("transaction")) {
+                    var transaction = this.transactionConverter.read((Map<String, Object>) event.get("transaction"));
+                    if ("request".equals(transaction.getType())) {
+                        // Incoming request.
+                        var httpBuilder = new HttpTelemetryEventBuilder();
+                        httpBuilder.setHttpEventType(HttpTelemetryEvent.HttpEventType.safeValueOf(transaction.getContext().getRequest().getMethod()));
+                        if (transaction.getParentId() != null) {
+                            httpBuilder.setId(transaction.getParentId());
+                        } else {
+                            httpBuilder.setId(transaction.getId());
+                        }
+                        httpBuilder.setName(transaction.getName());
+                        var endpointBuilder = new EndpointBuilder();
+                        endpointBuilder.setName(transaction.getContext().getRequest().getUrl().getFull());
+
+                        var endpointHandlerBuilder = new EndpointHandlerBuilder();
+                        endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.READER);
+                        endpointHandlerBuilder.setHandlingTime(Instant.EPOCH.plus(transaction.getTimestamp(), ChronoUnit.MICROS));
+                        endpointHandlerBuilder.setTransactionId(transaction.getTraceId());
+                        endpointHandlerBuilder.setApplication(application);
+
+                        endpointBuilder.addEndpointHandler(endpointHandlerBuilder);
+                        httpBuilder.addOrMergeEndpoint(endpointBuilder);
+
+                        telemetryCommandProcessor.processTelemetryEvent(httpBuilder, null);
+
+                        var id = httpBuilder.getId();
+                        httpBuilder.initialize();
+                        httpBuilder.setId(id + "-rsp");
+                        httpBuilder.setHttpEventType(HttpTelemetryEvent.HttpEventType.RESPONSE);
+                        httpBuilder.setName(transaction.getName() + " - Response");
+                        endpointBuilder = new EndpointBuilder();
+                        endpointBuilder.setName(transaction.getContext().getRequest().getUrl().getFull());
+
+                        endpointHandlerBuilder = new EndpointHandlerBuilder();
+                        endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.WRITER);
+                        endpointHandlerBuilder.setHandlingTime(Instant.EPOCH.plus(transaction.getTimestamp(), ChronoUnit.MICROS).plus(transaction.getDuration(), ChronoUnit.MILLIS));
+                        endpointHandlerBuilder.setTransactionId(transaction.getTraceId());
+                        endpointHandlerBuilder.setApplication(application);
+
+                        endpointBuilder.addEndpointHandler(endpointHandlerBuilder);
+                        httpBuilder.addOrMergeEndpoint(endpointBuilder);
+
+                        telemetryCommandProcessor.processTelemetryEvent(httpBuilder, null);
+                    }
+                    // ALS transaction.type == request && transaction.parent_id != null => Request ontvangen, transaction.parent_id == span.id == requestId in ETM. Endpoints zit in context.request.url.full
+
+                } else if (event.containsKey("span")) {
+                    var span = this.spanConverter.read((Map<String, Object>) event.get("span"));
+                } else if (event.containsKey("error")) {
+                    var error = this.errorConverter.read((Map<String, Object>) event.get("error"));
+                }
+                System.out.println(jsonConverter.toString(event));
+            }
         } catch (IOException e) {
-            e.printStackTrace();
+            if (log.isErrorLevelEnabled()) {
+                log.logErrorMessage(e.getMessage(), e);
+            }
         }
         return Response.ok().build();
     }

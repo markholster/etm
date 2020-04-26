@@ -39,6 +39,7 @@ public class DomainGenerator {
 
     public static void main(String[] args) throws IOException {
         new DomainGenerator().create("errors/error.json");
+        new DomainGenerator().create("metadata.json");
         new DomainGenerator().create("metricsets/metricset.json");
         new DomainGenerator().create("sourcemaps/payload.json");
         new DomainGenerator().create("spans/span.json");
@@ -76,11 +77,11 @@ public class DomainGenerator {
             packageName += "." + subPackage;
             converterPackageName += "." + subPackage;
         }
-        var packageDirectory = new File("./etm-apm-server/src/main/java", packageName.replaceAll("\\.", "/"));
+        var packageDirectory = new File("./etm-processor-elastic-apm/src/main/java", packageName.replaceAll("\\.", "/"));
         if (!packageDirectory.exists()) {
             packageDirectory.mkdirs();
         }
-        var converterPackageDirectory = new File("./etm-apm-server/src/main/java", converterPackageName.replaceAll("\\.", "/"));
+        var converterPackageDirectory = new File("./etm-processor-elastic-apm/src/main/java", converterPackageName.replaceAll("\\.", "/"));
         if (!converterPackageDirectory.exists()) {
             converterPackageDirectory.mkdirs();
         }
@@ -136,7 +137,14 @@ public class DomainGenerator {
         for (var jsonKey : properties.keySet()) {
             var javaName = DomainGenerator.toJavaName(jsonKey, false);
             var propertyValues = this.converter.getObject(jsonKey, properties);
-            if (propertyValues.containsKey("type")) {
+            if (propertyValues.containsKey("$ref")) {
+                var reference = this.converter.getString("$ref", propertyValues);
+                var url = new URL(new URL(entityBaseUrl), reference);
+                var referenceValues = this.converter.toMap(loadContent(url));
+                var entityName = url.toString().substring(url.toString().lastIndexOf("/") + 1, url.toString().lastIndexOf("."));
+                var generationResult = createClass(referenceValues, url.toString().substring(0, url.toString().lastIndexOf("/") + 1), entityName, false);
+                classToGenerate.addField(generationResult.jsonDataClass.packageName + "." + generationResult.jsonDataClass.name, javaName, jsonKey, generationResult.jsonDataClass.description, generationResult.jsonConverterClass.packageName + "." + generationResult.jsonConverterClass.name + ".class");
+            } else if (propertyValues.containsKey("type")) {
                 Object type = propertyValues.get("type");
                 var types = new ArrayList<String>();
                 if (type instanceof String) {
@@ -156,13 +164,6 @@ public class DomainGenerator {
                 } else {
                     System.out.println("Element '" + jsonKey + "' has unknown types: " + types.stream().collect(Collectors.joining(", ")));
                 }
-            } else if (propertyValues.containsKey("$ref")) {
-                var reference = this.converter.getString("$ref", propertyValues);
-                var url = new URL(new URL(entityBaseUrl), reference);
-                var referenceValues = this.converter.toMap(loadContent(url));
-                var entityName = url.toString().substring(url.toString().lastIndexOf("/") + 1, url.toString().lastIndexOf("."));
-                var generationResult = createClass(referenceValues, url.toString().substring(0, url.toString().lastIndexOf("/") + 1), entityName, false);
-                classToGenerate.addField(generationResult.jsonDataClass.packageName + "." + generationResult.jsonDataClass.name, javaName, jsonKey, generationResult.jsonDataClass.description, generationResult.jsonConverterClass.packageName + "." + generationResult.jsonConverterClass.name + ".class");
             }
         }
     }
