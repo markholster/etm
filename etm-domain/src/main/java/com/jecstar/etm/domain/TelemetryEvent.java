@@ -40,6 +40,11 @@ public abstract class TelemetryEvent<T extends TelemetryEvent<T>> {
     public String correlationId;
 
     /**
+     * The trace ID of the event. A trace ID can be used as a correlation id over several applications.
+     */
+    public String traceId;
+
+    /**
      * Data to be used for correlating event's that aren't correlated by the correlation id.
      */
     public Map<String, Object> correlationData = new HashMap<>();
@@ -97,6 +102,7 @@ public abstract class TelemetryEvent<T extends TelemetryEvent<T>> {
     final void internalInitialize() {
         this.id = null;
         this.correlationId = null;
+        this.traceId = null;
         this.correlationData.clear();
         this.endpoints.clear();
         this.extractedData.clear();
@@ -126,6 +132,7 @@ public abstract class TelemetryEvent<T extends TelemetryEvent<T>> {
         }
         this.id = copy.id;
         this.correlationId = copy.correlationId;
+        this.traceId = copy.traceId;
         this.correlationData.putAll(copy.correlationData);
         this.endpoints.clear();
         for (Endpoint endpoint : copy.endpoints) {

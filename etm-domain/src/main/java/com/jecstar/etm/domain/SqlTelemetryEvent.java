@@ -44,6 +44,7 @@ public class SqlTelemetryEvent extends TelemetryEvent<SqlTelemetryEvent> {
 
     @Override
     public SqlTelemetryEvent initialize() {
+        super.internalInitialize();
         this.sqlEventType = null;
         return this;
     }

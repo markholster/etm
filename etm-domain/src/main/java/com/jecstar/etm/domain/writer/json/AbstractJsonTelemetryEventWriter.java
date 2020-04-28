@@ -47,6 +47,7 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
             builder.field(this.tags.getIdTag(), event.id);
         }
         builder.field(this.tags.getCorrelationIdTag(), event.correlationId);
+        builder.field(this.tags.getTraceIdTag(), event.traceId);
         addMapElementToJsonBuilder(this.tags.getCorrelationDataTag(), event.correlationData, builder);
         if (event.endpoints.size() != 0) {
             builder.startArray(getTags().getEndpointsTag());

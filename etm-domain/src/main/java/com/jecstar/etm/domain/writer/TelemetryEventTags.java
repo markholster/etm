@@ -34,6 +34,8 @@ public interface TelemetryEventTags {
 
     String getCorrelationIdTag();
 
+    String getTraceIdTag();
+
     String getCorrelationDataTag();
 
     String getCorrelationsTag();

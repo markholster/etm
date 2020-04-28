@@ -42,6 +42,11 @@ public class TelemetryEventTagsJsonImpl implements TelemetryEventTags {
     }
 
     @Override
+    public String getTraceIdTag() {
+        return "trace_id";
+    }
+
+    @Override
     public String getCorrelationDataTag() {
         return "correlation_data";
     }

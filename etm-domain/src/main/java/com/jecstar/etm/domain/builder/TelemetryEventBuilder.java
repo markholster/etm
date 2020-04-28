@@ -60,6 +60,16 @@ public abstract class TelemetryEventBuilder<Event extends TelemetryEvent<Event>,
     }
 
     @SuppressWarnings("unchecked")
+    public Builder setTraceId(String traceId) {
+        this.event.traceId = traceId;
+        return (Builder) this;
+    }
+
+    public String getTraceId() {
+        return this.event.traceId;
+    }
+
+    @SuppressWarnings("unchecked")
     public Builder setCorrelationData(Map<String, Object> correlationData) {
         this.event.correlationData = correlationData;
         return (Builder) this;
