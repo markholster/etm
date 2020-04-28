@@ -139,6 +139,7 @@ public class ApmTelemetryEventProcessor {
 
     @SuppressWarnings("unchecked")
     private Response handleEvent(InputStream data, boolean compressedStream) {
+        var now = Instant.now();
         JsonConverter jsonConverter = new JsonConverter();
         try (BufferedReader bufferedReader = new BufferedReader(compressedStream ? new InputStreamReader(new InflaterInputStream(data), StandardCharsets.UTF_8) : new InputStreamReader(data, StandardCharsets.UTF_8))) {
             var lines = bufferedReader
@@ -176,16 +177,21 @@ public class ApmTelemetryEventProcessor {
             }
             System.out.println("=== " + application.name + " ===");
             for (int i = 1; i < lines.size(); i++) {
-                var event = this.objectMapper.readValue(lines.get(i), HashMap.class);
+                var line = lines.get(i);
+                if (line.startsWith("{\"span\":")) {
+                    // work around for https://github.com/elastic/apm-agent-rum-js/pull/753
+                    line = line.replace("\"subType\":", "\"subtype\":");
+                }
+                var event = this.objectMapper.readValue(line, HashMap.class);
                 if (event.containsKey("metricset")) {
                     // Skip metricsets for now..
                     continue;
                 } else if (event.containsKey("transaction")) {
                     var transaction = this.transactionConverter.read((Map<String, Object>) event.get("transaction"));
-                    handleTransaction(transaction, application);
+                    handleTransaction(transaction, application, now);
                 } else if (event.containsKey("span")) {
                     var span = this.spanConverter.read((Map<String, Object>) event.get("span"));
-                    handleSpan(span, application);
+                    handleSpan(span, application, now);
                 } else if (event.containsKey("error")) {
                     var error = this.errorConverter.read((Map<String, Object>) event.get("error"));
                 }
@@ -199,7 +205,7 @@ public class ApmTelemetryEventProcessor {
         return Response.ok().build();
     }
 
-    private void handleTransaction(Transaction transaction, Application application) {
+    private void handleTransaction(Transaction transaction, Application application, Instant handlingTime) {
         if ("request".equals(transaction.getType())) {
             // ALS transaction.type == request && transaction.parent_id != null => Request ontvangen, transaction.parent_id == span.id == requestId in ETM. Endpoints zit in context.request.url.full
 
@@ -256,17 +262,113 @@ public class ApmTelemetryEventProcessor {
             httpBuilder.addOrMergeEndpoint(endpointBuilder);
 
             telemetryCommandProcessor.processTelemetryEvent(httpBuilder, null);
+        } else if ("page-load".equals(transaction.getType())) {
+            // Incoming request.
+            var httpBuilder = new HttpTelemetryEventBuilder();
+            httpBuilder.setHttpEventType(HttpTelemetryEvent.HttpEventType.GET);
+            httpBuilder.setId(transaction.getId());
+            httpBuilder.setName(transaction.getName());
+            httpBuilder.setTraceId(transaction.getTraceId());
+            var endpointBuilder = new EndpointBuilder();
+            endpointBuilder.setName(transaction.getContext().getPage().getUrl());
+
+            var endpointHandlerBuilder = new EndpointHandlerBuilder();
+            endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.WRITER);
+            endpointHandlerBuilder.setTransactionId(transaction.getId());
+            if (transaction.getTimestamp() != null) {
+                endpointHandlerBuilder.setHandlingTime(Instant.EPOCH.plus(transaction.getTimestamp(), ChronoUnit.MICROS));
+            } else {
+                endpointHandlerBuilder.setHandlingTime(handlingTime);
+            }
+            endpointHandlerBuilder.setApplication(application);
+            endpointBuilder.addEndpointHandler(endpointHandlerBuilder);
+            httpBuilder.addOrMergeEndpoint(endpointBuilder);
+
+//            telemetryCommandProcessor.processTelemetryEvent(httpBuilder, null);
+
+            var id = httpBuilder.getId();
+            httpBuilder.initialize();
+            httpBuilder.setId(id + RESPONSE_ID_SUFFIX);
+            httpBuilder.setCorrelationId(id);
+            httpBuilder.setHttpEventType(HttpTelemetryEvent.HttpEventType.RESPONSE);
+            httpBuilder.setName(transaction.getName() + RESPONSE_NAME_SUFFIX);
+            httpBuilder.setTraceId(transaction.getTraceId());
+            endpointBuilder = new EndpointBuilder();
+            endpointBuilder.setName(transaction.getContext().getPage().getUrl());
+
+            endpointHandlerBuilder = new EndpointHandlerBuilder();
+            endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.READER);
+            endpointHandlerBuilder.setTransactionId(transaction.getId());
+            endpointHandlerBuilder.setHandlingTime(handlingTime.plus(transaction.getDuration(), ChronoUnit.MILLIS));
+            endpointHandlerBuilder.setApplication(application);
+            if (transaction.getContext().getResponse().getHeaders() != null) {
+                for (var entry : transaction.getContext().getResponse().getHeaders().entrySet()) {
+                    endpointHandlerBuilder.addMetadata("http_" + entry.getKey(), entry.getValue());
+                }
+            }
+            endpointBuilder.addEndpointHandler(endpointHandlerBuilder);
+            httpBuilder.addOrMergeEndpoint(endpointBuilder);
+
+//            telemetryCommandProcessor.processTelemetryEvent(httpBuilder, null);
         } else if ("messaging".equals(transaction.getType())) {
             // JMS transaction
         }
 
     }
 
-    private void handleSpan(Span span, Application application) {
+    private void handleSpan(Span span, Application application, Instant handlingTime) {
         if (span.getContext() == null) {
             return;
         }
-        if (span.getContext().getDb() != null) {
+        if ("external".equals(span.getType()) && "http".equals(span.getSubtype())) {
+            var http = span.getContext().getHttp();
+
+            var httpBuilder = new HttpTelemetryEventBuilder();
+            httpBuilder.setHttpEventType(HttpTelemetryEvent.HttpEventType.safeValueOf(http.getMethod()));
+            httpBuilder.setId(span.getId());
+            httpBuilder.setName(span.getName());
+            httpBuilder.setTraceId(span.getTraceId());
+            var endpointBuilder = new EndpointBuilder();
+            endpointBuilder.setName(http.getUrl());
+
+            var endpointHandlerBuilder = new EndpointHandlerBuilder();
+            endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.WRITER);
+            if (span.getTimestamp() != null) {
+                endpointHandlerBuilder.setHandlingTime(Instant.EPOCH.plus(span.getTimestamp(), ChronoUnit.MICROS));
+            } else if (span.getStart() != null) {
+                endpointHandlerBuilder.setHandlingTime(handlingTime.plus(span.getStart(), ChronoUnit.MILLIS));
+            }
+            endpointHandlerBuilder.setTransactionId(span.getTransactionId());
+            endpointHandlerBuilder.setApplication(application);
+            endpointBuilder.addEndpointHandler(endpointHandlerBuilder);
+            httpBuilder.addOrMergeEndpoint(endpointBuilder);
+
+            telemetryCommandProcessor.processTelemetryEvent(httpBuilder, null);
+
+            var id = httpBuilder.getId();
+            httpBuilder.initialize();
+            httpBuilder.setId(id + RESPONSE_ID_SUFFIX);
+            httpBuilder.setCorrelationId(id);
+            httpBuilder.setHttpEventType(HttpTelemetryEvent.HttpEventType.RESPONSE);
+            httpBuilder.setName(span.getName() + RESPONSE_NAME_SUFFIX);
+            httpBuilder.setTraceId(span.getTraceId());
+            endpointBuilder = new EndpointBuilder();
+            endpointBuilder.setName(http.getUrl());
+
+            endpointHandlerBuilder = new EndpointHandlerBuilder();
+            endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.READER);
+            if (span.getTimestamp() != null) {
+                endpointHandlerBuilder.setHandlingTime(Instant.EPOCH.plus(span.getTimestamp(), ChronoUnit.MICROS).plus(span.getDuration(), ChronoUnit.MILLIS));
+            } else if (span.getStart() != null) {
+                endpointHandlerBuilder.setHandlingTime(handlingTime.plus(span.getStart(), ChronoUnit.MILLIS).plus(span.getDuration(), ChronoUnit.MILLIS));
+            }
+            endpointHandlerBuilder.setTransactionId(span.getTransactionId());
+            endpointHandlerBuilder.setApplication(application);
+            endpointBuilder.addEndpointHandler(endpointHandlerBuilder);
+            httpBuilder.addOrMergeEndpoint(endpointBuilder);
+            telemetryCommandProcessor.processTelemetryEvent(httpBuilder, null);
+
+        } else if (span.getContext().getDb() != null) {
             var db = span.getContext().getDb();
             var sqlBuilder = new SqlTelemetryEventBuilder();
             sqlBuilder.setId(span.getId());
