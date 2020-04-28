@@ -30,6 +30,8 @@ public class Message {
     private com.jecstar.etm.processor.elastic.apm.domain.Age age;
     @JsonField("body")
     private String body;
+    @JsonField("headers")
+    private java.util.Map<String, Object> headers;
 
     public com.jecstar.etm.processor.elastic.apm.domain.Queue getQueue() {
         return this.queue;
@@ -44,5 +46,12 @@ public class Message {
      */
     public String getBody() {
         return this.body;
+    }
+
+    /**
+     * messsage headers, similar to http request headers
+     */
+    public java.util.Map<String, Object> getHeaders() {
+        return this.headers;
     }
 }

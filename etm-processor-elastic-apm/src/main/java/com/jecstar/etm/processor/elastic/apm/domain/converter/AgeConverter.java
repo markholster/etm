@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.custom.NestedObjectConverter;
  */
 public class AgeConverter extends NestedObjectConverter<Age> {
 
-    public AgeConverter() {
-        super(f -> new Age());
-    }
+   public AgeConverter() {
+      super(f -> new Age());
+   }
 }

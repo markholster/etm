@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.custom.NestedObjectConverter;
  */
 public class ServiceConverter extends NestedObjectConverter<Service> {
 
-    public ServiceConverter() {
-        super(f -> new Service());
-    }
+   public ServiceConverter() {
+      super(f -> new Service());
+   }
 }

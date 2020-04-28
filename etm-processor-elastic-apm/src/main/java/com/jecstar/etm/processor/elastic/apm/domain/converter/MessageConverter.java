@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.custom.NestedObjectConverter;
  */
 public class MessageConverter extends NestedObjectConverter<Message> {
 
-    public MessageConverter() {
-        super(f -> new Message());
-    }
+   public MessageConverter() {
+      super(f -> new Message());
+   }
 }

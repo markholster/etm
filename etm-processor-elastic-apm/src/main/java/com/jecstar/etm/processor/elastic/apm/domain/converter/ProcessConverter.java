@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.custom.NestedObjectConverter;
  */
 public class ProcessConverter extends NestedObjectConverter<Process> {
 
-    public ProcessConverter() {
-        super(f -> new Process());
-    }
+   public ProcessConverter() {
+      super(f -> new Process());
+   }
 }

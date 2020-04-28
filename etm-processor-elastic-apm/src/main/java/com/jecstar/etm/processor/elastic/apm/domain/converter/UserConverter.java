@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.custom.NestedObjectConverter;
  */
 public class UserConverter extends NestedObjectConverter<User> {
 
-    public UserConverter() {
-        super(f -> new User());
-    }
+   public UserConverter() {
+      super(f -> new User());
+   }
 }

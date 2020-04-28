@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.custom.NestedObjectConverter;
  */
 public class TagsConverter extends NestedObjectConverter<Tags> {
 
-    public TagsConverter() {
-        super(f -> new Tags());
-    }
+   public TagsConverter() {
+      super(f -> new Tags());
+   }
 }

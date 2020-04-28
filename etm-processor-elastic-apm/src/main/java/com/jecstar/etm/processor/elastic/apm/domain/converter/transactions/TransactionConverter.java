@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.JsonEntityConverter;
  */
 public class TransactionConverter extends JsonEntityConverter<Transaction> {
 
-    public TransactionConverter() {
-        super(f -> new Transaction());
-    }
+   public TransactionConverter() {
+      super(f -> new Transaction());
+   }
 }

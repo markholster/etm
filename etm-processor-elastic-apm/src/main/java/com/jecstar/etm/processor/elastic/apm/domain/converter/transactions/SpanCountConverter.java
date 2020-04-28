@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.custom.NestedObjectConverter;
  */
 public class SpanCountConverter extends NestedObjectConverter<SpanCount> {
 
-    public SpanCountConverter() {
-        super(f -> new SpanCount());
-    }
+   public SpanCountConverter() {
+      super(f -> new SpanCount());
+   }
 }

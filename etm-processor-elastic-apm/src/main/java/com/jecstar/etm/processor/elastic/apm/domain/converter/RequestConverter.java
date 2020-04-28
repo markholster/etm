@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.custom.NestedObjectConverter;
  */
 public class RequestConverter extends NestedObjectConverter<Request> {
 
-    public RequestConverter() {
-        super(f -> new Request());
-    }
+   public RequestConverter() {
+      super(f -> new Request());
+   }
 }

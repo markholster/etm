@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.custom.NestedObjectConverter;
  */
 public class NodeConverter extends NestedObjectConverter<Node> {
 
-    public NodeConverter() {
-        super(f -> new Node());
-    }
+   public NodeConverter() {
+      super(f -> new Node());
+   }
 }

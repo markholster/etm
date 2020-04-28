@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.custom.NestedObjectConverter;
  */
 public class PageConverter extends NestedObjectConverter<Page> {
 
-    public PageConverter() {
-        super(f -> new Page());
-    }
+   public PageConverter() {
+      super(f -> new Page());
+   }
 }

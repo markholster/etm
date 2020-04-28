@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.custom.NestedObjectConverter;
  */
 public class HttpConverter extends NestedObjectConverter<Http> {
 
-    public HttpConverter() {
-        super(f -> new Http());
-    }
+   public HttpConverter() {
+      super(f -> new Http());
+   }
 }

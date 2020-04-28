@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.custom.NestedObjectConverter;
  */
 public class LanguageConverter extends NestedObjectConverter<Language> {
 
-    public LanguageConverter() {
-        super(f -> new Language());
-    }
+   public LanguageConverter() {
+      super(f -> new Language());
+   }
 }

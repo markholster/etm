@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.custom.NestedObjectConverter;
  */
 public class FrameworkConverter extends NestedObjectConverter<Framework> {
 
-    public FrameworkConverter() {
-        super(f -> new Framework());
-    }
+   public FrameworkConverter() {
+      super(f -> new Framework());
+   }
 }

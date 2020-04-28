@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.custom.NestedObjectConverter;
  */
 public class AgentConverter extends NestedObjectConverter<Agent> {
 
-    public AgentConverter() {
-        super(f -> new Agent());
-    }
+   public AgentConverter() {
+      super(f -> new Agent());
+   }
 }

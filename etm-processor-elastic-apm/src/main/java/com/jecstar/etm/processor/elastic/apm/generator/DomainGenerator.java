@@ -161,6 +161,8 @@ public class DomainGenerator {
                 } else if (types.contains("object") && propertyValues.containsKey("properties")) {
                     var generationResult = createClass(propertyValues, entityBaseUrl, jsonKey, false);
                     classToGenerate.addField(generationResult.jsonDataClass.packageName + "." + generationResult.jsonDataClass.name, javaName, jsonKey, generationResult.jsonDataClass.description, generationResult.jsonConverterClass.packageName + "." + generationResult.jsonConverterClass.name + ".class");
+                } else if (types.contains("object") && propertyValues.containsKey("patternProperties")) {
+                    classToGenerate.addField("java.util.Map<String, Object>", javaName, jsonKey, this.converter.getString("description", propertyValues), null);
                 } else {
                     System.out.println("Element '" + jsonKey + "' has unknown types: " + types.stream().collect(Collectors.joining(", ")));
                 }

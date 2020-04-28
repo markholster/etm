@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.custom.NestedObjectConverter;
  */
 public class DbConverter extends NestedObjectConverter<Db> {
 
-    public DbConverter() {
-        super(f -> new Db());
-    }
+   public DbConverter() {
+      super(f -> new Db());
+   }
 }

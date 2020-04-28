@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.JsonEntityConverter;
  */
 public class MetadataConverter extends JsonEntityConverter<Metadata> {
 
-    public MetadataConverter() {
-        super(f -> new Metadata());
-    }
+   public MetadataConverter() {
+      super(f -> new Metadata());
+   }
 }

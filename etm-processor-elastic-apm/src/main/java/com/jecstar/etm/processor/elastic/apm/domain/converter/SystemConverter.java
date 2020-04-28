@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.custom.NestedObjectConverter;
  */
 public class SystemConverter extends NestedObjectConverter<System> {
 
-    public SystemConverter() {
-        super(f -> new System());
-    }
+   public SystemConverter() {
+      super(f -> new System());
+   }
 }

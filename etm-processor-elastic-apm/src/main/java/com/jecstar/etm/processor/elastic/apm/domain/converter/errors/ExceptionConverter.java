@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.custom.NestedObjectConverter;
  */
 public class ExceptionConverter extends NestedObjectConverter<Exception> {
 
-    public ExceptionConverter() {
-        super(f -> new Exception());
-    }
+   public ExceptionConverter() {
+      super(f -> new Exception());
+   }
 }

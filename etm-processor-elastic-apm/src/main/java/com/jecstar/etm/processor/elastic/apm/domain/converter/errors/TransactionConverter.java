@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.custom.NestedObjectConverter;
  */
 public class TransactionConverter extends NestedObjectConverter<Transaction> {
 
-    public TransactionConverter() {
-        super(f -> new Transaction());
-    }
+   public TransactionConverter() {
+      super(f -> new Transaction());
+   }
 }

@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.custom.NestedObjectConverter;
  */
 public class UrlConverter extends NestedObjectConverter<Url> {
 
-    public UrlConverter() {
-        super(f -> new Url());
-    }
+   public UrlConverter() {
+      super(f -> new Url());
+   }
 }

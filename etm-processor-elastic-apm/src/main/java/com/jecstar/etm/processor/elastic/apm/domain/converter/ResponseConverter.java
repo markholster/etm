@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.custom.NestedObjectConverter;
  */
 public class ResponseConverter extends NestedObjectConverter<Response> {
 
-    public ResponseConverter() {
-        super(f -> new Response());
-    }
+   public ResponseConverter() {
+      super(f -> new Response());
+   }
 }

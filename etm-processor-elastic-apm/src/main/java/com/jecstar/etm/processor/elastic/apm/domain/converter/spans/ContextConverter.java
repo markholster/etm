@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.custom.NestedObjectConverter;
  */
 public class ContextConverter extends NestedObjectConverter<Context> {
 
-    public ContextConverter() {
-        super(f -> new Context());
-    }
+   public ContextConverter() {
+      super(f -> new Context());
+   }
 }

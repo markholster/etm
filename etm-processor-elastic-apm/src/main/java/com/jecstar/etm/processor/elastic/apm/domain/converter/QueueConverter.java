@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.custom.NestedObjectConverter;
  */
 public class QueueConverter extends NestedObjectConverter<Queue> {
 
-    public QueueConverter() {
-        super(f -> new Queue());
-    }
+   public QueueConverter() {
+      super(f -> new Queue());
+   }
 }

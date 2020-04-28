@@ -32,6 +32,8 @@ public class Metricset {
     private String subtype;
     @JsonField("name")
     private String name;
+    @JsonField("samples")
+    private java.util.Map<String, Object> samples;
     @JsonField(value = "tags", converterClass = com.jecstar.etm.processor.elastic.apm.domain.converter.TagsConverter.class)
     private com.jecstar.etm.processor.elastic.apm.domain.Tags tags;
 
@@ -61,6 +63,13 @@ public class Metricset {
      */
     public String getName() {
         return this.name;
+    }
+
+    /**
+     * Sampled application metrics collected from the agent.
+     */
+    public java.util.Map<String, Object> getSamples() {
+        return this.samples;
     }
 
     /**

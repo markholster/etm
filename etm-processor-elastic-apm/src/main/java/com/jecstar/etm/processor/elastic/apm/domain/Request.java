@@ -28,6 +28,8 @@ public class Request {
     private String body;
     @JsonField(value = "env", converterClass = com.jecstar.etm.processor.elastic.apm.domain.converter.EnvConverter.class)
     private com.jecstar.etm.processor.elastic.apm.domain.Env env;
+    @JsonField("headers")
+    private java.util.Map<String, Object> headers;
     @JsonField("http_version")
     private String httpVersion;
     @JsonField("method")
@@ -49,6 +51,13 @@ public class Request {
      */
     public com.jecstar.etm.processor.elastic.apm.domain.Env getEnv() {
         return this.env;
+    }
+
+    /**
+     * Should include any headers sent by the requester. Cookies will be taken by headers if supplied.
+     */
+    public java.util.Map<String, Object> getHeaders() {
+        return this.headers;
     }
 
     /**

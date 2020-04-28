@@ -23,6 +23,8 @@ public class Response {
 
     @JsonField("finished")
     private Boolean finished;
+    @JsonField("headers")
+    private java.util.Map<String, Object> headers;
     @JsonField("headers_sent")
     private Boolean headersSent;
     @JsonField("status_code")
@@ -33,6 +35,13 @@ public class Response {
      */
     public Boolean isFinished() {
         return this.finished;
+    }
+
+    /**
+     * A mapping of HTTP headers of the response object
+     */
+    public java.util.Map<String, Object> getHeaders() {
+        return this.headers;
     }
 
     public Boolean isHeadersSent() {

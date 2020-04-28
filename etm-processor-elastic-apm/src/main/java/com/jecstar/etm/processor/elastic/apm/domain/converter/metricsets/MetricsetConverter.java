@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.JsonEntityConverter;
  */
 public class MetricsetConverter extends JsonEntityConverter<Metricset> {
 
-    public MetricsetConverter() {
-        super(f -> new Metricset());
-    }
+   public MetricsetConverter() {
+      super(f -> new Metricset());
+   }
 }

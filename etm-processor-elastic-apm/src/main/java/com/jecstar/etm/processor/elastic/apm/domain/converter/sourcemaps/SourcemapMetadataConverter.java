@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.JsonEntityConverter;
  */
 public class SourcemapMetadataConverter extends JsonEntityConverter<SourcemapMetadata> {
 
-    public SourcemapMetadataConverter() {
-        super(f -> new SourcemapMetadata());
-    }
+   public SourcemapMetadataConverter() {
+      super(f -> new SourcemapMetadata());
+   }
 }

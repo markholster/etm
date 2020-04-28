@@ -24,6 +24,8 @@ import com.jecstar.etm.server.core.converter.JsonField;
  */
 public class Context {
 
+    @JsonField("custom")
+    private java.util.Map<String, Object> custom;
     @JsonField(value = "response", converterClass = com.jecstar.etm.processor.elastic.apm.domain.converter.ResponseConverter.class)
     private com.jecstar.etm.processor.elastic.apm.domain.Response response;
     @JsonField(value = "request", converterClass = com.jecstar.etm.processor.elastic.apm.domain.converter.RequestConverter.class)
@@ -38,6 +40,13 @@ public class Context {
     private com.jecstar.etm.processor.elastic.apm.domain.Service service;
     @JsonField(value = "message", converterClass = com.jecstar.etm.processor.elastic.apm.domain.converter.MessageConverter.class)
     private com.jecstar.etm.processor.elastic.apm.domain.Message message;
+
+    /**
+     * An arbitrary mapping of additional metadata to store with the event.
+     */
+    public java.util.Map<String, Object> getCustom() {
+        return this.custom;
+    }
 
     public com.jecstar.etm.processor.elastic.apm.domain.Response getResponse() {
         return this.response;

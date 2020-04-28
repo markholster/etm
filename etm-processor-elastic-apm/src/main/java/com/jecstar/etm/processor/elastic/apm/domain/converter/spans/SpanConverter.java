@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.JsonEntityConverter;
  */
 public class SpanConverter extends JsonEntityConverter<Span> {
 
-    public SpanConverter() {
-        super(f -> new Span());
-    }
+   public SpanConverter() {
+      super(f -> new Span());
+   }
 }

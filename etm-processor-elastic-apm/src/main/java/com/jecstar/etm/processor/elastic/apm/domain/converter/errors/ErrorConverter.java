@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.JsonEntityConverter;
  */
 public class ErrorConverter extends JsonEntityConverter<Error> {
 
-    public ErrorConverter() {
-        super(f -> new Error());
-    }
+   public ErrorConverter() {
+      super(f -> new Error());
+   }
 }

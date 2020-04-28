@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.custom.NestedObjectConverter;
  */
 public class SocketConverter extends NestedObjectConverter<Socket> {
 
-    public SocketConverter() {
-        super(f -> new Socket());
-    }
+   public SocketConverter() {
+      super(f -> new Socket());
+   }
 }

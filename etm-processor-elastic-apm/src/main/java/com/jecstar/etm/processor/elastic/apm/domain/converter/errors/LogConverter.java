@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.custom.NestedObjectConverter;
  */
 public class LogConverter extends NestedObjectConverter<Log> {
 
-    public LogConverter() {
-        super(f -> new Log());
-    }
+   public LogConverter() {
+      super(f -> new Log());
+   }
 }

@@ -44,6 +44,8 @@ public class Transaction {
     private Long duration;
     @JsonField("result")
     private String result;
+    @JsonField("marks")
+    private java.util.Map<String, Object> marks;
     @JsonField("sampled")
     private Boolean sampled;
 
@@ -112,6 +114,13 @@ public class Transaction {
      */
     public String getResult() {
         return this.result;
+    }
+
+    /**
+     * A mark captures the timing of a significant event during the lifetime of a transaction. Marks are organized into groups and can be set by the user or the agent.
+     */
+    public java.util.Map<String, Object> getMarks() {
+        return this.marks;
     }
 
     /**

@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.custom.NestedObjectConverter;
  */
 public class RuntimeConverter extends NestedObjectConverter<Runtime> {
 
-    public RuntimeConverter() {
-        super(f -> new Runtime());
-    }
+   public RuntimeConverter() {
+      super(f -> new Runtime());
+   }
 }

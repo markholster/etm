@@ -25,7 +25,7 @@ import com.jecstar.etm.server.core.converter.custom.NestedObjectConverter;
  */
 public class DestinationConverter extends NestedObjectConverter<Destination> {
 
-    public DestinationConverter() {
-        super(f -> new Destination());
-    }
+   public DestinationConverter() {
+      super(f -> new Destination());
+   }
 }
