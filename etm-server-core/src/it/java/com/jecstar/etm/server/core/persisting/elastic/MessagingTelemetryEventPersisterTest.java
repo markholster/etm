@@ -17,9 +17,7 @@
 
 package com.jecstar.etm.server.core.persisting.elastic;
 
-import com.jecstar.etm.domain.Endpoint;
-import com.jecstar.etm.domain.EndpointHandler;
-import com.jecstar.etm.domain.MessagingTelemetryEvent;
+import com.jecstar.etm.domain.EndpointHandler.EndpointHandlerType;
 import com.jecstar.etm.domain.MessagingTelemetryEvent.MessagingEventType;
 import com.jecstar.etm.domain.PayloadFormat;
 import com.jecstar.etm.domain.builder.ApplicationBuilder;
@@ -32,10 +30,10 @@ import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.get.GetResponse;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -76,25 +74,25 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
      */
     @Test
     public void testMergingOfReaderAfterWriter() throws InterruptedException {
-        final String eventId = UUID.randomUUID().toString();
-        final MessagingTelemetryEventPersister persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
+        final var eventId = UUID.randomUUID().toString();
+        final var persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
 
-        final EndpointHandler writingEndpointHandler = new EndpointHandlerBuilder()
-                .setType(EndpointHandler.EndpointHandlerType.WRITER)
+        final var writingEndpointHandler = new EndpointHandlerBuilder()
+                .setType(EndpointHandlerType.WRITER)
                 .setHandlingTime(Instant.now())
                 .setApplication(new ApplicationBuilder()
                         .setName("Writing app")
                 ).build();
 
-        final EndpointHandler readingEndpointHandler = new EndpointHandlerBuilder()
-                .setType(EndpointHandler.EndpointHandlerType.READER)
+        final var readingEndpointHandler = new EndpointHandlerBuilder()
+                .setType(EndpointHandlerType.READER)
                 .setHandlingTime(Instant.now().plusSeconds(1))
                 .setApplication(new ApplicationBuilder()
                         .setName("Reading app")
                 ).build();
 
 
-        MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder()
+        var builder = new MessagingTelemetryEventBuilder()
                 .setId(eventId)
                 .setPayload("Test case " + this.getClass().getName())
                 .setPayloadFormat(PayloadFormat.TEXT)
@@ -116,12 +114,12 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
                         .addEndpointHandler(readingEndpointHandler)
                 );
         persister.persist(builder.build(), this.messagingEventConverter);
-        GetResponse getResponse = waitFor(persister.getElasticIndexName(), eventId, 2L);
+        var getResponse = waitFor(persister.getElasticIndexName(), eventId, 2L);
 
-        MessagingTelemetryEvent readEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
+        var readEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
         assertEquals(eventId, readEvent.id, eventId);
         assertEquals(1, readEvent.endpoints.size(), eventId);
-        Endpoint endpoint = readEvent.endpoints.get(0);
+        var endpoint = readEvent.endpoints.get(0);
         assertEquals("TEST.QUEUE", endpoint.name, eventId);
         assertEquals("Writing app", endpoint.getWritingEndpointHandler().application.name, eventId);
         assertEquals(1, endpoint.getReadingEndpointHandlers().size(), eventId);
@@ -133,24 +131,24 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
      */
     @Test
     public void testMergingOfWriterAfterReader() throws InterruptedException {
-        final String eventId = UUID.randomUUID().toString();
-        final MessagingTelemetryEventPersister persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
+        final var eventId = UUID.randomUUID().toString();
+        final var persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
 
-        final EndpointHandler writingEndpointHandler = new EndpointHandlerBuilder()
-                .setType(EndpointHandler.EndpointHandlerType.WRITER)
+        final var writingEndpointHandler = new EndpointHandlerBuilder()
+                .setType(EndpointHandlerType.WRITER)
                 .setHandlingTime(Instant.now())
                 .setApplication(new ApplicationBuilder()
                         .setName("Writing app")
                 ).build();
 
-        final EndpointHandler readingEndpointHandler = new EndpointHandlerBuilder()
-                .setType(EndpointHandler.EndpointHandlerType.READER)
+        final var readingEndpointHandler = new EndpointHandlerBuilder()
+                .setType(EndpointHandlerType.READER)
                 .setHandlingTime(Instant.now().plusSeconds(1))
                 .setApplication(new ApplicationBuilder()
                         .setName("Reading app")
                 ).build();
 
-        MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder()
+        var builder = new MessagingTelemetryEventBuilder()
                 .setId(eventId)
                 .setPayload("Test case " + this.getClass().getName())
                 .setPayloadFormat(PayloadFormat.TEXT)
@@ -172,12 +170,12 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
                         .addEndpointHandler(writingEndpointHandler)
                 );
         persister.persist(builder.build(), this.messagingEventConverter);
-        GetResponse getResponse = waitFor(persister.getElasticIndexName(), eventId, 2L);
+        var getResponse = waitFor(persister.getElasticIndexName(), eventId, 2L);
 
-        MessagingTelemetryEvent readEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
+        var readEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
         assertEquals(eventId, readEvent.id, eventId);
         assertEquals(1, readEvent.endpoints.size(), eventId);
-        Endpoint endpoint = readEvent.endpoints.get(0);
+        var endpoint = readEvent.endpoints.get(0);
         assertEquals("TEST.QUEUE", endpoint.name, eventId);
         assertEquals("Writing app", endpoint.getWritingEndpointHandler().application.name, eventId);
         assertEquals(1, endpoint.getReadingEndpointHandlers().size(), eventId);
@@ -189,24 +187,24 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
      */
     @Test
     public void testMergingOfEndpoints() throws InterruptedException {
-        final String eventId = UUID.randomUUID().toString();
-        final MessagingTelemetryEventPersister persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
+        final var eventId = UUID.randomUUID().toString();
+        final var persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
 
-        final EndpointHandler writingEndpointHandler = new EndpointHandlerBuilder()
-                .setType(EndpointHandler.EndpointHandlerType.WRITER)
+        final var writingEndpointHandler = new EndpointHandlerBuilder()
+                .setType(EndpointHandlerType.WRITER)
                 .setHandlingTime(Instant.now())
                 .setApplication(new ApplicationBuilder()
                         .setName("Writing app")
                 ).build();
 
-        final EndpointHandler readingEndpointHandler = new EndpointHandlerBuilder()
-                .setType(EndpointHandler.EndpointHandlerType.READER)
+        final var readingEndpointHandler = new EndpointHandlerBuilder()
+                .setType(EndpointHandlerType.READER)
                 .setHandlingTime(Instant.now().plusSeconds(1))
                 .setApplication(new ApplicationBuilder()
                         .setName("Reading app")
                 ).build();
 
-        MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder()
+        var builder = new MessagingTelemetryEventBuilder()
                 .setId(eventId)
                 .setPayload("Test case " + this.getClass().getName())
                 .setPayloadFormat(PayloadFormat.TEXT)
@@ -230,9 +228,9 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
                         .addEndpointHandler(readingEndpointHandler)
                 );
         persister.persist(builder.build(), this.messagingEventConverter);
-        GetResponse getResponse = waitFor(persister.getElasticIndexName(), eventId, 2L);
+        var getResponse = waitFor(persister.getElasticIndexName(), eventId, 2L);
 
-        MessagingTelemetryEvent readEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
+        var readEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
         assertEquals(eventId, readEvent.id, eventId);
         assertEquals(2, readEvent.endpoints.size(), eventId);
     }
@@ -242,26 +240,26 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
      */
     @Test
     public void testMergingOfFields() throws InterruptedException {
-        final String eventId = UUID.randomUUID().toString();
-        final String eventName = "Test case " + this.getClass().getName() + " - testMergingOfFields()";
-        final String payload = "Test case " + this.getClass().getName();
-        final MessagingTelemetryEventPersister persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
+        final var eventId = UUID.randomUUID().toString();
+        final var eventName = "Test case " + this.getClass().getName() + " - testMergingOfFields()";
+        final var payload = "Test case " + this.getClass().getName();
+        final var persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
 
-        final EndpointHandler writingEndpointHandler = new EndpointHandlerBuilder()
-                .setType(EndpointHandler.EndpointHandlerType.WRITER)
+        final var writingEndpointHandler = new EndpointHandlerBuilder()
+                .setType(EndpointHandlerType.WRITER)
                 .setHandlingTime(Instant.now())
                 .setApplication(new ApplicationBuilder()
                         .setName("Writing app")
                 ).build();
 
-        final EndpointHandler readingEndpointHandler = new EndpointHandlerBuilder()
-                .setType(EndpointHandler.EndpointHandlerType.READER)
+        final var readingEndpointHandler = new EndpointHandlerBuilder()
+                .setType(EndpointHandlerType.READER)
                 .setHandlingTime(Instant.now().plusSeconds(1))
                 .setApplication(new ApplicationBuilder()
                         .setName("Reading app")
                 ).build();
 
-        MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder()
+        var builder = new MessagingTelemetryEventBuilder()
                 .setId(eventId)
                 .addMetadata("key1", "initial value")
                 .addOrMergeEndpoint(new EndpointBuilder()
@@ -286,9 +284,9 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
                         .addEndpointHandler(readingEndpointHandler)
                 );
         persister.persist(builder.build(), this.messagingEventConverter);
-        GetResponse getResponse = waitFor(persister.getElasticIndexName(), eventId, 2L);
+        var getResponse = waitFor(persister.getElasticIndexName(), eventId, 2L);
 
-        MessagingTelemetryEvent readEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
+        var readEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
         assertEquals(eventId, readEvent.id, eventId);
         assertEquals(eventName, readEvent.name, eventId);
         assertEquals(payload, readEvent.payload, eventId);
@@ -303,26 +301,26 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
      */
     @Test
     public void testMergingOfResponseAfterRequest() throws InterruptedException {
-        final String requestId = UUID.randomUUID().toString();
-        final String responseId = UUID.randomUUID().toString();
-        final MessagingTelemetryEventPersister persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
+        final var requestId = UUID.randomUUID().toString();
+        final var responseId = UUID.randomUUID().toString();
+        final var persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
 
-        final Instant timeStamp = Instant.now();
-        final EndpointHandlerBuilder requestingEndpointHandler = new EndpointHandlerBuilder()
-                .setType(EndpointHandler.EndpointHandlerType.WRITER)
+        final var timeStamp = Instant.now();
+        final var requestingEndpointHandler = new EndpointHandlerBuilder()
+                .setType(EndpointHandlerType.WRITER)
                 .setHandlingTime(timeStamp)
                 .setApplication(new ApplicationBuilder()
                         .setName("Requesting App")
                 );
 
-        final EndpointHandlerBuilder respondingEndpointHandler = new EndpointHandlerBuilder()
-                .setType(EndpointHandler.EndpointHandlerType.READER)
+        final var respondingEndpointHandler = new EndpointHandlerBuilder()
+                .setType(EndpointHandlerType.READER)
                 .setHandlingTime(timeStamp.plusSeconds(1))
                 .setApplication(new ApplicationBuilder()
                         .setName("Responding App")
                 );
 
-        MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder()
+        var builder = new MessagingTelemetryEventBuilder()
                 .setId(requestId)
                 .setPayload("Test case " + this.getClass().getName())
                 .setPayloadFormat(PayloadFormat.TEXT)
@@ -343,19 +341,19 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
                 .setCorrelationId(requestId)
                 .addOrMergeEndpoint(new EndpointBuilder()
                         .setName("RESPONSE.QUEUE")
-                        .addEndpointHandler(respondingEndpointHandler.setType(EndpointHandler.EndpointHandlerType.WRITER).setHandlingTime(timeStamp.plusSeconds(2)))
-                        .addEndpointHandler(requestingEndpointHandler.setType(EndpointHandler.EndpointHandlerType.READER).setHandlingTime(timeStamp.plusSeconds(3)))
+                        .addEndpointHandler(respondingEndpointHandler.setType(EndpointHandlerType.WRITER).setHandlingTime(timeStamp.plusSeconds(2)))
+                        .addEndpointHandler(requestingEndpointHandler.setType(EndpointHandlerType.READER).setHandlingTime(timeStamp.plusSeconds(3)))
                 );
         persister.persist(builder.build(), this.messagingEventConverter);
         waitFor(persister.getElasticIndexName(), responseId, 1L);
-        GetResponse getResponse = waitFor(persister.getElasticIndexName(), requestId, 2L);
+        var getResponse = waitFor(persister.getElasticIndexName(), requestId, 2L);
 
-        MessagingTelemetryEvent event = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
+        var event = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
         assertEquals(1, event.correlations.size(), event.id);
         assertEquals(responseId, event.correlations.get(0), event.id);
 
         assertEquals(1, event.endpoints.size(), event.id);
-        Endpoint endpoint = event.endpoints.get(0);
+        var endpoint = event.endpoints.get(0);
         assertEquals(1000, endpoint.getReadingEndpointHandlers().get(0).responseTime.longValue(), event.id);
         assertEquals(1000, endpoint.getReadingEndpointHandlers().get(0).latency.longValue(), event.id);
         assertEquals(3000, endpoint.getWritingEndpointHandler().responseTime.longValue(), event.id);
@@ -366,26 +364,26 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
      */
     @Test
     public void testMergingOfRequestAfterResponse() throws InterruptedException {
-        final String requestId = UUID.randomUUID().toString();
-        final String responseId = UUID.randomUUID().toString();
-        final MessagingTelemetryEventPersister persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
+        final var requestId = UUID.randomUUID().toString();
+        final var responseId = UUID.randomUUID().toString();
+        final var persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
 
-        final Instant timeStamp = Instant.now();
-        final EndpointHandlerBuilder requestingEndpointHandler = new EndpointHandlerBuilder()
-                .setType(EndpointHandler.EndpointHandlerType.READER)
+        final var timeStamp = Instant.now();
+        final var requestingEndpointHandler = new EndpointHandlerBuilder()
+                .setType(EndpointHandlerType.READER)
                 .setHandlingTime(timeStamp)
                 .setApplication(new ApplicationBuilder()
                         .setName("Requesting App")
                 );
 
-        final EndpointHandlerBuilder respondingEndpointHandler = new EndpointHandlerBuilder()
-                .setType(EndpointHandler.EndpointHandlerType.WRITER)
+        final var respondingEndpointHandler = new EndpointHandlerBuilder()
+                .setType(EndpointHandlerType.WRITER)
                 .setHandlingTime(timeStamp.plusSeconds(1))
                 .setApplication(new ApplicationBuilder()
                         .setName("Responding App")
                 );
 
-        MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder()
+        var builder = new MessagingTelemetryEventBuilder()
                 .setId(responseId)
                 .setPayload("Test case " + this.getClass().getName())
                 .setPayloadFormat(PayloadFormat.TEXT)
@@ -406,18 +404,18 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
                 .setMessagingEventType(MessagingEventType.REQUEST)
                 .addOrMergeEndpoint(new EndpointBuilder()
                         .setName("REQUEST.QUEUE")
-                        .addEndpointHandler(requestingEndpointHandler.setType(EndpointHandler.EndpointHandlerType.WRITER).setHandlingTime(timeStamp))
-                        .addEndpointHandler(respondingEndpointHandler.setType(EndpointHandler.EndpointHandlerType.READER).setHandlingTime(timeStamp.plusSeconds(1)))
+                        .addEndpointHandler(requestingEndpointHandler.setType(EndpointHandlerType.WRITER).setHandlingTime(timeStamp))
+                        .addEndpointHandler(respondingEndpointHandler.setType(EndpointHandlerType.READER).setHandlingTime(timeStamp.plusSeconds(1)))
                 );
         persister.persist(builder.build(), this.messagingEventConverter);
-        GetResponse getResponse = waitFor(persister.getElasticIndexName(), requestId, 2L);
+        var getResponse = waitFor(persister.getElasticIndexName(), requestId, 2L);
 
-        MessagingTelemetryEvent event = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
+        var event = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
         assertEquals(1, event.correlations.size(), event.id);
         assertEquals(responseId, event.correlations.get(0), event.id);
 
         assertEquals(1, event.endpoints.size(), event.id);
-        Endpoint endpoint = event.endpoints.get(0);
+        var endpoint = event.endpoints.get(0);
         assertEquals(1000, endpoint.getReadingEndpointHandlers().get(0).responseTime.longValue(), event.id);
         assertEquals(1000, endpoint.getReadingEndpointHandlers().get(0).latency.longValue(), event.id);
         assertEquals(3000, endpoint.getWritingEndpointHandler().responseTime.longValue(), event.id);
@@ -428,25 +426,25 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
      */
     @Test
     public void testPersistMessageTwice() throws InterruptedException {
-        final String requestId = UUID.randomUUID().toString();
-        final MessagingTelemetryEventPersister persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
+        final var requestId = UUID.randomUUID().toString();
+        final var persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
 
-        final Instant timeStamp = Instant.now();
-        final EndpointHandlerBuilder requestingEndpointHandler = new EndpointHandlerBuilder()
-                .setType(EndpointHandler.EndpointHandlerType.WRITER)
+        final var timeStamp = Instant.now();
+        final var requestingEndpointHandler = new EndpointHandlerBuilder()
+                .setType(EndpointHandlerType.WRITER)
                 .setHandlingTime(timeStamp)
                 .setApplication(new ApplicationBuilder()
                         .setName("Requesting App")
                 );
 
-        final EndpointHandlerBuilder respondingEndpointHandler = new EndpointHandlerBuilder()
-                .setType(EndpointHandler.EndpointHandlerType.READER)
+        final var respondingEndpointHandler = new EndpointHandlerBuilder()
+                .setType(EndpointHandlerType.READER)
                 .setHandlingTime(timeStamp.plusSeconds(1))
                 .setApplication(new ApplicationBuilder()
                         .setName("Responding App")
                 );
 
-        MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder()
+        var builder = new MessagingTelemetryEventBuilder()
                 .setId(requestId)
                 .setPayload("Test case " + this.getClass().getName())
                 .setPayloadFormat(PayloadFormat.TEXT)
@@ -457,12 +455,12 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
                         .addEndpointHandler(respondingEndpointHandler)
                 );
         persister.persist(builder.build(), this.messagingEventConverter);
-        GetResponse getResponse = waitFor(persister.getElasticIndexName(), requestId, 1L);
-        MessagingTelemetryEvent event_v1 = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
+        var getResponse = waitFor(persister.getElasticIndexName(), requestId, 1L);
+        var event_v1 = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
 
         persister.persist(builder.build(), this.messagingEventConverter);
         getResponse = waitFor(persister.getElasticIndexName(), requestId, 2L);
-        MessagingTelemetryEvent event_v2 = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
+        var event_v2 = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
         assertEquals(event_v1.getCalculatedHash(), event_v2.getCalculatedHash(), getResponse.getId());
     }
 
@@ -472,14 +470,14 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
      */
     @Test
     public void testSetResponseTimeWithoutApplicationsRequestBeforeResponse() throws InterruptedException {
-        final String requestId = UUID.randomUUID().toString();
-        final String responseId = UUID.randomUUID().toString();
-        final Instant timestamp = Instant.now();
-        final EndpointHandlerBuilder endpointHandler = new EndpointHandlerBuilder()
-                .setType(EndpointHandler.EndpointHandlerType.WRITER)
+        final var requestId = UUID.randomUUID().toString();
+        final var responseId = UUID.randomUUID().toString();
+        final var timestamp = Instant.now();
+        final var endpointHandler = new EndpointHandlerBuilder()
+                .setType(EndpointHandlerType.WRITER)
                 .setHandlingTime(timestamp);
-        final MessagingTelemetryEventPersister persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
-        MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder()
+        final var persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
+        var builder = new MessagingTelemetryEventBuilder()
                 .setId(requestId)
                 .setPayload("Test case " + this.getClass().getName())
                 .setPayloadFormat(PayloadFormat.TEXT)
@@ -496,10 +494,10 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
                 .setMessagingEventType(MessagingEventType.RESPONSE);
         persister.persist(builder.build(), this.messagingEventConverter);
         // wait for the request to be updated with the response time
-        GetResponse getResponse = waitFor(persister.getElasticIndexName(), requestId, 2L);
-        MessagingTelemetryEvent requestEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
+        var getResponse = waitFor(persister.getElasticIndexName(), requestId, 2L);
+        var requestEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
         assertNotNull(requestEvent.endpoints.get(0).getWritingEndpointHandler().responseTime);
-        long responsetTime = requestEvent.endpoints.get(0).getWritingEndpointHandler().responseTime;
+        var responsetTime = requestEvent.endpoints.get(0).getWritingEndpointHandler().responseTime;
         assertEquals(1000L, responsetTime, requestId);
     }
 
@@ -509,14 +507,14 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
      */
     @Test
     public void testSetResponseTimeWithoutApplicationsResponseBeforeRequest() throws InterruptedException {
-        final String requestId = UUID.randomUUID().toString();
-        final String responseId = UUID.randomUUID().toString();
-        final Instant timestamp = Instant.now();
-        final EndpointHandlerBuilder endpointHandler = new EndpointHandlerBuilder()
-                .setType(EndpointHandler.EndpointHandlerType.WRITER)
+        final var requestId = UUID.randomUUID().toString();
+        final var responseId = UUID.randomUUID().toString();
+        final var timestamp = Instant.now();
+        final var endpointHandler = new EndpointHandlerBuilder()
+                .setType(EndpointHandlerType.WRITER)
                 .setHandlingTime(timestamp.plusSeconds(1));
-        final MessagingTelemetryEventPersister persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
-        MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder()
+        final var persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
+        var builder = new MessagingTelemetryEventBuilder()
                 .setId(responseId)
                 .setCorrelationId(requestId)
                 .setPayload("Test case " + this.getClass().getName())
@@ -534,10 +532,10 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
                 .setMessagingEventType(MessagingEventType.REQUEST);
         persister.persist(builder.build(), this.messagingEventConverter);
         // wait for the request to be updated with the response time
-        GetResponse getResponse = waitFor(persister.getElasticIndexName(), requestId, 2L);
-        MessagingTelemetryEvent requestEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
+        var getResponse = waitFor(persister.getElasticIndexName(), requestId, 2L);
+        var requestEvent = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
         assertNotNull(requestEvent.endpoints.get(0).getWritingEndpointHandler().responseTime, requestId);
-        long responsetTime = requestEvent.endpoints.get(0).getWritingEndpointHandler().responseTime;
+        var responsetTime = requestEvent.endpoints.get(0).getWritingEndpointHandler().responseTime;
         assertEquals(1000L, responsetTime, requestId);
     }
 
@@ -549,10 +547,10 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
      */
     @Test
     public void testAlwaysCorrelateFirstBeforeSecond() throws InterruptedException {
-        final String firstId = UUID.randomUUID().toString();
-        final String secondId = UUID.randomUUID().toString();
-        final MessagingTelemetryEventPersister persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
-        MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder()
+        final var firstId = UUID.randomUUID().toString();
+        final var secondId = UUID.randomUUID().toString();
+        final var persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
+        var builder = new MessagingTelemetryEventBuilder()
                 .setId(firstId)
                 .setPayload("Test case " + this.getClass().getName())
                 .setPayloadFormat(PayloadFormat.TEXT)
@@ -565,8 +563,8 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
         builder.setId(secondId).setCorrelationId(firstId);
         persister.persist(builder.build(), this.messagingEventConverter);
 
-        GetResponse getResponse = waitFor(persister.getElasticIndexName(), firstId, 2L);
-        MessagingTelemetryEvent event = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
+        var getResponse = waitFor(persister.getElasticIndexName(), firstId, 2L);
+        var event = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
 
         // Make sure the second event is referenced in the first event.
         assertTrue(event.correlations.contains(secondId), firstId);
@@ -574,10 +572,10 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
 
     @Test
     public void testAlwaysCorrelateSecondBeforeFirst() throws InterruptedException {
-        final String firstId = UUID.randomUUID().toString();
-        final String secondId = UUID.randomUUID().toString();
-        final MessagingTelemetryEventPersister persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
-        MessagingTelemetryEventBuilder builder = new MessagingTelemetryEventBuilder()
+        final var firstId = UUID.randomUUID().toString();
+        final var secondId = UUID.randomUUID().toString();
+        final var persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
+        var builder = new MessagingTelemetryEventBuilder()
                 .setId(secondId)
                 .setCorrelationId(firstId)
                 .setPayload("Test case " + this.getClass().getName())
@@ -591,11 +589,104 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
         builder.setId(firstId).setCorrelationId(null);
         persister.persist(builder.build(), this.messagingEventConverter);
 
-        GetResponse getResponse = waitFor(persister.getElasticIndexName(), firstId, 2L);
-        MessagingTelemetryEvent event = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
+        var getResponse = waitFor(persister.getElasticIndexName(), firstId, 2L);
+        var event = this.messagingEventConverter.read(getResponse.getSourceAsMap(), getResponse.getId());
 
         // Make sure the second event is referenced in the first event.
         assertTrue(event.correlations.contains(secondId), firstId);
+    }
+
+    /**
+     * Test if all calculations on readers and writers succeed when the time set on the application that sends the
+     * request is after the time the application that reads the event. This can only be possible if both clocks are off
+     * sync, but ETM should be capable of handling this situation.
+     *
+     * @throws InterruptedException
+     */
+    @Test
+    public void testReaderAndWriterWithOffSyncClocks() throws InterruptedException {
+        final var reqId = UUID.randomUUID().toString();
+        final var rspId = UUID.randomUUID().toString();
+        final var frontendTime = Instant.now();
+        final var backendTime = frontendTime.minus(750, ChronoUnit.MILLIS);
+        final var frontendApp = new ApplicationBuilder().setName("Frontend app");
+        final var backendApp = new ApplicationBuilder().setName("Backend app");
+        final var persister = new MessagingTelemetryEventPersister(bulkProcessor, etmConfiguration);
+        // First log the frontend.
+        var builder = new MessagingTelemetryEventBuilder()
+                .setId(reqId)
+                .setPayload("Test case " + this.getClass().getName())
+                .setPayloadFormat(PayloadFormat.TEXT)
+                .setMessagingEventType(MessagingEventType.REQUEST)
+                .addOrMergeEndpoint(new EndpointBuilder()
+                        .setName("wmq://dummyQueue")
+                        .addEndpointHandler(new EndpointHandlerBuilder()
+                                .setType(EndpointHandlerType.WRITER)
+                                .setApplication(frontendApp)
+                                .setHandlingTime(frontendTime)
+                        )
+                );
+        persister.persist(builder.build(), this.messagingEventConverter);
+        waitFor(persister.getElasticIndexName(), reqId, 1L);
+
+        builder = new MessagingTelemetryEventBuilder()
+                .setId(rspId)
+                .setCorrelationId(reqId)
+                .setPayload("Test case response " + this.getClass().getName())
+                .setPayloadFormat(PayloadFormat.TEXT)
+                .setMessagingEventType(MessagingEventType.RESPONSE)
+                .addOrMergeEndpoint(new EndpointBuilder()
+                        .setName("wmq://dummyResponseQueue")
+                        .addEndpointHandler(new EndpointHandlerBuilder()
+                                .setType(EndpointHandlerType.READER)
+                                .setApplication(frontendApp)
+                                .setHandlingTime(frontendTime.plus(110, ChronoUnit.MILLIS))
+                        )
+                );
+        persister.persist(builder.build(), this.messagingEventConverter);
+        waitFor(persister.getElasticIndexName(), rspId, 1L);
+
+        // And then log the backend, which has time values before the frontend times.
+        builder = new MessagingTelemetryEventBuilder()
+                .setId(reqId)
+                .setPayload("Test case " + this.getClass().getName())
+                .setPayloadFormat(PayloadFormat.TEXT)
+                .setMessagingEventType(MessagingEventType.REQUEST)
+                .addOrMergeEndpoint(new EndpointBuilder()
+                        .setName("wmq://dummyQueue")
+                        .addEndpointHandler(new EndpointHandlerBuilder()
+                                .setType(EndpointHandlerType.READER)
+                                .setApplication(backendApp)
+                                .setHandlingTime(backendTime)
+                        )
+                );
+        persister.persist(builder.build(), this.messagingEventConverter);
+
+        builder = new MessagingTelemetryEventBuilder()
+                .setId(rspId)
+                .setCorrelationId(reqId)
+                .setPayload("Test case response " + this.getClass().getName())
+                .setPayloadFormat(PayloadFormat.TEXT)
+                .setMessagingEventType(MessagingEventType.RESPONSE)
+                .addOrMergeEndpoint(new EndpointBuilder()
+                        .setName("wmq://dummyResponseQueue")
+                        .addEndpointHandler(new EndpointHandlerBuilder()
+                                .setType(EndpointHandlerType.WRITER)
+                                .setApplication(backendApp)
+                                .setHandlingTime(backendTime.plus(100, ChronoUnit.MILLIS))
+                        )
+                );
+        persister.persist(builder.build(), this.messagingEventConverter);
+        var requestData = waitFor(persister.getElasticIndexName(), reqId, 4L);
+        var responseData = waitFor(persister.getElasticIndexName(), rspId, 2L);
+
+        var request = this.messagingEventConverter.read(requestData.getSourceAsMap(), requestData.getId());
+        var response = this.messagingEventConverter.read(responseData.getSourceAsMap(), responseData.getId());
+
+        assertEquals(1, request.endpoints.size());
+        assertEquals(2, request.endpoints.get(0).getEndpointHandlers().size());
+        assertEquals(1, response.endpoints.size());
+        assertEquals(2, response.endpoints.get(0).getEndpointHandlers().size());
     }
 
 }
