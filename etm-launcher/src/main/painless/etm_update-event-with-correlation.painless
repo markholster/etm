@@ -9,3 +9,4 @@ if (correlations == null) {
 if (!correlations.contains(correlatingId)) {
 	correlations.add(correlatingId);
 }
+}

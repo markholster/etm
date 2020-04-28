@@ -333,12 +333,11 @@ public class ApmTelemetryEventProcessor {
 
             var endpointHandlerBuilder = new EndpointHandlerBuilder();
             endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.WRITER);
-// WHEN ENABLED THE ENDPOINTS AREN'T MERGED ANYMORE!!! So the READER is overwriting the WRITER!!
-//            if (span.getTimestamp() != null) {
-//                endpointHandlerBuilder.setHandlingTime(Instant.EPOCH.plus(span.getTimestamp(), ChronoUnit.MICROS));
-//            } else if (span.getStart() != null) {
-//                endpointHandlerBuilder.setHandlingTime(handlingTime.plus(span.getStart(), ChronoUnit.MILLIS));
-//            }
+            if (span.getTimestamp() != null) {
+                endpointHandlerBuilder.setHandlingTime(Instant.EPOCH.plus(span.getTimestamp(), ChronoUnit.MICROS));
+            } else if (span.getStart() != null) {
+                endpointHandlerBuilder.setHandlingTime(handlingTime.plus(span.getStart(), ChronoUnit.MILLIS));
+            }
             endpointHandlerBuilder.setTransactionId(span.getTransactionId());
             endpointHandlerBuilder.setApplication(application);
             endpointBuilder.addEndpointHandler(endpointHandlerBuilder);
@@ -358,12 +357,11 @@ public class ApmTelemetryEventProcessor {
 
             endpointHandlerBuilder = new EndpointHandlerBuilder();
             endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.READER);
-// WHEN ENABLED THE ENDPOINTS AREN'T MERGED ANYMORE!!! So the READER is overwriting the WRITER!!
-//            if (span.getTimestamp() != null) {
-//                endpointHandlerBuilder.setHandlingTime(Instant.EPOCH.plus(span.getTimestamp(), ChronoUnit.MICROS).plus(span.getDuration(), ChronoUnit.MILLIS));
-//            } else if (span.getStart() != null) {
-//                endpointHandlerBuilder.setHandlingTime(handlingTime.plus(span.getStart(), ChronoUnit.MILLIS).plus(span.getDuration(), ChronoUnit.MILLIS));
-//            }
+            if (span.getTimestamp() != null) {
+                endpointHandlerBuilder.setHandlingTime(Instant.EPOCH.plus(span.getTimestamp(), ChronoUnit.MICROS).plus(span.getDuration(), ChronoUnit.MILLIS));
+            } else if (span.getStart() != null) {
+                endpointHandlerBuilder.setHandlingTime(handlingTime.plus(span.getStart(), ChronoUnit.MILLIS).plus(span.getDuration(), ChronoUnit.MILLIS));
+            }
             endpointHandlerBuilder.setTransactionId(span.getTransactionId());
             endpointHandlerBuilder.setApplication(application);
             endpointBuilder.addEndpointHandler(endpointHandlerBuilder);

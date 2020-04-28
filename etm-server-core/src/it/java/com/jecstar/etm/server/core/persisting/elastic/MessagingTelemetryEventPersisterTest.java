@@ -615,8 +615,8 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
         // First log the frontend.
         var builder = new MessagingTelemetryEventBuilder()
                 .setId(reqId)
-                .setPayload("Test case " + this.getClass().getName())
-                .setPayloadFormat(PayloadFormat.TEXT)
+//                .setPayload("Test case " + this.getClass().getName())
+//                .setPayloadFormat(PayloadFormat.TEXT)
                 .setMessagingEventType(MessagingEventType.REQUEST)
                 .addOrMergeEndpoint(new EndpointBuilder()
                         .setName("wmq://dummyQueue")
@@ -649,8 +649,8 @@ public class MessagingTelemetryEventPersisterTest extends AbstractIntegrationTes
         // And then log the backend, which has time values before the frontend times.
         builder = new MessagingTelemetryEventBuilder()
                 .setId(reqId)
-                .setPayload("Test case " + this.getClass().getName())
-                .setPayloadFormat(PayloadFormat.TEXT)
+//                .setPayload("Test case " + this.getClass().getName())
+//                .setPayloadFormat(PayloadFormat.TEXT)
                 .setMessagingEventType(MessagingEventType.REQUEST)
                 .addOrMergeEndpoint(new EndpointBuilder()
                         .setName("wmq://dummyQueue")

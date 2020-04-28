@@ -53,18 +53,34 @@ http:
   sslKeystoreType: PKCS12
   # The tls protocol that will be used.
   sslProtocol: TLSv1.2
-# The location of the truststore. This store will hold the information from clients that are allowed to connect to the https interface. 
+  # The location of the truststore. This store will hold the information from clients that are allowed to connect to the https interface.
   sslTruststoreLocation: null
-# The password of the truststore.
+  # The password of the truststore.
   sslTruststorePassword: null
-# The truststore type
+  # The truststore type
   sslTruststoreType: JKS
-# Should the secure flag be set on the session cookies? Set this value to true when your etm instance is accessed via https.
+  # Should the secure flag be set on the session cookies? Set this value to true when your etm instance is accessed via https.
   secureCookies: false
+  # The Elastic APM options.
+  elasticApm:
+    # Should the Elastic APM server be enabled. Set this option to true if you want to ingest Elastic APM events.
+    enabled: false
+# The maximum number of requests that can be handled concurrently. If the number of requests exceeds this number they will be queued.
+#    maxConcurrentRequests: 50
+# The maximum number of request that can be queued before the server will reject further requests.
+#    maxQueuedRequests: 50
+# The RUM origins that are allowed to send request to ETM.
+#    allowedOrigins:
+#      - "http://localhost:3000"
+# The RUM headers that are allowed to send in requests to ETM.
+#    allowedHeaders:
+#      - "Accept"
+#      - "Content-Encoding"
+#      - "Content-Type"
 
 # The IBM MQ configuration options.  
 ibmMq:
-# Should the MQ processor be enabled. Set this option to true if you want to process events from a queue or topic. This option can only be enabled if the correct MQ jar files are added to the Node's classpath.
+  # Should the MQ processor be enabled. Set this option to true if you want to process events from a queue or topic. This option can only be enabled if the correct MQ jar files are added to the Node's classpath.
   enabled: false
 # The queuemanagers and queues & topics that need to be read. The following example will demonstrate the usage of this option:
 #  queueManagers:

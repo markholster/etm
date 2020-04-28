@@ -11,13 +11,15 @@ http:
   httpPort: 8080
   httpsPort: 8443
   restProcessorEnabled: true
-  sslKeystoreLocation: 
-  sslKeystorePassword: 
+  sslKeystoreLocation:
+  sslKeystorePassword:
   sslKeystoreType: PKCS12
   sslProtocol: TLSv1.2
-  sslTruststoreLocation: 
-  sslTruststorePassword: 
+  sslTruststoreLocation:
+  sslTruststorePassword:
   sslTruststoreType: JKS
+  elasticApm:
+    enabled: true
 logging:
   loggers: {}
   rootLogger: INFO
