@@ -1,4 +1,7 @@
 # Changelog
+## Version 4.2.0
+* [ETM-24](https://github.com/jecstarinnovations/etm/issues/24) Search result table is not showing nested properties.
+
 ## Version 4.1.0
 * [ETM-133](https://jecstar.atlassian.net/browse/ETM-133) Scripts of old version are cached in browser.
 * [ETM-134](https://jecstar.atlassian.net/browse/ETM-134) Option to set font size on number graphs.

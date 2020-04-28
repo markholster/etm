@@ -85,13 +85,14 @@ const searchResultLayout = {
 
         const container = currentObject[fieldParts[0]];
         if (container) {
-
             if (Array.isArray(container)) {
                 $(container).each(function (i, v) {
                     searchResultLayout.retrieveValuesFromSource(v, fieldParts.slice(1).join('.'), values);
                 });
             } else if (fieldParts.length === 1) {
                 values.push(container);
+            } else {
+                searchResultLayout.retrieveValuesFromSource(container, fieldParts.slice(1).join('.'), values);
             }
         }
     },
