@@ -819,6 +819,11 @@ function showEvent(id) {
 													})
 													.addClass('etm-gen-drawing-edge')
 													.add(mainGroup);
+												if (edge.transition_time_percentage < 0) {
+													edge.transition_time_percentage = 0;
+												} else if (edge.transition_time_percentage > 1) {
+													edge.transition_time_percentage = 1;
+												}
 												const redColor = Math.round(255 * Number(edge.transition_time_percentage));
 												color = '#' + (redColor < 10 ? ('0' + redColor.toString(16)) : (redColor.toString(16))) + '0000';
 											}
