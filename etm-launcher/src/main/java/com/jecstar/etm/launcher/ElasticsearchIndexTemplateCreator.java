@@ -438,7 +438,7 @@ public class ElasticsearchIndexTemplateCreator implements ConfigurationChangeLis
                 "\n" +
                 "    Map tempForCorrelations = (Map)targetSource.get(\"temp_for_correlations\");\n" +
                 "    boolean correlatedBeforeInserted = false;\n" +
-                "    if (targetSource.get(\"payload\") == null &&\n" +
+                "    if (targetSource.get(\"timestamp\") == null &&\n" +
                 "        targetSource.get(\"correlations\") != null) {\n" +
                 "        // The correlation to this event is stored before the event itself is stored. Merge the entire event.\n" +
                 "        correlatedBeforeInserted = true;\n" +

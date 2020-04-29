@@ -112,7 +112,7 @@ boolean mainMethod(Map params) {
 
     Map tempForCorrelations = (Map)targetSource.get("temp_for_correlations");
     boolean correlatedBeforeInserted = false;
-    if (targetSource.get("payload") == null &&
+    if (targetSource.get("timestamp") == null &&
         targetSource.get("correlations") != null) {
         // The correlation to this event is stored before the event itself is stored. Merge the entire event.
         correlatedBeforeInserted = true;
