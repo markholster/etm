@@ -238,7 +238,7 @@ public class ApmTelemetryEventProcessor {
             endpointHandlerBuilder.setApplication(application);
             if (transaction.getContext().getRequest().getHeaders() != null) {
                 for (var entry : transaction.getContext().getRequest().getHeaders().entrySet()) {
-                    endpointHandlerBuilder.addMetadata("http_" + entry.getKey(), entry.getValue());
+                    endpointHandlerBuilder.addMetadata("http_" + entry.getKey().toLowerCase(), entry.getValue());
                 }
             }
             endpointBuilder.addEndpointHandler(endpointHandlerBuilder);
@@ -263,7 +263,7 @@ public class ApmTelemetryEventProcessor {
             endpointHandlerBuilder.setApplication(application);
             if (transaction.getContext().getResponse().getHeaders() != null) {
                 for (var entry : transaction.getContext().getResponse().getHeaders().entrySet()) {
-                    endpointHandlerBuilder.addMetadata("http_" + entry.getKey(), entry.getValue());
+                    endpointHandlerBuilder.addMetadata("http_" + entry.getKey().toLowerCase(), entry.getValue());
                 }
             }
             endpointBuilder.addEndpointHandler(endpointHandlerBuilder);
@@ -281,7 +281,7 @@ public class ApmTelemetryEventProcessor {
             endpointBuilder.setName(transaction.getContext().getPage().getUrl());
 
             var endpointHandlerBuilder = new EndpointHandlerBuilder();
-            endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.WRITER);
+            endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.READER);
             endpointHandlerBuilder.setTransactionId(transaction.getId());
             if (transaction.getTimestamp() != null) {
                 endpointHandlerBuilder.setHandlingTime(Instant.EPOCH.plus(transaction.getTimestamp(), ChronoUnit.MICROS));
@@ -292,7 +292,7 @@ public class ApmTelemetryEventProcessor {
             endpointBuilder.addEndpointHandler(endpointHandlerBuilder);
             httpBuilder.addOrMergeEndpoint(endpointBuilder);
 
-//            telemetryCommandProcessor.processTelemetryEvent(httpBuilder, null);
+            telemetryCommandProcessor.processTelemetryEvent(httpBuilder, null);
 
             var id = httpBuilder.getId();
             httpBuilder.initialize();
@@ -305,19 +305,19 @@ public class ApmTelemetryEventProcessor {
             endpointBuilder.setName(transaction.getContext().getPage().getUrl());
 
             endpointHandlerBuilder = new EndpointHandlerBuilder();
-            endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.READER);
+            endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.WRITER);
             endpointHandlerBuilder.setTransactionId(transaction.getId());
             endpointHandlerBuilder.setHandlingTime(handlingTime.plus(transaction.getDuration(), ChronoUnit.MILLIS));
             endpointHandlerBuilder.setApplication(application);
             if (transaction.getContext().getResponse().getHeaders() != null) {
                 for (var entry : transaction.getContext().getResponse().getHeaders().entrySet()) {
-                    endpointHandlerBuilder.addMetadata("http_" + entry.getKey(), entry.getValue());
+                    endpointHandlerBuilder.addMetadata("http_" + entry.getKey().toLowerCase(), entry.getValue());
                 }
             }
             endpointBuilder.addEndpointHandler(endpointHandlerBuilder);
             httpBuilder.addOrMergeEndpoint(endpointBuilder);
 
-//            telemetryCommandProcessor.processTelemetryEvent(httpBuilder, null);
+            telemetryCommandProcessor.processTelemetryEvent(httpBuilder, null);
         } else if ("messaging".equals(transaction.getType())) {
             // JMS transaction
         }
