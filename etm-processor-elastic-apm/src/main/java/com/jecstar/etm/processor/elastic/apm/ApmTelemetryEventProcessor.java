@@ -88,14 +88,14 @@ public class ApmTelemetryEventProcessor {
     @Path("/assets/v1/sourcemaps")
     @Produces(MediaType.APPLICATION_JSON)
     public Response addApmAssets(InputStream data) {
-        return handleEvent(data, false);
+        return handleEvent(data, false).build();
     }
 
     @POST
     @Path("/intake/v2/events")
     @Produces(MediaType.APPLICATION_JSON)
     public Response addApmEvents(InputStream data) {
-        return handleEvent(data, true);
+        return handleEvent(data, true).build();
     }
 
     @OPTIONS
@@ -124,8 +124,16 @@ public class ApmTelemetryEventProcessor {
     @POST
     @Path("/intake/v2/rum/events")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response addApmRumEvents(InputStream data) {
-        return handleEvent(data, false);
+    public Response addApmRumEvents(@Context HttpHeaders headers, InputStream data) {
+        List<String> origins = headers.getRequestHeader("Origin");
+        var response = handleEvent(data, false);
+        if (origins != null && origins.size() > 0 && elasticApm.allowedOrigins != null) {
+            var origin = origins.get(0);
+            if (elasticApm.allowedOrigins.contains(origin)) {
+                response.header("Access-Control-Allow-Origin", origin);
+            }
+        }
+        return response.build();
     }
 
 
@@ -138,7 +146,7 @@ public class ApmTelemetryEventProcessor {
     }
 
     @SuppressWarnings("unchecked")
-    private Response handleEvent(InputStream data, boolean compressedStream) {
+    private Response.ResponseBuilder handleEvent(InputStream data, boolean compressedStream) {
         var now = Instant.now();
         JsonConverter jsonConverter = new JsonConverter();
         try (BufferedReader bufferedReader = new BufferedReader(compressedStream ? new InputStreamReader(new InflaterInputStream(data), StandardCharsets.UTF_8) : new InputStreamReader(data, StandardCharsets.UTF_8))) {
@@ -202,7 +210,7 @@ public class ApmTelemetryEventProcessor {
                 log.logErrorMessage(e.getMessage(), e);
             }
         }
-        return Response.ok().build();
+        return Response.ok();
     }
 
     private void handleTransaction(Transaction transaction, Application application, Instant handlingTime) {
