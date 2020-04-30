@@ -156,6 +156,7 @@ const multiSelectOptions = {
     buttonContainer: '<div class="btn-group w-100" />',
     buttonClass: 'form-control-sm btn-light border w-100 text-left',
     nonSelectedText: '',
+    maxHeight: 500,
     templates: {
         button: '<button type="button" class="multiselect" data-toggle="dropdown"><span class="multiselect-selected-text"></span> <i class="fas fa-sort float-right mt-1 mr-1"></i></button>'
     }

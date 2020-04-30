@@ -223,7 +223,7 @@ public class SearchService extends AbstractIndexMetadataService {
                             AggregationBuilders.terms("distinct")
                                     .field(termField.sortProperty)
                                     .order(BucketOrder.key(true))
-                                    .size(250)
+                                    .size(1000)
                     );
             var searchResponse = dataRepository.search(builder);
             var distinct = (ParsedTerms) searchResponse.getAggregations().get("distinct");
