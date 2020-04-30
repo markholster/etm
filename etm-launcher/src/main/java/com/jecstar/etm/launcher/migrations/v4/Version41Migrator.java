@@ -114,9 +114,6 @@ public class Version41Migrator extends AbstractEtmMigrator {
         checkAndCreateIndexExistence(this.dataRepository,
                 ElasticsearchLayout.CONFIGURATION_INDEX_NAME
         );
-        //TODO etm_update-search-template stored script should be removed.
-        //TODO etm_remove-search-template stored script should be removed.
-        //TODO etm_update-search-history stored script should be removed.
     }
 
     @SuppressWarnings("unchecked")
