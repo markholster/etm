@@ -30,8 +30,8 @@ Select | The field will be a drop down box from which you can select a single va
 Select multi | The field will be a drop down box from which you can select one or more values.
 
 :::warning Note
-There will never be more than 250 distinct values in a *Select* or *Select multi* field. A *Free format* field should be used in those case where there are 
-more than 250 distinct values.
+There will never be more than 1000 distinct values in a *Select* or *Select multi* field. A *Free format* field should be used in those case where there are 
+more than 1000 distinct values.
 :::
 
 Finally, you can add a default value for the field. When you want to provide multiple default values for a *Select multi* typed field you should provide the appropriate values as a comma separated list. 
