@@ -366,7 +366,11 @@ tailNode() {
     # The string passed to eval must handles spaces in paths correctly.
     COMMAND_LINE="$CMDNICE \"$JAVACMD\" $JAVA_OPTS -classpath \"$CLASSPATH\" -Dapp.name=\"$APP_NAME\" -Dapp.version=\"$APP_VERSION\" -Dapp.repo=\"$REPO\" -Dapp.home=\"$BASEDIR\" ${mainClassName} --config-dir=\"$CONFIGDIR\" --tail"
     eval $COMMAND_LINE
+}
 
+migrate() {
+    COMMAND_LINE="$CMDNICE \"$JAVACMD\" $JAVA_OPTS -classpath \"$CLASSPATH\" -Dapp.name=\"$APP_NAME\" -Dapp.version=\"$APP_VERSION\" -Dapp.repo=\"$REPO\" -Dapp.home=\"$BASEDIR\" ${mainClassName} --config-dir=\"$CONFIGDIR\" --migrator=$1"
+    eval $COMMAND_LINE
 }
 
 case "$1" in
@@ -411,6 +415,10 @@ case "$1" in
 
     'tail')
         tailNode
+        ;;
+
+    'migrate')
+        migrate $2
         ;;
     *)
         echo "Usage: $0 { console | start | stop | restart | status | dump | reinitialize | tail }"

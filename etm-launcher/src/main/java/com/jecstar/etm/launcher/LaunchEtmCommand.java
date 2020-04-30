@@ -246,15 +246,15 @@ class LaunchEtmCommand extends AbstractCommand {
         boolean reinitialze = false;
         EtmMigrator etmMigrator = new Version4Migrator(dataRepository);
         if (etmMigrator.shouldBeExecuted()) {
-            etmMigrator.migrate();
+            etmMigrator.migrate(false);
         }
         etmMigrator = new Version41Migrator(dataRepository);
         if (etmMigrator.shouldBeExecuted()) {
-            etmMigrator.migrate();
+            etmMigrator.migrate(false);
         }
         etmMigrator = new Version42Migrator(dataRepository);
         if (etmMigrator.shouldBeExecuted()) {
-            etmMigrator.migrate();
+            etmMigrator.migrate(false);
             reinitialze = true;
         }
         return reinitialze;

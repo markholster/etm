@@ -29,13 +29,16 @@ class CommandLineParameters {
     private static final String PARAM_REINITIALIZE = "--reinitialize";
     private static final String PARAM_QUIET = "--quiet";
     private static final String PARAM_TAIL = "--tail";
+    private static final String PARAM_MIGRATOR = "--migrator=";
 
     private String configDirectory = "config";
+    private String migratorName;
 
     private boolean quiet = false;
     private boolean reinitialize = false;
     private boolean proceedNormalStartup = true;
     private boolean tail = false;
+    private boolean migrate = false;
 
     CommandLineParameters(String[] arguments) {
         if (arguments == null || arguments.length == 0) {
@@ -57,6 +60,9 @@ class CommandLineParameters {
                 this.reinitialize = true;
             } else if (argument.equals(PARAM_TAIL)) {
                 this.tail = true;
+            } else if (argument.startsWith(PARAM_MIGRATOR)) {
+                this.migrate = true;
+                this.migratorName = argument.substring(PARAM_MIGRATOR.length());
             }
         }
     }
@@ -79,5 +85,13 @@ class CommandLineParameters {
 
     public boolean isTail() {
         return this.tail;
+    }
+
+    public boolean isMigrate() {
+        return this.migrate;
+    }
+
+    public String getMigratorName() {
+        return this.migratorName;
     }
 }

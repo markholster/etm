@@ -146,12 +146,13 @@ class TailCommand extends AbstractCommand {
                 try {
                     TailCommand.this.dateRepository.close();
                 } catch (Throwable t) {
+                    t.printStackTrace();
                 }
             }
         }));
     }
 
-    private class LastPrinted {
+    private static class LastPrinted {
 
         private long timestamp;
         private String id;

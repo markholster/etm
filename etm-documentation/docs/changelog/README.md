@@ -3,6 +3,7 @@
 * [ETM-24](https://github.com/jecstarinnovations/etm/issues/24) Search result table is not showing nested properties.
 * [ETM-26](https://github.com/jecstarinnovations/etm/issues/26) Group signals not visible although user has access.
 * [ETM-27](https://github.com/jecstarinnovations/etm/issues/27) Multi select does not scroll.
+* [ETM-28](https://github.com/jecstarinnovations/etm/issues/28) Option to force migration to run.
 
 ## Version 4.1.0
 * [ETM-133](https://jecstar.atlassian.net/browse/ETM-133) Scripts of old version are cached in browser.
