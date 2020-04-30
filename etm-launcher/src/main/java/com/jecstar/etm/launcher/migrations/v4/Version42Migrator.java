@@ -51,8 +51,8 @@ public class Version42Migrator extends AbstractEtmMigrator {
     }
 
     @Override
-    public void migrate() {
-        if (!shouldBeExecuted()) {
+    public void migrate(boolean forced) {
+        if (!shouldBeExecuted() && !forced) {
             return;
         }
         System.out.println("Start removing old script templates.");

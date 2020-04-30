@@ -70,8 +70,8 @@ public class Version4Migrator extends AbstractEtmMigrator {
     }
 
     @Override
-    public void migrate() {
-        if (!shouldBeExecuted()) {
+    public void migrate(boolean forced) {
+        if (!shouldBeExecuted() && !forced) {
             return;
         }
 

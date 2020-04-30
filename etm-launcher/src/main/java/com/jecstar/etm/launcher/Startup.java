@@ -55,20 +55,23 @@ class Startup {
             LogConfiguration.rootLogLevel = configuration.logging.rootLogger;
             LogConfiguration.applicationInstance = configuration.instanceName;
             LogConfiguration.hostAddress = InetAddress.getByName(configuration.bindingAddress);
-            InternalBulkProcessorWrapper bulkProcessorWrapper = new InternalBulkProcessorWrapper();
-            EtmLoggerFactory.initialize(bulkProcessorWrapper, commandLineParameters.isQuiet());
-            BusinessEventLogger.initialize(bulkProcessorWrapper,
-                    new EndpointBuilder().setName(configuration.instanceName)
-                            .addEndpointHandler(new EndpointHandlerBuilder().setHandlingTime(Instant.now())
-                                    .setType(EndpointHandler.EndpointHandlerType.WRITER)
-                                    .setApplication(new ApplicationBuilder().setName("Enterprise Telemetry Monitor")
-                                            .setVersion(System.getProperty("app.version"))
-                                            .setInstance(configuration.instanceName)
-                                            .setPrincipal(System.getProperty("user.name"))
-                                            .setHostAddress(InetAddress.getByName(configuration.bindingAddress)))));
             if (commandLineParameters.isTail()) {
                 new TailCommand().tail(configuration);
+            } else if (commandLineParameters.isMigrate()) {
+                new MigrateCommand().migrate(commandLineParameters.getMigratorName(), configuration);
+                System.exit(0);
             } else {
+                InternalBulkProcessorWrapper bulkProcessorWrapper = new InternalBulkProcessorWrapper();
+                EtmLoggerFactory.initialize(bulkProcessorWrapper, commandLineParameters.isQuiet());
+                BusinessEventLogger.initialize(bulkProcessorWrapper,
+                        new EndpointBuilder().setName(configuration.instanceName)
+                                .addEndpointHandler(new EndpointHandlerBuilder().setHandlingTime(Instant.now())
+                                        .setType(EndpointHandler.EndpointHandlerType.WRITER)
+                                        .setApplication(new ApplicationBuilder().setName("Enterprise Telemetry Monitor")
+                                                .setVersion(System.getProperty("app.version"))
+                                                .setInstance(configuration.instanceName)
+                                                .setPrincipal(System.getProperty("user.name"))
+                                                .setHostAddress(InetAddress.getByName(configuration.bindingAddress)))));
                 new LaunchEtmCommand().launch(commandLineParameters, configuration, bulkProcessorWrapper);
             }
         } catch (FileNotFoundException e) {
