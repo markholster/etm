@@ -431,6 +431,22 @@ public class DataRepository {
         }
     }
 
+    public AcknowledgedResponse deleteStoredScript(DeleteStoredScriptRequestBuilder builder) {
+        try {
+            long startTime = System.currentTimeMillis();
+            var response = this.client.deleteScript(builder.build(), RequestOptions.DEFAULT);
+            shapeRequest(calculateIndexRequestUnits(response), System.currentTimeMillis() - startTime);
+            return response;
+        } catch (IOException e) {
+            throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
+        } catch (ElasticsearchStatusException e) {
+            if (RestStatus.NOT_FOUND.equals(e.status())) {
+                return null;
+            }
+            throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
+        }
+    }
+
     public GetStoredScriptResponse getStoredScript(GetStoredScriptRequestBuilder builder) {
         try {
             long startTime = System.currentTimeMillis();
