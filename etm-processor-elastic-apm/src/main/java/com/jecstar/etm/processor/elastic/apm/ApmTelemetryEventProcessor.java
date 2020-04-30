@@ -18,10 +18,7 @@
 package com.jecstar.etm.processor.elastic.apm;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jecstar.etm.domain.Application;
-import com.jecstar.etm.domain.EndpointHandler;
-import com.jecstar.etm.domain.HttpTelemetryEvent;
-import com.jecstar.etm.domain.SqlTelemetryEvent;
+import com.jecstar.etm.domain.*;
 import com.jecstar.etm.domain.builder.*;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.elastic.apm.configuration.ElasticApm;
@@ -102,7 +99,6 @@ public class ApmTelemetryEventProcessor {
     @Path("/intake/v2/rum/events")
     @Produces(MediaType.APPLICATION_JSON)
     public Response optionsApmRumEvents(@Context HttpHeaders headers) {
-        List<String> origins = headers.getRequestHeader("Origin");
         var response = Response.ok()
                 .header(HttpHeaders.VARY, "Origin")
                 .header("Access-Control-Max-Age", "3600")
@@ -112,12 +108,7 @@ public class ApmTelemetryEventProcessor {
                 .header("Access-Control-Allow-Headers",
                         String.join(", ", ApmTelemetryEventProcessor.allowedHeaders))
                 .header("Access-Control-Expose-Headers", "Etag");
-        if (origins != null && origins.size() > 0 && elasticApm.allowedOrigins != null) {
-            var origin = origins.get(0);
-            if (elasticApm.allowedOrigins.contains(origin)) {
-                response.header("Access-Control-Allow-Origin", origin);
-            }
-        }
+        addOriginHeader(headers.getRequestHeader("Origin"), response);
         return response.build();
     }
 
@@ -125,23 +116,24 @@ public class ApmTelemetryEventProcessor {
     @Path("/intake/v2/rum/events")
     @Produces(MediaType.APPLICATION_JSON)
     public Response addApmRumEvents(@Context HttpHeaders headers, InputStream data) {
-        List<String> origins = headers.getRequestHeader("Origin");
         var response = handleEvent(data, false);
+        addOriginHeader(headers.getRequestHeader("Origin"), response);
+        return response.build();
+    }
+
+    private void addOriginHeader(List<String> origins, Response.ResponseBuilder response) {
         if (origins != null && origins.size() > 0 && elasticApm.allowedOrigins != null) {
             var origin = origins.get(0);
             if (elasticApm.allowedOrigins.contains(origin)) {
                 response.header("Access-Control-Allow-Origin", origin);
             }
         }
-        return response.build();
     }
-
 
     @GET
     @Path("/")
     @Produces(MediaType.TEXT_PLAIN)
     public Response apmHealthCheck() {
-        System.out.println("System registered");
         return Response.ok("{\"name:\":\"Enterprise Telemetry Monitor APM Bridge\",\"version\":\"" + Etm.getVersion() + "\"}").build();
     }
 
@@ -182,8 +174,8 @@ public class ApmTelemetryEventProcessor {
                     applicationBuilder.setPrincipal(metadata.getUser().getId());
                 }
                 application = applicationBuilder.build();
+                System.out.println("=== " + application.name + " ===");
             }
-            System.out.println("=== " + application.name + " ===");
             for (int i = 1; i < lines.size(); i++) {
                 var line = lines.get(i);
                 if (line.startsWith("{\"span\":")) {
@@ -214,112 +206,31 @@ public class ApmTelemetryEventProcessor {
     }
 
     private void handleTransaction(Transaction transaction, Application application, Instant handlingTime) {
-        if ("request".equals(transaction.getType())) {
-            // ALS transaction.type == request && transaction.parent_id != null => Request ontvangen, transaction.parent_id == span.id == requestId in ETM. Endpoints zit in context.request.url.full
-
-            // Incoming request.
+        if ("request".equals(transaction.getType())
+                || "page-load".equals(transaction.getType())
+        ) {
+            // Incoming http request.
             var httpBuilder = new HttpTelemetryEventBuilder();
-            httpBuilder.setHttpEventType(HttpTelemetryEvent.HttpEventType.safeValueOf(transaction.getContext().getRequest().getMethod()));
-            if (transaction.getParentId() != null) {
-                httpBuilder.setId(transaction.getParentId());
-            } else {
-                httpBuilder.setId(transaction.getId());
-            }
-            httpBuilder.setName(transaction.getName());
-            httpBuilder.setTraceId(transaction.getTraceId());
-            httpBuilder.setPayload(transaction.getContext().getRequest().getBody());
-            var endpointBuilder = new EndpointBuilder();
-            endpointBuilder.setName(transaction.getContext().getRequest().getUrl().getFull());
-
-            var endpointHandlerBuilder = new EndpointHandlerBuilder();
-            endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.READER);
-            endpointHandlerBuilder.setHandlingTime(Instant.EPOCH.plus(transaction.getTimestamp(), ChronoUnit.MICROS));
-            endpointHandlerBuilder.setTransactionId(transaction.getId());
-            endpointHandlerBuilder.setApplication(application);
-            if (transaction.getContext().getRequest().getHeaders() != null) {
-                for (var entry : transaction.getContext().getRequest().getHeaders().entrySet()) {
-                    endpointHandlerBuilder.addMetadata("http_" + entry.getKey().toLowerCase(), entry.getValue());
-                }
-            }
-            endpointBuilder.addEndpointHandler(endpointHandlerBuilder);
-            httpBuilder.addOrMergeEndpoint(endpointBuilder);
-
+            createRequestFromTransaction(httpBuilder, transaction, application, handlingTime);
             telemetryCommandProcessor.processTelemetryEvent(httpBuilder, null);
 
             var id = httpBuilder.getId();
-            httpBuilder.initialize();
+            createResponseFromTransaction(httpBuilder, transaction, application, handlingTime);
             httpBuilder.setId(id + RESPONSE_ID_SUFFIX);
             httpBuilder.setCorrelationId(id);
-            httpBuilder.setHttpEventType(HttpTelemetryEvent.HttpEventType.RESPONSE);
-            httpBuilder.setName(transaction.getName() + RESPONSE_NAME_SUFFIX);
-            httpBuilder.setTraceId(transaction.getTraceId());
-            endpointBuilder = new EndpointBuilder();
-            endpointBuilder.setName(transaction.getContext().getRequest().getUrl().getFull());
-
-            endpointHandlerBuilder = new EndpointHandlerBuilder();
-            endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.WRITER);
-            endpointHandlerBuilder.setHandlingTime(Instant.EPOCH.plus(transaction.getTimestamp(), ChronoUnit.MICROS).plus(transaction.getDuration(), ChronoUnit.MILLIS));
-            endpointHandlerBuilder.setTransactionId(transaction.getId());
-            endpointHandlerBuilder.setApplication(application);
-            if (transaction.getContext().getResponse().getHeaders() != null) {
-                for (var entry : transaction.getContext().getResponse().getHeaders().entrySet()) {
-                    endpointHandlerBuilder.addMetadata("http_" + entry.getKey().toLowerCase(), entry.getValue());
-                }
-            }
-            endpointBuilder.addEndpointHandler(endpointHandlerBuilder);
-            httpBuilder.addOrMergeEndpoint(endpointBuilder);
-
-            telemetryCommandProcessor.processTelemetryEvent(httpBuilder, null);
-        } else if ("page-load".equals(transaction.getType())) {
-            // Incoming request.
-            var httpBuilder = new HttpTelemetryEventBuilder();
-            httpBuilder.setHttpEventType(HttpTelemetryEvent.HttpEventType.GET);
-            httpBuilder.setId(transaction.getId());
-            httpBuilder.setName(transaction.getName());
-            httpBuilder.setTraceId(transaction.getTraceId());
-            var endpointBuilder = new EndpointBuilder();
-            endpointBuilder.setName(transaction.getContext().getPage().getUrl());
-
-            var endpointHandlerBuilder = new EndpointHandlerBuilder();
-            endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.READER);
-            endpointHandlerBuilder.setTransactionId(transaction.getId());
-            if (transaction.getTimestamp() != null) {
-                endpointHandlerBuilder.setHandlingTime(Instant.EPOCH.plus(transaction.getTimestamp(), ChronoUnit.MICROS));
-            } else {
-                endpointHandlerBuilder.setHandlingTime(handlingTime);
-            }
-            endpointHandlerBuilder.setApplication(application);
-            endpointBuilder.addEndpointHandler(endpointHandlerBuilder);
-            httpBuilder.addOrMergeEndpoint(endpointBuilder);
-
-            telemetryCommandProcessor.processTelemetryEvent(httpBuilder, null);
-
-            var id = httpBuilder.getId();
-            httpBuilder.initialize();
-            httpBuilder.setId(id + RESPONSE_ID_SUFFIX);
-            httpBuilder.setCorrelationId(id);
-            httpBuilder.setHttpEventType(HttpTelemetryEvent.HttpEventType.RESPONSE);
-            httpBuilder.setName(transaction.getName() + RESPONSE_NAME_SUFFIX);
-            httpBuilder.setTraceId(transaction.getTraceId());
-            endpointBuilder = new EndpointBuilder();
-            endpointBuilder.setName(transaction.getContext().getPage().getUrl());
-
-            endpointHandlerBuilder = new EndpointHandlerBuilder();
-            endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.WRITER);
-            endpointHandlerBuilder.setTransactionId(transaction.getId());
-            endpointHandlerBuilder.setHandlingTime(handlingTime.plus(transaction.getDuration(), ChronoUnit.MILLIS));
-            endpointHandlerBuilder.setApplication(application);
-            if (transaction.getContext().getResponse().getHeaders() != null) {
-                for (var entry : transaction.getContext().getResponse().getHeaders().entrySet()) {
-                    endpointHandlerBuilder.addMetadata("http_" + entry.getKey().toLowerCase(), entry.getValue());
-                }
-            }
-            endpointBuilder.addEndpointHandler(endpointHandlerBuilder);
-            httpBuilder.addOrMergeEndpoint(endpointBuilder);
-
             telemetryCommandProcessor.processTelemetryEvent(httpBuilder, null);
         } else if ("messaging".equals(transaction.getType())) {
-            // JMS transaction
+            // Incoming JMS request
+            var messagingBuilder = new MessagingTelemetryEventBuilder();
+            createRequestFromTransaction(messagingBuilder, transaction, application, handlingTime);
+            telemetryCommandProcessor.processTelemetryEvent(messagingBuilder, null);
+
+//            var id = messagingBuilder.getId();
+            // TODO, might be a fire-forget message.
+//            createResponseFromTransaction(messagingBuilder, transaction, application, handlingTime);
+//            messagingBuilder.setId(id + RESPONSE_ID_SUFFIX);
+//            messagingBuilder.setCorrelationId(id);
+//            telemetryCommandProcessor.processTelemetryEvent(messagingBuilder, null);
         }
 
     }
@@ -328,98 +239,207 @@ public class ApmTelemetryEventProcessor {
         if (span.getContext() == null) {
             return;
         }
-        if ("external".equals(span.getType()) && "http".equals(span.getSubtype())) {
-            var http = span.getContext().getHttp();
-
+        var context = span.getContext();
+        if (context.getHttp() != null && "http".equals(span.getSubtype())) {
             var httpBuilder = new HttpTelemetryEventBuilder();
-            httpBuilder.setHttpEventType(HttpTelemetryEvent.HttpEventType.safeValueOf(http.getMethod()));
-            httpBuilder.setId(span.getId());
-            httpBuilder.setName(span.getName());
-            httpBuilder.setTraceId(span.getTraceId());
-            var endpointBuilder = new EndpointBuilder();
-            endpointBuilder.setName(http.getUrl());
-
-            var endpointHandlerBuilder = new EndpointHandlerBuilder();
-            endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.WRITER);
-            if (span.getTimestamp() != null) {
-                endpointHandlerBuilder.setHandlingTime(Instant.EPOCH.plus(span.getTimestamp(), ChronoUnit.MICROS));
-            } else if (span.getStart() != null) {
-                endpointHandlerBuilder.setHandlingTime(handlingTime.plus(span.getStart(), ChronoUnit.MILLIS));
-            }
-            endpointHandlerBuilder.setTransactionId(span.getTransactionId());
-            endpointHandlerBuilder.setApplication(application);
-            endpointBuilder.addEndpointHandler(endpointHandlerBuilder);
-            httpBuilder.addOrMergeEndpoint(endpointBuilder);
-
+            createRequestFromSpan(httpBuilder, span, application, handlingTime);
             telemetryCommandProcessor.processTelemetryEvent(httpBuilder, null);
 
             var id = httpBuilder.getId();
-            httpBuilder.initialize();
+            createResponseFromSpan(httpBuilder, span, application, handlingTime);
             httpBuilder.setId(id + RESPONSE_ID_SUFFIX);
             httpBuilder.setCorrelationId(id);
-            httpBuilder.setHttpEventType(HttpTelemetryEvent.HttpEventType.RESPONSE);
-            httpBuilder.setName(span.getName() + RESPONSE_NAME_SUFFIX);
-            httpBuilder.setTraceId(span.getTraceId());
-            endpointBuilder = new EndpointBuilder();
-            endpointBuilder.setName(http.getUrl());
-
-            endpointHandlerBuilder = new EndpointHandlerBuilder();
-            endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.READER);
-            if (span.getTimestamp() != null) {
-                endpointHandlerBuilder.setHandlingTime(Instant.EPOCH.plus(span.getTimestamp(), ChronoUnit.MICROS).plus(span.getDuration(), ChronoUnit.MILLIS));
-            } else if (span.getStart() != null) {
-                endpointHandlerBuilder.setHandlingTime(handlingTime.plus(span.getStart(), ChronoUnit.MILLIS).plus(span.getDuration(), ChronoUnit.MILLIS));
-            }
-            endpointHandlerBuilder.setTransactionId(span.getTransactionId());
-            endpointHandlerBuilder.setApplication(application);
-            endpointBuilder.addEndpointHandler(endpointHandlerBuilder);
-            httpBuilder.addOrMergeEndpoint(endpointBuilder);
             telemetryCommandProcessor.processTelemetryEvent(httpBuilder, null);
-
         } else if (span.getContext().getDb() != null) {
-            var db = span.getContext().getDb();
             var sqlBuilder = new SqlTelemetryEventBuilder();
-            sqlBuilder.setId(span.getId());
-            sqlBuilder.setTraceId(span.getTraceId());
-            sqlBuilder.setDbQueryEventType(SqlTelemetryEvent.SqlEventType.safeValueOf(db.getStatement().substring(0, db.getStatement().indexOf(" "))));
-            sqlBuilder.setName(span.getName());
-            sqlBuilder.setPayload(db.getStatement());
-
-            var endpointBuilder = new EndpointBuilder();
-            endpointBuilder.setName(span.getContext().getDestination().getAddress());
-
-            var endpointHandlerBuilder = new EndpointHandlerBuilder();
-            endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.WRITER);
-            endpointHandlerBuilder.setHandlingTime(Instant.EPOCH.plus(span.getTimestamp(), ChronoUnit.MICROS));
-            endpointHandlerBuilder.setTransactionId(span.getTransactionId());
-            endpointHandlerBuilder.setApplication(application);
-
-            endpointBuilder.addEndpointHandler(endpointHandlerBuilder);
-            sqlBuilder.addOrMergeEndpoint(endpointBuilder);
-
+            createRequestFromSpan(sqlBuilder, span, application, handlingTime);
             telemetryCommandProcessor.processTelemetryEvent(sqlBuilder, null);
 
             var id = sqlBuilder.getId();
-            sqlBuilder.initialize();
+            createResponseFromSpan(sqlBuilder, span, application, handlingTime);
             sqlBuilder.setId(id + RESPONSE_ID_SUFFIX);
             sqlBuilder.setCorrelationId(id);
-            sqlBuilder.setDbQueryEventType(SqlTelemetryEvent.SqlEventType.RESULTSET);
-            sqlBuilder.setName(span.getName() + RESPONSE_NAME_SUFFIX);
-            sqlBuilder.setTraceId(span.getTraceId());
-
-            endpointBuilder = new EndpointBuilder();
-            endpointBuilder.setName(span.getContext().getDestination().getAddress());
-
-            endpointHandlerBuilder = new EndpointHandlerBuilder();
-            endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.READER);
-            endpointHandlerBuilder.setHandlingTime(Instant.EPOCH.plus(span.getTimestamp(), ChronoUnit.MICROS).plus(span.getDuration(), ChronoUnit.MILLIS));
-            endpointHandlerBuilder.setTransactionId(span.getTransactionId());
-            endpointHandlerBuilder.setApplication(application);
-
-            endpointBuilder.addEndpointHandler(endpointHandlerBuilder);
-            sqlBuilder.addOrMergeEndpoint(endpointBuilder);
-
             telemetryCommandProcessor.processTelemetryEvent(sqlBuilder, null);
         }
+    }
+
+    private <T extends TelemetryEvent<T>, Q extends TelemetryEventBuilder<T, Q>> void createRequestFromTransaction(TelemetryEventBuilder<T, Q> builder, Transaction transaction, Application application, Instant handlingTime) {
+        builder.initialize();
+        var context = transaction.getContext();
+        var endpointBuilder = new EndpointBuilder();
+        var endpointHandlerBuilder = new EndpointHandlerBuilder();
+
+        if (transaction.getParentId() != null) {
+            builder.setId(transaction.getParentId());
+        } else {
+            builder.setId(transaction.getId());
+        }
+        builder.setName(transaction.getName());
+        builder.setTraceId(transaction.getTraceId());
+
+
+        if (context.getRequest() != null) {
+            var request = context.getRequest();
+            endpointBuilder.setName(request.getUrl().getFull());
+            builder.setPayload(request.getBody());
+            if (request.getHeaders() != null) {
+                String metadataPrefix = "";
+                if (builder instanceof HttpTelemetryEventBuilder) {
+                    metadataPrefix = "http_";
+                }
+                for (var entry : request.getHeaders().entrySet()) {
+                    endpointHandlerBuilder.addMetadata(metadataPrefix + entry.getKey().toLowerCase(), entry.getValue());
+                }
+            }
+        }
+        if (context.getPage() != null) {
+            var page = context.getPage();
+            endpointBuilder.setName(page.getUrl());
+        }
+        endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.READER);
+        if (transaction.getTimestamp() != null) {
+            endpointHandlerBuilder.setHandlingTime(Instant.EPOCH.plus(transaction.getTimestamp(), ChronoUnit.MICROS));
+        } else {
+            endpointHandlerBuilder.setHandlingTime(handlingTime);
+        }
+        endpointHandlerBuilder.setTransactionId(transaction.getId());
+        endpointHandlerBuilder.setApplication(application);
+        endpointBuilder.addEndpointHandler(endpointHandlerBuilder);
+        builder.addOrMergeEndpoint(endpointBuilder);
+
+        if (builder instanceof HttpTelemetryEventBuilder) {
+            var httpBuilder = ((HttpTelemetryEventBuilder) builder);
+            if (context.getRequest() != null) {
+                httpBuilder.setHttpEventType(HttpTelemetryEvent.HttpEventType.safeValueOf(context.getRequest().getMethod()));
+            } else if (context.getPage() != null) {
+                httpBuilder.setHttpEventType(HttpTelemetryEvent.HttpEventType.GET);
+            }
+        }
+    }
+
+    private <T extends TelemetryEvent<T>, Q extends TelemetryEventBuilder<T, Q>> void createResponseFromTransaction(TelemetryEventBuilder<T, Q> builder, Transaction transaction, Application application, Instant handlingTime) {
+        builder.initialize();
+        var context = transaction.getContext();
+        var endpointBuilder = new EndpointBuilder();
+        var endpointHandlerBuilder = new EndpointHandlerBuilder();
+
+        builder.setName(transaction.getName() + RESPONSE_NAME_SUFFIX);
+        builder.setTraceId(transaction.getTraceId());
+        if (context.getRequest() != null) {
+            var request = context.getRequest();
+            endpointBuilder.setName(request.getUrl().getFull());
+        }
+        if (context.getPage() != null) {
+            var page = context.getPage();
+            endpointBuilder.setName(page.getUrl());
+        }
+        if (context.getResponse() != null) {
+            var response = context.getResponse();
+            if (response.getHeaders() != null) {
+                String metadataPrefix = "";
+                if (builder instanceof HttpTelemetryEventBuilder) {
+                    metadataPrefix = "http_";
+                }
+                for (var entry : response.getHeaders().entrySet()) {
+                    endpointHandlerBuilder.addMetadata(metadataPrefix + entry.getKey().toLowerCase(), entry.getValue());
+                }
+            }
+            if (builder instanceof HttpTelemetryEventBuilder) {
+                if (response.getStatusCode() != null && response.getStatusCode() != 0) {
+                    ((HttpTelemetryEventBuilder) builder).setStatusCode(response.getStatusCode().intValue());
+                }
+            }
+        }
+
+        endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.WRITER);
+        if (transaction.getTimestamp() != null) {
+            endpointHandlerBuilder.setHandlingTime(Instant.EPOCH.plus(transaction.getTimestamp(), ChronoUnit.MICROS).plus(transaction.getDuration(), ChronoUnit.MILLIS));
+        } else {
+            endpointHandlerBuilder.setHandlingTime(handlingTime.plus(transaction.getDuration(), ChronoUnit.MILLIS));
+        }
+        endpointHandlerBuilder.setTransactionId(transaction.getId());
+        endpointHandlerBuilder.setApplication(application);
+        endpointBuilder.addEndpointHandler(endpointHandlerBuilder);
+        builder.addOrMergeEndpoint(endpointBuilder);
+
+        if (builder instanceof HttpTelemetryEventBuilder) {
+            ((HttpTelemetryEventBuilder) builder).setHttpEventType(HttpTelemetryEvent.HttpEventType.RESPONSE);
+        }
+    }
+
+    private <T extends TelemetryEvent<T>, Q extends TelemetryEventBuilder<T, Q>> void createRequestFromSpan(TelemetryEventBuilder<T, Q> builder, Span span, Application application, Instant handlingTime) {
+        builder.initialize();
+        var context = span.getContext();
+        var endpointBuilder = new EndpointBuilder();
+        var endpointHandlerBuilder = new EndpointHandlerBuilder();
+
+        if (context.getHttp() != null) {
+            var http = context.getHttp();
+            if (builder instanceof HttpTelemetryEventBuilder) {
+                var httpBuilder = (HttpTelemetryEventBuilder) builder;
+                httpBuilder.setHttpEventType(HttpTelemetryEvent.HttpEventType.safeValueOf(http.getMethod()));
+            }
+            endpointBuilder.setName(http.getUrl());
+        }
+        if (context.getDb() != null) {
+            var db = context.getDb();
+            if (builder instanceof SqlTelemetryEventBuilder) {
+                var sqlBuilder = (SqlTelemetryEventBuilder) builder;
+                sqlBuilder.setDbQueryEventType(SqlTelemetryEvent.SqlEventType.safeValueOf(db.getStatement().substring(0, db.getStatement().indexOf(" "))));
+            }
+            builder.setPayload(db.getStatement());
+            endpointBuilder.setName(span.getContext().getDestination().getAddress());
+        }
+
+        builder.setId(span.getId());
+        builder.setName(span.getName());
+        builder.setTraceId(span.getTraceId());
+
+        endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.WRITER);
+        if (span.getTimestamp() != null) {
+            endpointHandlerBuilder.setHandlingTime(Instant.EPOCH.plus(span.getTimestamp(), ChronoUnit.MICROS));
+        } else if (span.getStart() != null) {
+            endpointHandlerBuilder.setHandlingTime(handlingTime.plus(span.getStart(), ChronoUnit.MILLIS));
+        }
+        endpointHandlerBuilder.setTransactionId(span.getTransactionId());
+        endpointHandlerBuilder.setApplication(application);
+        endpointBuilder.addEndpointHandler(endpointHandlerBuilder);
+        builder.addOrMergeEndpoint(endpointBuilder);
+    }
+
+    private <T extends TelemetryEvent<T>, Q extends TelemetryEventBuilder<T, Q>> void createResponseFromSpan(TelemetryEventBuilder<T, Q> builder, Span span, Application application, Instant handlingTime) {
+        builder.initialize();
+        var context = span.getContext();
+        var endpointBuilder = new EndpointBuilder();
+        var endpointHandlerBuilder = new EndpointHandlerBuilder();
+
+        if (context.getHttp() != null) {
+            var http = context.getHttp();
+            if (builder instanceof HttpTelemetryEventBuilder) {
+                var httpBuilder = (HttpTelemetryEventBuilder) builder;
+                httpBuilder.setHttpEventType(HttpTelemetryEvent.HttpEventType.RESPONSE);
+            }
+            endpointBuilder.setName(http.getUrl());
+        }
+        if (context.getDb() != null) {
+            if (builder instanceof SqlTelemetryEventBuilder) {
+                var sqlBuilder = (SqlTelemetryEventBuilder) builder;
+                sqlBuilder.setDbQueryEventType(SqlTelemetryEvent.SqlEventType.RESULTSET);
+            }
+            endpointBuilder.setName(span.getContext().getDestination().getAddress());
+        }
+        builder.setName(span.getName() + RESPONSE_NAME_SUFFIX);
+        builder.setTraceId(span.getTraceId());
+
+        endpointHandlerBuilder.setType(EndpointHandler.EndpointHandlerType.READER);
+        if (span.getTimestamp() != null) {
+            endpointHandlerBuilder.setHandlingTime(Instant.EPOCH.plus(span.getTimestamp(), ChronoUnit.MICROS).plus(span.getDuration(), ChronoUnit.MILLIS));
+        } else if (span.getStart() != null) {
+            endpointHandlerBuilder.setHandlingTime(handlingTime.plus(span.getStart(), ChronoUnit.MILLIS).plus(span.getDuration(), ChronoUnit.MILLIS));
+        }
+        endpointHandlerBuilder.setTransactionId(span.getTransactionId());
+        endpointHandlerBuilder.setApplication(application);
+        endpointBuilder.addEndpointHandler(endpointHandlerBuilder);
+        builder.addOrMergeEndpoint(endpointBuilder);
     }
 }
