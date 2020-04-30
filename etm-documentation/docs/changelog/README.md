@@ -1,6 +1,7 @@
 # Changelog
 ## Version 4.2.0
 * [ETM-24](https://github.com/jecstarinnovations/etm/issues/24) Search result table is not showing nested properties.
+* [ETM-26](https://github.com/jecstarinnovations/etm/issues/26) Group signals not visible although user has access.
 
 ## Version 4.1.0
 * [ETM-133](https://jecstar.atlassian.net/browse/ETM-133) Scripts of old version are cached in browser.

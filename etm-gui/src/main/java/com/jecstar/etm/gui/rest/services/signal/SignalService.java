@@ -222,7 +222,7 @@ public class SignalService extends AbstractUserAttributeService {
     @GET
     @Path("/{groupName}/signals/")
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({SecurityRoles.GROUP_SIGNAL_READ, SecurityRoles.GROUP_SETTINGS_READ_WRITE})
+    @RolesAllowed({SecurityRoles.GROUP_SIGNAL_READ, SecurityRoles.GROUP_SIGNAL_READ_WRITE})
     public Response getGroupSignals(@PathParam("groupName") String groupName) {
         if (!getEtmPrincipal().isInGroup(groupName)) {
             return Response.status(Response.Status.UNAUTHORIZED).build();
