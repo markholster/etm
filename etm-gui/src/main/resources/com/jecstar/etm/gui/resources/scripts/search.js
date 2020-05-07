@@ -489,6 +489,15 @@ function buildSearchPage() {
                         allowJoins: true
                     }
                 );
+                $('#table-settings-sort-field').on('keydown', function (event) {
+                    if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
+                        event.stopPropagation();
+                    }
+                }).autocompleteFieldQuery(
+                    {
+                        queryKeywords: queryKeywords,
+                        mode: 'field'
+                    });
             }
             // Add the additional query parameters
             if (data.additional_query_parameters) {
