@@ -7,6 +7,7 @@
 * [ETM-28](https://github.com/jecstarinnovations/etm/issues/28) Option to force migration to run.
 * [ETM-29](https://github.com/jecstarinnovations/etm/issues/29) Sort field does not autocomplete.
 * [ETM-30](https://github.com/jecstarinnovations/etm/issues/30) User with 'Read without payload' access can see log payload.
+* [ETM-31](https://github.com/jecstarinnovations/etm/issues/31) Index statistics misformed.
 
 ## Version 4.1.0
 * [ETM-133](https://jecstar.atlassian.net/browse/ETM-133) Scripts of old version are cached in browser.

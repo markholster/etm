@@ -442,7 +442,7 @@ public class SettingsService extends AbstractIndexMetadataService {
         var numberFormat = getEtmPrincipal().getNumberFormat();
         var builder = new JsonBuilder();
         builder.startObject();
-        builder.field("locale", getLocalFormatting(getEtmPrincipal()));
+        builder.rawField("locale", getLocalFormatting(getEtmPrincipal()));
         builder.startObject("totals");
         final long totalCount = eventIndicesStatsResponse.getPrimaries().getDocs().getCount() - eventIndicesStatsResponse.getPrimaries().getDocs().getDeleted();
         builder.field("document_count", totalCount);
