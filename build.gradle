@@ -48,7 +48,7 @@ ext {
 allprojects {
     apply plugin: "eclipse"
     apply plugin: "idea"
-    version "4.1.1-SNAPSHOT"
+    version "4.2.0-SNAPSHOT"
     group "com.jecstar.etm"
 
     repositories {

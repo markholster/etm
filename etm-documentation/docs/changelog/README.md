@@ -1,10 +1,13 @@
 # Changelog
 ## Version 4.1.1
+* [ETM-23](https://github.com/jecstarinnovations/etm/issues/23) Explain the tokenizer in the documentation.
 * [ETM-24](https://github.com/jecstarinnovations/etm/issues/24) Search result table is not showing nested properties.
 * [ETM-26](https://github.com/jecstarinnovations/etm/issues/26) Group signals not visible although user has access.
 * [ETM-27](https://github.com/jecstarinnovations/etm/issues/27) Multi select does not scroll.
 * [ETM-28](https://github.com/jecstarinnovations/etm/issues/28) Option to force migration to run.
 * [ETM-29](https://github.com/jecstarinnovations/etm/issues/29) Sort field does not autocomplete.
+* [ETM-30](https://github.com/jecstarinnovations/etm/issues/30) User with 'Read without payload' access can see log payload.
+* [ETM-31](https://github.com/jecstarinnovations/etm/issues/31) Index statistics misformed.
 
 ## Version 4.1.0
 * [ETM-133](https://jecstar.atlassian.net/browse/ETM-133) Scripts of old version are cached in browser.
