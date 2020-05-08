@@ -5,6 +5,7 @@
 * [ETM-27](https://github.com/jecstarinnovations/etm/issues/27) Multi select does not scroll.
 * [ETM-28](https://github.com/jecstarinnovations/etm/issues/28) Option to force migration to run.
 * [ETM-29](https://github.com/jecstarinnovations/etm/issues/29) Sort field does not autocomplete.
+* [ETM-30](https://github.com/jecstarinnovations/etm/issues/30) User with 'Read without payload' access can see log payload.
 
 ## Version 4.1.0
 * [ETM-133](https://jecstar.atlassian.net/browse/ETM-133) Scripts of old version are cached in browser.
