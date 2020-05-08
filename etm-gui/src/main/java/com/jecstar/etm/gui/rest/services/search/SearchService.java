@@ -223,7 +223,7 @@ public class SearchService extends AbstractIndexMetadataService {
                             AggregationBuilders.terms("distinct")
                                     .field(termField.sortProperty)
                                     .order(BucketOrder.key(true))
-                                    .size(250)
+                                    .size(1000)
                     );
             var searchResponse = dataRepository.search(builder);
             var distinct = (ParsedTerms) searchResponse.getAggregations().get("distinct");
@@ -848,13 +848,14 @@ public class SearchService extends AbstractIndexMetadataService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
     public String getTransaction(@PathParam("id") String transactionId) {
-        var events = getTransactionEvents(transactionId);
+        var etmPrincipal = getEtmPrincipal();
+        var events = getTransactionEvents(transactionId, etmPrincipal.isInRole(SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD));
         if (events == null) {
             return null;
         }
         var builder = new JsonBuilder();
         builder.startObject();
-        builder.field("time_zone", getEtmPrincipal().getTimeZone().getID());
+        builder.field("time_zone", etmPrincipal.getTimeZone().getID());
         builder.startArray("events");
         for (TransactionEvent event : events) {
             builder.startObject();
@@ -873,12 +874,15 @@ public class SearchService extends AbstractIndexMetadataService {
         return builder.build();
     }
 
-    private List<TransactionEvent> getTransactionEvents(String transactionId) {
-        BoolQueryBuilder findEventsQuery = new BoolQueryBuilder()
+    private List<TransactionEvent> getTransactionEvents(String transactionId, boolean hidePayload) {
+        var findEventsQuery = new BoolQueryBuilder()
                 .must(new TermQueryBuilder(this.eventTags.getEndpointsTag() +
                         "." + this.eventTags.getEndpointHandlersTag() +
                         "." + this.eventTags.getEndpointHandlerTransactionIdTag() + KEYWORD_SUFFIX, transactionId)
                 );
+        if (hidePayload) {
+            findEventsQuery.mustNot(new TermQueryBuilder(this.eventTags.getObjectTypeTag(), TelemetryEventTags.EVENT_OBJECT_TYPE_LOG));
+        }
         SearchRequestBuilder searchRequest = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(etmConfiguration.mergeRemoteIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL)))
                 .setQuery(addFilterQuery(getEtmPrincipal(), findEventsQuery))
                 .setSort(SortBuilders.fieldSort("_doc"))
@@ -891,15 +895,15 @@ public class SearchService extends AbstractIndexMetadataService {
                         this.eventTags.getHttpEventTypeTag(),
                         this.eventTags.getSqlEventTypeTag()}, null
                 );
-        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequest);
+        var scrollableSearch = new ScrollableSearch(dataRepository, searchRequest);
         if (!scrollableSearch.hasNext()) {
             scrollableSearch.clearScrollIds();
             return null;
         }
-        List<TransactionEvent> events = new ArrayList<>();
+        var events = new ArrayList<TransactionEvent>();
         for (SearchHit searchHit : scrollableSearch) {
-            TransactionEvent event = new TransactionEvent();
-            Map<String, Object> source = searchHit.getSourceAsMap();
+            var event = new TransactionEvent();
+            var source = searchHit.getSourceAsMap();
             event.index = searchHit.getIndex();
             event.objectType = getString(this.eventTags.getObjectTypeTag(), source);
             event.id = searchHit.getId();
@@ -921,11 +925,12 @@ public class SearchService extends AbstractIndexMetadataService {
                     }
                 }
             }
-            if ("http".equals(event.objectType)) {
+
+            if (TelemetryEventTags.EVENT_OBJECT_TYPE_HTTP.equals(event.objectType)) {
                 event.subtype = getString(this.eventTags.getHttpEventTypeTag(), source);
-            } else if ("messaging".equals(event.objectType)) {
+            } else if (TelemetryEventTags.EVENT_OBJECT_TYPE_MESSAGING.equals(event.objectType)) {
                 event.subtype = getString(this.eventTags.getMessagingEventTypeTag(), source);
-            } else if ("sql".equals(event.objectType)) {
+            } else if (TelemetryEventTags.EVENT_OBJECT_TYPE_SQL.equals(event.objectType)) {
                 event.subtype = getString(this.eventTags.getSqlEventTypeTag(), source);
             }
 
@@ -948,7 +953,7 @@ public class SearchService extends AbstractIndexMetadataService {
             @PathParam("id") String transactionId) {
         EtmPrincipal etmPrincipal = getEtmPrincipal();
         Map<String, Object> valueMap = toMap(json);
-        List<TransactionEvent> events = getTransactionEvents(transactionId);
+        List<TransactionEvent> events = getTransactionEvents(transactionId, etmPrincipal.isInRole(SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD));
         if (events == null) {
             return null;
         }

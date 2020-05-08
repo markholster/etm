@@ -25,6 +25,7 @@ import com.jecstar.etm.launcher.http.ElasticsearchIdentityManager;
 import com.jecstar.etm.launcher.http.HttpServer;
 import com.jecstar.etm.launcher.migrations.EtmMigrator;
 import com.jecstar.etm.launcher.migrations.v4.Version41Migrator;
+import com.jecstar.etm.launcher.migrations.v4.Version42Migrator;
 import com.jecstar.etm.launcher.migrations.v4.Version4Migrator;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessorImpl;
@@ -245,11 +246,16 @@ class LaunchEtmCommand extends AbstractCommand {
         boolean reinitialze = false;
         EtmMigrator etmMigrator = new Version4Migrator(dataRepository);
         if (etmMigrator.shouldBeExecuted()) {
-            etmMigrator.migrate();
+            etmMigrator.migrate(false);
         }
         etmMigrator = new Version41Migrator(dataRepository);
         if (etmMigrator.shouldBeExecuted()) {
-            etmMigrator.migrate();
+            etmMigrator.migrate(false);
+        }
+        etmMigrator = new Version42Migrator(dataRepository);
+        if (etmMigrator.shouldBeExecuted()) {
+            etmMigrator.migrate(false);
+            reinitialze = true;
         }
         return reinitialze;
     }

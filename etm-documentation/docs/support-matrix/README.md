@@ -7,7 +7,7 @@ For those users that cannot upgrade as quickly as we release we will provide bug
 The End of Life policy defines how long a given release is considered supported, as well as how long a release is considered still in active development or maintenance. As part of our support activities we may request you to upgrade to the latest minor release stream of your current (supported) major version. Enterprise Telemetry Monitor will never support or maintain a release that is based on an unsupported version of the Java JRE or Elasticsearch installation.
 
 Version | Release date | Oracle/OpenJDK 1.8.0u111+ | Oracle/OpenJDK 11 | Oracle/OpenJDK 14 | Elasticsearch | EOL | Maintained until
---- | --- | --- | --- | --- | --- | ---
+--- | --- | --- | --- | --- | --- | --- | ---
 ETM 4.1.x | 2020-04-11 | :x:                | :white_check_mark: | :white_check_mark: | 7.x   | 2022-04-11 | 4.2.0
 ETM 4.0.x | 2020-01-25 | :x:                | :white_check_mark: | :x:                | 7.x   | 2022-01-25 | 4.1.0
 ETM 3.5.x | 2019-03-19 | :white_check_mark: | :white_check_mark: | :x:                | 6.6.x | 2021-03-19 | 5.0.0

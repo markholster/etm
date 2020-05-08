@@ -35,7 +35,9 @@ public interface EtmMigrator {
 
     /**
      * Run the migration.
+     *
+     * @param forced Set to <code>true</code> when te <code>EtmMigrator</code> should be forced to run even when the {@link #shouldBeExecuted()} method returns <code>false</code>.
      */
-    void migrate();
+    void migrate(boolean forced);
 
 }
