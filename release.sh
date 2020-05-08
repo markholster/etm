@@ -45,7 +45,7 @@ then
   logError "Release date in support matrix documentation is empty."
   exit 1
 fi
-logOk "Release date fount in support matrix."
+logOk "Release date found in support matrix."
 
 EOL_DATE=$(cat "$SCRIPT_DIR"/etm-documentation/docs/support-matrix/README.md | grep "ETM $VERSION_WILDCARD_BUGFIX" | cut -d'|' -f7)
 if [[ -z "${EOL_DATE// }" ]]
