@@ -1,5 +1,6 @@
 # Changelog
 ## Version 4.1.1
+* [ETM-23](https://github.com/jecstarinnovations/etm/issues/23) Explain the tokenizer in the documentation.
 * [ETM-24](https://github.com/jecstarinnovations/etm/issues/24) Search result table is not showing nested properties.
 * [ETM-26](https://github.com/jecstarinnovations/etm/issues/26) Group signals not visible although user has access.
 * [ETM-27](https://github.com/jecstarinnovations/etm/issues/27) Multi select does not scroll.

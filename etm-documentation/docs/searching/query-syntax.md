@@ -135,3 +135,54 @@ name: \(DemoName\)
 ```
 
 searches for an event with the name *(DemoName)*.
+
+## Unexpected results
+Most of the time the above instructions will give you the results you're looking for. In some specific situations like email addresses
+or URL's you may see more or fewer results than you expected. In almost all cases this is caused by the way Enterprise Telemetry Monitor is
+storing the events in Elasticsearch. Event values aren't stored as is in the database, but are split into one or more 'tokens'. 
+
+By default, Enterprise Telemetry monitor is using the default tokenizer of Elasticsearch which is perfectly fine for most text/languages.  
+When you search for `name: MyEventName`, Enterprise Telemetry Monitor is actually searching for a *token* that matches `MyEventName`, and 
+not an entire attribute *value*.
+ 
+To fully understand the search process you need to know the difference between a token, and an attribute value. Fortunately that's quite simple. 
+An attribute value may be split up into several tokens. That's it, no more, no less.
+
+To explain why this process may lead to unexpected search results let me show you some examples. When you have indexed an event on the endpoint 
+`http://instserv0001.my.corp/shopping-card.html` and you want to search for it you could use the following query:
+```coffeescript
+endpoints.name: http://instserv0001.my.corp/shopping-card.html
+```
+This query will fail because we need to [escape the special characters](#reserved-characters). So our second try would be 
+```coffeescript
+endpoints.name: http\:\/\/instserv0001.my.corp\/shopping-card.html
+```
+This time we receive results. A lot of results! Most of those results don't match the specified endpoint name (i'll explain later why). 
+Let's change the query a little again and make it an exact match by using double quotes around the value.
+```coffeescript
+endpoints.name: "http://instserv0001.my.corp/shopping-card.html"
+```
+There we go. Finally we've got the events we were looking for. 
+
+Now, let's say we want to search for all calls on `http://instserv0001.my.corp`, or all shopping related calls like 
+`http://instserv0001.my.corp/shopping*`. That's not going to work with double quotes because that will only find exact
+matched. But if we don't use double quotes we're getting way too many results. In order to understand why we get so many
+results we need to remember a query is executed against *tokens* and not attribute *values*. The attribute value 
+`http://instserv0001.my.corp/shopping-card.html` is actually split up in the tokens `http`, `instser0001`, `my.corp`, 
+`shopping` and `card.html`. The actual token algorithm is not covert in this document but is described in the 
+[Unicode Standard Annex #29](http://unicode.org/reports/tr29/).
+
+With this knowledge we can easily find all requests to `instserv0001.my.corp` by quering for 
+```coffeescript
+endpoints.name: instserv0001
+```
+or
+```coffeescript
+endpoints.name: (instserv0001 AND my.corp)
+```
+when you have multiple instserv0001 instances running in different domains. 
+
+Now we get rid of the double quotes we can unleash all flexibility on our queries again. For example
+```coffeescript
+endpoints.name: (instserv* AND my.copr~)
+```
