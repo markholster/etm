@@ -782,7 +782,7 @@ public class DashboardService extends AbstractUserAttributeService {
     private JsonBuilder initializeGraphResult(EtmPrincipal etmPrincipal, GraphContainer graphContainer) {
         var builder = new JsonBuilder();
         builder.startObject();
-        builder.field("locale", getLocalFormatting(etmPrincipal));
+        builder.rawField("locale", getLocalFormatting(etmPrincipal));
         builder.field("type", graphContainer.getGraph().getType());
         builder.field("valueFormat", graphContainer.getGraph().getValueFormat());
         return builder;

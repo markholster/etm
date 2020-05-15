@@ -440,7 +440,7 @@ public class SignalService extends AbstractUserAttributeService {
         // Start building the response
         var builder = new JsonBuilder();
         builder.startObject();
-        builder.field("locale", getLocalFormatting(getEtmPrincipal()));
+        builder.rawField("locale", getLocalFormatting(getEtmPrincipal()));
         int exceededCount = 0;
         SearchResponse searchResponse = dataRepository.search(requestBuilder);
         Map<String, List<String>> seriesData = new LinkedHashMap<>();

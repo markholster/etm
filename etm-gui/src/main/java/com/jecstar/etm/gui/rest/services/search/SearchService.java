@@ -717,7 +717,7 @@ public class SearchService extends AbstractIndexMetadataService {
         var layers = directedGraph.getLayers();
         var builder = new JsonBuilder();
         builder.startObject();
-        builder.field("locale", getLocalFormatting(getEtmPrincipal()));
+        builder.rawField("locale", getLocalFormatting(getEtmPrincipal()));
         builder.startArray("layers");
         for (var layer : layers) {
             builder.startObject();
