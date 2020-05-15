@@ -19,7 +19,7 @@ will appear.
 !["Search parameters"](../assets/images/etm-manage-search-parameters.png)
 
 To add a new input field click on the *Add row* header in the table. You can give the field a representable name and put the field you want to add in the *Field* column.
-Depending on the *Type* you select the query will act as follow:
+Depending on the *Type* you select the query will act as follows:
 
 Field type | Description
 --- | ---
