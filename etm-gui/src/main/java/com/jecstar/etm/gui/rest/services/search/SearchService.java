@@ -476,8 +476,8 @@ public class SearchService extends AbstractIndexMetadataService {
                     rangeFilter.gte("" + instant.toEpochMilli());
                 } else {
                     rangeFilter.gte(fieldValue.toString());
+                    rangeFilter.timeZone(etmPrincipal.getTimeZone().getID());
                 }
-                rangeFilter.timeZone(etmPrincipal.getTimeZone().getID());
             } else {
                 rangeFilter.gte(fieldValue);
             }
@@ -490,8 +490,8 @@ public class SearchService extends AbstractIndexMetadataService {
                     rangeFilter.lte("" + instant.toEpochMilli());
                 } else {
                     rangeFilter.lte(fieldValue.toString());
+                    rangeFilter.timeZone(etmPrincipal.getTimeZone().getID());
                 }
-                rangeFilter.timeZone(etmPrincipal.getTimeZone().getID());
             } else {
                 rangeFilter.lte(fieldValue);
             }
