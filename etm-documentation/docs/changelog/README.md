@@ -2,6 +2,7 @@
 ## Version 4.2.0
 * [ETM-32](https://github.com/jecstarinnovations/etm/issues/32) Invalid locale data in all graphs.
 * [ETM-33](https://github.com/jecstarinnovations/etm/issues/33) Timezone not taken into account on search page.
+* [ETM-36](https://github.com/jecstarinnovations/etm/issues/36) Result table width should be 100%.
 
 ## Version 4.1.1
 * [ETM-23](https://github.com/jecstarinnovations/etm/issues/23) Explain the tokenizer in the documentation.
