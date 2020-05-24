@@ -38,9 +38,9 @@ public class EtmGroup implements EtmSecurityEntity, Serializable {
     private boolean ldapBase;
     private Set<String> dashboards = new HashSet<>();
     private Set<String> notifiers = new HashSet<>();
-
     private Set<String> dashboardDatasources = new HashSet<>();
     private Set<String> signalDatasources = new HashSet<>();
+    private Set<String> eventFieldDenies = new HashSet<>();
 
     public EtmGroup(String name) {
         this.name = name;
@@ -195,6 +195,16 @@ public class EtmGroup implements EtmSecurityEntity, Serializable {
     public void addSignalDatasources(List<String> datasources) {
         if (datasources != null) {
             this.signalDatasources.addAll(datasources);
+        }
+    }
+
+    public Set<String> getEventFieldDenies() {
+        return this.eventFieldDenies;
+    }
+
+    public void addEventFieldDenies(List<String> eventFieldDenies) {
+        if (eventFieldDenies != null) {
+            this.eventFieldDenies.addAll(eventFieldDenies);
         }
     }
 

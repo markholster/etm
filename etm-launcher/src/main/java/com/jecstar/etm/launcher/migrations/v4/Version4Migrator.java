@@ -28,13 +28,13 @@ import com.jecstar.etm.server.core.elasticsearch.builder.GetIndexRequestBuilder;
 import com.jecstar.etm.server.core.elasticsearch.builder.GetSettingsRequestBuilder;
 import com.jecstar.etm.server.core.elasticsearch.builder.IndexRequestBuilder;
 import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
+import com.jecstar.etm.server.core.persisting.RedactedSearchHit;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.admin.indices.settings.get.GetSettingsResponse;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
 
 import java.util.List;
 import java.util.Map;
@@ -77,7 +77,7 @@ public class Version4Migrator extends AbstractEtmMigrator {
 
         checkAndCleanupPreviousRun(this.dataRepository, this.migrationIndexPrefix);
 
-        Function<SearchHit, DocWriteRequest<?>> processor = searchHit -> {
+        Function<RedactedSearchHit, DocWriteRequest<?>> processor = searchHit -> {
             IndexRequestBuilder builder = new IndexRequestBuilder(
                     Version4Migrator.this.migrationIndexPrefix + searchHit.getIndex(), determineId(searchHit.getId())
             ).setSource(determineSource(searchHit));
@@ -114,7 +114,7 @@ public class Version4Migrator extends AbstractEtmMigrator {
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, Object> determineSource(SearchHit searchHit) {
+    private Map<String, Object> determineSource(RedactedSearchHit searchHit) {
         Map<String, Object> sourceAsMap = searchHit.getSourceAsMap();
         if (searchHit.getId().startsWith(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX) || searchHit.getId().startsWith(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX)) {
             // Migrate users and groups
@@ -149,7 +149,7 @@ public class Version4Migrator extends AbstractEtmMigrator {
         return sourceAsMap;
     }
 
-    private boolean migrateEtmConfiguration(DataRepository dataRepository, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener, Function<SearchHit, DocWriteRequest<?>> processor) {
+    private boolean migrateEtmConfiguration(DataRepository dataRepository, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener, Function<RedactedSearchHit, DocWriteRequest<?>> processor) {
         SearchRequestBuilder searchRequestBuilder = new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
                 .setQuery(QueryBuilders.matchAllQuery())
                 .setTimeout(TimeValue.timeValueSeconds(30))

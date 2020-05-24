@@ -19,9 +19,14 @@ package com.jecstar.etm.server.core.domain.parser;
 
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.Option;
+import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
+import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
+
+import java.util.EnumSet;
 
 public class JsonPathExpressionParser extends AbstractExpressionParser {
 
@@ -29,13 +34,12 @@ public class JsonPathExpressionParser extends AbstractExpressionParser {
      * The <code>LogWrapper</code> for this class.
      */
     private static final LogWrapper log = LogFactory.getLogger(JsonPathExpressionParser.class);
+    private static final Configuration configuration = Configuration.builder()
+            .jsonProvider(new JacksonJsonProvider())
+            .mappingProvider(new JacksonMappingProvider())
+            .options(EnumSet.noneOf(Option.class)).build();
 
     private final JsonPath expression;
-
-    static {
-        Configuration.setDefaults(new JsonPathDefaults());
-    }
-
 
     public JsonPathExpressionParser(final String name, final String expression) {
         super(name);
@@ -51,7 +55,7 @@ public class JsonPathExpressionParser extends AbstractExpressionParser {
             return null;
         }
         try {
-            return JsonPath.parse(content).read(this.expression, String.class);
+            return JsonPath.parse(content, configuration).read(this.expression, String.class);
         } catch (Exception e) {
             if (log.isDebugLevelEnabled()) {
                 log.logDebugMessage("Json expression '" + this.expression.getPath() + "' could not be evaluated against content '" + content + "'.", e);

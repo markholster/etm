@@ -25,7 +25,6 @@ import java.util.Arrays;
 public final class SecurityRoles {
 
     public static final String ETM_EVENT_READ = "etm_event_read";
-    public static final String ETM_EVENT_READ_WITHOUT_PAYLOAD = "etm_event_read_without_payload";
     public static final String ETM_EVENT_WRITE = "etm_event_write";
     public static final String ETM_EVENT_READ_WRITE = "etm_event_read_write";
 
@@ -79,7 +78,6 @@ public final class SecurityRoles {
             CLUSTER_SETTINGS_READ,
             CLUSTER_SETTINGS_READ_WRITE,
             ETM_EVENT_READ,
-            ETM_EVENT_READ_WITHOUT_PAYLOAD,
             ETM_EVENT_READ_WRITE,
             ETM_EVENT_WRITE,
             GROUP_DASHBOARD_READ,
@@ -118,7 +116,6 @@ public final class SecurityRoles {
             ",\"" + CLUSTER_SETTINGS_READ + "\"" +
             ",\"" + CLUSTER_SETTINGS_READ_WRITE + "\"" +
             ",\"" + ETM_EVENT_READ + "\"" +
-            ",\"" + ETM_EVENT_READ_WITHOUT_PAYLOAD + "\"" +
             ",\"" + ETM_EVENT_READ_WRITE + "\"" +
             ",\"" + ETM_EVENT_WRITE + "\"" +
             ",\"" + GROUP_DASHBOARD_READ + "\"" +
@@ -155,7 +152,7 @@ public final class SecurityRoles {
             .filter(p -> {
                 if (p.endsWith("_read") && Arrays.stream(ALL_ROLES_ARRAY).anyMatch(t -> t.equals(p + "_write"))) {
                     return false;
-                } else return !ETM_EVENT_WRITE.equals(p) && !ETM_EVENT_READ_WITHOUT_PAYLOAD.equals(p);
+                } else return !ETM_EVENT_WRITE.equals(p);
             })
             .toArray(String[]::new);
 

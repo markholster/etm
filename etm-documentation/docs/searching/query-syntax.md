@@ -58,7 +58,7 @@ searches for the *My* and *Name* terms with a term distance of 5.
 ## Ranges
 Ranges can be specified to numeric and date attributes. Inclusive ranges are specified with square brackets `[min TO max]` and exclusive ranges with curly brackets `{min TO max}`.
 
-All events of 2018 can be queried as follow
+All events of 2018 can be queried as follows
 ```coffeescript
 endpoints.endpoint_handlers.handling_time: [2018-01-01 TO 2018-12-31]
 ```

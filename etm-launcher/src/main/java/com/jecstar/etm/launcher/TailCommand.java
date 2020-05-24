@@ -23,13 +23,13 @@ import com.jecstar.etm.launcher.configuration.Configuration;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
+import com.jecstar.etm.server.core.persisting.RedactedSearchHit;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.MatchAllQueryBuilder;
 import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.elasticsearch.index.query.TermQueryBuilder;
-import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.sort.SortOrder;
 
@@ -64,7 +64,7 @@ class TailCommand extends AbstractCommand {
         LastPrinted lastPrinted = new LastPrinted();
         if (hits != null) {
             for (int i = hits.getHits().length - 1; i >= 0; i--) {
-                printSearchHit(hits.getAt(i), lastPrinted);
+                printSearchHit(new RedactedSearchHit(hits.getAt(i)), lastPrinted);
             }
         }
         while (true) {
@@ -83,9 +83,9 @@ class TailCommand extends AbstractCommand {
                     .setSize(50)
                     .setSort(this.timestampField, SortOrder.DESC)
                     .setTimeout(TimeValue.timeValueSeconds(30));
-            ScrollableSearch searchHits = new ScrollableSearch(this.dateRepository, builder);
+            ScrollableSearch searchHits = new ScrollableSearch(this.dateRepository, builder, null);
             boolean lastFound = false;
-            for (SearchHit searchHit : searchHits) {
+            for (var searchHit : searchHits) {
                 if (searchHit.getId().equals(lastPrinted.id)) {
                     lastFound = true;
                     continue;
@@ -99,7 +99,7 @@ class TailCommand extends AbstractCommand {
     }
 
     @SuppressWarnings("unchecked")
-    private void printSearchHit(SearchHit hit, LastPrinted lastPrinted) {
+    private void printSearchHit(RedactedSearchHit hit, LastPrinted lastPrinted) {
         Map<String, Object> sourceMap = hit.getSourceAsMap();
         Map<String, Object> endpointMap = ((List<Map<String, Object>>) sourceMap.get(this.tags.getEndpointsTag())).get(0);
         Map<String, Object> endpointHandlerMap = ((List<Map<String, Object>>) endpointMap.get(this.tags.getEndpointHandlersTag())).get(0);

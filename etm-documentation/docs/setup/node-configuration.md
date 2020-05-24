@@ -83,7 +83,7 @@ sslTruststoreType | JSK | The ssl truststore type.
 secureCookies | false | Should the secure flag be set on the session cookies? Set this value to true when your Enterprise Telemetry Monitor instance is accessed via https.
 
 ## IBM MQ section in etm.yml
-The *ibmMq* section contains all options that are necessary to process Enterprise Telemetry Monitor events from a IBM MQ queue or topic. Make sure to add the MQ libraries to the classpath of the Node. See the [Integration with IBM MQ and/or IBM Integration Bus](../integration-with-ibm.md) section.
+The *ibmMq* section contains all options that are necessary to process Enterprise Telemetry Monitor events from a IBM MQ queue or topic. Make sure to add the MQ libraries to the classpath of the Node. See the [Integration with IBM MQ and/or IBM Integration Bus](integration-with-ibm.md) section.
 
 **IBM MQ configuration options**
 Name | Default value | Description

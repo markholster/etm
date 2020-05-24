@@ -17,25 +17,26 @@
 
 package com.jecstar.etm.server.core.persisting;
 
+import com.jayway.jsonpath.JsonPath;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.elasticsearch.builder.ClearScrollRequestBuilder;
 import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
 import com.jecstar.etm.server.core.elasticsearch.builder.SearchScrollRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.search.SearchHit;
 
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-public class ScrollableSearch implements Iterable<SearchHit>, Iterator<SearchHit> {
+public class ScrollableSearch implements Iterable<RedactedSearchHit>, Iterator<RedactedSearchHit> {
 
     private final DataRepository dataRepository;
     private final SearchRequestBuilder searchRequestBuilder;
     private final int startIx;
     private final int scrollSize;
+    private final Set<JsonPath> redactedFields;
 
     private SearchResponse response;
     private String currentScrollId;
@@ -43,19 +44,20 @@ public class ScrollableSearch implements Iterable<SearchHit>, Iterator<SearchHit
     private boolean nextBatchRequired = false;
     private int currentIndexInResponse = 0;
 
-    public ScrollableSearch(DataRepository dataRepository, SearchRequestBuilder builder) {
-        this(dataRepository, builder, 0);
+    public ScrollableSearch(DataRepository dataRepository, SearchRequestBuilder builder, Set<JsonPath> redactedFields) {
+        this(dataRepository, builder, redactedFields, 0);
     }
 
-    public ScrollableSearch(DataRepository dataRepository, SearchRequestBuilder builder, int startIx) {
-        this(dataRepository, builder, startIx, 25);
+    public ScrollableSearch(DataRepository dataRepository, SearchRequestBuilder builder, Set<JsonPath> redactedFields, int startIx) {
+        this(dataRepository, builder, redactedFields, startIx, 25);
     }
 
-    private ScrollableSearch(DataRepository dataRepository, SearchRequestBuilder builder, int startIx, int scrollSize) {
+    private ScrollableSearch(DataRepository dataRepository, SearchRequestBuilder builder, Set<JsonPath> redactedFields, int startIx, int scrollSize) {
         this.dataRepository = dataRepository;
         this.searchRequestBuilder = builder;
         this.startIx = startIx;
         this.scrollSize = scrollSize;
+        this.redactedFields = redactedFields;
     }
 
     @Override
@@ -74,16 +76,16 @@ public class ScrollableSearch implements Iterable<SearchHit>, Iterator<SearchHit
     }
 
     @Override
-    public Iterator<SearchHit> iterator() {
+    public Iterator<RedactedSearchHit> iterator() {
         return this;
     }
 
     @Override
-    public SearchHit next() {
+    public RedactedSearchHit next() {
         if (!hasNext()) {
             throw new NoSuchElementException();
         }
-        return this.response.getHits().getHits()[this.currentIndexInResponse++];
+        return new RedactedSearchHit(this.response.getHits().getHits()[this.currentIndexInResponse++], this.redactedFields);
     }
 
     public void clearScrollIds() {
@@ -122,6 +124,5 @@ public class ScrollableSearch implements Iterable<SearchHit>, Iterator<SearchHit
         this.currentScrollId = this.response.getScrollId();
         this.scrollIds.add(this.currentScrollId);
         this.nextBatchRequired = this.scrollSize == this.response.getHits().getHits().length;
-//
     }
 }

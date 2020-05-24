@@ -37,7 +37,6 @@ import com.jecstar.etm.signaler.domain.Signal;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
 
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
@@ -228,9 +227,10 @@ class EmailSignal implements Closeable {
                             .must(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getGroupsTag(), etmGroup.getName()))
                     )
                     .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
-                    .setFetchSource(new String[]{ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getEmailTag()}, null)
+                    .setFetchSource(new String[]{ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.etmPrincipalTags.getEmailTag()}, null),
+                    null
             );
-            for (SearchHit searchHit : scrollableSearch) {
+            for (var searchHit : scrollableSearch) {
                 Map<String, Object> userValues = this.jsonConverter.getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER, searchHit.getSourceAsMap());
                 String email = this.jsonConverter.getString(this.etmPrincipalTags.getEmailTag(), userValues);
                 if (email != null) {

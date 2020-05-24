@@ -28,17 +28,16 @@ import com.jecstar.etm.launcher.ElasticsearchIndexTemplateCreator;
 import com.jecstar.etm.launcher.migrations.AbstractEtmMigrator;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
-import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.elasticsearch.builder.GetIndexRequestBuilder;
 import com.jecstar.etm.server.core.elasticsearch.builder.GetMappingsRequestBuilder;
 import com.jecstar.etm.server.core.elasticsearch.builder.IndexRequestBuilder;
 import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
+import com.jecstar.etm.server.core.persisting.RedactedSearchHit;
 import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -55,12 +54,6 @@ public class Version41Migrator extends AbstractEtmMigrator {
     private final JsonConverter jsonConverter = new JsonConverter();
     private final String migrationIndexPrefix = "migetm_";
     private final EtmQueryConverter queryConverter = new EtmQueryConverter();
-    private final EtmPrincipal migrator = new EtmPrincipal("migrator") {
-        @Override
-        public boolean maySeeEventPayload() {
-            return true;
-        }
-    };
 
     public Version41Migrator(final DataRepository dataRepository) {
         this.dataRepository = dataRepository;
@@ -87,7 +80,7 @@ public class Version41Migrator extends AbstractEtmMigrator {
 
         checkAndCleanupPreviousRun(this.dataRepository, this.migrationIndexPrefix);
 
-        Function<SearchHit, DocWriteRequest<?>> processor = searchHit -> {
+        Function<RedactedSearchHit, DocWriteRequest<?>> processor = searchHit -> {
             IndexRequestBuilder builder = new IndexRequestBuilder(
                     Version41Migrator.this.migrationIndexPrefix + searchHit.getIndex(), searchHit.getId()
             ).setSource(determineSource(searchHit));
@@ -117,7 +110,7 @@ public class Version41Migrator extends AbstractEtmMigrator {
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, Object> determineSource(SearchHit searchHit) {
+    private Map<String, Object> determineSource(RedactedSearchHit searchHit) {
         Map<String, Object> sourceAsMap = searchHit.getSourceAsMap();
         if (searchHit.getId().startsWith(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX)) {
             // Migrate users
@@ -198,11 +191,11 @@ public class Version41Migrator extends AbstractEtmMigrator {
             field.setLink(this.jsonConverter.getBoolean("link", fieldValues));
             field.setFormat(Field.Format.safeValueOf(this.jsonConverter.getString("format", fieldValues)));
             field.setArraySelector(Field.ArraySelector.safeValueOf(this.jsonConverter.getString("array", fieldValues)));
-            etmQuery.getResultLayout().addField(field, this.migrator);
+            etmQuery.getResultLayout().addField(field);
         }
     }
 
-    private boolean migrateEtmConfiguration(DataRepository dataRepository, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener, Function<SearchHit, DocWriteRequest<?>> processor) {
+    private boolean migrateEtmConfiguration(DataRepository dataRepository, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener, Function<RedactedSearchHit, DocWriteRequest<?>> processor) {
         SearchRequestBuilder searchRequestBuilder = new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
                 .setQuery(QueryBuilders.matchAllQuery())
                 .setTimeout(TimeValue.timeValueSeconds(30))

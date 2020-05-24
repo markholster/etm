@@ -1,5 +1,5 @@
 # Installation with .tgz
-The .tgz archive for Enterprise Telemetry Monitor can be downloaded and installed as follow:
+The .tgz archive for Enterprise Telemetry Monitor can be downloaded and installed as follows:
 
 ```bash
 wget https://www.jecstar.com/assets/downloads/etm-4.1.1.tgz

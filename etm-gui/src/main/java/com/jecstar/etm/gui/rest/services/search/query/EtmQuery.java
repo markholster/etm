@@ -37,9 +37,9 @@ public class EtmQuery {
     @JsonField(NAME)
     private String name;
     @JsonField(value = RESULT_LAYOUT, converterClass = ResultLayoutConverter.class)
-    private ResultLayout resultLayout;
+    private final ResultLayout resultLayout;
     @JsonField(value = ADDITIONAL_QUERY_PARAMETERS, converterClass = AdditionalQueryParameterListConverter.class)
-    private List<AdditionalQueryParameter> additionalQueryParameters;
+    private final List<AdditionalQueryParameter> additionalQueryParameters;
 
     public EtmQuery() {
         this.resultLayout = new ResultLayout();
@@ -57,20 +57,18 @@ public class EtmQuery {
                 .setSortOrder(ResultLayout.SortOrder.DESC);
 
         this.resultLayout.addField(new Field()
-                        .setName("Timestamp")
-                        .setField(tags.getTimestampTag())
-                        .setArraySelector(Field.ArraySelector.LOWEST)
-                        .setFormat(Field.Format.ISOTIMESTAMP)
-                        .setLink(true),
-                etmPrincipal
+                .setName("Timestamp")
+                .setField(tags.getTimestampTag())
+                .setArraySelector(Field.ArraySelector.LOWEST)
+                .setFormat(Field.Format.ISOTIMESTAMP)
+                .setLink(true)
         );
         this.resultLayout.addField(new Field()
-                        .setName("Name")
-                        .setField(tags.getNameTag())
-                        .setArraySelector(Field.ArraySelector.FIRST)
-                        .setFormat(Field.Format.PLAIN)
-                        .setLink(false),
-                etmPrincipal
+                .setName("Name")
+                .setField(tags.getNameTag())
+                .setArraySelector(Field.ArraySelector.FIRST)
+                .setFormat(Field.Format.PLAIN)
+                .setLink(false)
         );
         if (startTime != null) {
             AdditionalQueryParameter param = new AdditionalQueryParameter()

@@ -312,8 +312,31 @@ function buildAuditLogPage() {
 		appendToContainerInRow($('#event-detail'), 'Found', data.found ? 'Yes' : 'No');
 		appendToContainerInRow($('#event-detail'), 'Event id', data.event_id);
 		appendToContainerInRow($('#event-detail'), 'Event name', data.event_name);
-		appendToContainerInRow($('#event-detail'), 'Payload visible', data.payload_visible ? 'Yes' : 'No');
 		appendToContainerInRow($('#event-detail'), 'Downloaded', data.downloaded ? 'Yes' : 'No');
+
+		if (data.redacted_fields) {
+			$('#event-detail').append($('<br/>'));
+			const $redactedFieldsTable = $('<table id="redacted-fields-table">').addClass('table table-hover table-sm').append(
+				$('<caption>').attr('style', 'caption-side: top;').text('Redacted fields')
+			).append(
+				$('<thead>').append(
+					$('<tr>').append(
+						$('<th>').attr('style', 'padding: 0.1rem;').text('Field')
+					)
+				)
+			).append(function () {
+				const $tbody = $('<tbody>');
+				$.each(data.redacted_fields, function (index, event) {
+					$tbody.append(
+						$('<tr>').append(
+							$('<td>').attr('style', 'padding: 0.1rem;').text(event)
+						)
+					);
+				});
+				return $tbody;
+			});
+			$('#event-detail').append($redactedFieldsTable);
+		}
 
 		if (data.correlated_events) {
 			$('#event-detail').append($('<br/>'));
@@ -322,8 +345,7 @@ function buildAuditLogPage() {
 			).append(
 				$('<thead>').append(
 					$('<tr>').append(
-						$('<th>').attr('style', 'padding: 0.1rem;').text('Id'),
-						$('<th>').attr('style', 'padding: 0.1rem;').text('Type')
+						$('<th>').attr('style', 'padding: 0.1rem;').text('Id')
 					)
 				)
 			).append(function () {
@@ -331,8 +353,7 @@ function buildAuditLogPage() {
 				$.each(data.correlated_events, function (index, event) {
 					$tbody.append(
 						$('<tr>').append(
-							$('<td>').attr('style', 'padding: 0.1rem;').text(event.event_id),
-							$('<td>').attr('style', 'padding: 0.1rem;').text('sql' === event.event_type ? 'SQL' : capitalize(event.event_type))
+							$('<td>').attr('style', 'padding: 0.1rem;').text(event)
 						)
 					);
 				});

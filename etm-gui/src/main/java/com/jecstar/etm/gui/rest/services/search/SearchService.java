@@ -17,6 +17,7 @@
 
 package com.jecstar.etm.gui.rest.services.search;
 
+import com.jayway.jsonpath.JsonPath;
 import com.jecstar.etm.domain.EndpointHandler;
 import com.jecstar.etm.domain.HttpTelemetryEvent;
 import com.jecstar.etm.domain.MessagingTelemetryEvent;
@@ -57,6 +58,7 @@ import com.jecstar.etm.server.core.elasticsearch.builder.UpdateRequestBuilder;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.persisting.EtmQueryBuilder;
+import com.jecstar.etm.server.core.persisting.RedactedSearchHit;
 import com.jecstar.etm.server.core.persisting.RequestEnhancer;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import com.jecstar.etm.server.core.util.DateUtils;
@@ -69,7 +71,6 @@ import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.*;
-import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.BucketOrder;
@@ -124,7 +125,7 @@ public class SearchService extends AbstractIndexMetadataService {
     @GET
     @Path("/userdata")
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
     public String getUserData() {
         var etmPrincipal = getEtmPrincipal();
         var builder = new JsonBuilder();
@@ -169,9 +170,10 @@ public class SearchService extends AbstractIndexMetadataService {
     @Path("/distinctvalues")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
     public String getDistinctValues(String json) {
         var etmPrincipal = getEtmPrincipal();
+        Set<String> redactedFields = etmPrincipal.getRedactedFields();
         var fieldsMap = (List<Map<String, Object>>) getArray("fields", toMap(json));
         var params = new ArrayList<AdditionalSearchParameter>();
         var directedGraph = new DirectedGraph<AdditionalSearchParameter>();
@@ -210,6 +212,9 @@ public class SearchService extends AbstractIndexMetadataService {
                 if (filterQuery != null) {
                     rootQuery.must(filterQuery);
                 }
+            }
+            if (redactedFields != null && redactedFields.contains(vertex.getField())) {
+                continue;
             }
             var termField = getFieldData(dataRepository, ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL, vertex.getField());
             if (termField == null) {
@@ -264,7 +269,7 @@ public class SearchService extends AbstractIndexMetadataService {
     @Path("/templates/{templateName}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
     public String addSearchTemplate(@PathParam("templateName") String templateName, String json) {
         EtmQuery query = this.etmQueryConverter.read(json);
         query.setName(templateName);
@@ -299,7 +304,7 @@ public class SearchService extends AbstractIndexMetadataService {
     @DELETE
     @Path("/templates/{templateName}")
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
     public String removeSearchTemplate(@PathParam("templateName") String templateName) {
         Map<String, Object> userData = getCurrentUser(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + ".search_templates");
 
@@ -331,7 +336,7 @@ public class SearchService extends AbstractIndexMetadataService {
     @Path("/additionalparameters")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
     public String addAdditionalSearchParameters(String json) {
         var requestValues = toMap(json);
         var objectMap = new HashMap<String, Object>();
@@ -349,13 +354,11 @@ public class SearchService extends AbstractIndexMetadataService {
     @Path("/query")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
     public String executeQuery(String json) {
-        var startTime = System.currentTimeMillis();
-        var etmPrincipal = getEtmPrincipal();
-        var payloadVisible = etmPrincipal.isInAnyRole(SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE);
-
         var now = Instant.now();
+        var startTime = now.toEpochMilli();
+        var etmPrincipal = getEtmPrincipal();
         var auditLogBuilder = new QueryAuditLogBuilder().setTimestamp(now).setHandlingTime(now).setPrincipalId(etmPrincipal.getId());
 
         var etmQuery = this.etmQueryConverter.read(json);
@@ -390,9 +393,8 @@ public class SearchService extends AbstractIndexMetadataService {
         builder.field("end_ix", etmQuery.getResultLayout().getStartIndex() + response.getHits().getHits().length - 1);
         builder.field("has_more_results", etmQuery.getResultLayout().getStartIndex() + response.getHits().getHits().length < response.getHits().getTotalHits().value - 1);
         builder.field("time_zone", etmPrincipal.getTimeZone().getID());
-        builder.field("may_see_payload", payloadVisible);
         builder.startArray("results");
-        addSearchHits(builder, response.getHits());
+        addSearchHits(builder, response.getHits(), getRedactedFields(etmPrincipal));
         builder.endArray();
         long queryTime = System.currentTimeMillis() - startTime;
         builder.field("query_time", queryTime);
@@ -476,8 +478,8 @@ public class SearchService extends AbstractIndexMetadataService {
                     rangeFilter.gte("" + instant.toEpochMilli());
                 } else {
                     rangeFilter.gte(fieldValue.toString());
+                    rangeFilter.timeZone(etmPrincipal.getTimeZone().getID());
                 }
-                rangeFilter.timeZone(etmPrincipal.getTimeZone().getID());
             } else {
                 rangeFilter.gte(fieldValue);
             }
@@ -490,8 +492,8 @@ public class SearchService extends AbstractIndexMetadataService {
                     rangeFilter.lte("" + instant.toEpochMilli());
                 } else {
                     rangeFilter.lte(fieldValue.toString());
+                    rangeFilter.timeZone(etmPrincipal.getTimeZone().getID());
                 }
-                rangeFilter.timeZone(etmPrincipal.getTimeZone().getID());
             } else {
                 rangeFilter.lte(fieldValue);
             }
@@ -541,7 +543,7 @@ public class SearchService extends AbstractIndexMetadataService {
     @GET
     @Path("/download")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
     public Response getDownload(@QueryParam("q") String json) {
         var etmPrincipal = getEtmPrincipal();
         var valueMap = toMap(json);
@@ -549,12 +551,12 @@ public class SearchService extends AbstractIndexMetadataService {
         if (getBoolean("includePayload", valueMap)
                 && !etmQuery.getResultLayout().getFieldNames().contains(this.eventTags.getPayloadTag())) {
             Field field = new Field().setName("Payload").setField("payload").setFormat(Field.Format.PLAIN).setArraySelector(Field.ArraySelector.FIRST);
-            etmQuery.getResultLayout().addField(field, etmPrincipal);
+            etmQuery.getResultLayout().addField(field);
 
         }
         SearchRequestBuilder requestBuilder = createRequestFromInput(etmQuery, etmPrincipal);
 
-        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, requestBuilder, etmQuery.getResultLayout().getStartIndex());
+        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, requestBuilder, getRedactedFields(etmPrincipal), 0);
         FileType fileType = FileType.valueOf(getString("fileType", valueMap).toUpperCase());
         File result = new QueryExporter().exportToFile(
                 scrollableSearch,
@@ -581,16 +583,17 @@ public class SearchService extends AbstractIndexMetadataService {
     @GET
     @Path("/event/{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
     public String getEvent(@PathParam("id") String eventId) {
         var now = Instant.now();
-        var payloadVisible = getEtmPrincipal().maySeeEventPayload();
+        var etmPrincipal = getEtmPrincipal();
+        var redactedFields = getRedactedFields(etmPrincipal);
         var auditLogBuilder = new GetEventAuditLogBuilder()
                 .setTimestamp(now)
                 .setHandlingTime(now)
                 .setPrincipalId(getEtmPrincipal().getId())
                 .setEventId(eventId)
-                .setPayloadVisible(payloadVisible)
+                .setRedactedFields(etmPrincipal.getRedactedFields())
                 .setDownloaded(false)
                 .setFound(false);
         SyncActionListener<SearchResponse> auditLogListener = null;
@@ -602,7 +605,7 @@ public class SearchService extends AbstractIndexMetadataService {
         var builder = new JsonBuilder();
         builder.startObject();
         builder.field("time_zone", getEtmPrincipal().getTimeZone().getID());
-        SearchHit searchHit = getEvent(eventId, new String[]{"*"}, !payloadVisible ? new String[]{this.eventTags.getPayloadTag()} : null);
+        RedactedSearchHit searchHit = getEvent(eventId, new String[]{"*"}, redactedFields);
         if (searchHit != null) {
             auditLogBuilder.setFound(true);
             Map<String, Object> valueMap = searchHit.getSourceAsMap();
@@ -617,7 +620,7 @@ public class SearchService extends AbstractIndexMetadataService {
             String correlatedToId = getString(this.eventTags.getCorrelationIdTag(), valueMap);
             boolean correlationAdded = false;
             if (correlatedToId != null && !correlatedToId.equals(eventId)) {
-                SearchHit correlatedEvent = conditionallyGetEvent(correlatedToId, payloadVisible);
+                RedactedSearchHit correlatedEvent = conditionallyGetEvent(correlatedToId, getRedactedFields(etmPrincipal));
                 if (correlatedEvent != null) {
                     builder.startArray("correlated_events");
                     builder.startObject();
@@ -642,7 +645,7 @@ public class SearchService extends AbstractIndexMetadataService {
                         // An event correlates to itself.
                         continue;
                     }
-                    SearchHit correlatedEvent = conditionallyGetEvent(correlationId, payloadVisible);
+                    RedactedSearchHit correlatedEvent = conditionallyGetEvent(correlationId, getRedactedFields(etmPrincipal));
                     if (correlatedEvent != null) {
                         added++;
                         if (!correlationAdded) {
@@ -666,14 +669,14 @@ public class SearchService extends AbstractIndexMetadataService {
                 SearchResponse auditLogResponse = auditLogListener.get();
                 if (auditLogResponse != null && auditLogResponse.getHits().getHits().length != 0) {
                     builder.startArray("audit_logs");
-                    for (SearchHit hit : auditLogResponse.getHits().getHits()) {
+                    for (var hit : auditLogResponse.getHits().getHits()) {
                         Map<String, Object> auditLogValues = hit.getSourceAsMap();
                         builder.startObject();
                         builder.field("direct", getString(GetEventAuditLog.EVENT_ID, auditLogValues).equals(eventId));
-                        builder.field("handling_time", getLong(AuditLog.HANDLING_TIME, auditLogValues));
-                        builder.field("principal_id", getString(AuditLog.PRINCIPAL_ID, auditLogValues));
-                        builder.field("payload_visible", getBoolean(GetEventAuditLog.PAYLOAD_VISIBLE, auditLogValues, true));
-                        builder.field("downloaded", getBoolean(GetEventAuditLog.DOWNLOADED, auditLogValues, false));
+                        builder.field(AuditLog.HANDLING_TIME, getLong(AuditLog.HANDLING_TIME, auditLogValues));
+                        builder.field(AuditLog.PRINCIPAL_ID, getString(AuditLog.PRINCIPAL_ID, auditLogValues));
+                        builder.field(GetEventAuditLog.REDACTED_FIELDS, getArray(GetEventAuditLog.REDACTED_FIELDS, auditLogValues, new ArrayList<String>()));
+                        builder.field(GetEventAuditLog.DOWNLOADED, getBoolean(GetEventAuditLog.DOWNLOADED, auditLogValues, false));
                         builder.endObject();
                     }
                     builder.endArray();
@@ -699,7 +702,7 @@ public class SearchService extends AbstractIndexMetadataService {
         SearchRequestBuilder requestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.AUDIT_LOG_INDEX_ALIAS_ALL))
                 .setQuery(boolQueryBuilder)
                 .setSort(AuditLog.HANDLING_TIME, SortOrder.DESC)
-                .setFetchSource(new String[]{AuditLog.HANDLING_TIME, AuditLog.PRINCIPAL_ID, GetEventAuditLog.EVENT_ID, GetEventAuditLog.PAYLOAD_VISIBLE, GetEventAuditLog.DOWNLOADED}, null)
+                .setFetchSource(new String[]{AuditLog.HANDLING_TIME, AuditLog.PRINCIPAL_ID, GetEventAuditLog.EVENT_ID, GetEventAuditLog.REDACTED_FIELDS, GetEventAuditLog.DOWNLOADED}, null)
                 .setFrom(0)
                 .setSize(500);
         dataRepository.searchAsync(requestBuilder, actionListener);
@@ -708,16 +711,17 @@ public class SearchService extends AbstractIndexMetadataService {
     @GET
     @Path("/event/{id}/dag")
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
     public String getDirectedGraphData(@PathParam("id") String eventId) {
-        var directedGraph = calculateDirectedGraph(eventId);
+        var etmPrincipal = getEtmPrincipal();
+        var directedGraph = calculateDirectedGraph(eventId, etmPrincipal);
         if (directedGraph == null) {
             return null;
         }
         var layers = directedGraph.getLayers();
         var builder = new JsonBuilder();
         builder.startObject();
-        builder.field("locale", getLocalFormatting(getEtmPrincipal()));
+        builder.rawField("locale", getLocalFormatting(etmPrincipal));
         builder.startArray("layers");
         for (var layer : layers) {
             builder.startObject();
@@ -780,12 +784,13 @@ public class SearchService extends AbstractIndexMetadataService {
     @GET
     @Path("/event/{id}/endpoints")
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
     public String getEventChainEndpoint(@PathParam("id") String eventId) {
+        var etmPrincipal = getEtmPrincipal();
         var builder = new JsonBuilder();
         builder.startObject();
-        builder.field("time_zone", getEtmPrincipal().getTimeZone().getID());
-        SearchHit searchHit = getEvent(eventId, new String[]{this.eventTags.getEndpointsTag() + ".*"}, null);
+        builder.field("time_zone", etmPrincipal.getTimeZone().getID());
+        RedactedSearchHit searchHit = getEvent(eventId, new String[]{this.eventTags.getEndpointsTag() + ".*"}, getRedactedFields(etmPrincipal));
         if (searchHit != null) {
             builder.startObject("event");
             builder.field("index", searchHit.getIndex());
@@ -797,7 +802,7 @@ public class SearchService extends AbstractIndexMetadataService {
         return builder.build();
     }
 
-    private SearchHit getEvent(String eventId, String[] includes, String[] excludes) {
+    private RedactedSearchHit getEvent(String eventId, String[] includes, Set<JsonPath> redactedFields) {
         IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder()
                 .addIds(eventId);
         BoolQueryBuilder query = new BoolQueryBuilder();
@@ -806,15 +811,15 @@ public class SearchService extends AbstractIndexMetadataService {
                 .setQuery(addFilterQuery(getEtmPrincipal(), query))
                 .setFrom(0)
                 .setSize(1);
-        builder.setFetchSource(includes, excludes);
+        builder.setFetchSource(includes, null);
         SearchResponse response = dataRepository.search(builder);
         if (response.getHits().getHits().length == 0) {
             return null;
         }
-        return response.getHits().getAt(0);
+        return new RedactedSearchHit(response.getHits().getAt(0), redactedFields);
     }
 
-    private SearchHit conditionallyGetEvent(String eventId, boolean payloadVisible) {
+    private RedactedSearchHit conditionallyGetEvent(String eventId, Set<JsonPath> redactedFields) {
         IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder()
                 .addIds(eventId);
         BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder().must(idsQueryBuilder);
@@ -822,12 +827,12 @@ public class SearchService extends AbstractIndexMetadataService {
                 .setQuery(alwaysShowCorrelatedEvents(getEtmPrincipal()) ? idsQueryBuilder : addFilterQuery(getEtmPrincipal(), boolQueryBuilder))
                 .setFrom(0)
                 .setSize(1)
-                .setFetchSource(new String[]{"*"}, !payloadVisible ? new String[]{this.eventTags.getPayloadTag()} : null);
+                .setFetchSource(true);
         SearchResponse response = dataRepository.search(builder);
         if (response.getHits().getHits().length == 0) {
             return null;
         }
-        return response.getHits().getAt(0);
+        return new RedactedSearchHit(response.getHits().getAt(0), redactedFields);
     }
 
     private boolean alwaysShowCorrelatedEvents(EtmPrincipal etmPrincipal) {
@@ -846,10 +851,10 @@ public class SearchService extends AbstractIndexMetadataService {
     @GET
     @Path("/transaction/{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
     public String getTransaction(@PathParam("id") String transactionId) {
         var etmPrincipal = getEtmPrincipal();
-        var events = getTransactionEvents(transactionId, etmPrincipal.isInRole(SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD));
+        var events = getTransactionEvents(transactionId, etmPrincipal);
         if (events == null) {
             return null;
         }
@@ -874,15 +879,12 @@ public class SearchService extends AbstractIndexMetadataService {
         return builder.build();
     }
 
-    private List<TransactionEvent> getTransactionEvents(String transactionId, boolean hidePayload) {
+    private List<TransactionEvent> getTransactionEvents(String transactionId, EtmPrincipal etmPrincipal) {
         var findEventsQuery = new BoolQueryBuilder()
                 .must(new TermQueryBuilder(this.eventTags.getEndpointsTag() +
                         "." + this.eventTags.getEndpointHandlersTag() +
                         "." + this.eventTags.getEndpointHandlerTransactionIdTag() + KEYWORD_SUFFIX, transactionId)
                 );
-        if (hidePayload) {
-            findEventsQuery.mustNot(new TermQueryBuilder(this.eventTags.getObjectTypeTag(), TelemetryEventTags.EVENT_OBJECT_TYPE_LOG));
-        }
         SearchRequestBuilder searchRequest = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(etmConfiguration.mergeRemoteIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL)))
                 .setQuery(addFilterQuery(getEtmPrincipal(), findEventsQuery))
                 .setSort(SortBuilders.fieldSort("_doc"))
@@ -895,13 +897,13 @@ public class SearchService extends AbstractIndexMetadataService {
                         this.eventTags.getHttpEventTypeTag(),
                         this.eventTags.getSqlEventTypeTag()}, null
                 );
-        var scrollableSearch = new ScrollableSearch(dataRepository, searchRequest);
+        var scrollableSearch = new ScrollableSearch(dataRepository, searchRequest, getRedactedFields(etmPrincipal));
         if (!scrollableSearch.hasNext()) {
             scrollableSearch.clearScrollIds();
             return null;
         }
         var events = new ArrayList<TransactionEvent>();
-        for (SearchHit searchHit : scrollableSearch) {
+        for (var searchHit : scrollableSearch) {
             var event = new TransactionEvent();
             var source = searchHit.getSourceAsMap();
             event.index = searchHit.getIndex();
@@ -947,13 +949,13 @@ public class SearchService extends AbstractIndexMetadataService {
     @GET
     @Path("/download/transaction/{id}")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
     public Response getDownloadTransaction(
             @QueryParam("q") String json,
             @PathParam("id") String transactionId) {
         EtmPrincipal etmPrincipal = getEtmPrincipal();
         Map<String, Object> valueMap = toMap(json);
-        List<TransactionEvent> events = getTransactionEvents(transactionId, etmPrincipal.isInRole(SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD));
+        List<TransactionEvent> events = getTransactionEvents(transactionId, etmPrincipal);
         if (events == null) {
             return null;
         }
@@ -978,16 +980,16 @@ public class SearchService extends AbstractIndexMetadataService {
     @GET
     @Path("/event/{id}/chain")
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE})
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
     public String getEventChain(@PathParam("id") String eventId) {
-        var directedGraph = calculateDirectedGraph(eventId);
+        var etmPrincipal = getEtmPrincipal();
+        var directedGraph = calculateDirectedGraph(eventId, etmPrincipal);
         if (directedGraph == null) {
             return null;
         }
         var events = directedGraph.findEvents(x -> !x.isResponse());
         events.sort(Comparator.comparing(Event::getEventStartTime).thenComparing(Event::getOrder).thenComparing(Event::getEventEndTime, Comparator.reverseOrder()));
 
-        var etmPrincipal = getEtmPrincipal();
         var builder = new JsonBuilder();
         builder.startObject()
                 .rawField("locale", getLocalFormatting(etmPrincipal))
@@ -1038,11 +1040,12 @@ public class SearchService extends AbstractIndexMetadataService {
     /**
      * Creates a <code>DirectedGraph</code> for a given event.
      *
-     * @param eventId The event id.
+     * @param eventId      The event id.
+     * @param etmPrincipal The <code>EtmPrincipal</code> used for redacting attributes.
      * @return The <code>DirectedGraph</code> for the event.
      */
     @SuppressWarnings("unchecked")
-    private DirectedGraph<AbstractVertex> calculateDirectedGraph(String eventId) {
+    private DirectedGraph<AbstractVertex> calculateDirectedGraph(String eventId, EtmPrincipal etmPrincipal) {
         IdsQueryBuilder idsQueryBuilder = new IdsQueryBuilder()
                 .addIds(eventId);
         // No principal filtered query. We would like to show the entire event chain, but the user should not be able to retrieve all information.
@@ -1060,6 +1063,7 @@ public class SearchService extends AbstractIndexMetadataService {
         var searchHit = response.getHits().getAt(0);
         var source = searchHit.getSourceAsMap();
         var endpoints = (List<Map<String, Object>>) source.get(this.eventTags.getEndpointsTag());
+        var redactedFields = getRedactedFields(etmPrincipal);
         if (endpoints != null) {
             for (var endpoint : endpoints) {
                 List<Map<String, Object>> endpointHandlers = getArray(this.eventTags.getEndpointHandlersTag(), endpoint);
@@ -1067,7 +1071,7 @@ public class SearchService extends AbstractIndexMetadataService {
                     for (var endpointHandler : endpointHandlers) {
                         if (endpointHandler.containsKey(this.eventTags.getEndpointHandlerTransactionIdTag())) {
                             var transactionId = (String) endpointHandler.get(this.eventTags.getEndpointHandlerTransactionIdTag());
-                            addTransactionToDirectedGraph(transactionId, directedGraph, handledTransactions);
+                            addTransactionToDirectedGraph(transactionId, directedGraph, handledTransactions, redactedFields);
                         }
                     }
                 }
@@ -1083,8 +1087,9 @@ public class SearchService extends AbstractIndexMetadataService {
      * @param transactionId       The id of the transaction to add.
      * @param directedGraph       The <code>DirectedGraph</code> to add the transaction data to.
      * @param handledTransactions A set of transaction id's on which the recursive transaction id's that are covered by this method are added.
+     * @param redactedFields      A set of <code>JsonPath</code> instances that correspond to fields that should be redacted.
      */
-    private void addTransactionToDirectedGraph(String transactionId, DirectedGraph<AbstractVertex> directedGraph, Set<String> handledTransactions) {
+    private void addTransactionToDirectedGraph(String transactionId, DirectedGraph<AbstractVertex> directedGraph, Set<String> handledTransactions, Set<JsonPath> redactedFields) {
         if (transactionId == null || handledTransactions.contains(transactionId)) {
             return;
         }
@@ -1099,15 +1104,15 @@ public class SearchService extends AbstractIndexMetadataService {
                 .setQuery(findEventsQuery)
                 .setSort(SortBuilders.fieldSort("_doc"))
                 .setFetchSource(null, this.eventTags.getPayloadTag());
-        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequest);
+        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequest, redactedFields);
         if (!scrollableSearch.hasNext()) {
             return;
         }
         Set<String> transactionIds = new HashSet<>();
-        for (SearchHit searchHit : scrollableSearch) {
+        for (var searchHit : scrollableSearch) {
             transactionIds.addAll(addSearchHitToDirectedGraph(searchHit, directedGraph));
         }
-        transactionIds.forEach(c -> addTransactionToDirectedGraph(c, directedGraph, handledTransactions));
+        transactionIds.forEach(c -> addTransactionToDirectedGraph(c, directedGraph, handledTransactions, redactedFields));
     }
 
     /**
@@ -1117,7 +1122,7 @@ public class SearchService extends AbstractIndexMetadataService {
      * @param directedGraph The <code>DirectedGraph</code> to add the <code>SearchHit</code> to.
      * @return A <code>Set</code> of transaction id's that are stored within this <code>SearchHit</code>. This list can be used to create a full event chain.
      */
-    private Set<String> addSearchHitToDirectedGraph(SearchHit searchHit, DirectedGraph<AbstractVertex> directedGraph) {
+    private Set<String> addSearchHitToDirectedGraph(RedactedSearchHit searchHit, DirectedGraph<AbstractVertex> directedGraph) {
         if (directedGraph.containsEvent(e -> searchHit.getId().equals(e.getEventId()))) {
             return Collections.emptySet();
         }
@@ -1258,13 +1263,48 @@ public class SearchService extends AbstractIndexMetadataService {
         return application != null;
     }
 
-    private void addSearchHits(JsonBuilder builder, SearchHits hits) {
-        for (SearchHit searchHit : hits.getHits()) {
+    private void addSearchHits(JsonBuilder builder, SearchHits hits, Set<JsonPath> redactedAttributes) {
+        for (var searchHit : hits.getHits()) {
             builder.startObject();
             builder.field("index", searchHit.getIndex());
             builder.field("id", searchHit.getId());
-            builder.rawField("source", searchHit.getSourceAsString());
+            builder.rawField("source", new RedactedSearchHit(searchHit, redactedAttributes).getSourceAsString());
             builder.endObject();
         }
+    }
+
+    /**
+     * Creates a <code>Set</code> with <code>JsonPath</code> instances that match fields that should be redacted.
+     *
+     * @param etmPrincipal The <code>EtmPrincipal</code> to retrieve the redacted fields for.
+     * @return A <code>Set</code> with <code>JsonPath</code> instances that match fields that should be redacted.
+     */
+    private Set<JsonPath> getRedactedFields(EtmPrincipal etmPrincipal) {
+        Set<String> redactedFields = etmPrincipal.getRedactedFields();
+        if (redactedFields == null || redactedFields.size() == 0) {
+            return null;
+        }
+        var result = new HashSet<JsonPath>();
+        for (var redactedField : redactedFields) {
+            result.add(fieldToJsonPath(redactedField));
+        }
+        return result;
+    }
+
+    /**
+     * Converts a full path of an Elasticsearch field to a JsonPath expression.
+     *
+     * @param field The path of an Elasticsearch field.
+     * @return The compiles <code>JsonPath</code> expression.
+     */
+    private JsonPath fieldToJsonPath(String field) {
+        var jsonPath = "$." + field;
+        if (jsonPath.startsWith("$.endpoints.")) {
+            jsonPath = jsonPath.replace("$.endpoints.", "$.endpoints[*].");
+        }
+        if (jsonPath.startsWith("$.endpoints[*].endpoint_handlers.")) {
+            jsonPath = jsonPath.replace("$.endpoints[*].endpoint_handlers.", "$.endpoints[*].endpoint_handlers[*].");
+        }
+        return JsonPath.compile(jsonPath);
     }
 }

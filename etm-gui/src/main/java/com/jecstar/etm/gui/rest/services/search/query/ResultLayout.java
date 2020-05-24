@@ -25,7 +25,6 @@ import com.jecstar.etm.gui.rest.export.MultiSelect;
 import com.jecstar.etm.gui.rest.services.search.query.converter.FieldListConverter;
 import com.jecstar.etm.server.core.converter.JsonField;
 import com.jecstar.etm.server.core.converter.custom.EnumConverter;
-import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -107,10 +106,7 @@ public class ResultLayout {
         return Collections.unmodifiableList(this.fields);
     }
 
-    public void addField(Field field, EtmPrincipal etmPrincipal) {
-        if (this.tags.getPayloadTag().equals(field.getField()) && !etmPrincipal.maySeeEventPayload()) {
-            return;
-        }
+    public void addField(Field field) {
         this.fields.add(field);
     }
 

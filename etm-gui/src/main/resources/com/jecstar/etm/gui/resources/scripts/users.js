@@ -19,6 +19,7 @@ function buildUserPage() {
     const userMap = {};
     const $groupSelect = $('<select>').addClass('form-control custom-select etm-group');
     const $notifierSelect = $('<select>').addClass('form-control custom-select etm-notifier');
+    let queryKeywords = null;
 
     $.when(
         $.ajax({
@@ -30,11 +31,12 @@ function buildUserPage() {
                 if (!data || !data.keywords) {
                     return;
                 }
+                queryKeywords = data.keywords;
                 $('#input-filter-query').bind('keydown', function (event) {
                     if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
                         event.stopPropagation();
                     }
-                }).autocompleteFieldQuery({queryKeywords: data.keywords});
+                }).autocompleteFieldQuery({queryKeywords: queryKeywords});
             }
         }),
         $.ajax({
@@ -182,9 +184,21 @@ function buildUserPage() {
         $('#user-roles-container > label > input').prop('checked', false);
         if (userData.roles) {
             $('#card-acl').find('select').val('none');
-            $.each(userData.roles, function(index, role) {
-                $('#card-acl').find("option[value='" + role + "']").parent().val(role);
+            $.each(userData.roles, function (index, role) {
+                $('#card-acl').find("option[value='" + role + "']").parent().val(role).trigger('change');
             });
+        }
+        if (userData.roles.indexOf('etm_event_read') !== -1 || userData.roles.indexOf('etm_event_read_write') !== -1) {
+            if (userData.event_field_denies) {
+                $.each(userData.event_field_denies, function (index, deny) {
+                    $('#list-event-denies').append(createEventDenyGrantRow(deny));
+                });
+            }
+            if (userData.event_field_grants) {
+                $.each(userData.event_field_grants, function (index, grant) {
+                    $('#list-event-grants').append(createEventDenyGrantRow(grant));
+                });
+            }
         }
         $('#dashboard-datasource-block').find("input[type='checkbox']").prop('checked', false);
         if (userData.dashboard_datasources) {
@@ -353,6 +367,16 @@ function buildUserPage() {
         $('#list-notifiers').append(createNotifierRow());
     });
 
+    $('#lnk-add-deny').on('click', function (event) {
+        event.preventDefault();
+        $('#list-event-denies').append(createEventDenyGrantRow());
+    });
+
+    $('#lnk-add-grant').on('click', function (event) {
+        event.preventDefault();
+        $('#list-event-grants').append(createEventDenyGrantRow());
+    });
+
     $('#lnk-rotate-api-key').on('click', function (event) {
         event.preventDefault();
         const userId = $('#input-user-id').val();
@@ -386,6 +410,15 @@ function buildUserPage() {
 
     $('#input-user-id').on('input', enableOrDisableButtons);
 
+    $('#sel-event-acl').on('change', function (event) {
+        event.preventDefault();
+        if ('etm_event_read' === $(this).val() || 'etm_event_read_write' === $(this).val()) {
+            $('#event-denies-container, #event-grants-container').show();
+        } else {
+            $('#event-denies-container, #event-grants-container').hide();
+        }
+    });
+
     function enableOrDisableButtons() {
         const userId = $('#input-user-id').val();
         if (userId) {
@@ -409,42 +442,72 @@ function buildUserPage() {
     }
 
     function createGroupRow(groupName) {
-        const groupRow = $('<li>').attr('style', 'margin-top: 5px; list-style-type: none;').append(
+        const $groupRow = $('<li>').attr('style', 'margin-top: 5px; list-style-type: none;').append(
             $('<div>').addClass('input-group').append(
                 $groupSelect.clone(true),
                 $('<div>').addClass('input-group-append').append(
                     $('<button>').addClass('btn btn-outline-secondary fa fa-times text-danger').attr('type', 'button').click(function (event) {
                         event.preventDefault();
-                        removeGroupOrNotifierRow($(this));
+                        removeSelectedRow($(this));
                     })
                 )
             )
         );
         if (groupName) {
-            $(groupRow).find('.etm-group').val(groupName)
+            $groupRow.find('.etm-group').val(groupName)
         }
-        return groupRow;
+        return $groupRow;
     }
 
     function createNotifierRow(notifierName) {
-        const notifierRow = $('<li>').attr('style', 'margin-top: 5px; list-style-type: none;').append(
+        const $notifierRow = $('<li>').attr('style', 'margin-top: 5px; list-style-type: none;').append(
             $('<div>').addClass('input-group').append(
                 $notifierSelect.clone(true),
                 $('<div>').addClass('input-group-append').append(
                     $('<button>').addClass('btn btn-outline-secondary fa fa-times text-danger').attr('type', 'button').click(function (event) {
                         event.preventDefault();
-                        removeGroupOrNotifierRow($(this));
+                        removeSelectedRow($(this));
                     })
                 )
             )
         );
         if (notifierName) {
-            $(notifierRow).find('.etm-notifier').val(notifierName)
+            $notifierRow.find('.etm-notifier').val(notifierName)
         }
-        return notifierRow;
+        return $notifierRow;
     }
 
-    function removeGroupOrNotifierRow(anchor) {
+    function createEventDenyGrantRow(fieldName) {
+        const $inputField = $('<input class="form-control form-control-sm">')
+            .bind('keydown', function (event) {
+                if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
+                    event.stopPropagation();
+                }
+            })
+            .autocompleteFieldQuery(
+                {
+                    queryKeywords: queryKeywords,
+                    mode: 'field'
+                }
+            );
+        const $row = $('<li>').attr('style', 'margin-top: 5px; list-style-type: none;').append(
+            $('<div>').addClass('input-group').append(
+                $inputField,
+                $('<div>').addClass('input-group-append').append(
+                    $('<button>').addClass('btn btn-sm btn-outline-secondary fa fa-times text-danger').attr('type', 'button').click(function (event) {
+                        event.preventDefault();
+                        removeSelectedRow($(this));
+                    })
+                )
+            )
+        );
+        if (fieldName) {
+            $inputField.val(fieldName);
+        }
+        return $row;
+    }
+
+    function removeSelectedRow(anchor) {
         anchor.parent().parent().parent().remove();
     }
 
@@ -559,7 +622,9 @@ function buildUserPage() {
                 .map(function () {
                     return $(this).val();
                 }).get(),
-            notifiers: []
+            notifiers: [],
+            event_field_denies: [],
+            event_field_grants: []
         };
         if ($('#input-new-password1').val()) {
             userData.new_password = $('#input-new-password1').val();
@@ -581,12 +646,27 @@ function buildUserPage() {
                 userData.notifiers.push(notifierName);
             }
         });
+        if (userData.roles.indexOf('etm_event_read') !== -1 || userData.roles.indexOf('etm_event_read_write') !== -1) {
+            $('#list-event-denies').find('input').each(function () {
+                const val = $(this).val();
+                if (val.trim().length > 0) {
+                    userData.event_field_denies.push(val.trim());
+                }
+            });
+            $('#list-event-grants').find('input').each(function () {
+                const val = $(this).val();
+                if (val.trim().length > 0) {
+                    userData.event_field_grants.push(val.trim());
+                }
+            });
+        }
         return userData;
     }
 
     function resetValues() {
         document.getElementById('user_form').reset();
         $('#input-user-api-key').text('');
+        $('#sel-event-acl').trigger('change');
         enableOrDisableButtons();
     }
 }

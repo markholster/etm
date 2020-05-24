@@ -29,7 +29,6 @@ import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.elasticsearch.search.SearchHit;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -44,8 +43,6 @@ public class QueryExporter {
 
     public File exportToFile(ScrollableSearch scrollableSearch, FileType fileType, int maxRows, EtmPrincipal etmPrincipal, List<FieldLayout> fields, Consumer<GetEventAuditLogBuilder> auditLogPersistingConsumer) {
         GetEventAuditLogBuilder auditLogBuilder = createGetEventAuditLogBuilder(etmPrincipal);
-
-        removePayloadWhenUserIsNotAllowedToSee(fields, etmPrincipal);
 
         try {
             File outputFile = File.createTempFile("etm-", "-download");
@@ -73,8 +70,6 @@ public class QueryExporter {
         fields.add(new FieldLayout("Endpoint", "endpoint", FieldType.PLAIN, MultiSelect.FIRST));
         fields.add(new FieldLayout("Payload", eventTags.getPayloadTag(), FieldType.PLAIN, MultiSelect.FIRST));
 
-        removePayloadWhenUserIsNotAllowedToSee(fields, etmPrincipal);
-
         try {
             File outputFile = File.createTempFile("etm-", "-download");
             outputFile.deleteOnExit();
@@ -99,13 +94,6 @@ public class QueryExporter {
                 .setFound(true);
     }
 
-    private void removePayloadWhenUserIsNotAllowedToSee(List<FieldLayout> fields, EtmPrincipal etmPrincipal) {
-        if (etmPrincipal.maySeeEventPayload()) {
-            return;
-        }
-        fields.removeIf(f -> this.eventTags.getPayloadTag().equals(f.getField()));
-    }
-
     private void createCsv(
             Supplier<Iterator<Map<String, Object>>> sourceSupplier,
             int maxResults,
@@ -115,9 +103,6 @@ public class QueryExporter {
             GetEventAuditLogBuilder auditLogBuilder,
             Consumer<GetEventAuditLogBuilder> auditLogPersistingConsumer
     ) throws IOException {
-
-        boolean payloadVisible = fields.stream().anyMatch(p -> this.eventTags.getPayloadTag().equals(p.getField()));
-        auditLogBuilder.setPayloadVisible(payloadVisible);
 
         try (BufferedWriter writer = Files.newBufferedWriter(outputFile.toPath())) {
             boolean first = true;
@@ -172,7 +157,7 @@ public class QueryExporter {
     ) throws IOException {
 
         boolean payloadVisible = fields.stream().anyMatch(p -> this.eventTags.getPayloadTag().equals(p.getField()));
-        auditLogBuilder.setPayloadVisible(payloadVisible);
+        auditLogBuilder.setRedactedFields(etmPrincipal.getRedactedFields());
 
         final int charsPerCell = 30000;
         // First make sure the payload field is at the end of the field list because it can be splitted into several cells.
@@ -284,7 +269,7 @@ public class QueryExporter {
 
         @Override
         public Map<String, Object> next() {
-            SearchHit next = this.scrollableSearch.next();
+            var next = this.scrollableSearch.next();
             if (next != null) {
                 Map<String, Object> sourceAsMap = next.getSourceAsMap();
                 sourceAsMap.put(Keyword.ID.getName(), next.getId());

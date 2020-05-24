@@ -1285,11 +1285,6 @@ function executeQuery(queryParameters, successCallback) {
                 $('#link-request-download').show();
                 $('#input-download-number-of-rows').attr('max', maxDownloads);
             }
-            if (data.may_see_payload) {
-                $('#sel-download-include-payload').removeAttr('disabled').val('true');
-            } else {
-                $('#sel-download-include-payload').attr('disabled', 'disabled').val('false');
-            }
             searchResultLayout.current_ix = data.start_ix;
             const $searchStats = $('#search-stats');
             const hadPreviousResults = $('#result_card').children().length !== 0;
@@ -1302,7 +1297,7 @@ function executeQuery(queryParameters, successCallback) {
                     $('#result_card').append($('<p>').text('No results found'));
                 } else {
                     $searchStats.text(':  Found ' + data.hits_as_string + ' results in ' + data.query_time_as_string + 'ms. Showing results ' + (data.start_ix + 1) + ' to ' + (data.end_ix + 1) + '.');
-                    const $resultTable = $('<div id="search_result_table" class="container">');
+                    const $resultTable = $('<div id="search_result_table">');
                     $resultTable.append(function () {
                         const $row = $('<div class="row header-row">');
                         $(searchResultLayout.fields).each(function (index, tableColumn) {
@@ -1316,6 +1311,7 @@ function executeQuery(queryParameters, successCallback) {
                             }
                             $row.append($col)
                         });
+                        $row.append($('<div class="col-1">'));
                         return $row;
                     });
                     $('#result_card').append($resultTable);

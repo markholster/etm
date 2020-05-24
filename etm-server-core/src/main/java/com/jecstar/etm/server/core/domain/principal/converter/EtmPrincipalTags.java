@@ -19,53 +19,111 @@ package com.jecstar.etm.server.core.domain.principal.converter;
 
 public interface EtmPrincipalTags {
 
-    String getIdTag();
+    default String getAlwaysShowCorrelatedEventsTag() {
+        return "always_show_correlated_events";
+    }
 
-    String getEmailTag();
+    default String getApiKeyTag() {
+        return "api_key";
+    }
 
-    String getApiKeyTag();
+    default String getChangePasswordOnLogonTag() {
+        return "change_password_on_logon";
+    }
 
-    String getSecondaryApiKeyTag();
+    default String getDashboardDatasourcesTag() {
+        return "dashboard_datasources";
+    }
 
-    String getFilterQueryTag();
+    default String getDashboardsTag() {
+        return "dashboards";
+    }
 
-    String getFilterQueryOccurrenceTag();
+    default String getDisplayNameTag() {
+        return "display_name";
+    }
 
-    String getAlwaysShowCorrelatedEventsTag();
+    default String getEmailTag() {
+        return "email";
+    }
 
-    String getSearchHistorySizeTag();
+    default String getEventFieldDeniesTag() {
+        return "event_field_denies";
+    }
 
-    String getLocaleTag();
+    default String getEventFieldGrantsTag() {
+        return "event_field_grants";
+    }
 
-    String getNameTag();
+    default String getFilterQueryTag() {
+        return "filter_query";
+    }
 
-    String getDisplayNameTag();
+    default String getFilterQueryOccurrenceTag() {
+        return "filter_query_occurrence";
+    }
 
-    String getPasswordHashTag();
+    default String getGraphsTag() {
+        return "graphs";
+    }
 
-    String getChangePasswordOnLogonTag();
+    default String getGroupsTag() {
+        return "groups";
+    }
 
-    String getRolesTag();
+    default String getIdTag() {
+        return "id";
+    }
 
-    String getGroupsTag();
+    default String getLdapBaseTag() {
+        return "ldap_base";
+    }
 
-    String getTimeZoneTag();
+    default String getLocaleTag() {
+        return "locale";
+    }
 
-    String getLdapBaseTag();
+    default String getNameTag() {
+        return "name";
+    }
 
-    String getDashboardsTag();
+    default String getNotifiersTag() {
+        return "notifiers";
+    }
 
-    String getGraphsTag();
+    default String getPasswordHashTag() {
+        return "password_hash";
+    }
 
-    String getSearchHistoryTag();
+    default String getRolesTag() {
+        return "roles";
+    }
 
-    String getSearchTemplatesTag();
+    default String getSearchHistoryTag() {
+        return "search_history";
+    }
 
-    String getSignalsTag();
+    default String getSearchHistorySizeTag() {
+        return "search_history_size";
+    }
 
-    String getDashboardDatasourcesTag();
+    default String getSearchTemplatesTag() {
+        return "search_templates";
+    }
 
-    String getSignalDatasourcesTag();
+    default String getSecondaryApiKeyTag() {
+        return "secondary_api_key";
+    }
 
-    String getNotifiersTag();
+    default String getSignalDatasourcesTag() {
+        return "signal_datasources";
+    }
+
+    default String getSignalsTag() {
+        return "signals";
+    }
+
+    default String getTimeZoneTag() {
+        return "time_zone";
+    }
 }

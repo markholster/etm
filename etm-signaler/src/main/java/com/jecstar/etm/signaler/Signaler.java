@@ -50,7 +50,6 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.ExistsQueryBuilder;
 import org.elasticsearch.rest.RestStatus;
-import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.HasAggregations;
 import org.elasticsearch.search.aggregations.ParsedMultiBucketAggregation;
@@ -143,9 +142,10 @@ public class Signaler extends AbstractJsonService implements Runnable {
                             new SearchRequestBuilder()
                     ).setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
                             .setFetchSource(false)
-                            .setQuery(boolQueryBuilder)
+                            .setQuery(boolQueryBuilder),
+                    null
             );
-            for (SearchHit searchHit : scrollableSearch) {
+            for (var searchHit : scrollableSearch) {
                 for (int i = 0; i < MAX_RETRIES; i++) {
                     if (Thread.currentThread().isInterrupted()) {
                         if (log.isInfoLevelEnabled()) {
