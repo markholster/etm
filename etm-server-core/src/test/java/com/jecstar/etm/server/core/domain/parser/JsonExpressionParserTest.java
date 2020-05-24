@@ -64,7 +64,7 @@ public class JsonExpressionParserTest {
     @Test
     public void testEvaluate() {
         JsonPathExpressionParser parser = new JsonPathExpressionParser("test", "$.store.book[0].author");
-        assertEquals("Nigel Rees", parser.evaluate(json));
-
+        assertEquals("Nigel Rees", parser.evaluate(this.json));
     }
+
 }

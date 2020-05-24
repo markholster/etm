@@ -30,7 +30,6 @@ import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.persisting.RequestEnhancer;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
 
 public class HttpSessionCleaner implements Runnable {
 
@@ -67,7 +66,7 @@ public class HttpSessionCleaner implements Runnable {
                                     QueryBuilders.rangeQuery(this.tags.getLastAccessedTag()).lt(System.currentTimeMillis() - this.etmConfiguration.getSessionTimeout()).from(0L)
                             ).filter(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.STATE_OBJECT_TYPE_SESSION))
                     );
-            ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
+            ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder, null);
             if (!scrollableSearch.hasNext()) {
                 return;
             }
@@ -75,7 +74,7 @@ public class HttpSessionCleaner implements Runnable {
                 log.logInfoMessage("Found " + scrollableSearch.getNumberOfHits() + " expired http sessions marked for deletion.");
             }
             BulkRequestBuilder bulkRequestBuilder = this.requestEnhancer.enhance(new BulkRequestBuilder());
-            for (SearchHit searchHit : scrollableSearch) {
+            for (var searchHit : scrollableSearch) {
                 if (Thread.currentThread().isInterrupted()) {
                     return;
                 }

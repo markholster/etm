@@ -55,4 +55,5 @@ abstract class AbstractAuditLogBuilder<Audit extends AuditLog, Builder extends A
         return (Builder) this;
     }
 
+
 }

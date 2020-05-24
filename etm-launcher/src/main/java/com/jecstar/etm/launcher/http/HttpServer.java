@@ -278,7 +278,7 @@ public class HttpServer {
                 .addRolesAllowed(SecurityRoles.ALL_ROLES_ARRAY)
                 .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/").addUrlPattern("/index.html").addUrlPattern("/preferences/*").addUrlPattern("/rest/user/*")));
         di.addSecurityConstraint(new SecurityConstraint()
-                .addRolesAllowed(SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE)
+                .addRolesAllowed(SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE)
                 .addWebResourceCollection(new WebResourceCollection().addUrlPattern("/search/*").addUrlPattern("/rest/search/*")));
         di.addSecurityConstraint(new SecurityConstraint()
                 .addRolesAllowed(SecurityRoles.USER_DASHBOARD_READ_WRITE, SecurityRoles.GROUP_DASHBOARD_READ, SecurityRoles.GROUP_DASHBOARD_READ_WRITE)

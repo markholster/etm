@@ -59,6 +59,8 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
         builder.field(this.tags.getRolesTag(), etmPrincipal.getRoles());
         builder.field(this.tags.getDashboardDatasourcesTag(), etmPrincipal.getDashboardDatasources());
         builder.field(this.tags.getNotifiersTag(), etmPrincipal.getNotifiers());
+        builder.field(this.tags.getEventFieldDeniesTag(), etmPrincipal.getEventFieldDenies());
+        builder.field(this.tags.getEventFieldGrantsTag(), etmPrincipal.getEventFieldGrants());
         builder.field(this.tags.getGroupsTag(), etmPrincipal.getGroups().stream().filter(g -> !g.isLdapBase()).map(EtmGroup::getName).collect(Collectors.toSet()));
         builder.field(this.tags.getTimeZoneTag(), etmPrincipal.getTimeZone().getID());
         builder.endObject().endObject();
@@ -86,6 +88,7 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
         builder.field(this.tags.getDashboardDatasourcesTag(), etmGroup.getDashboardDatasources());
         builder.field(this.tags.getSignalDatasourcesTag(), etmGroup.getSignalDatasources());
         builder.field(this.tags.getNotifiersTag(), etmGroup.getNotifiers());
+        builder.field(this.tags.getEventFieldDeniesTag(), etmGroup.getEventFieldDenies());
         builder.endObject().endObject();
         return builder.build();
     }
@@ -117,11 +120,11 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
         if (value != null) {
             principal.setTimeZone(TimeZone.getTimeZone(value));
         }
-        List<String> roles = this.converter.getArray(this.tags.getRolesTag(), valueMap);
-        if (roles != null) {
-            principal.addRoles(roles);
+        List<String> list = this.converter.getArray(this.tags.getRolesTag(), valueMap);
+        if (list != null) {
+            principal.addRoles(list);
         }
-        List<String> list = this.converter.getArray(this.tags.getDashboardDatasourcesTag(), valueMap);
+        list = this.converter.getArray(this.tags.getDashboardDatasourcesTag(), valueMap);
         if (list != null) {
             principal.addDashboardDatasources(list);
         }
@@ -132,6 +135,14 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
         list = this.converter.getArray(this.tags.getNotifiersTag(), valueMap);
         if (list != null) {
             principal.addNotifiers(list);
+        }
+        list = this.converter.getArray(this.tags.getEventFieldDeniesTag(), valueMap);
+        if (list != null) {
+            principal.addEventFieldDenies(list);
+        }
+        list = this.converter.getArray(this.tags.getEventFieldGrantsTag(), valueMap);
+        if (list != null) {
+            principal.addEventFieldGrants(list);
         }
         // Add the dashboard names. These are readonly properties added by the DashboardService.
         List<Map<String, Object>> dashboards = this.converter.getArray(this.tags.getDashboardsTag(), valueMap);
@@ -151,11 +162,11 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
         group.setFilterQueryOccurrence(QueryOccurrence.valueOf(this.converter.getString(this.tags.getFilterQueryOccurrenceTag(), valueMap)));
         group.setAlwaysShowCorrelatedEvents(this.converter.getBoolean(this.tags.getAlwaysShowCorrelatedEventsTag(), valueMap));
         group.setLdapBase(this.converter.getBoolean(this.tags.getLdapBaseTag(), valueMap, Boolean.FALSE));
-        List<String> roles = this.converter.getArray(this.tags.getRolesTag(), valueMap);
-        if (roles != null) {
-            group.addRoles(roles);
+        List<String> list = this.converter.getArray(this.tags.getRolesTag(), valueMap);
+        if (list != null) {
+            group.addRoles(list);
         }
-        List<String> list = this.converter.getArray(this.tags.getDashboardDatasourcesTag(), valueMap);
+        list = this.converter.getArray(this.tags.getDashboardDatasourcesTag(), valueMap);
         if (list != null) {
             group.addDashboardDatasources(list);
         }
@@ -166,6 +177,10 @@ public class EtmPrincipalConverterJsonImpl implements EtmPrincipalConverter<Stri
         list = this.converter.getArray(this.tags.getNotifiersTag(), valueMap);
         if (list != null) {
             group.addNotifiers(list);
+        }
+        list = this.converter.getArray(this.tags.getEventFieldDeniesTag(), valueMap);
+        if (list != null) {
+            group.addEventFieldDenies(list);
         }
         // Add the dashboard names. These are readonly properties added by the DashboardService.
         List<Map<String, Object>> dashboards = this.converter.getArray(this.tags.getDashboardsTag(), valueMap);

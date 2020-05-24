@@ -21,6 +21,7 @@ import com.jecstar.etm.launcher.ElasticsearchIndexTemplateCreator;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.elasticsearch.builder.*;
+import com.jecstar.etm.server.core.persisting.RedactedSearchHit;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.DocWriteRequest;
@@ -36,7 +37,6 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
 
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -112,10 +112,10 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
                         .setQuery(QueryBuilders.matchAllQuery())
                         .setTimeout(TimeValue.timeValueSeconds(30))
                         .setFetchSource(true);
-                ScrollableSearch searchHits = new ScrollableSearch(dataRepository, searchRequestBuilder);
+                ScrollableSearch searchHits = new ScrollableSearch(dataRepository, searchRequestBuilder, null);
                 long total = searchHits.getNumberOfHits();
                 long current = 0, lastPrint = 0;
-                for (SearchHit searchHit : searchHits) {
+                for (var searchHit : searchHits) {
                     bulkProcessor.add(new IndexRequest()
                             .index(searchHit.getIndex().substring(migrationIndexPrefix.length()))
                             .id(searchHit.getId())
@@ -198,13 +198,13 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
         createTemporaryIndexTemplates(dataRepository, migrationIndexPrefix, 1);
     }
 
-    protected boolean migrateEntity(SearchRequestBuilder searchRequestBuilder, String entityName, DataRepository dataRepository, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener, Function<SearchHit, DocWriteRequest<?>> processor) {
+    protected boolean migrateEntity(SearchRequestBuilder searchRequestBuilder, String entityName, DataRepository dataRepository, BulkProcessor bulkProcessor, FailureDetectingBulkProcessorListener listener, Function<RedactedSearchHit, DocWriteRequest<?>> processor) {
         System.out.println("Start migrating " + entityName + " to temporary index.");
         listener.reset();
-        ScrollableSearch searchHits = new ScrollableSearch(dataRepository, searchRequestBuilder);
+        ScrollableSearch searchHits = new ScrollableSearch(dataRepository, searchRequestBuilder, null);
         long total = searchHits.getNumberOfHits();
         long current = 0, lastPrint = 0;
-        for (SearchHit searchHit : searchHits) {
+        for (var searchHit : searchHits) {
             bulkProcessor.add(processor.apply(searchHit));
             lastPrint = printPercentageWhenChanged(lastPrint, ++current, total);
         }

@@ -39,7 +39,6 @@ import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
 
 import javax.annotation.security.DeclareRoles;
 import javax.annotation.security.RolesAllowed;
@@ -79,14 +78,14 @@ public class IIBService extends AbstractGuiService {
         SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE));
-        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
+        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder, null);
         if (!scrollableSearch.hasNext()) {
             return null;
         }
         StringBuilder result = new StringBuilder();
         result.append("{\"nodes\": [");
         boolean first = true;
-        for (SearchHit searchHit : scrollableSearch) {
+        for (var searchHit : scrollableSearch) {
             if (!first) {
                 result.append(",");
             }

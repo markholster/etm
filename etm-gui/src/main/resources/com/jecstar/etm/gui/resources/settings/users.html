@@ -312,15 +312,31 @@
                                                                 <select id="sel-event-acl"
                                                                         class="form-control form-control-sm custom-select custom-select-sm">
                                                                     <option value="none">None</option>
-                                                                    <option value="etm_event_read_without_payload">Read
-                                                                        without
-                                                                        payload
-                                                                    </option>
                                                                     <option value="etm_event_read">Read</option>
                                                                     <option value="etm_event_write">Write</option>
                                                                     <option value="etm_event_read_write">Read & write
                                                                     </option>
                                                                 </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row" id="event-denies-container"
+                                                             style="display: none">
+                                                            <div class="col ml-2">
+                                                                <a id="lnk-add-deny" class="float-right" href="#">Add
+                                                                    denied field</a>
+                                                                <label>Denies</label>
+                                                                <ol id="list-event-denies">
+                                                                </ol>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row" id="event-grants-container"
+                                                             style="display: none">
+                                                            <div class="col ml-2">
+                                                                <a id="lnk-add-grant" class="float-right" href="#">Add
+                                                                    granted field</a>
+                                                                <label>Grants</label>
+                                                                <ol id="list-event-grants">
+                                                                </ol>
                                                             </div>
                                                         </div>
                                                         <div class="row">

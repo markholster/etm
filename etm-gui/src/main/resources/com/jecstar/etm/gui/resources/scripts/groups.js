@@ -17,22 +17,24 @@
 
 function buildGroupPage() {
 	const $notifierSelect = $('<select>').addClass('form-control custom-select etm-notifier');
+	let queryKeywords = null;
 
 	$.when(
 		$.ajax({
-            type: 'GET',
-            contentType: 'application/json',
-            url: '../rest/settings/keywords/etm_event_all',
-            cache: false,
-            success: function (data) {
-                if (!data || !data.keywords) {
-                    return;
-                }
-                $('#input-filter-query').bind('keydown', function (event) {
-                    if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
-                        event.stopPropagation();
-                    }
-                }).autocompleteFieldQuery({queryKeywords: data.keywords});
+			type: 'GET',
+			contentType: 'application/json',
+			url: '../rest/settings/keywords/etm_event_all',
+			cache: false,
+			success: function (data) {
+				if (!data || !data.keywords) {
+					return;
+				}
+				queryKeywords = data.keywords;
+				$('#input-filter-query').bind('keydown', function (event) {
+					if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
+						event.stopPropagation();
+					}
+				}).autocompleteFieldQuery({queryKeywords: queryKeywords});
 			}
 		}),
 		$.ajax({
@@ -94,8 +96,16 @@ function buildGroupPage() {
 		if (groupData.roles) {
 			$('#card-acl').find('select').val('none');
 			$.each(groupData.roles, function (index, role) {
-				$('#card-acl').find("option[value='" + role + "']").parent().val(role);
+				$('#card-acl').find("option[value='" + role + "']").parent().val(role).trigger('change');
+				;
 			});
+		}
+		if (groupData.roles.indexOf('etm_event_read') !== -1 || groupData.roles.indexOf('etm_event_read_write') !== -1) {
+			if (groupData.event_field_denies) {
+				$.each(groupData.event_field_denies, function (index, deny) {
+					$('#list-event-denies').append(createEventDenyRow(deny));
+				});
+			}
 		}
 		$('#dashboard-datasource-block').find("input[type='checkbox']").prop('checked', false);
 		if (groupData.dashboard_datasources) {
@@ -174,7 +184,7 @@ function buildGroupPage() {
 
 	$('#btn-import-group').on('click', function (event) {
 		event.preventDefault();
-		var groupName = $("#sel-import-group").val();
+		const groupName = $("#sel-import-group").val();
 		if (!groupName) {
 			return false;
 		}
@@ -209,10 +219,24 @@ function buildGroupPage() {
 		$('#list-notifiers').append(createNotifierRow());
 	});
 
+	$('#lnk-add-deny').on('click', function (event) {
+		event.preventDefault();
+		$('#list-event-denies').append(createEventDenyRow());
+	});
+
 	$('#input-group-name').on('input', enableOrDisableButtons);
 
+	$('#sel-event-acl').on('change', function (event) {
+		event.preventDefault();
+		if ('etm_event_read' === $(this).val() || 'etm_event_read_write' === $(this).val()) {
+			$('#event-denies-container').show();
+		} else {
+			$('#event-denies-container').hide();
+		}
+	});
+
 	function enableOrDisableButtons() {
-		var groupName = $('#input-group-name').val();
+		const groupName = $('#input-group-name').val();
 		if (groupName) {
 			$('#btn-confirm-save-group').removeAttr('disabled');
 			if (isGroupExistent(groupName)) {
@@ -230,7 +254,7 @@ function buildGroupPage() {
 	}
 
 	function saveGroup() {
-		var groupData = createGroupData();
+		const groupData = createGroupData();
 		$.ajax({
 			type: 'PUT',
 			contentType: 'application/json',
@@ -276,24 +300,54 @@ function buildGroupPage() {
 	}
 
 	function createNotifierRow(notifierName) {
-		var notifierRow = $('<li>').attr('style', 'margin-top: 5px; list-style-type: none;').append(
+		const $notifierRow = $('<li>').attr('style', 'margin-top: 5px; list-style-type: none;').append(
 			$('<div>').addClass('input-group').append(
 				$notifierSelect.clone(true),
 				$('<div>').addClass('input-group-append').append(
 					$('<button>').addClass('btn btn-outline-secondary fa fa-times text-danger').attr('type', 'button').click(function (event) {
 						event.preventDefault();
-						removeNotifierRow($(this));
+						removeSelectedRow($(this));
 					})
 				)
 			)
 		);
 		if (notifierName) {
-			$(notifierRow).find('.etm-notifier').val(notifierName)
+			$notifierRow.find('.etm-notifier').val(notifierName)
 		}
-		return notifierRow;
+		return $notifierRow;
 	}
 
-	function removeNotifierRow(anchor) {
+	function createEventDenyRow(fieldName) {
+		const $inputField = $('<input class="form-control form-control-sm">')
+			.bind('keydown', function (event) {
+				if (event.keyCode === $.ui.keyCode.ESCAPE && $(this).autocomplete('instance').menu.active) {
+					event.stopPropagation();
+				}
+			})
+			.autocompleteFieldQuery(
+				{
+					queryKeywords: queryKeywords,
+					mode: 'field'
+				}
+			);
+		const $row = $('<li>').attr('style', 'margin-top: 5px; list-style-type: none;').append(
+			$('<div>').addClass('input-group').append(
+				$inputField,
+				$('<div>').addClass('input-group-append').append(
+					$('<button>').addClass('btn btn-sm btn-outline-secondary fa fa-times text-danger').attr('type', 'button').click(function (event) {
+						event.preventDefault();
+						removeSelectedRow($(this));
+					})
+				)
+			)
+		);
+		if (fieldName) {
+			$inputField.val(fieldName);
+		}
+		return $row;
+	}
+
+	function removeSelectedRow(anchor) {
 		anchor.parent().parent().parent().remove();
 	}
 
@@ -315,7 +369,8 @@ function buildGroupPage() {
 				.map(function () {
 					return $(this).val();
 				}).get(),
-			notifiers: []
+			notifiers: [],
+			event_field_denies: []
 		};
 		$('#card-acl').find('select').each(function () {
 			if ($(this).val() !== 'none') {
@@ -328,11 +383,20 @@ function buildGroupPage() {
 				groupData.notifiers.push(notifierName);
 			}
 		});
+		if (groupData.roles.indexOf('etm_event_read') !== -1 || groupData.roles.indexOf('etm_event_read_write') !== -1) {
+			$('#list-event-denies').find('input').each(function () {
+				const val = $(this).val();
+				if (val.trim().length > 0) {
+					groupData.event_field_denies.push(val.trim());
+				}
+			});
+		}
 		return groupData;
 	}
 
 	function resetValues() {
 		document.getElementById('group_form').reset();
+		$('#sel-event-acl').trigger('change');
 		enableOrDisableButtons();
 	}
 }

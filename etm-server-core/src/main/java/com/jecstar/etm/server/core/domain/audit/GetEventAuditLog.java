@@ -18,7 +18,6 @@
 package com.jecstar.etm.server.core.domain.audit;
 
 import com.jecstar.etm.server.core.converter.JsonField;
-import com.jecstar.etm.server.core.domain.audit.converter.CorrelatedEventsFieldsConverter;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -32,8 +31,8 @@ public class GetEventAuditLog extends AuditLog {
 
     public static final String CORRELATED_EVENTS = "correlated_events";
     public static final String EVENT_ID = "event_id";
-    public static final String PAYLOAD_VISIBLE = "payload_visible";
     public static final String DOWNLOADED = "downloaded";
+    public static final String REDACTED_FIELDS = "redacted_fields";
 
     /**
      * The id of the event that is requested.
@@ -54,16 +53,16 @@ public class GetEventAuditLog extends AuditLog {
     public String eventName;
 
     /**
-     * The map that contains the correlated events returned with the main event. The key will be the eventId and the value the eventType.
+     * The set that contains the id's of correlated events returned with the main event.
      */
-    @JsonField(value = CORRELATED_EVENTS, converterClass = CorrelatedEventsFieldsConverter.class)
+    @JsonField(value = CORRELATED_EVENTS)
     public final Set<String> correlatedEvents = new HashSet<>();
 
     /**
-     * Whether or not the payload was visible for the user.
+     * The redacted fields.
      */
-    @JsonField(PAYLOAD_VISIBLE)
-    public boolean payloadVisible;
+    @JsonField(value = REDACTED_FIELDS)
+    public Set<String> redactedFields;
 
     /**
      * Whether or not the event was downloaded by the user.

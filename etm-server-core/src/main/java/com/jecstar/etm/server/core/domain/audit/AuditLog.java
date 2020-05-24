@@ -45,5 +45,4 @@ public abstract class AuditLog {
     @JsonField(HANDLING_TIME)
     public Instant handlingTime;
 
-
 }

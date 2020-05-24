@@ -34,7 +34,6 @@ import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import com.jecstar.etm.server.core.rest.AbstractJsonService;
 import com.jecstar.etm.server.core.util.ObjectUtils;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -90,11 +89,11 @@ public class LdapSynchronizer extends AbstractJsonService implements Runnable {
                                     QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.tags.getLdapBaseTag(), true)
                             )
                     );
-            ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
+            ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder, null);
             if (!scrollableSearch.hasNext()) {
                 return;
             }
-            for (SearchHit searchHit : scrollableSearch) {
+            for (var searchHit : scrollableSearch) {
                 Map<String, Object> values = toMapWithoutNamespace(searchHit.getSourceAsMap(), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER);
                 if (!getBoolean(this.tags.getLdapBaseTag(), values, false)) {
                     continue;

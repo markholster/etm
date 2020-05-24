@@ -45,7 +45,6 @@ import com.jecstar.etm.signaler.domain.converter.SignalConverter;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.HasAggregations;
 import org.elasticsearch.search.aggregations.ParsedMultiBucketAggregation;
@@ -198,8 +197,8 @@ public class SignalService extends AbstractUserAttributeService {
                             ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER + "." + Notifier.NOTIFIER_TYPE
                     }, null)
                     .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER));
-            ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
-            for (SearchHit searchHit : scrollableSearch) {
+            ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder, null);
+            for (var searchHit : scrollableSearch) {
                 Map<String, Object> notifierMap = toMapWithoutNamespace(searchHit.getSourceAsMap(), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER);
                 String notifierName = getString(Notifier.NAME, notifierMap);
                 if (notifiers.contains(notifierName)) {

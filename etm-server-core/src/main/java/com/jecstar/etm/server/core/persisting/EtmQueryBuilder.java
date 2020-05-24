@@ -47,8 +47,8 @@ public class EtmQueryBuilder {
     private final String queryString;
     private final DataRepository dataRepository;
     private final RequestEnhancer requestEnhancer;
-    private List<QueryBuilder> joinFilters = new ArrayList<>();
-    private List<QueryBuilder> rootFilters = new ArrayList<>();
+    private final List<QueryBuilder> joinFilters = new ArrayList<>();
+    private final List<QueryBuilder> rootFilters = new ArrayList<>();
     private String timeZoneId;
 
     public EtmQueryBuilder(String queryString, DataRepository dataRepository, RequestEnhancer requestEnhancer) {
@@ -76,7 +76,7 @@ public class EtmQueryBuilder {
             elements.add(matcher.group());
         }
         var joinIx = elements.indexOf(JOIN_KEYWORD);
-        if (joinIx == -1 || elements.size() <= joinIx + 1 || JOIN_ELEMENTS.indexOf(elements.get(joinIx + 1)) == -1) {
+        if (joinIx == -1 || elements.size() <= joinIx + 1 || !JOIN_ELEMENTS.contains(elements.get(joinIx + 1))) {
             // Join keyword was probably in a quotes string. Return the original query.
             return new BoolQueryBuilder().must(createQueryStringQuery(queryString));
         }
@@ -97,9 +97,9 @@ public class EtmQueryBuilder {
         SearchRequestBuilder joinRequestBuilder = this.requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.EVENT_INDEX_ALIAS_ALL)
                 .setQuery(joinQueryBuilder)
                 .setFetchSource(false));
-        ScrollableSearch searchHits = new ScrollableSearch(dataRepository, joinRequestBuilder);
+        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, joinRequestBuilder, null);
         var ids = new ArrayList<String>();
-        for (var searchHit : searchHits) {
+        for (var searchHit : scrollableSearch) {
             ids.add(searchHit.getId());
         }
         if (ids.isEmpty()) {

@@ -287,15 +287,15 @@ public class JsonEntityConverter<T> implements EntityConverter<T, String> {
             } else {
                 builder.field(jsonKey, (Instant) value, writeWhenNull);
             }
-        } else if (List.class.isAssignableFrom(classToTest)) {
-            List<?> list = (List<?>) value;
-            if (list == null) {
+        } else if (Collection.class.isAssignableFrom(classToTest)) {
+            Collection<?> collection = (Collection<?>) value;
+            if (collection == null) {
                 if (writeWhenNull) {
                     builder.startArray(jsonKey).endArray();
                 }
             } else {
                 builder.startArray(jsonKey);
-                for (var item : list) {
+                for (var item : collection) {
                     if (item != null) {
                         addElementToJson(item.getClass(), item, null, false, true, builder);
                     }

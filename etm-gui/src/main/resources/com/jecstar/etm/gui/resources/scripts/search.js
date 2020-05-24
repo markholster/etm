@@ -1285,11 +1285,6 @@ function executeQuery(queryParameters, successCallback) {
                 $('#link-request-download').show();
                 $('#input-download-number-of-rows').attr('max', maxDownloads);
             }
-            if (data.may_see_payload) {
-                $('#sel-download-include-payload').removeAttr('disabled').val('true');
-            } else {
-                $('#sel-download-include-payload').attr('disabled', 'disabled').val('false');
-            }
             searchResultLayout.current_ix = data.start_ix;
             const $searchStats = $('#search-stats');
             const hadPreviousResults = $('#result_card').children().length !== 0;

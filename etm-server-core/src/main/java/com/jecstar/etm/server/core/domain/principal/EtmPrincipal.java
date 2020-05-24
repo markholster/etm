@@ -40,6 +40,8 @@ public class EtmPrincipal implements EtmSecurityEntity, Principal, Serializable 
     private Set<String> notifiers = new HashSet<>();
     private Set<String> dashboardDatasources = new HashSet<>();
     private Set<String> signalDatasources = new HashSet<>();
+    private Set<String> eventFieldGrants = new HashSet<>();
+    private Set<String> eventFieldDenies = new HashSet<>();
     private String passwordHash;
     private String name = null;
     private String emailAddress = null;
@@ -56,7 +58,6 @@ public class EtmPrincipal implements EtmSecurityEntity, Principal, Serializable 
     private boolean ldapBase;
     // State properties. DO NOT CHANGE!!
     public boolean forceReload = false;
-
 
     public EtmPrincipal(String id) {
         this.id = id;
@@ -228,6 +229,26 @@ public class EtmPrincipal implements EtmSecurityEntity, Principal, Serializable 
         }
     }
 
+    public Set<String> getEventFieldGrants() {
+        return this.eventFieldGrants;
+    }
+
+    public void addEventFieldGrants(List<String> eventFieldGrants) {
+        if (eventFieldGrants != null) {
+            this.eventFieldGrants.addAll(eventFieldGrants);
+        }
+    }
+
+    public Set<String> getEventFieldDenies() {
+        return this.eventFieldDenies;
+    }
+
+    public void addEventFieldDenies(List<String> eventFieldDenies) {
+        if (eventFieldDenies != null) {
+            this.eventFieldDenies.addAll(eventFieldDenies);
+        }
+    }
+
     public boolean isInRole(String role) {
         if (this.roles.contains(role)) {
             return true;
@@ -292,11 +313,6 @@ public class EtmPrincipal implements EtmSecurityEntity, Principal, Serializable 
         return false;
     }
 
-    public boolean maySeeEventPayload() {
-        // The ETM_EVENT_READ and ETM_EVENT_READ_WRITE are the only event roles that are allowed to see the event payload.
-        return isInAnyRole(SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE);
-    }
-
     public boolean isInGroup(String groupName) {
         for (EtmGroup group : this.groups) {
             if (group.getName().equals(groupName)) {
@@ -355,6 +371,34 @@ public class EtmPrincipal implements EtmSecurityEntity, Principal, Serializable 
 
     public void setLdapBase(boolean ldapBase) {
         this.ldapBase = ldapBase;
+    }
+
+    /**
+     * Gives the full path of fields that should be redacted.
+     * <p>
+     * An field must be redacted when it is present in the {@link #getEventFieldDenies()} or corresponding
+     * {@link EtmGroup#getEventFieldDenies()} set and not present in the {@link #getEventFieldGrants()} set.
+     *
+     * @return A <code>Set</code> with attributes that should be redacted, or <code>null</code> when no such attribute exists.
+     */
+    public Set<String> getRedactedFields() {
+        var denies = new HashSet<String>();
+        if (getEventFieldDenies() != null) {
+            denies.addAll(getEventFieldDenies());
+        }
+        for (EtmGroup group : this.groups) {
+            var groupDenies = group.getEventFieldDenies();
+            if (groupDenies != null) {
+                denies.addAll(groupDenies);
+            }
+        }
+        if (getEventFieldGrants() != null) {
+            denies.removeAll(getEventFieldGrants());
+        }
+        if (denies.size() == 0) {
+            return null;
+        }
+        return denies;
     }
 
     public NumberFormat getNumberFormat() {

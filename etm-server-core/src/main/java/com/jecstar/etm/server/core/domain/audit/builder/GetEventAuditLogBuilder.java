@@ -19,6 +19,8 @@ package com.jecstar.etm.server.core.domain.audit.builder;
 
 import com.jecstar.etm.server.core.domain.audit.GetEventAuditLog;
 
+import java.util.Set;
+
 public class GetEventAuditLogBuilder extends AbstractAuditLogBuilder<GetEventAuditLog, GetEventAuditLogBuilder> {
 
     public GetEventAuditLogBuilder() {
@@ -45,8 +47,8 @@ public class GetEventAuditLogBuilder extends AbstractAuditLogBuilder<GetEventAud
         return this;
     }
 
-    public GetEventAuditLogBuilder setPayloadVisible(boolean payloadVisible) {
-        this.audit.payloadVisible = payloadVisible;
+    public GetEventAuditLogBuilder setRedactedFields(Set<String> redactedFields) {
+        this.audit.redactedFields = redactedFields;
         return this;
     }
 
@@ -54,5 +56,6 @@ public class GetEventAuditLogBuilder extends AbstractAuditLogBuilder<GetEventAud
         this.audit.downloaded = downloaded;
         return this;
     }
+
 
 }

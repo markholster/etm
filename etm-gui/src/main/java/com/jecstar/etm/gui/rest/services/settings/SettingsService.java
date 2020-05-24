@@ -68,7 +68,6 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
 
 import javax.annotation.security.DeclareRoles;
 import javax.annotation.security.RolesAllowed;
@@ -365,14 +364,14 @@ public class SettingsService extends AbstractIndexMetadataService {
         SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE));
-        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
+        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder, null);
         if (!scrollableSearch.hasNext()) {
             return null;
         }
         StringBuilder result = new StringBuilder();
         result.append("{\"nodes\": [");
         boolean first = true;
-        for (SearchHit searchHit : scrollableSearch) {
+        for (var searchHit : scrollableSearch) {
             if (searchHit.getId().equalsIgnoreCase(ElasticsearchLayout.CONFIGURATION_OBJECT_ID_NODE_DEFAULT)) {
                 continue;
             }
@@ -488,14 +487,14 @@ public class SettingsService extends AbstractIndexMetadataService {
         var searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER));
-        var scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
+        var scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder, null);
         if (!scrollableSearch.hasNext()) {
             return null;
         }
         var result = new StringBuilder();
         result.append("{\"parsers\": [");
         boolean first = true;
-        for (SearchHit searchHit : scrollableSearch) {
+        for (var searchHit : scrollableSearch) {
             ExpressionParser expressionParser = expressionParserConverter.read(searchHit.getSourceAsString());
             Map<String, Object> parserMap = toMapWithoutNamespace(searchHit.getSourceAsMap(), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER);
             parserMap.put("capable_of_replacing", expressionParser.isCapableOfReplacing());
@@ -552,8 +551,8 @@ public class SettingsService extends AbstractIndexMetadataService {
                         .should(QueryBuilders.termQuery(parserInImportProfileTransformationTag, parserName))
                         .minimumShouldMatch(1)
                 );
-        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
-        for (SearchHit searchHit : scrollableSearch) {
+        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder, null);
+        for (var searchHit : scrollableSearch) {
             boolean updated = false;
             ImportProfile endpointConfig = this.importProfileConverter.read(searchHit.getSourceAsString());
             if (endpointConfig.eventEnhancer instanceof DefaultTelemetryEventEnhancer) {
@@ -616,8 +615,8 @@ public class SettingsService extends AbstractIndexMetadataService {
                         .should(QueryBuilders.termQuery(parserInImportProfileTransformationTag, expressionParser.getName()))
                         .minimumShouldMatch(1)
                 );
-        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
-        for (SearchHit searchHit : scrollableSearch) {
+        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder, null);
+        for (var searchHit : scrollableSearch) {
             boolean updated = false;
             ImportProfile endpointConfig = this.importProfileConverter.read(searchHit.getSourceAsString());
             if (endpointConfig.eventEnhancer instanceof DefaultTelemetryEventEnhancer) {
@@ -653,12 +652,12 @@ public class SettingsService extends AbstractIndexMetadataService {
         SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE));
-        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
+        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder, null);
         StringBuilder result = new StringBuilder();
         result.append("{\"import_profiles\": [");
         boolean first = true;
         boolean defaultFound = false;
-        for (SearchHit searchHit : scrollableSearch) {
+        for (var searchHit : scrollableSearch) {
             if (!first) {
                 result.append(",");
             }
@@ -722,14 +721,14 @@ public class SettingsService extends AbstractIndexMetadataService {
         SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
                 .setFetchSource(new String[]{"*"}, new String[]{this.principalTags.getPasswordHashTag(), this.principalTags.getSearchTemplatesTag(), this.principalTags.getSearchHistoryTag()})
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER));
-        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
+        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder, null);
         if (!scrollableSearch.hasNext()) {
             return null;
         }
         StringBuilder result = new StringBuilder();
         result.append("{\"users\": [");
         boolean first = true;
-        for (SearchHit searchHit : scrollableSearch) {
+        for (var searchHit : scrollableSearch) {
             if (!first) {
                 result.append(",");
             }
@@ -750,7 +749,7 @@ public class SettingsService extends AbstractIndexMetadataService {
         SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
                 .setFetchSource(this.exportPrincipalFields.stream().map(FieldLayout::getField).toArray(String[]::new), null)
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER));
-        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
+        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder, null);
         if (!scrollableSearch.hasNext()) {
             return null;
         }
@@ -864,14 +863,14 @@ public class SettingsService extends AbstractIndexMetadataService {
         SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE));
-        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
+        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder, null);
         if (!scrollableSearch.hasNext()) {
             return "{\"time_zone\": \"" + getEtmPrincipal().getTimeZone().getID() + "\"}";
         }
         StringBuilder result = new StringBuilder();
         result.append("{\"certificates\": [");
         boolean first = true;
-        for (SearchHit searchHit : scrollableSearch) {
+        for (var searchHit : scrollableSearch) {
             if (!first) {
                 result.append(",");
             }
@@ -1226,11 +1225,11 @@ public class SettingsService extends AbstractIndexMetadataService {
         SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP));
-        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
+        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder, null);
         StringBuilder result = new StringBuilder();
         result.append("{\"groups\": [");
         boolean first = true;
-        for (SearchHit searchHit : scrollableSearch) {
+        for (var searchHit : scrollableSearch) {
             if (!first) {
                 result.append(",");
             }
@@ -1382,7 +1381,7 @@ public class SettingsService extends AbstractIndexMetadataService {
         SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
                 .setFetchSource(true)
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER));
-        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
+        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder, null);
         return notifiersToJson(scrollableSearch);
     }
 
@@ -1401,7 +1400,7 @@ public class SettingsService extends AbstractIndexMetadataService {
                         ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER + "." + Notifier.NOTIFIER_TYPE
                 }, null)
                 .setQuery(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER));
-        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
+        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder, null);
         return notifiersToJson(scrollableSearch);
     }
 
@@ -1409,7 +1408,7 @@ public class SettingsService extends AbstractIndexMetadataService {
         StringBuilder result = new StringBuilder();
         result.append("{\"notifiers\": [");
         boolean first = true;
-        for (SearchHit searchHit : scrollableSearch) {
+        for (var searchHit : scrollableSearch) {
             if (!first) {
                 result.append(",");
             }
@@ -1471,8 +1470,8 @@ public class SettingsService extends AbstractIndexMetadataService {
                         .should(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP + "." + this.principalTags.getNotifiersTag(), notifierName))
                         .minimumShouldMatch(1)
                 );
-        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
-        for (SearchHit searchHit : scrollableSearch) {
+        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder, null);
+        for (var searchHit : scrollableSearch) {
             boolean updated = false;
             Map<String, Object> valueMap = searchHit.getSourceAsMap();
             Map<String, Object> groupOrUserValueMap;
@@ -1528,8 +1527,8 @@ public class SettingsService extends AbstractIndexMetadataService {
                         .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP))
                         .must(QueryBuilders.termQuery(this.principalTags.getGroupsTag(), groupName))
                 );
-        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
-        for (SearchHit searchHit : scrollableSearch) {
+        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder, null);
+        for (var searchHit : scrollableSearch) {
             boolean updated = false;
             EtmPrincipal principal = loadPrincipal(searchHit.getId());
             if (principal != null && principal.isInGroup(groupName)) {
@@ -1624,10 +1623,10 @@ public class SettingsService extends AbstractIndexMetadataService {
                         .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP))
                         .must(QueryBuilders.termsQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP + "." + this.principalTags.getRolesTag(), roles))
                 );
-        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder);
+        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder, null);
         List<String> groups = new ArrayList<>();
         if (scrollableSearch.hasNext()) {
-            for (SearchHit searchHit : scrollableSearch) {
+            for (var searchHit : scrollableSearch) {
                 String group = searchHit.getId();
                 if (!groups.contains(group)) {
                     groups.add(group);

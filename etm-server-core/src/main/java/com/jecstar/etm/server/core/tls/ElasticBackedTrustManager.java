@@ -50,7 +50,7 @@ public class ElasticBackedTrustManager extends AbstractConfigurableTrustManager 
                         .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE))
                         .must(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE + "." + Certificate.USAGE, usage.name()))
                 );
-        var scrollableSearch = new ScrollableSearch(this.dataRepository, searchRequestBuilder);
+        var scrollableSearch = new ScrollableSearch(this.dataRepository, searchRequestBuilder, null);
         if (!scrollableSearch.hasNext()) {
             return Collections.emptySet();
         }

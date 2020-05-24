@@ -196,7 +196,7 @@ public class MenuAwareURLResource extends URLResource {
                                     "                            </div>");
                         }
                         ix = htmlContent.indexOf(SEARCH_HEADER_PLACEHOLDER);
-                        if (ix != -1 && etmAccount.getPrincipal().isInAnyRole(SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE)) {
+                        if (ix != -1 && etmAccount.getPrincipal().isInAnyRole(SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE)) {
                             htmlContent = htmlContent.replace(SEARCH_HEADER_PLACEHOLDER, "                <div class=\"collapse\" id=\"search-nav\">\n" +
                                     "                    <form class=\"navbar-left navbar-form nav-search mr-md-3\" action=\"" + pathPrefixToContextRoot + "search/index.html\">\n" +
                                     "                        <div class=\"input-group\">\n" +
@@ -326,7 +326,7 @@ public class MenuAwareURLResource extends URLResource {
      * @param html      The html buffer.
      */
     private void addSearchMenuOption(EtmPrincipal principal, StringBuilder html) {
-        if (!principal.isInAnyRole(SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WITHOUT_PAYLOAD, SecurityRoles.ETM_EVENT_READ_WRITE)) {
+        if (!principal.isInAnyRole(SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE)) {
             return;
         }
         if (MenuContext.SEARCH.equals(menuContext)) {
