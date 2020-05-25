@@ -19,19 +19,19 @@ Once Elasticsearch is up and running you can download and run Enterprise Telemet
 preference) you can download a .zip or .tgz file. In this example we choose the .tgz file, so let's download the binary to our machine:
 
 ```bash
-curl -LO https://www.jecstar.com/downloads/etm-4.1.1.tgz
+curl -LO https://www.jecstar.com/downloads/etm-4.2.0.tgz
 ```
 
 Then extract the archive with the following command:
 
 ```bash
-tar -xvf etm-4.1.1.tgz
+tar -xvf etm-4.2.0.tgz
 ```
 
-This will extract the archive to the directory etm-4.1.1. We then change to the bin directory of Enterprise Telemetry Monitor to fire it up for the first time:
+This will extract the archive to the directory etm-4.2.0. We then change to the bin directory of Enterprise Telemetry Monitor to fire it up for the first time:
 
 ```bash
-cd etm-4.1.1/bin
+cd etm-4.2.0/bin
 ```
 
 You are now ready to start Enterprise Telemetry Monitor with the following command:
