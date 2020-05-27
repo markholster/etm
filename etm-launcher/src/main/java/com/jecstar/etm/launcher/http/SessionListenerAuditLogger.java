@@ -25,6 +25,7 @@ import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.elasticsearch.builder.IndexRequestBuilder;
 import com.jecstar.etm.server.core.util.DateUtils;
+import com.jecstar.etm.server.core.util.IdGenerator;
 import io.undertow.security.api.AuthenticatedSessionManager.AuthenticatedSession;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.session.Session;
@@ -39,6 +40,11 @@ import java.time.format.DateTimeFormatter;
 
 class SessionListenerAuditLogger implements SessionListener {
 
+    /**
+     * An <code>IdGenerator</code> that will be used to create id's for audit logs.
+     */
+    private static final IdGenerator idGenerator = new IdGenerator();
+
     private static final DateTimeFormatter dateTimeFormatterIndexPerDay = DateUtils.getIndexPerDayFormatter();
 
     private final DataRepository dataRepository;
@@ -52,9 +58,14 @@ class SessionListenerAuditLogger implements SessionListener {
 
     private void logLogout(String id, boolean expired) {
         Instant now = Instant.now();
-        LogoutAuditLogBuilder auditLogBuilder = new LogoutAuditLogBuilder().setTimestamp(now).setHandlingTime(now)
-                .setPrincipalId(id).setExpired(expired);
+        LogoutAuditLogBuilder auditLogBuilder = new LogoutAuditLogBuilder()
+                .setId(idGenerator.createId())
+                .setTimestamp(now)
+                .setHandlingTime(now)
+                .setPrincipalId(id)
+                .setExpired(expired);
         dataRepository.indexAsync(new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now))
+                        .setId(auditLogBuilder.getId())
                         .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
                         .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
                         .setSource(this.auditLogConverter.write(auditLogBuilder.build()), XContentType.JSON)

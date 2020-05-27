@@ -1,4 +1,10 @@
 # Changelog
+## Version 4.3.0
+* [ETM-8](https://github.com/jecstarinnovations/etm/issues/8) Automatic migration.
+* [ETM-37](https://github.com/jecstarinnovations/etm/issues/37) Autoscroll uses wrong time.
+* [ETM-38](https://github.com/jecstarinnovations/etm/issues/38) NullPointerException in Signaler.
+* [ETM-39](https://github.com/jecstarinnovations/etm/issues/39) Replace _id with id.
+
 ## Version 4.2.0
 * [ETM-32](https://github.com/jecstarinnovations/etm/issues/32) Invalid locale data in all graphs.
 * [ETM-33](https://github.com/jecstarinnovations/etm/issues/33) Timezone not taken into account on search page.

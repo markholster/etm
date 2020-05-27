@@ -40,35 +40,32 @@ public class MessagingTelemetryEventPersister extends AbstractElasticTelemetryEv
 
     @Override
     public void persist(MessagingTelemetryEvent event, MessagingTelemetryEventConverterJsonImpl converter) {
-        var indexRequestBuilder = createIndexRequest(event.id).setSource(converter.write(event, false, false), XContentType.JSON);
-
         if (event.id == null) {
-            // An event without an id can never be an update.
-            bulkProcessor.add(indexRequestBuilder.build());
-            licenseRateLimiter.addRequestUnits(indexRequestBuilder.calculateIndexRequestUnits()).throttle();
-        } else {
-            var parameters = new HashMap<String, Object>();
-            parameters.put("source", XContentHelper.convertToMap(new BytesArray(converter.write(event, false, false)), false, XContentType.JSON).v2());
-            parameters.put("event_id", event.id);
-            bulkProcessor.add(createUpdateRequest(event.id)
-                    .setScript(new Script(ScriptType.STORED, null, "etm_update-event", parameters))
-                    .setUpsert(indexRequestBuilder)
+            event.id = idGenerator.createId();
+        }
+        var indexRequestBuilder = createIndexRequest(event.id).setSource(converter.write(event), XContentType.JSON);
+        var parameters = new HashMap<String, Object>();
+        parameters.put("source", XContentHelper.convertToMap(new BytesArray(converter.write(event)), false, XContentType.JSON).v2());
+        parameters.put("event_id", event.id);
+        bulkProcessor.add(createUpdateRequest(event.id)
+                .setScript(new Script(ScriptType.STORED, null, "etm_update-event", parameters))
+                .setUpsert(indexRequestBuilder)
+                .build()
+        );
+        licenseRateLimiter.addRequestUnits(indexRequestBuilder.calculateIndexRequestUnits()).throttle();
+
+        // Set the correlation on the parent.
+        if (MessagingEventType.RESPONSE.equals(event.messagingEventType) && event.correlationId != null) {
+            bulkProcessor.add(createUpdateRequest(event.correlationId)
+                    .setScript(new Script(ScriptType.STORED, null, "etm_update-request-with-response", parameters))
+                    .setUpsert("{}", XContentType.JSON)
+                    .setScriptedUpsert(true)
                     .build()
             );
-            licenseRateLimiter.addRequestUnits(indexRequestBuilder.calculateIndexRequestUnits()).throttle();
-
-            // Set the correlation on the parent.
-            if (MessagingEventType.RESPONSE.equals(event.messagingEventType) && event.correlationId != null) {
-                bulkProcessor.add(createUpdateRequest(event.correlationId)
-                        .setScript(new Script(ScriptType.STORED, null, "etm_update-request-with-response", parameters))
-                        .setUpsert("{}", XContentType.JSON)
-                        .setScriptedUpsert(true)
-                        .build()
-                );
-                licenseRateLimiter.addRequestUnits(correlation_request_units);
-            } else {
-                setCorrelationOnParent(event);
-            }
+            licenseRateLimiter.addRequestUnits(correlation_request_units);
+        } else {
+            setCorrelationOnParent(event);
         }
+
     }
 }

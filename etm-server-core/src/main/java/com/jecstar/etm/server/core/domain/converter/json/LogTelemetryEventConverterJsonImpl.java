@@ -29,11 +29,6 @@ public class LogTelemetryEventConverterJsonImpl extends LogTelemetryEventWriterJ
     private final TelemetryEventJsonConverter<LogTelemetryEvent> converter = new TelemetryEventJsonConverter<>();
 
     @Override
-    public String write(LogTelemetryEvent event, boolean includeId, boolean includePayloadEncoding) {
-        return super.write(event, includeId, includePayloadEncoding);
-    }
-
-    @Override
     protected void doWrite(LogTelemetryEvent event, JsonBuilder builder) {
         this.converter.addDatabaseFields(event, builder);
         super.doWrite(event, builder);

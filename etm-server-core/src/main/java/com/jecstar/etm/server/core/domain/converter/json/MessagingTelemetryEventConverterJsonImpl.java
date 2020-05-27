@@ -30,11 +30,6 @@ public class MessagingTelemetryEventConverterJsonImpl extends MessagingTelemetry
     private final TelemetryEventJsonConverter<MessagingTelemetryEvent> converter = new TelemetryEventJsonConverter<>();
 
     @Override
-    public String write(MessagingTelemetryEvent event, boolean includeId, boolean includePayloadEncoding) {
-        return super.write(event, includeId, includePayloadEncoding);
-    }
-
-    @Override
     protected void doWrite(MessagingTelemetryEvent event, JsonBuilder builder) {
         this.converter.addDatabaseFields(event, builder);
         super.doWrite(event, builder);

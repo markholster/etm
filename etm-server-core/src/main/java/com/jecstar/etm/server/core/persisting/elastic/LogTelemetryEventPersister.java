@@ -33,7 +33,10 @@ public class LogTelemetryEventPersister extends AbstractElasticTelemetryEventPer
 
     @Override
     public void persist(LogTelemetryEvent event, LogTelemetryEventConverterJsonImpl converter) {
-        var indexRequestBuilder = createIndexRequest(event.id).setSource(converter.write(event, false, false), XContentType.JSON);
+        if (event.id == null) {
+            event.id = idGenerator.createId();
+        }
+        var indexRequestBuilder = createIndexRequest(event.id).setSource(converter.write(event), XContentType.JSON);
         bulkProcessor.add(indexRequestBuilder.build());
         setCorrelationOnParent(event);
         licenseRateLimiter.addRequestUnits(indexRequestBuilder.calculateIndexRequestUnits()).throttle();

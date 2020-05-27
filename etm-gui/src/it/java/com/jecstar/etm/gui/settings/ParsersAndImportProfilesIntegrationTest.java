@@ -148,7 +148,7 @@ public class ParsersAndImportProfilesIntegrationTest extends AbstractCitrusSelen
         runner.selenium(action -> action.navigate(getEtmUrl() + searchPath));
         runner.selenium(action -> action.waitUntil().visible().element(By.id("search-container")));
         // Search for the given event id.
-        runner.selenium(action -> action.setInput("_id: " + eventId1).element(By.id("query-string")));
+        runner.selenium(action -> action.setInput("id: " + eventId1).element(By.id("query-string")));
         // Wait for elasticsearch to make the event searchable
         while (browser.getWebDriver().findElements(By.xpath("//div[@data-event-id='" + eventId1 + "']")).size() == 0) {
             runner.selenium(action -> action.click().element(By.id("btn-search")));
@@ -164,7 +164,7 @@ public class ParsersAndImportProfilesIntegrationTest extends AbstractCitrusSelen
         runner.selenium(action -> action.navigate(getEtmUrl() + searchPath));
         runner.selenium(action -> action.waitUntil().visible().element(By.id("search-container")));
         // Search for the given event id.
-        runner.selenium(action -> action.setInput("_id: " + eventId2).element(By.id("query-string")));
+        runner.selenium(action -> action.setInput("id: " + eventId2).element(By.id("query-string")));
         // Wait for elasticsearch to make the event searchable
         while (browser.getWebDriver().findElements(By.xpath("//div[@data-event-id='" + eventId2 + "']")).size() == 0) {
             runner.selenium(action -> action.click().element(By.id("btn-search")));

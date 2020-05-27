@@ -199,7 +199,7 @@ public class SearchIntegrationTest extends AbstractCitrusSeleniumTest {
         runner.selenium(action -> action.navigate(getEtmUrl() + searchPath));
         runner.selenium(action -> action.waitUntil().visible().element(By.id("search-container")));
         // Search for the given event id.
-        runner.selenium(action -> action.setInput("_id: " + eventId).element(By.id("query-string")));
+        runner.selenium(action -> action.setInput("id: " + eventId).element(By.id("query-string")));
         // Wait for elasticsearch to make the event searchable
         waitForClickable(browser, By.id("btn-search"));
         while (browser.getWebDriver().findElements(By.xpath("//div[@data-event-id='" + eventId + "']")).size() == 0) {
