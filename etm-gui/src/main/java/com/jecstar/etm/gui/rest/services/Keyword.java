@@ -20,7 +20,6 @@ package com.jecstar.etm.gui.rest.services;
 public class Keyword {
 
     public final static Keyword EXISTS = new Keyword("_exists_", null);
-    public final static Keyword ID = new Keyword("_id", null);
 
     private final String name;
     private final String type;

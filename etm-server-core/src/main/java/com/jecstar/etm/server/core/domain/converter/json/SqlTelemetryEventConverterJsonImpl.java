@@ -30,11 +30,6 @@ public class SqlTelemetryEventConverterJsonImpl extends SqlTelemetryEventWriterJ
     private final TelemetryEventJsonConverter<SqlTelemetryEvent> converter = new TelemetryEventJsonConverter<>();
 
     @Override
-    public String write(SqlTelemetryEvent event, boolean includeId, boolean includePayloadEncoding) {
-        return super.write(event, includeId, includePayloadEncoding);
-    }
-
-    @Override
     protected void doWrite(SqlTelemetryEvent event, JsonBuilder builder) {
         this.converter.addDatabaseFields(event, builder);
         super.doWrite(event, builder);

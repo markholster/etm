@@ -1,6 +1,7 @@
 # Changelog
 ## Version 4.3.0
-* [ETM-8](https://github.com/jecstarinnovations/etm/issues/8)  Automatic migration.
+* [ETM-8](https://github.com/jecstarinnovations/etm/issues/8) Automatic migration.
+* [ETM-39](https://github.com/jecstarinnovations/etm/issues/39) Replace _id with id.
 
 ## Version 4.2.0
 * [ETM-32](https://github.com/jecstarinnovations/etm/issues/32) Invalid locale data in all graphs.

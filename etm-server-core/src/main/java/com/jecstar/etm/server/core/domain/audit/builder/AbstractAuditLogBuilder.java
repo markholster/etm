@@ -34,6 +34,16 @@ abstract class AbstractAuditLogBuilder<Audit extends AuditLog, Builder extends A
     }
 
     @SuppressWarnings("unchecked")
+    public Builder setId(String id) {
+        this.audit.id = id;
+        return (Builder) this;
+    }
+
+    public String getId() {
+        return this.audit.id;
+    }
+
+    @SuppressWarnings("unchecked")
     public Builder setTimestamp(Instant timestamp) {
         this.audit.timestamp = timestamp;
         return (Builder) this;

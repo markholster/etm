@@ -23,9 +23,16 @@ import java.time.Instant;
 
 public abstract class AuditLog {
 
-    public static final String HANDLING_TIME = "handling_time";
+    public static final String ID = "id";
     public static final String TIMESTAMP = "timestamp";
+    public static final String HANDLING_TIME = "handling_time";
     public static final String PRINCIPAL_ID = "principal_id";
+
+    /**
+     * The unique id of the audit log.
+     */
+    @JsonField(ID)
+    public String id;
 
     /**
      * The time the audit was written to the database.

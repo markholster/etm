@@ -70,7 +70,10 @@ public class InternalBulkProcessorWrapper implements AutoCloseable {
                 this.logPersister = new LogTelemetryEventPersister(this.bulkProcessor, this.configuration) {
                     @Override
                     public void persist(LogTelemetryEvent event, LogTelemetryEventConverterJsonImpl converter) {
-                        var indexRequest = createIndexRequest(event.id).setSource(converter.write(event, false, false), XContentType.JSON);
+                        if (event.id == null) {
+                            event.id = idGenerator.createId();
+                        }
+                        var indexRequest = createIndexRequest(event.id).setSource(converter.write(event), XContentType.JSON);
                         bulkProcessor.add(indexRequest.build());
                         setCorrelationOnParent(event);
                     }
@@ -80,7 +83,10 @@ public class InternalBulkProcessorWrapper implements AutoCloseable {
                 this.businessPersister = new BusinessTelemetryEventPersister(this.bulkProcessor, this.configuration) {
                     @Override
                     public void persist(BusinessTelemetryEvent event, BusinessTelemetryEventConverterJsonImpl converter) {
-                        var indexRequestBuilder = createIndexRequest(event.id).setSource(converter.write(event, false, false), XContentType.JSON);
+                        if (event.id == null) {
+                            event.id = idGenerator.createId();
+                        }
+                        var indexRequestBuilder = createIndexRequest(event.id).setSource(converter.write(event), XContentType.JSON);
                         bulkProcessor.add(indexRequestBuilder.build());
                         setCorrelationOnParent(event);
                     }

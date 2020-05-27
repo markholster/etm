@@ -437,8 +437,8 @@ $('#btn-download-results').on('click', function (event) {
     event.preventDefault();
     $('#modal-download-results').modal('hide');
     const q = createQuery(false);
-    q.start_ix = Number($('#input-download-start-row').val()) - 1;
-    q.max_results = Number($('#input-download-number-of-rows').val());
+    q.result_layout.current_ix = Number($('#input-download-start-row').val()) - 1;
+    q.result_layout.results_per_page = Number($('#input-download-number-of-rows').val());
     q.fileType = $('#sel-download-type').val();
     q.includePayload = $('#sel-download-include-payload').val() === 'true';
     window.location.href = '../rest/search/download?q=' + encodeURIComponent(JSON.stringify(q));
@@ -515,6 +515,10 @@ function buildSearchPage() {
                 $.each(data.search_templates, function (index, template) {
                     addSearchTemplate(template, false);
                 });
+            }
+            // Set the max downloads
+            if (maxNumberOfEventsInDownload) {
+                $('#input-download-number-of-rows').attr('max', maxNumberOfEventsInDownload);
             }
         }
     });

@@ -35,6 +35,7 @@ import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.util.BCrypt;
 import com.jecstar.etm.server.core.util.DateUtils;
+import com.jecstar.etm.server.core.util.IdGenerator;
 import com.jecstar.etm.server.core.util.LruCache;
 import io.undertow.security.idm.*;
 import org.elasticsearch.action.support.ActiveShardCount;
@@ -54,6 +55,11 @@ public class ElasticsearchIdentityManager implements IdentityManager {
      * The <code>LogWrapper</code> for this class.
      */
     private static final LogWrapper log = LogFactory.getLogger(ElasticsearchIdentityManager.class);
+
+    /**
+     * An <code>IdGenerator</code> that will be used to create id's for audit logs.
+     */
+    private static final IdGenerator idGenerator = new IdGenerator();
     private static final DateTimeFormatter dateTimeFormatterIndexPerDay = DateUtils.getIndexPerDayFormatter();
 
     private final DataRepository dataRepository;
@@ -302,8 +308,14 @@ public class ElasticsearchIdentityManager implements IdentityManager {
 
     private void logLoginAttempt(String id, boolean success) {
         var now = Instant.now();
-        var auditLogBuilder = new LoginAuditLogBuilder().setTimestamp(now).setHandlingTime(now).setPrincipalId(id).setSuccess(success);
+        var auditLogBuilder = new LoginAuditLogBuilder()
+                .setId(idGenerator.createId())
+                .setTimestamp(now)
+                .setHandlingTime(now)
+                .setPrincipalId(id)
+                .setSuccess(success);
         this.dataRepository.indexAsync(new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now))
+                .setId(auditLogBuilder.getId())
                 .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
                 .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))
                 .setSource(this.auditLogConverter.write(auditLogBuilder.build()), XContentType.JSON), DataRepository.noopActionListener());

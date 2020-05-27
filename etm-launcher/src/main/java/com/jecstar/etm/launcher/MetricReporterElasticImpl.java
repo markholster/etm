@@ -25,6 +25,7 @@ import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.elasticsearch.builder.IndexRequestBuilder;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
+import com.jecstar.etm.server.core.util.IdGenerator;
 import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.common.xcontent.XContentType;
 
@@ -48,6 +49,11 @@ class MetricReporterElasticImpl extends ScheduledReporter {
      * The <code>LogWrapper</code> for this class.
      */
     private static final LogWrapper log = LogFactory.getLogger(MetricReporterElasticImpl.class);
+
+    /**
+     * An <code>IdGenerator</code> that will be used to create id's metrics.
+     */
+    private static final IdGenerator idGenerator = new IdGenerator();
 
     private static final TimeUnit rateUnit = TimeUnit.SECONDS;
     private static final TimeUnit durationUnit = TimeUnit.MILLISECONDS;
@@ -75,6 +81,7 @@ class MetricReporterElasticImpl extends ScheduledReporter {
 
         Instant now = Instant.now();
         SortedMap<String, Object> root = new TreeMap<>();
+        root.put(this.tags.getIdTag(), idGenerator.createId());
         root.put(this.tags.getTimestampTag(), now.toEpochMilli());
         root.put(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.METRICS_OBJECT_TYPE_ETM_NODE);
         appendNodeInfo(root);
@@ -97,6 +104,7 @@ class MetricReporterElasticImpl extends ScheduledReporter {
         try (StringWriter sw = new StringWriter()) {
             objectMapper.writeValue(sw, root);
             this.dataRepository.index(new IndexRequestBuilder(getElasticIndexName(now))
+                    .setId((String) root.get(this.tags.getIdTag()))
                     .setWaitForActiveShards(ActiveShardCount.ONE)
                     .setSource(sw.toString(), XContentType.JSON));
         } catch (IOException e) {
