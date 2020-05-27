@@ -127,6 +127,7 @@ let queryInProgress;
 let maxDownloads = 0;
 const queryTemplates = [];
 const queryHistory = [];
+const queryStartTimeOffset = 5000;
 
 const flatpickrRangeStart = {
     dateFormat: "Y-m-dTH:i:S",
@@ -425,7 +426,7 @@ $('#btn-apply-table-settings').on('click', function () {
     }
     searchResultLayout.fields = fields;
     if (changed && $('#result_block').is(':visible')) {
-        searchResultLayout.timestamp = new Date().getTime();
+        searchResultLayout.timestamp = new Date().getTime() - queryStartTimeOffset;
         searchResultLayout.current_ix = 0;
         $('#result_card').empty();
         executeQuery(createQuery(false));
@@ -1242,7 +1243,7 @@ function sortResultTable(fieldName) {
     } else {
         searchResultLayout.sort_field = fieldName;
     }
-    searchResultLayout.timestamp = new Date().getTime();
+    searchResultLayout.timestamp = new Date().getTime() - queryStartTimeOffset;
     searchResultLayout.current_ix = 0;
     $('#result_card').empty();
     executeQuery(createQuery(false));
@@ -1252,7 +1253,7 @@ function sortResultTable(fieldName) {
  * Start a new query. This function will reset the query index start position and timestamp.
  */
 function startNewQuery() {
-    searchResultLayout.timestamp = new Date().getTime();
+    searchResultLayout.timestamp = new Date().getTime() - queryStartTimeOffset;
     searchResultLayout.current_query = $('#query-string').val();
     searchResultLayout.current_ix = 0;
     $('#result_card').empty();
