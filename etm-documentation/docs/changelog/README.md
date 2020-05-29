@@ -1,6 +1,7 @@
 # Changelog
 ## Version 4.3.0
 * [ETM-8](https://github.com/jecstarinnovations/etm/issues/8) Automatic migration.
+* [ETM-34](https://github.com/jecstarinnovations/etm/issues/34) Option to sort search templates.
 * [ETM-37](https://github.com/jecstarinnovations/etm/issues/37) Autoscroll uses wrong time.
 * [ETM-38](https://github.com/jecstarinnovations/etm/issues/38) NullPointerException in Signaler.
 * [ETM-39](https://github.com/jecstarinnovations/etm/issues/39) Replace _id with id.

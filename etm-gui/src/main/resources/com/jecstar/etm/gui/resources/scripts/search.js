@@ -193,14 +193,14 @@ $('body').on('click', 'a', function (event) {
             setQuery(queryHistory[ix]);
         }
     } else if ('search-template-selection' === $anchor.attr('data-action')) {
-        const ix = $('#list-template-links > li > a[data-action="search-template-selection"]').index($anchor);
-        if (ix >= 0) {
-            setQuery(queryTemplates[ix]);
+        let templateIx = getTemplateIndex($anchor.text());
+        if (templateIx >= 0) {
+            setQuery(queryTemplates[templateIx]);
         }
     } else if ('search-template-removal' === $anchor.attr('data-action')) {
-        const ix = $('#list-template-links > li > a[data-action="search-template-removal"]').index($anchor);
-        if (ix >= 0) {
-            $('#remove-template-name').text(queryTemplates[ix].name);
+        let templateIx = getTemplateIndex($anchor.text());
+        if (templateIx >= 0) {
+            $('#remove-template-name').text(queryTemplates[templateIx].name);
             $('#modal-template-remove').modal();
         }
     }
@@ -500,7 +500,13 @@ function buildSearchPage() {
                         mode: 'field'
                     });
             }
+            $('#table-settings-columns').sortable({
+                items: "div.row:not(.etm-table-header)"
+            });
             // Add the additional query parameters
+            $('#block-param-fields').sortable({
+                items: "div.row:not(.etm-table-header)"
+            });
             if (data.additional_query_parameters) {
                 additionalSearchParameters.params.push(...data.additional_query_parameters);
                 displayAdditionalSearchParameters();
@@ -512,6 +518,25 @@ function buildSearchPage() {
                 });
             }
             // Add the search templates
+            $('#list-template-links').sortable({
+                update: function (event, ui) {
+                    const $anchors = $('#list-template-links > li > a[data-action="search-template-selection"]');
+                    const orderedTemplates = {
+                        templates: new Array($anchors.length)
+                    };
+                    $.each($anchors, function (index, anchor) {
+                        const templateIndex = getTemplateIndex($(anchor).text());
+                        orderedTemplates.templates.splice(index, 1, queryTemplates[templateIndex]);
+                    });
+                    $.ajax({
+                        type: 'POST',
+                        contentType: 'application/json',
+                        url: '../rest/search/templates',
+                        cache: false,
+                        data: JSON.stringify(orderedTemplates)
+                    })
+                }
+            });
             if (data.search_templates) {
                 $.each(data.search_templates, function (index, template) {
                     addSearchTemplate(template, false);
@@ -526,18 +551,28 @@ function buildSearchPage() {
 }
 
 /**
+ * Gives the index of a given template in the #queryTemplates list.
+ * @param templateName The name of the template.
+ * @returns {number} The index of the template, or -1 if no template with the given name is found.
+ */
+function getTemplateIndex(templateName) {
+    let templateIx = -1;
+    $.each(queryTemplates, function (index, availableTemplate) {
+        if (templateName === availableTemplate.name) {
+            templateIx = index;
+            return false;
+        }
+    });
+    return templateIx;
+}
+
+/**
  * Add a search template to the templates card.
  * @param template The template to add.
  * @param persist Whether or not the template needs to be persisted.
  */
 function addSearchTemplate(template, persist) {
-    let currentIx = -1;
-    $.each(queryTemplates, function (index, availableTemplate) {
-        if (template.name === availableTemplate.name) {
-            currentIx = index;
-            return false;
-        }
-    });
+    let currentIx = getTemplateIndex(template.name);
     if (currentIx === -1) {
         $('#list-template-links').append(
             $('<li>').append(
@@ -719,7 +754,7 @@ function exportQuery() {
 function editAdditionalSearchParameters() {
     const $modal = $('#modal-additional-search-parameters');
     $modal.find('.modal-body > #block-param-fields').empty().append(
-        $('<div>').addClass('row mr-1 ml-1').append(
+        $('<div>').addClass('row mr-1 ml-1 etm-table-header').append(
             $('<div>').addClass('col-sm-2 font-weight-bold').text('Name'),
             $('<div>').addClass('col-sm-5 font-weight-bold').text('Field'),
             $('<div>').addClass('col-sm-2 font-weight-bold').text('Type'),
@@ -729,7 +764,6 @@ function editAdditionalSearchParameters() {
                     .click(function (event) {
                         event.preventDefault();
                         $(this).parent().parent().parent().append(createRow);
-                        updateRowActions();
                         updateRelationOptions();
                     })
                 )
@@ -762,27 +796,13 @@ function editAdditionalSearchParameters() {
         $select.val(selectedValues);
         $select.multiselect('rebuild');
     });
-    updateRowActions();
     $modal.modal();
 
     function removeRow(row) {
         const $row = $(row);
         $modal.find('.modal-body > #block-param-relations > [data-for-row="' + $row.attr('data-row-id') + '"]').remove();
         $row.remove();
-        updateRowActions();
         updateRelationOptions();
-    }
-
-    function moveRowUp(row) {
-        const $row = $(row);
-        $row.after($row.prev());
-        updateRowActions();
-    }
-
-    function moveRowDown(row) {
-        const $row = $(row);
-        $row.before($row.next());
-        updateRowActions();
     }
 
     function createRow(data) {
@@ -819,20 +839,10 @@ function editAdditionalSearchParameters() {
             }),
             $('<div>').addClass('col-sm-2').append($('<input>').attr('type', 'text').addClass('form-control form-control-sm').attr('placeholder', 'Default value...')),
             $('<div>').addClass('col-sm-1').append(
-                $('<div>').addClass('row').append(
-                    $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-arrow-up').click(function (event) {
-                        event.preventDefault();
-                        moveRowUp($row)
-                    })),
-                    $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-arrow-down').click(function (event) {
-                        event.preventDefault();
-                        moveRowDown($row)
-                    })),
-                    $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-times text-danger').click(function (event) {
-                        event.preventDefault();
-                        removeRow($row)
-                    }))
-                )
+                $('<a href="#">').addClass('fa fa-times text-danger').click(function (event) {
+                    event.preventDefault();
+                    removeRow($row)
+                })
             )
         );
         if (data) {
@@ -850,30 +860,6 @@ function editAdditionalSearchParameters() {
             });
         }
         return $row;
-    }
-
-    function updateRowActions() {
-        const $rows = $modal.find('.modal-body > div > div');
-        $rows.each(function (index, row) {
-            if (index === 0) {
-                return true;
-            }
-            if ($rows.length >= 3) {
-                if (index === 1) {
-                    $(row).find('.fa-arrow-up').hide();
-                } else {
-                    $(row).find('.fa-arrow-up').show();
-                }
-                if (index >= $rows.length - 1) {
-                    $(row).find('.fa-arrow-down').hide();
-                } else {
-                    $(row).find('.fa-arrow-down').show();
-                }
-            } else {
-                $(row).find('.fa-arrow-up').hide();
-                $(row).find('.fa-arrow-down').hide();
-            }
-        });
     }
 
     function updateRelationFields(row) {
@@ -1095,7 +1081,7 @@ function editSearchResultTable() {
     $('#table-settings-results-per-page').val(searchResultLayout.results_per_page);
     const $tableSettingsColumns = $('#table-settings-columns').empty();
     $tableSettingsColumns.append(
-        $('<div>').addClass('row').append(
+        $('<div>').addClass('row etm-table-header').append(
             $('<div>').addClass('col-sm-2 font-weight-bold').text('Name'),
             $('<div>').addClass('col-sm-3 font-weight-bold').text('Field'),
             $('<div>').addClass('col-sm-2 font-weight-bold').text('Format'),
@@ -1107,7 +1093,6 @@ function editSearchResultTable() {
                     .click(function (event) {
                         event.preventDefault();
                         $tableSettingsColumns.append(createRow());
-                        updateRowActions();
                     })
                 )
         )
@@ -1118,22 +1103,10 @@ function editSearchResultTable() {
             }
         )
     });
-    updateRowActions();
     $('#modal-table-settings').modal();
 
     function removeRow(row) {
         $(row).remove();
-        updateRowActions();
-    }
-
-    function moveRowUp(row) {
-        $(row).after($(row).prev());
-        updateRowActions();
-    }
-
-    function moveRowDown(row) {
-        $(row).before($(row).next());
-        updateRowActions();
     }
 
     function createRow(columnData) {
@@ -1171,20 +1144,10 @@ function editSearchResultTable() {
             )
         );
         const actionDiv = $('<div>').addClass('col-sm-2').append(
-            $('<div>').addClass('row actionRow').append(
-                $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-arrow-up').click(function (event) {
-                    event.preventDefault();
-                    moveRowUp(row)
-                })),
-                $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-arrow-down').click(function (event) {
-                    event.preventDefault();
-                    moveRowDown(row)
-                })),
-                $('<div>').addClass('col-sm-1').append($('<a href="#">').addClass('fa fa-times text-danger').click(function (event) {
-                    event.preventDefault();
-                    removeRow(row)
-                }))
-            )
+            $('<a href="#">').addClass('fa fa-times text-danger').click(function (event) {
+                event.preventDefault();
+                removeRow(row)
+            })
         );
         $(row).append($(actionDiv));
         if (columnData) {
@@ -1203,26 +1166,6 @@ function editSearchResultTable() {
             });
         }
         return row;
-    }
-
-    function updateRowActions() {
-        $('#table-settings-columns .actionRow').each(function (index, row) {
-            if ($tableSettingsColumns.children().length > 2) {
-                if (index === 0) {
-                    $(row).find('.fa-arrow-up').hide();
-                } else {
-                    $(row).find('.fa-arrow-up').show();
-                }
-                if (index >= $('#table-settings-columns').children().length - 2) {
-                    $(row).find('.fa-arrow-down').hide();
-                } else {
-                    $(row).find('.fa-arrow-down').show();
-                }
-            } else {
-                $(row).find('.fa-arrow-up').hide();
-                $(row).find('.fa-arrow-down').hide();
-            }
-        });
     }
 }
 

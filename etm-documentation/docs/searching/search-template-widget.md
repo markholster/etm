@@ -3,6 +3,9 @@ On the top right of the search screen you see your search templates. By default 
 
 To use a search template just click on the name in the Search template widget. All setting stored with the search template will be restored to your current search context. 
 
-To delete a search template click on the red cross behind the name and confirm the deletion of the template. If you accidentally removed the wrong template just hit the *Save* button again and the search template will be available again. Note that if you changed anything in the search context between the removal and the save of the search template that will be saved as well.
+To delete a search template click on the red cross behind the name and confirm the deletion of the template. If you accidentally 
+removed the wrong template just hit the *Save* button again and the search template will be available again. Note that if you 
+changed anything in the search context between the removal and the save of the search template that will be saved as well. Search
+templates can be re-arranged by dragging them into the desired position.
 
 Your Enterprise Telemetry Monitor administrator may set a limit on the number of templates that you can store. If the limit is reached a message will be shown in the Search template widget.
