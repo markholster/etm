@@ -227,7 +227,7 @@ $('#query-string').on('input', function () {
         $('#template-name').trigger('input');
     }
 }).on('keydown', function (event) {
-    if (event.keyCode === 13 && !event.shiftKey) {
+    if (event.keyCode === 13 && !event.shiftKey && !$('#query-string').autocomplete('instance').menu.active) {
         event.preventDefault();
         const $searchButton = $('#btn-search');
         if ($searchButton.is(':enabled')) {
