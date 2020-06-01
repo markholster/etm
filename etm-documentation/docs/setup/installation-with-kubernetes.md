@@ -5,6 +5,7 @@ Both Enterprise Telemetry Monitor and Elasticsearch are capable of running on Ku
 These templates give you a good starting point with great flexibility on setting up your cluster. To create an Enterprise Telemetry Monitor cluster with 3 Elasticsearch master nodes, 2 Elasticsearch data nodes, 2 Elasticsearch client nodes and 2 Enterprise Telemetry Monitor nodes run the following commands on a Google Cloud Platform connected Kubernetes cluster:
 
 ```bash
+kubectl create -f namespace.yml
 kubectl create -f storage.yaml
 kubectl create -f elasticearch-master-svc.yml
 kubectl create -f elasticearch-client-svc.yml

@@ -7,6 +7,7 @@
 * [ETM-39](https://github.com/jecstarinnovations/etm/issues/39) Replace _id with id.
 * [ETM-40](https://github.com/jecstarinnovations/etm/issues/40) DirectedGraph causes OutOfMemory.
 * [ETM-41](https://github.com/jecstarinnovations/etm/issues/41) Query is executed when autocomplete is selected.
+* [ETM-44](https://github.com/jecstarinnovations/etm/issues/44) Deployment on Kubernetes fails.
 
 ## Version 4.2.0
 * [ETM-32](https://github.com/jecstarinnovations/etm/issues/32) Invalid locale data in all graphs.
