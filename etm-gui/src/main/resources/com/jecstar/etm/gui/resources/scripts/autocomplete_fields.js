@@ -183,7 +183,6 @@
                         if ("field" === query.queryType) {
                             this.value += ':'
                         }
-                        this.value += ' '
                     }
                     $(this).trigger('autocomplete:selected');
                     return false;

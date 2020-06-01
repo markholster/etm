@@ -271,6 +271,26 @@ public class SearchService extends AbstractIndexMetadataService {
         return jsonBuilder.build();
     }
 
+    @SuppressWarnings("unchecked")
+    @POST
+    @Path("/templates")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
+    public String setSearchTemplates(String json) {
+        var objectMap = toMap(json);
+        var templates = (List<Map<String, Object>>) getArray("templates", objectMap);
+        var queries = new ArrayList<EtmQuery>();
+        for (var template : templates) {
+            EtmQuery etmQuery = this.etmQueryConverter.read(template);
+            queries.add(etmQuery);
+        }
+        Map<String, Object> userData = getCurrentUser(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + ".search_templates");
+        userData.put("search_templates", queries.stream().map(c -> toMap(this.etmQueryConverter.write(c))).collect(Collectors.toList()));
+        updateCurrentUser(userData, false);
+        return "{\"status\":\"success\"}";
+    }
+
     @PUT
     @Path("/templates/{templateName}")
     @Consumes(MediaType.APPLICATION_JSON)

@@ -33,3 +33,4 @@ Code | Reason | Solution
 500001 | Not authorized for signal data source. | 
 500002 | Not authorized for notifier. | 
 600000 | Maximum number of search templates reached. | You are not allowed to store more search templates. Delete a search template, or ask your Enterprise Telemetry Monitor administrator to raise the maximum number of search templates that can be stored.
+600001 | Maximum number of events in Directed Graph reached. | The transactions you want to view are build up by more that 2048 events. To prevent Enterprise Telemetry Monitor to run out of memory this isn't allowed. This error indicates a problem in your logging regarding the event_id, correlation_id or transaction_id. 

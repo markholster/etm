@@ -144,6 +144,9 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
                 case EtmException.MAX_NR_OF_SEARCH_TEMPLATES_REACHED:
                     errorMessage.setMessage("Maximum number of search templates reached");
                     break;
+                case EtmException.MAX_NR_OF_EVENTS_IN_DAG_REACHED:
+                    errorMessage.setMessage("Maximum number of events in Directed Graph reached");
+                    break;
                 default:
                     break;
             }
