@@ -1,4 +1,7 @@
 # Changelog
+## Version 4.4.0
+* [ETM-45](https://github.com/jecstarinnovations/etm/issues/45) Unable to remove search template.
+
 ## Version 4.3.0
 * [ETM-8](https://github.com/jecstarinnovations/etm/issues/8) Automatic migration.
 * [ETM-34](https://github.com/jecstarinnovations/etm/issues/34) Option to sort search templates.
