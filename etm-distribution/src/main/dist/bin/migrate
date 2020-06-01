@@ -1,0 +1,43 @@
+#! /bin/sh
+SCRIPT=$(readlink -f "$0")
+TARGET_DIR=$(dirname "$(dirname "$SCRIPT")")
+
+echo "Welcome to the Enterprise Telemetry Monitor migration tool!"
+read -rp "Please enter the path of you old Enterprise Telemetry Monitor instance: " OLD_LOCATION
+
+if [ ! -d "$OLD_LOCATION" ]; then
+  echo "'$OLD_LOCATION' could not be found or is not a directory."
+  exit 1
+fi
+
+LIB_COUNT=$(find "$OLD_LOCATION"/lib -name "etm*.jar" 2> /dev/null | wc -l)
+if [ "$LIB_COUNT" -lt 1 ]; then
+  echo "'$OLD_LOCATION' doesn't seem to be an Enterprise Telemetry Monitor root directory."
+  exit 1
+fi
+
+echo "Migrating config files"
+mv "$TARGET_DIR"/config/etm.yml "$TARGET_DIR"/config/etm.yml.org
+mv "$TARGET_DIR"/config/jvm.options "$TARGET_DIR"/config/jvm.options.org
+cp "$OLD_LOCATION"/config/etm.yml "$TARGET_DIR"/config/
+cp "$OLD_LOCATION"/config/jvm.options "$TARGET_DIR"/config/
+
+if [ -d "$OLD_LOCATION/lib/ext" ]; then
+  echo "Migrating lib/ext directory"
+  cp -r "$OLD_LOCATION"/lib/ext "$TARGET_DIR"/lib/ext
+fi
+
+if [ -L "$OLD_LOCATION" ]; then
+  read -rp "'$OLD_LOCATION' is a symlink. Do you want to update the link to this instance? (yes/no): " MIGRATE_SYMLINK
+  if [ "yes" = "$MIGRATE_SYMLINK" ]; then
+    echo "Migrating symlink"
+    rm "$OLD_LOCATION"
+    ln -s "$TARGET_DIR" "$OLD_LOCATION"
+  else 
+    echo "Symlink not updated"
+  fi
+fi
+
+echo "Migration finished!"
+echo "Note that this script will only copy files from an old installation to the current one. Changes in those files might be needed as well!"
+echo "Please consult the changelog to see if additional changes are necessary."

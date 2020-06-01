@@ -25,6 +25,7 @@ import com.jecstar.etm.server.core.elasticsearch.builder.IndexRequestBuilder;
 import com.jecstar.etm.server.core.elasticsearch.builder.UpdateRequestBuilder;
 import com.jecstar.etm.server.core.persisting.RequestEnhancer;
 import com.jecstar.etm.server.core.util.DateUtils;
+import com.jecstar.etm.server.core.util.IdGenerator;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.script.Script;
@@ -45,6 +46,11 @@ public abstract class AbstractElasticTelemetryEventPersister {
      * The <code>DateTimeFormatter</code> instance that is used to distinguish the indices per timestamp.
      */
     private static final DateTimeFormatter dateTimeFormatterIndexPerDay = DateUtils.getIndexPerDayFormatter();
+
+    /**
+     * An <code>IdGenerator</code> that will be used to create id's for events that don't have an id supplied.
+     */
+    protected static final IdGenerator idGenerator = new IdGenerator();
 
     /**
      * The cost of correlating an event.

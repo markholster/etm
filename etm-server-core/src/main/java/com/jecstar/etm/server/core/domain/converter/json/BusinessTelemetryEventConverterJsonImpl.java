@@ -29,11 +29,6 @@ public class BusinessTelemetryEventConverterJsonImpl extends BusinessTelemetryEv
     private final TelemetryEventJsonConverter<BusinessTelemetryEvent> converter = new TelemetryEventJsonConverter<>();
 
     @Override
-    public String write(BusinessTelemetryEvent event, boolean includeId, boolean includePayloadEncoding) {
-        return super.write(event, includeId, includePayloadEncoding);
-    }
-
-    @Override
     protected void doWrite(BusinessTelemetryEvent event, JsonBuilder builder) {
         this.converter.addDatabaseFields(event, builder);
         super.doWrite(event, builder);

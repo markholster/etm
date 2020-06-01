@@ -62,6 +62,7 @@ import com.jecstar.etm.server.core.persisting.RedactedSearchHit;
 import com.jecstar.etm.server.core.persisting.RequestEnhancer;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import com.jecstar.etm.server.core.util.DateUtils;
+import com.jecstar.etm.server.core.util.IdGenerator;
 import org.apache.lucene.search.TotalHits;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.get.GetResponse;
@@ -102,6 +103,11 @@ public class SearchService extends AbstractIndexMetadataService {
      * The <code>LogWrapper</code> for this class.
      */
     private static final LogWrapper log = LogFactory.getLogger(SearchService.class);
+
+    /**
+     * An <code>IdGenerator</code> that will be used to create id's for audit logs.
+     */
+    private static final IdGenerator idGenerator = new IdGenerator();
 
     private static final DateTimeFormatter dateTimeFormatterIndexPerDay = DateUtils.getIndexPerDayFormatter();
 
@@ -265,6 +271,26 @@ public class SearchService extends AbstractIndexMetadataService {
         return jsonBuilder.build();
     }
 
+    @SuppressWarnings("unchecked")
+    @POST
+    @Path("/templates")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({SecurityRoles.ETM_EVENT_READ, SecurityRoles.ETM_EVENT_READ_WRITE})
+    public String setSearchTemplates(String json) {
+        var objectMap = toMap(json);
+        var templates = (List<Map<String, Object>>) getArray("templates", objectMap);
+        var queries = new ArrayList<EtmQuery>();
+        for (var template : templates) {
+            EtmQuery etmQuery = this.etmQueryConverter.read(template);
+            queries.add(etmQuery);
+        }
+        Map<String, Object> userData = getCurrentUser(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + ".search_templates");
+        userData.put("search_templates", queries.stream().map(c -> toMap(this.etmQueryConverter.write(c))).collect(Collectors.toList()));
+        updateCurrentUser(userData, false);
+        return "{\"status\":\"success\"}";
+    }
+
     @PUT
     @Path("/templates/{templateName}")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -359,7 +385,11 @@ public class SearchService extends AbstractIndexMetadataService {
         var now = Instant.now();
         var startTime = now.toEpochMilli();
         var etmPrincipal = getEtmPrincipal();
-        var auditLogBuilder = new QueryAuditLogBuilder().setTimestamp(now).setHandlingTime(now).setPrincipalId(etmPrincipal.getId());
+        var auditLogBuilder = new QueryAuditLogBuilder()
+                .setId(idGenerator.createId())
+                .setTimestamp(now)
+                .setHandlingTime(now)
+                .setPrincipalId(etmPrincipal.getId());
 
         var etmQuery = this.etmQueryConverter.read(json);
         var requestBuilder = createRequestFromInput(etmQuery, etmPrincipal);
@@ -425,6 +455,7 @@ public class SearchService extends AbstractIndexMetadataService {
                     .setQueryTime(queryTime);
             IndexRequestBuilder indexRequestBuilder = requestEnhancer.enhance(
                     new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now))
+                            .setId(auditLogBuilder.getId())
             )
                     .setSource(this.queryAuditLogConverter.write(auditLogBuilder.build()), XContentType.JSON);
             dataRepository.indexAsync(indexRequestBuilder, DataRepository.noopActionListener());
@@ -569,6 +600,7 @@ public class SearchService extends AbstractIndexMetadataService {
                         requestEnhancer.enhance(
                                 new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(c.getTimestamp()))
                         )
+                                .setId(c.getId())
                                 .setSource(this.getEventAuditLogConverter.write(c.build()), XContentType.JSON),
                         DataRepository.noopActionListener()
                 )
@@ -589,6 +621,7 @@ public class SearchService extends AbstractIndexMetadataService {
         var etmPrincipal = getEtmPrincipal();
         var redactedFields = getRedactedFields(etmPrincipal);
         var auditLogBuilder = new GetEventAuditLogBuilder()
+                .setId(idGenerator.createId())
                 .setTimestamp(now)
                 .setHandlingTime(now)
                 .setPrincipalId(getEtmPrincipal().getId())
@@ -687,6 +720,7 @@ public class SearchService extends AbstractIndexMetadataService {
         // Log the retrieval request to the audit logs.
         IndexRequestBuilder indexRequestBuilder = requestEnhancer.enhance(
                 new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now))
+                        .setId(auditLogBuilder.getId())
         )
                 .setSource(this.getEventAuditLogConverter.write(auditLogBuilder.build()), XContentType.JSON);
         dataRepository.indexAsync(indexRequestBuilder, DataRepository.noopActionListener());

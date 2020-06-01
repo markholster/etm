@@ -44,7 +44,6 @@ public abstract class AbstractIndexMetadataService extends AbstractGuiService {
     protected List<Keyword> getIndexFields(DataRepository dataRepository, String indexName) {
         var keywords = new ArrayList<Keyword>();
         keywords.add(Keyword.EXISTS);
-        keywords.add(Keyword.ID);
         var mappingsResponse = dataRepository.indicesGetMappings(new GetMappingsRequestBuilder().setIndices(indexName));
         var mappings = mappingsResponse.mappings();
         for (var mappingMetaData : mappings.values()) {

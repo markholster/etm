@@ -12,7 +12,7 @@ By default only the lowest handling time of any of the writing event handlers an
 **Edit search results table**
 !["Edit search results table"](../assets/images/etm-edit-search-results-table.png)
 
-This screen enables you to change sort settings and the number of results per page that should be retrieved. Also an option is given to alter the column layout of the result table. Columns can be added, deleted an re-arranged. Per column the following options are available:
+This screen enables you to change sort settings and the number of results per page that should be retrieved. Also an option is given to alter the column layout of the result table. Columns can be added, deleted and re-arranged by dragging the row to the preferred position. Per column the following options are available:
 
 **Column attributes**
 Name | Description

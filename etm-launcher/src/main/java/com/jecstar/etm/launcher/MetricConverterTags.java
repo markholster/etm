@@ -23,33 +23,65 @@ public interface MetricConverterTags {
 
     enum RateType {EVENTS, CALLS}
 
-    String getTimestampTag();
+    default String getIdTag() {
+        return "id";
+    }
 
-    String getNodeTag();
+    default String getTimestampTag() {
+        return "timestamp";
+    }
 
-    String getNameTag();
+    default String getNodeTag() {
+        return "node";
+    }
 
-    String getCountTag();
+    default String getNameTag() {
+        return "name";
+    }
 
-    String getMinTag();
+    default String getCountTag() {
+        return "count";
+    }
 
-    String getMaxTag();
+    default String getMinTag() {
+        return "min";
+    }
 
-    String getMeanTag();
+    default String getMaxTag() {
+        return "max";
+    }
 
-    String getStandardDeviationTag();
+    default String getMeanTag() {
+        return "mean";
+    }
 
-    String getMedianTag();
+    default String getStandardDeviationTag() {
+        return "stddev";
+    }
 
-    String get75thPercentileTag();
+    default String getMedianTag() {
+        return "median";
+    }
 
-    String get95thPercentileTag();
+    default String get75thPercentileTag() {
+        return "75%%";
+    }
 
-    String get98thPercentileTag();
+    default String get95thPercentileTag() {
+        return "95%%";
+    }
 
-    String get99thPercentileTag();
+    default String get98thPercentileTag() {
+        return "98%%";
+    }
 
-    String get999thPercentileTag();
+    default String get99thPercentileTag() {
+        return "99%%";
+    }
+
+    default String get999thPercentileTag() {
+        return "99_9%%";
+    }
 
     String getMeanRateTag(RateType rateType, TimeUnit rateUnit);
 
@@ -70,14 +102,9 @@ public interface MetricConverterTags {
     String getMedianDurationTag(TimeUnit durationUnit);
 
     String get75thPercentileDurationTag(TimeUnit durationUnit);
-
     String get95thPercentileDurationTag(TimeUnit durationUnit);
-
     String get98thPercentileDurationTag(TimeUnit durationUnit);
-
     String get99thPercentileDurationTag(TimeUnit durationUnit);
-
     String get999thPercentileDurationTag(TimeUnit durationUnit);
-
 
 }

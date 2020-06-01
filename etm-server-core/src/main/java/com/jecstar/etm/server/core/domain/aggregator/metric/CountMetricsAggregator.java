@@ -38,6 +38,6 @@ public class CountMetricsAggregator extends MetricsAggregator {
 
     @Override
     public ValueCountAggregationBuilder toAggregationBuilder() {
-        return AggregationBuilders.count(getId()).setMetaData(getMetadata()).field("_id");
+        return AggregationBuilders.count(getId()).setMetaData(getMetadata()).field("id.keyword");
     }
 }

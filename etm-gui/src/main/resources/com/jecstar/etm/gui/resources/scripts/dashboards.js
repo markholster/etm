@@ -144,6 +144,9 @@ function initialize(doneFunction, readonly) {
                 clickOpens: false,
                 wrap: true
             });
+        $('#dashboard-settings-columns').sortable({
+            items: "div.row:not(.etm-table-header)"
+        });
         $.when(
             $.ajax({
                 type: 'GET',
@@ -244,7 +247,6 @@ function showSettings() {
             $.each(dashboardData.rows, function (ix, row) {
                 $columns.append(createColumnSettingsRow(row));
             });
-            updateSettingsRowActions('#dashboard-settings-columns .actionRow');
         }
         enableOrDisableButtons();
     }
@@ -255,7 +257,7 @@ function showSettings() {
         $columns.empty();
         $('#dashboard-settings_form').trigger("reset");
         $columns.append(
-            $('<div>').addClass('row').append(
+            $('<div>').addClass('row etm-table-header').append(
                 $('<div>').addClass('col-sm-5 font-weight-bold').text('Columns'),
                 $('<div>').addClass('col-sm-5 font-weight-bold').text('Height'),
                 $('<div>').addClass('col-sm-2 font-weight-bold')
@@ -554,30 +556,14 @@ function addListeners(readonly) {
         const $dashboardSettings = $('#dashboard-settings');
         $dashboardSettings.on('click', 'a[data-row-action]', function (event) {
             event.preventDefault();
-            if ('row-up' === $(this).attr('data-row-action')) {
-                moveRowUp($(this).parent().parent().parent().parent());
-            } else if ('row-down' === $(this).attr('data-row-action')) {
-                moveRowDown($(this).parent().parent().parent().parent());
-            } else if ('row-remove' === $(this).attr('data-row-action')) {
+            if ('row-remove' === $(this).attr('data-row-action')) {
                 removeRow($(this).parent().parent().parent().parent());
             } else if ('row-add' === $(this).attr('data-row-action')) {
                 $('#dashboard-settings-columns').append(createColumnSettingsRow());
-                updateSettingsRowActions('#dashboard-settings-columns .actionRow');
-            }
-
-            function moveRowUp(row) {
-                $(row).after($(row).prev());
-                updateSettingsRowActions('#dashboard-settings-columns .actionRow');
-            }
-
-            function moveRowDown(row) {
-                $(row).before($(row).next());
-                updateSettingsRowActions('#dashboard-settings-columns .actionRow');
             }
 
             function removeRow(row) {
                 $(row).remove();
-                updateSettingsRowActions('#dashboard-settings-columns .actionRow');
             }
         });
 
@@ -1063,11 +1049,7 @@ function createColumnSettingsRow(rowData) {
         )
     );
     const $actionDiv = $('<div>').addClass('col-sm-2').append(
-        $('<div>').addClass('row actionRow').append(
-            $('<div>').addClass('col-sm-1').append($('<a href="#">').attr('data-row-action', 'row-up').addClass('fa fa-arrow-up')),
-            $('<div>').addClass('col-sm-1').append($('<a href="#">').attr('data-row-action', 'row-down').addClass('fa fa-arrow-down')),
-            $('<div>').addClass('col-sm-1').append($('<a href="#">').attr('data-row-action', 'row-remove').addClass('fa fa-times text-danger'))
-        )
+        $('<a href="#">').attr('data-row-action', 'row-remove').addClass('fa fa-times text-danger')
     );
     $row.append($actionDiv);
     if (rowData) {
@@ -1149,27 +1131,6 @@ function applyDashboardSettings(currentDashboard) {
 
     }
     return newDashboardData;
-}
-
-function updateSettingsRowActions(selector) {
-    const $columns = $('#dashboard-settings-columns');
-    $(selector).each(function (index, row) {
-        const $row = $(row);
-        if ($columns.children().length > 2) {
-            if (index === 0) {
-                $row.find('.fa-arrow-up').hide();
-            } else {
-                $row.find('.fa-arrow-up').show();
-            }
-            if (index >= $columns.children().length - 2) {
-                $row.find('.fa-arrow-down').hide();
-            } else {
-                $row.find('.fa-arrow-down').show();
-            }
-        } else {
-            $row.find('.fa-arrow-up, .fa-arrow-down').hide();
-        }
-    });
 }
 
 function removeDashboard(dashboardName) {

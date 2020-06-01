@@ -32,14 +32,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
@@ -275,10 +274,10 @@ public abstract class AbstractCitrusSeleniumTest {
             con.setConnectTimeout(1000);
             con.setRequestMethod("POST");
             con.setRequestProperty("Content-Type", "application/json; charset=utf-8");
-            con.setRequestProperty("apikey", apiKeys.stream().collect(Collectors.joining(",")));
+            con.setRequestProperty("apikey", String.join(",", apiKeys));
             con.setDoOutput(true);
             stream = new DataOutputStream(con.getOutputStream());
-            stream.write(("{\"type\": \"" + type + (importProfile != null ? "\", \"import_profile\": \"" + importProfile + "\"" : "\"") + ", \"data\": " + data + "}").getBytes(Charset.forName("utf-8")));
+            stream.write(("{\"type\": \"" + type + (importProfile != null ? "\", \"import_profile\": \"" + importProfile + "\"" : "\"") + ", \"data\": " + data + "}").getBytes(StandardCharsets.UTF_8));
             stream.flush();
             stream.close();
 

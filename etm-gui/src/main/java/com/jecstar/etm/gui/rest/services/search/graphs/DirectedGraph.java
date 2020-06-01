@@ -17,6 +17,7 @@
 
 package com.jecstar.etm.gui.rest.services.search.graphs;
 
+import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 
@@ -36,6 +37,11 @@ public class DirectedGraph<V extends Vertex> {
      * The <code>LogWrapper</code> for this class.
      */
     private static final LogWrapper log = LogFactory.getLogger(DirectedGraph.class);
+
+    /**
+     * The maximum number of vertices in a <code>DirectedGraph</code>.
+     */
+    private static final int MAX_VERTICES = 2048;
 
     /**
      * The outdegree map of all <code>Vertex</code> instances present in this <code>DirectedGraph</code>.
@@ -71,6 +77,9 @@ public class DirectedGraph<V extends Vertex> {
     public DirectedGraph<V> addVertex(V vertex) {
         if (this.outdegreeMap.containsKey(vertex)) {
             return this;
+        }
+        if (this.outdegreeMap.size() >= MAX_VERTICES) {
+            throw new EtmException(EtmException.MAX_NR_OF_EVENTS_IN_DAG_REACHED);
         }
         this.outdegreeMap.put(vertex, new LinkedList<>());
         this.indegreeMap.put(vertex, new LinkedList<>());

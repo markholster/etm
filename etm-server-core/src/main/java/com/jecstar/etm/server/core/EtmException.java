@@ -68,6 +68,7 @@ public class EtmException extends RuntimeException {
 
     // 600_* reserved for search errors.
     public static final int MAX_NR_OF_SEARCH_TEMPLATES_REACHED = 600_000;
+    public static final int MAX_NR_OF_EVENTS_IN_DAG_REACHED = 600_001;
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     // When adding an code, also add the code to com.jecstar.etm.gui.rest.EtmExceptionMapper and to the user manual!!!!!

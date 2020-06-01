@@ -27,8 +27,6 @@ import java.util.Map.Entry;
 
 /**
  * Converter class that converts a <code>TelemetryEvent</code> to a JSON string.
- *
- * @author mark
  */
 public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEvent<Event>> implements TelemetryEventWriter<String, Event> {
 
@@ -36,16 +34,10 @@ public abstract class AbstractJsonTelemetryEventWriter<Event extends TelemetryEv
 
     @Override
     public String write(Event event) {
-        return write(event, true, true);
-    }
-
-    protected String write(Event event, boolean includeId, boolean includePayloadEncoding) {
         var builder = new JsonBuilder();
         builder.startObject();
         builder.field(this.tags.getObjectTypeTag(), getType());
-        if (includeId) {
-            builder.field(this.tags.getIdTag(), event.id);
-        }
+        builder.field(this.tags.getIdTag(), event.id);
         builder.field(this.tags.getCorrelationIdTag(), event.correlationId);
         addMapElementToJsonBuilder(this.tags.getCorrelationDataTag(), event.correlationData, builder);
         if (event.endpoints.size() != 0) {

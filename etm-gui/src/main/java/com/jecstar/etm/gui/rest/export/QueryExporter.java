@@ -19,12 +19,12 @@ package com.jecstar.etm.gui.rest.export;
 
 import com.jecstar.etm.domain.writer.TelemetryEventTags;
 import com.jecstar.etm.domain.writer.json.TelemetryEventTagsJsonImpl;
-import com.jecstar.etm.gui.rest.services.Keyword;
 import com.jecstar.etm.gui.rest.services.search.TransactionEvent;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.audit.builder.GetEventAuditLogBuilder;
 import com.jecstar.etm.server.core.domain.principal.EtmPrincipal;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
+import com.jecstar.etm.server.core.util.IdGenerator;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -38,6 +38,11 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class QueryExporter {
+
+    /**
+     * An <code>IdGenerator</code> that will be used to create id's for audit logs.
+     */
+    private static final IdGenerator idGenerator = new IdGenerator();
 
     private final TelemetryEventTags eventTags = new TelemetryEventTagsJsonImpl();
 
@@ -62,7 +67,7 @@ public class QueryExporter {
         GetEventAuditLogBuilder auditLogBuilder = createGetEventAuditLogBuilder(etmPrincipal);
 
         List<FieldLayout> fields = new ArrayList<>();
-        fields.add(new FieldLayout("Id", Keyword.ID.getName(), FieldType.PLAIN, MultiSelect.FIRST));
+        fields.add(new FieldLayout("Id", eventTags.getIdTag(), FieldType.PLAIN, MultiSelect.FIRST));
         fields.add(new FieldLayout("Name", eventTags.getNameTag(), FieldType.PLAIN, MultiSelect.FIRST));
         fields.add(new FieldLayout("Date", eventTags.getEndpointHandlerHandlingTimeTag(), FieldType.ISO_TIMESTAMP, MultiSelect.FIRST));
         fields.add(new FieldLayout("Direction", "direction", FieldType.PLAIN, MultiSelect.FIRST));
@@ -136,7 +141,8 @@ public class QueryExporter {
                     writer.append(escapeToQuotedCsvField(formattedValue));
                 }
                 if (auditLogPersistingConsumer != null) {
-                    auditLogBuilder.setEventId(sourceValues.get(Keyword.ID.getName()).toString());
+                    auditLogBuilder.setId(idGenerator.createId());
+                    auditLogBuilder.setEventId(sourceValues.get(eventTags.getIdTag()).toString());
                     auditLogPersistingConsumer.accept(auditLogBuilder);
                 }
             }
@@ -156,7 +162,6 @@ public class QueryExporter {
             Consumer<GetEventAuditLogBuilder> auditLogPersistingConsumer
     ) throws IOException {
 
-        boolean payloadVisible = fields.stream().anyMatch(p -> this.eventTags.getPayloadTag().equals(p.getField()));
         auditLogBuilder.setRedactedFields(etmPrincipal.getRedactedFields());
 
         final int charsPerCell = 30000;
@@ -213,7 +218,7 @@ public class QueryExporter {
                     }
                 }
                 if (auditLogPersistingConsumer != null) {
-                    auditLogBuilder.setEventId(sourceValues.get(Keyword.ID.getName()).toString());
+                    auditLogBuilder.setEventId(sourceValues.get(eventTags.getIdTag()).toString());
                     auditLogPersistingConsumer.accept(auditLogBuilder);
                 }
             }
@@ -272,7 +277,7 @@ public class QueryExporter {
             var next = this.scrollableSearch.next();
             if (next != null) {
                 Map<String, Object> sourceAsMap = next.getSourceAsMap();
-                sourceAsMap.put(Keyword.ID.getName(), next.getId());
+                sourceAsMap.put(eventTags.getIdTag(), next.getId());
                 return sourceAsMap;
             }
             return null;
@@ -303,7 +308,7 @@ public class QueryExporter {
             Map<String, Object> values = new HashMap<>();
             values.put("index", event.index);
             values.put("type", event.objectType);
-            values.put(Keyword.ID.getName(), event.id);
+            values.put(eventTags.getIdTag(), event.id);
             values.put(eventTags.getNameTag(), event.name);
             values.put(eventTags.getEndpointHandlerHandlingTimeTag(), event.handlingTime);
             values.put(eventTags.getEndpointHandlerSequenceNumberTag(), event.sequenceNumber);
