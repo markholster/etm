@@ -198,7 +198,7 @@ $('body').on('click', 'a', function (event) {
             setQuery(queryTemplates[templateIx]);
         }
     } else if ('search-template-removal' === $anchor.attr('data-action')) {
-        let templateIx = getTemplateIndex($anchor.text());
+        let templateIx = getTemplateIndex($anchor.prev().text());
         if (templateIx >= 0) {
             $('#remove-template-name').text(queryTemplates[templateIx].name);
             $('#modal-template-remove').modal();
