@@ -120,11 +120,10 @@ const searchResultLayout = {
 let queryKeywords = null;
 let maxNumberOfSearchTemplates;
 let maxNumberOfHistoricalQueries;
-let maxNumberOfEventsInDownload;
+let maxNumberOfEventsInDownload = 0;
 let timeZone;
 let currentSelectedFile;
 let queryInProgress;
-let maxDownloads = 0;
 const queryTemplates = [];
 const queryHistory = [];
 const queryStartTimeOffset = 5000;
@@ -221,9 +220,6 @@ $('#query-string').on('input', function () {
     } else {
         $('#btn-search, #template-name').removeAttr("disabled");
         $('#link-edit-table').show();
-        if (maxNumberOfEventsInDownload && maxNumberOfEventsInDownload > 0) {
-            $('#link-request-download').show();
-        }
         $('#template-name').trigger('input');
     }
 }).on('keydown', function (event) {
@@ -1228,10 +1224,8 @@ function executeQuery(queryParameters, successCallback) {
                 commons.showNotification('Query returned a warning: ' + data.warning, 'warning');
             }
             $('#lnk-export-query').show();
-            maxDownloads = data.max_downloads;
-            if (maxDownloads > 0) {
+            if (maxNumberOfEventsInDownload > 0) {
                 $('#link-request-download').show();
-                $('#input-download-number-of-rows').attr('max', maxDownloads);
             }
             searchResultLayout.current_ix = data.start_ix;
             const $searchStats = $('#search-stats');
