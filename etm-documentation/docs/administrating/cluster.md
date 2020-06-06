@@ -26,7 +26,7 @@ Shards per index | Each day at 00:00 UTC a new Elasticsearch index is created. T
 Replicas per index | The number of [replica's](https://www.elastic.co/guide/en/elasticsearch/reference/7.x/scalability.html) each Elasticsearch index should have. Leave this value to zero if you have only one Elasticsearch instance in your cluster.
 Max event indices | The number of event indices to keep. Each day at 00:00 UTC a new Elasticsearch index is created. This means that setting this value to 10 will keep your events at least 9 days, depending on your local time zone.
 Max metrics indices | The number of metrics indices to keep. Each Enterprise Telemetry Monitor node generates metrics to the metrics index of the current day. This index cannot be queried, but is useful to monitor your Enterprise Telemetry Monitor cluster health.
-Max audit log indices | The number of audit logs indices to keep. This index cannot be queried, but keeps your audit logs to see who is doing what in Enterprise Telemetry Monitor.
+Max audit log indices | The number of audit logs indices to keep. This index cannot be queried, but keeps your audit logs to see who is doing what in Enterprise Telemetry Monitor. Every week a new index is created.
 Wait for active shards | The number of Elasticsearch shards that need to be active before performing any query. Leave this value to 1 if you have only one Elasticsearch instance in your cluster, or have not configured any replicas.
 Retries on conflict | The number of retries before an insert or update query will fail.
 Query timeout | The timeout in milliseconds for queries to Elasticsearch.

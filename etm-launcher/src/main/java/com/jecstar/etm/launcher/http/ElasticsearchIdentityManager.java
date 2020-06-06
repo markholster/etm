@@ -60,7 +60,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
      * An <code>IdGenerator</code> that will be used to create id's for audit logs.
      */
     private static final IdGenerator idGenerator = new IdGenerator();
-    private static final DateTimeFormatter dateTimeFormatterIndexPerDay = DateUtils.getIndexPerDayFormatter();
+    private static final DateTimeFormatter dateTimeFormatterIndexPerWeek = DateUtils.getIndexPerWeekFormatter();
 
     private final DataRepository dataRepository;
     private final EtmConfiguration etmConfiguration;
@@ -314,7 +314,7 @@ public class ElasticsearchIdentityManager implements IdentityManager {
                 .setHandlingTime(now)
                 .setPrincipalId(id)
                 .setSuccess(success);
-        this.dataRepository.indexAsync(new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now))
+        this.dataRepository.indexAsync(new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerWeek.format(now))
                 .setId(auditLogBuilder.getId())
                 .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
                 .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))

@@ -45,7 +45,7 @@ class SessionListenerAuditLogger implements SessionListener {
      */
     private static final IdGenerator idGenerator = new IdGenerator();
 
-    private static final DateTimeFormatter dateTimeFormatterIndexPerDay = DateUtils.getIndexPerDayFormatter();
+    private static final DateTimeFormatter dateTimeFormatterIndexPerWeek = DateUtils.getIndexPerWeekFormatter();
 
     private final DataRepository dataRepository;
     private final EtmConfiguration etmConfiguration;
@@ -64,7 +64,7 @@ class SessionListenerAuditLogger implements SessionListener {
                 .setHandlingTime(now)
                 .setPrincipalId(id)
                 .setExpired(expired);
-        dataRepository.indexAsync(new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now))
+        dataRepository.indexAsync(new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerWeek.format(now))
                         .setId(auditLogBuilder.getId())
                         .setWaitForActiveShards(getActiveShardCount(etmConfiguration))
                         .setTimeout(TimeValue.timeValueMillis(etmConfiguration.getQueryTimeout()))

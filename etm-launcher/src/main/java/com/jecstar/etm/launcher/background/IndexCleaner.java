@@ -25,10 +25,10 @@ import com.jecstar.etm.server.core.elasticsearch.builder.GetAliasesRequestBuilde
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.persisting.internal.BusinessEventLogger;
+import com.jecstar.etm.server.core.util.DateUtils;
 import org.elasticsearch.client.GetAliasesResponse;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class IndexCleaner implements Runnable {
@@ -77,7 +77,7 @@ public class IndexCleaner implements Runnable {
             if (log.isInfoLevelEnabled()) {
                 log.logInfoMessage("Found " + (indices.size() - maxIndices) + " indices to remove in alias '" + indexAlias + "'.");
             }
-            Collections.sort(indices);
+            indices.sort(DateUtils.getIndexTemplateComparator());
             for (int i = 0; i < indices.size() - maxIndices; i++) {
                 if (log.isInfoLevelEnabled()) {
                     log.logInfoMessage("Removing index '" + indices.get(i) + "'.");

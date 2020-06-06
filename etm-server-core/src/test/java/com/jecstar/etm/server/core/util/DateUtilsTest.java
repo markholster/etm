@@ -21,6 +21,8 @@ package com.jecstar.etm.server.core.util;
 import org.junit.jupiter.api.Test;
 
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Comparator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -40,6 +42,30 @@ public class DateUtilsTest {
         assertEquals(JAN_FIRST_UTC, DateUtils.parseDateString("2018-12-31T22-02:00", null, true).toEpochMilli());
         // Zone should only be taken into consideration when given time has no offset.
         assertEquals(JAN_FIRST_UTC, DateUtils.parseDateString("2019-01-01T02+02:00", ZoneId.of("+05:00"), true).toEpochMilli());
+    }
+
+    @Test
+    public void testIndexTemplateComparator() {
+        Comparator<String> comparator = DateUtils.getIndexTemplateComparator();
+
+        var dates = new ArrayList<String>();
+        dates.add("2020-04");
+        dates.add("2020-01-01");
+        dates.add("2020-01-21");
+        dates.add("2020-01-10");
+        dates.add("2020-02");
+        dates.add("2020-02-14");
+        dates.add("2020-03");
+
+        dates.sort(comparator);
+
+        assertEquals("2020-01-01", dates.get(0));
+        assertEquals("2020-01-10", dates.get(1));
+        assertEquals("2020-02", dates.get(2));
+        assertEquals("2020-01-21", dates.get(3));
+        assertEquals("2020-03", dates.get(4));
+        assertEquals("2020-04", dates.get(5));
+        assertEquals("2020-02-14", dates.get(6));
     }
 
 }

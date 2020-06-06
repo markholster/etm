@@ -445,7 +445,7 @@ public class SearchService extends AbstractIndexMetadataService {
                     .setNumberOfResultsRelation(response.getHits().getTotalHits().relation.name())
                     .setQueryTime(queryTime);
             IndexRequestBuilder indexRequestBuilder = requestEnhancer.enhance(
-                    new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now))
+                    new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerWeek.format(now))
                             .setId(auditLogBuilder.getId())
             )
                     .setSource(this.queryAuditLogConverter.write(auditLogBuilder.build()), XContentType.JSON);
@@ -589,7 +589,7 @@ public class SearchService extends AbstractIndexMetadataService {
                 etmQuery.getResultLayout().toFieldLayouts(),
                 c -> dataRepository.indexAsync(
                         requestEnhancer.enhance(
-                                new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(c.getTimestamp()))
+                                new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerWeek.format(c.getTimestamp()))
                         )
                                 .setId(c.getId())
                                 .setSource(this.getEventAuditLogConverter.write(c.build()), XContentType.JSON),
@@ -710,7 +710,7 @@ public class SearchService extends AbstractIndexMetadataService {
         builder.endObject();
         // Log the retrieval request to the audit logs.
         IndexRequestBuilder indexRequestBuilder = requestEnhancer.enhance(
-                new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now))
+                new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerWeek.format(now))
                         .setId(auditLogBuilder.getId())
         )
                 .setSource(this.getEventAuditLogConverter.write(auditLogBuilder.build()), XContentType.JSON);
@@ -990,7 +990,7 @@ public class SearchService extends AbstractIndexMetadataService {
                 fileType,
                 etmPrincipal,
                 c -> dataRepository.indexAsync(requestEnhancer.enhance(
-                        new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(c.getTimestamp()))
+                        new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerWeek.format(c.getTimestamp()))
                 )
                         .setSource(this.getEventAuditLogConverter.write(c.build()), XContentType.JSON), DataRepository.noopActionListener())
 

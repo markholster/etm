@@ -38,10 +38,9 @@ public abstract class AbstractGuiService extends AbstractJsonService {
     protected SecurityContext securityContext;
 
     /**
-     * A <code>DateTimeFormatter</code> that is configured to have day precision.
+     * A <code>DateTimeFormatter</code> that is configured to have week precision.
      */
-    protected final DateTimeFormatter dateTimeFormatterIndexPerDay = DateUtils.getIndexPerDayFormatter();
-
+    protected final DateTimeFormatter dateTimeFormatterIndexPerWeek = DateUtils.getIndexPerWeekFormatter();
 
     /**
      * An <code>IdGenerator</code> that will be used to create id's for audit logs.

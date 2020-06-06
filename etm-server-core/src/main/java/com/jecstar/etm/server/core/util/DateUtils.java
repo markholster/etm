@@ -20,10 +20,12 @@ package com.jecstar.etm.server.core.util;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
 import java.time.temporal.Temporal;
 import java.time.temporal.TemporalAccessor;
 import java.time.temporal.TemporalField;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -46,7 +48,67 @@ public class DateUtils {
                 .appendLiteral("-")
                 .appendValue(ChronoField.MONTH_OF_YEAR, 2)
                 .appendLiteral("-")
-                .appendValue(ChronoField.DAY_OF_MONTH, 2).toFormatter().withZone(ZoneId.of("UTC"));
+                .appendValue(ChronoField.DAY_OF_MONTH, 2)
+                .toFormatter().withZone(ZoneId.of("UTC"));
+    }
+
+    public static DateTimeFormatter getIndexPerWeekFormatter() {
+        return new DateTimeFormatterBuilder()
+                .appendValue(ChronoField.YEAR, 4)
+                .appendLiteral("-")
+                .appendValue(ChronoField.ALIGNED_WEEK_OF_YEAR, 2)
+                .toFormatter().withZone(ZoneId.of("UTC"));
+    }
+
+    /**
+     * Comparator that shorts index names base on the timestamp they got.
+     * <p>
+     * The comparator will sort the index names ascending based on the time period they represent. Both the week and
+     * day pattern are supported in a single list. When an index with a week pattern is present and also a index with
+     * a day pattern that falls into the week, the week pattern will be placed after the day pattern.
+     *
+     * @return The <code>Comparator</code>
+     */
+    public static Comparator<String> getIndexTemplateComparator() {
+        return new Comparator<>() {
+            @Override
+            public int compare(String o1, String o2) {
+                var parts = o1.split("_");
+                var dateString1 = parts[parts.length - 1];
+                parts = o2.split("_");
+                var dateString2 = parts[parts.length - 1];
+                TemporalAccessor temp1 = getTemporalAccessor(dateString1);
+                TemporalAccessor temp2 = getTemporalAccessor(dateString2);
+
+                var compare1 = temp1.get(ChronoField.YEAR) + "-" + temp1.get(ChronoField.ALIGNED_WEEK_OF_YEAR);
+                var compare2 = temp2.get(ChronoField.YEAR) + "-" + temp2.get(ChronoField.ALIGNED_WEEK_OF_YEAR);
+                var result = compare1.compareTo(compare2);
+                if (result == 0) {
+                    // Seem week in year.
+                    if (o1.length() == o2.length()) {
+                        // Same length, just compare as text
+                        result = o1.compareTo(o2);
+                    } else {
+                        // Shortest should be last
+                        result = Integer.compare(o2.length(), o1.length());
+                    }
+                }
+                return result;
+            }
+
+            private TemporalAccessor getTemporalAccessor(String dateString) {
+                TemporalAccessor temporalAccessor = null;
+                try {
+                    temporalAccessor = getIndexPerDayFormatter().parse(dateString);
+                } catch (DateTimeParseException e1) {
+                    try {
+                        temporalAccessor = getIndexPerWeekFormatter().parse(dateString);
+                    } catch (DateTimeParseException e2) {
+                    }
+                }
+                return temporalAccessor;
+            }
+        };
     }
 
     public static Instant parseDateString(String dateString, ZoneId zoneId, boolean normalizeToStart) {

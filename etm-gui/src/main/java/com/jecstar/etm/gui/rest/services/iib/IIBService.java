@@ -530,7 +530,7 @@ public class IIBService extends AbstractGuiService {
     private void storeConfigurationChangedAuditLog(ConfigurationChangedAuditLogBuilder auditLogBuilder) {
         var now = Instant.now();
         IndexRequestBuilder indexRequestBuilder = requestEnhancer.enhance(
-                new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now))
+                new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerWeek.format(now))
                         .setId(auditLogBuilder.getId())
         )
                 .setSource(this.configurationChangedAuditLogConverter.write(
