@@ -24,6 +24,10 @@ import com.jecstar.etm.gui.rest.services.Keyword;
 import com.jecstar.etm.gui.rest.services.search.DefaultUserSettings;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.ImportProfile;
+import com.jecstar.etm.server.core.domain.audit.ConfigurationChangedAuditLog;
+import com.jecstar.etm.server.core.domain.audit.builder.ConfigurationChangedAuditLogBuilder;
+import com.jecstar.etm.server.core.domain.audit.converter.ConfigurationChangedAuditLogConverter;
+import com.jecstar.etm.server.core.domain.cluster.certificate.Usage;
 import com.jecstar.etm.server.core.domain.cluster.certificate.converter.CertificateConverter;
 import com.jecstar.etm.server.core.domain.cluster.notifier.ConnectionTestResult;
 import com.jecstar.etm.server.core.domain.cluster.notifier.Notifier;
@@ -83,6 +87,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.time.Instant;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -91,6 +96,9 @@ import java.util.stream.Collectors;
 @DeclareRoles(SecurityRoles.ALL_ROLES)
 public class SettingsService extends AbstractIndexMetadataService {
 
+    /**
+     * The <code>LogWrapper</code> for this class.
+     */
     private final LogWrapper log = LogFactory.getLogger(SettingsService.class);
 
     private final EtmConfigurationConverterJsonImpl etmConfigurationConverter = new EtmConfigurationConverterJsonImpl();
@@ -101,6 +109,7 @@ public class SettingsService extends AbstractIndexMetadataService {
     private final EtmPrincipalConverterJsonImpl etmPrincipalConverter = new EtmPrincipalConverterJsonImpl();
     private final EtmPrincipalTags principalTags = this.etmPrincipalConverter.getTags();
     private final CertificateConverter certificateConverter = new CertificateConverter();
+    private final ConfigurationChangedAuditLogConverter configurationChangedAuditLogConverter = new ConfigurationChangedAuditLogConverter();
 
     private final List<FieldLayout> exportPrincipalFields = Arrays.asList(
             new FieldLayout("Account ID", ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.principalTags.getIdTag(), FieldType.PLAIN, MultiSelect.FIRST),
@@ -182,10 +191,13 @@ public class SettingsService extends AbstractIndexMetadataService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.LICENSE_READ_WRITE)
     public String setLicense(String json) {
+        var now = Instant.now();
         var etmPrincipal = getEtmPrincipal();
         var requestValues = toMap(json);
         var licenseKey = getString("key", requestValues);
+        var oldLicense = etmConfiguration.getLicense();
         etmConfiguration.setLicenseKey(licenseKey);
+        var newLicense = etmConfiguration.getLicense();
         var licenseObject = new HashMap<String, Object>();
         var values = new HashMap<String, Object>();
         values.put(this.etmConfigurationConverter.getTags().getLicenseTag(), licenseKey);
@@ -196,6 +208,18 @@ public class SettingsService extends AbstractIndexMetadataService {
                 .setDoc(licenseObject)
                 .setDocAsUpsert(true);
         dataRepository.update(updateRequestBuilder);
+        // Create audit data.
+        if (!Objects.equals(oldLicense, newLicense)) {
+            storeConfigurationChangedAuditLog(new ConfigurationChangedAuditLogBuilder()
+                    .setPrincipalId(etmPrincipal.getId())
+                    .setHandlingTime(now)
+                    .setAction(ConfigurationChangedAuditLog.Action.UPDATE)
+                    .setConfigurationType(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LICENSE)
+                    .setConfigurationId(ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LICENSE_DEFAULT)
+                    .setOldValue(oldLicense)
+                    .setNewValue(newLicense)
+            );
+        }
 
         // Because the access to the etmConfiguration in the above statement could cause a reload of the configuration
         // the old license may still be applied. To prevent this, we set the license again at this place.
@@ -245,10 +269,14 @@ public class SettingsService extends AbstractIndexMetadataService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.CLUSTER_SETTINGS_READ_WRITE)
     public String setClusterConfiguration(String json) {
+        var now = Instant.now();
+        var etmPrincipal = getEtmPrincipal();
+
         GetResponse getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_NODE_DEFAULT)
                 .setFetchSource(true)
         );
         Map<String, Object> currentNodeObject = getResponse.getSourceAsMap();
+        var oldClusterConfiguration = this.etmConfigurationConverter.write(null, this.etmConfigurationConverter.read(null, currentNodeObject, null));
         Map<String, Object> currentValues = (Map<String, Object>) currentNodeObject.get(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE);
         // Overwrite the values with the new values.
         currentValues.putAll(toMap(json));
@@ -277,13 +305,25 @@ public class SettingsService extends AbstractIndexMetadataService {
         if (!settingsBuilder.keys().isEmpty()) {
             dataRepository.clusterUpdateSettings(new ClusterUpdateSettingsRequestBuilder().setPersistentSettings(settingsBuilder));
         }
+        var newClusterConfiguration = this.etmConfigurationConverter.write(null, defaultConfig);
         UpdateRequestBuilder builder = requestEnhancer.enhance(
                 new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_NODE_DEFAULT)
         )
-                .setDoc(this.etmConfigurationConverter.write(null, defaultConfig), XContentType.JSON)
+                .setDoc(newClusterConfiguration, XContentType.JSON)
                 .setDocAsUpsert(true)
                 .setDetectNoop(true);
         dataRepository.update(builder);
+        if (!Objects.equals(oldClusterConfiguration, newClusterConfiguration)) {
+            storeConfigurationChangedAuditLog(new ConfigurationChangedAuditLogBuilder()
+                    .setPrincipalId(etmPrincipal.getId())
+                    .setHandlingTime(now)
+                    .setAction(ConfigurationChangedAuditLog.Action.UPDATE)
+                    .setConfigurationType(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE)
+                    .setConfigurationId(ElasticsearchLayout.CONFIGURATION_OBJECT_ID_NODE_DEFAULT)
+                    .setOldValue(oldClusterConfiguration)
+                    .setNewValue(newClusterConfiguration)
+            );
+        }
         return "{\"status\":\"success\"}";
     }
 
@@ -307,17 +347,33 @@ public class SettingsService extends AbstractIndexMetadataService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.CLUSTER_SETTINGS_READ_WRITE)
     public String setLdapConfiguration(String json) {
+        var now = Instant.now();
+        var etmPrincipal = getEtmPrincipal();
+        var oldLdapConfig = getCurrentLdapConfiguration();
+
         LdapConfiguration config = this.ldapConfigurationConverter.read(toStringWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LDAP));
         testLdapConnection(config);
+        var newLdapConfig = this.ldapConfigurationConverter.write(config);
         IndexRequestBuilder indexRequestBuilder = requestEnhancer.enhance(
                 new IndexRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LDAP_DEFAULT)
-        ).setSource(this.ldapConfigurationConverter.write(config), XContentType.JSON);
+        ).setSource(newLdapConfig, XContentType.JSON);
         dataRepository.index(indexRequestBuilder);
         if (etmConfiguration.getDirectory() != null) {
             etmConfiguration.getDirectory().merge(config);
         } else {
             Directory directory = new Directory(dataRepository, config);
             etmConfiguration.setDirectory(directory);
+        }
+        if (!Objects.equals(oldLdapConfig, newLdapConfig)) {
+            storeConfigurationChangedAuditLog(new ConfigurationChangedAuditLogBuilder()
+                    .setPrincipalId(etmPrincipal.getId())
+                    .setHandlingTime(now)
+                    .setAction(oldLdapConfig == null ? ConfigurationChangedAuditLog.Action.CREATE : ConfigurationChangedAuditLog.Action.UPDATE)
+                    .setConfigurationType(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LDAP)
+                    .setConfigurationId(ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LDAP_DEFAULT)
+                    .setOldValue(oldLdapConfig)
+                    .setNewValue(newLdapConfig)
+            );
         }
         return "{\"status\":\"success\"}";
     }
@@ -337,12 +393,43 @@ public class SettingsService extends AbstractIndexMetadataService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.CLUSTER_SETTINGS_READ_WRITE)
     public String deleteLdapConfiguration() {
+        var now = Instant.now();
+        var etmPrincipal = getEtmPrincipal();
+        var oldLdapConfig = getCurrentLdapConfiguration();
+
         DeleteRequestBuilder builder = requestEnhancer.enhance(
                 new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LDAP_DEFAULT)
         );
         dataRepository.delete(builder);
         etmConfiguration.setDirectory(null);
+
+        if (oldLdapConfig != null) {
+            storeConfigurationChangedAuditLog(new ConfigurationChangedAuditLogBuilder()
+                    .setPrincipalId(etmPrincipal.getId())
+                    .setHandlingTime(now)
+                    .setAction(ConfigurationChangedAuditLog.Action.DELETE)
+                    .setConfigurationType(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LDAP)
+                    .setConfigurationId(ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LDAP_DEFAULT)
+                    .setOldValue(oldLdapConfig)
+            );
+        }
         return "{\"status\":\"success\"}";
+    }
+
+    /**
+     * Returns the current LDAP configuration.
+     *
+     * @return The current LDAP configuration.
+     */
+    private String getCurrentLdapConfiguration() {
+        var getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_LDAP_DEFAULT)
+                .setFetchSource(true)
+        );
+        if (!getResponse.isExists()) {
+            return null;
+        }
+        var config = this.ldapConfigurationConverter.read(getResponse.getSourceAsString());
+        return this.ldapConfigurationConverter.write(config);
     }
 
     /**
@@ -390,16 +477,31 @@ public class SettingsService extends AbstractIndexMetadataService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.NODE_SETTINGS_READ_WRITE)
     public String addNode(@PathParam("nodeName") String nodeName, String json) {
+        var now = Instant.now();
+        var etmPrincipal = getEtmPrincipal();
         // Do a read and write of the node to make sure it's valid.
         GetResponse defaultSettingsResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_NODE_DEFAULT)
                 .setFetchSource(true)
         );
         EtmConfiguration defaultConfig = this.etmConfigurationConverter.read(null, defaultSettingsResponse.getSourceAsString(), null);
+        var oldNodeConfiguration = getCurrentNodeConfiguration(nodeName, defaultConfig);
         EtmConfiguration nodeConfig = this.etmConfigurationConverter.read(toStringWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE), defaultSettingsResponse.getSourceAsString(), nodeName);
+        var newNodeConfiguration = this.etmConfigurationConverter.write(nodeConfig, defaultConfig);
         IndexRequestBuilder builder = requestEnhancer.enhance(
                 new IndexRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE_ID_PREFIX + nodeName)
         ).setSource(this.etmConfigurationConverter.write(nodeConfig, defaultConfig), XContentType.JSON);
         dataRepository.index(builder);
+        if (!Objects.equals(oldNodeConfiguration, newNodeConfiguration)) {
+            storeConfigurationChangedAuditLog(new ConfigurationChangedAuditLogBuilder()
+                    .setPrincipalId(etmPrincipal.getId())
+                    .setHandlingTime(now)
+                    .setAction(oldNodeConfiguration == null ? ConfigurationChangedAuditLog.Action.CREATE : ConfigurationChangedAuditLog.Action.UPDATE)
+                    .setConfigurationType(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE)
+                    .setConfigurationId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE_ID_PREFIX + nodeName)
+                    .setOldValue(oldNodeConfiguration)
+                    .setNewValue(newNodeConfiguration)
+            );
+        }
         return "{ \"status\": \"success\" }";
     }
 
@@ -408,6 +510,14 @@ public class SettingsService extends AbstractIndexMetadataService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.NODE_SETTINGS_READ_WRITE)
     public String deleteNode(@PathParam("nodeName") String nodeName) {
+        var now = Instant.now();
+        var etmPrincipal = getEtmPrincipal();
+        GetResponse defaultSettingsResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_ID_NODE_DEFAULT)
+                .setFetchSource(true)
+        );
+        EtmConfiguration defaultConfig = this.etmConfigurationConverter.read(null, defaultSettingsResponse.getSourceAsString(), null);
+        var oldNodeConfiguration = getCurrentNodeConfiguration(nodeName, defaultConfig);
+
         if (ElasticsearchLayout.ETM_OBJECT_NAME_DEFAULT.equalsIgnoreCase(nodeName)) {
             return "{\"status\":\"failed\"}";
         }
@@ -415,9 +525,34 @@ public class SettingsService extends AbstractIndexMetadataService {
                 new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE_ID_PREFIX + nodeName)
         );
         dataRepository.delete(builder);
+        if (oldNodeConfiguration != null) {
+            storeConfigurationChangedAuditLog(new ConfigurationChangedAuditLogBuilder()
+                    .setPrincipalId(etmPrincipal.getId())
+                    .setHandlingTime(now)
+                    .setAction(ConfigurationChangedAuditLog.Action.DELETE)
+                    .setConfigurationType(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE)
+                    .setConfigurationId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE_ID_PREFIX + nodeName)
+                    .setOldValue(oldNodeConfiguration)
+            );
+        }
         return "{\"status\":\"success\"}";
     }
 
+    /**
+     * Returns the current node configuration.
+     *
+     * @return The current node configuration.
+     */
+    private String getCurrentNodeConfiguration(String nodeName, EtmConfiguration defaultConfiguration) {
+        var getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE_ID_PREFIX + nodeName)
+                .setFetchSource(true)
+        );
+        if (!getResponse.isExists()) {
+            return null;
+        }
+        var nodeConfig = this.etmConfigurationConverter.read(getResponse.getSourceAsString(), this.etmConfigurationConverter.write(null, defaultConfiguration), nodeName);
+        return this.etmConfigurationConverter.write(nodeConfig, defaultConfiguration);
+    }
 
     @GET
     @Path("/indicesstats")
@@ -531,6 +666,9 @@ public class SettingsService extends AbstractIndexMetadataService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.PARSER_SETTINGS_READ_WRITE)
     public String deleteParser(@PathParam("parserName") String parserName) {
+        var now = Instant.now();
+        var etmPrincipal = getEtmPrincipal();
+        var oldParserConfiguration = getCurrentParserConfiguration(parserName);
         BulkRequestBuilder bulkRequestBuilder = requestEnhancer.enhance(new BulkRequestBuilder());
         bulkRequestBuilder.add(
                 requestEnhancer.enhance(
@@ -539,6 +677,16 @@ public class SettingsService extends AbstractIndexMetadataService {
         );
         removeParserFromImportProfiles(bulkRequestBuilder, parserName);
         dataRepository.bulk(bulkRequestBuilder);
+        if (oldParserConfiguration != null) {
+            storeConfigurationChangedAuditLog(new ConfigurationChangedAuditLogBuilder()
+                    .setPrincipalId(etmPrincipal.getId())
+                    .setHandlingTime(now)
+                    .setAction(ConfigurationChangedAuditLog.Action.DELETE)
+                    .setConfigurationType(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER)
+                    .setConfigurationId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER_ID_PREFIX + parserName)
+                    .setOldValue(oldParserConfiguration)
+            );
+        }
         return "{\"status\":\"success\"}";
     }
 
@@ -587,22 +735,37 @@ public class SettingsService extends AbstractIndexMetadataService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.PARSER_SETTINGS_READ_WRITE)
     public String addParser(@PathParam("parserName") String parserName, String json) {
+        var now = Instant.now();
+        var etmPrincipal = getEtmPrincipal();
+        var oldParserConfiguration = getCurrentParserConfiguration(parserName);
+
         BulkRequestBuilder bulkRequestBuilder = requestEnhancer.enhance(new BulkRequestBuilder());
         // Do a read and write of the parser to make sure it's valid.
         ExpressionParser expressionParser = this.expressionParserConverter.read(toStringWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER));
-
+        var newParserConfiguration = this.expressionParserConverter.write(expressionParser, true);
 
         bulkRequestBuilder.add(
                 requestEnhancer.enhance(
                         new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER_ID_PREFIX + parserName)
                 )
-                        .setDoc(this.expressionParserConverter.write(expressionParser, true), XContentType.JSON)
+                        .setDoc(newParserConfiguration, XContentType.JSON)
                         .setDocAsUpsert(true)
                         .setDetectNoop(true)
                         .build()
         );
         updateParserInImportProfiles(bulkRequestBuilder, expressionParser);
         dataRepository.bulk(bulkRequestBuilder);
+        if (!Objects.equals(oldParserConfiguration, newParserConfiguration)) {
+            storeConfigurationChangedAuditLog(new ConfigurationChangedAuditLogBuilder()
+                    .setPrincipalId(etmPrincipal.getId())
+                    .setHandlingTime(now)
+                    .setAction(oldParserConfiguration == null ? ConfigurationChangedAuditLog.Action.CREATE : ConfigurationChangedAuditLog.Action.UPDATE)
+                    .setConfigurationType(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER)
+                    .setConfigurationId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER_ID_PREFIX + parserName)
+                    .setOldValue(oldParserConfiguration)
+                    .setNewValue(newParserConfiguration)
+            );
+        }
         return "{ \"status\": \"success\" }";
     }
 
@@ -642,6 +805,22 @@ public class SettingsService extends AbstractIndexMetadataService {
                 bulkRequestBuilder.add(createImportProfileUpdateRequest(endpointConfig).build());
             }
         }
+    }
+
+    /**
+     * Returns the current parser configuration.
+     *
+     * @return The current parser configuration.
+     */
+    private String getCurrentParserConfiguration(String parserName) {
+        var getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_PARSER_ID_PREFIX + parserName)
+                .setFetchSource(true)
+        );
+        if (!getResponse.isExists()) {
+            return null;
+        }
+        var expressionParser = this.expressionParserConverter.read(getResponse.getSourceAsString());
+        return this.expressionParserConverter.write(expressionParser, true);
     }
 
     @GET
@@ -687,10 +866,23 @@ public class SettingsService extends AbstractIndexMetadataService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.IMPORT_PROFILES_READ_WRITE)
     public String deleteImportProfile(@PathParam("importProfileName") String importProfileName) {
+        var now = Instant.now();
+        var etmPrincipal = getEtmPrincipal();
+        var oldImportProfileConfiguration = getCurrentImportProfileConfiguration(importProfileName);
         DeleteRequestBuilder builder = requestEnhancer.enhance(
                 new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE_ID_PREFIX + importProfileName)
         );
         dataRepository.delete(builder);
+        if (oldImportProfileConfiguration != null) {
+            storeConfigurationChangedAuditLog(new ConfigurationChangedAuditLogBuilder()
+                    .setPrincipalId(etmPrincipal.getId())
+                    .setHandlingTime(now)
+                    .setAction(ConfigurationChangedAuditLog.Action.DELETE)
+                    .setConfigurationType(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE)
+                    .setConfigurationId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE_ID_PREFIX + importProfileName)
+                    .setOldValue(oldImportProfileConfiguration)
+            );
+        }
         return "{\"status\":\"success\"}";
     }
 
@@ -699,9 +891,25 @@ public class SettingsService extends AbstractIndexMetadataService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.IMPORT_PROFILES_READ_WRITE)
     public String addImportProfile(@PathParam("importProfileName") String importProfileName, String json) {
+        var now = Instant.now();
+        var etmPrincipal = getEtmPrincipal();
+        var oldImportProfileConfiguration = getCurrentImportProfileConfiguration(importProfileName);
         // Do a read and write of the import profile to make sure it's valid.
         ImportProfile importProfile = this.importProfileConverter.read(toStringWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE));
+        var newImportProfileConfiguration = this.importProfileConverter.write(importProfile);
         dataRepository.update(createImportProfileUpdateRequest(importProfile));
+
+        if (!Objects.equals(oldImportProfileConfiguration, newImportProfileConfiguration)) {
+            storeConfigurationChangedAuditLog(new ConfigurationChangedAuditLogBuilder()
+                    .setPrincipalId(etmPrincipal.getId())
+                    .setHandlingTime(now)
+                    .setAction(oldImportProfileConfiguration == null ? ConfigurationChangedAuditLog.Action.CREATE : ConfigurationChangedAuditLog.Action.UPDATE)
+                    .setConfigurationType(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE)
+                    .setConfigurationId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE_ID_PREFIX + importProfileName)
+                    .setOldValue(oldImportProfileConfiguration)
+                    .setNewValue(newImportProfileConfiguration)
+            );
+        }
         return "{ \"status\": \"success\" }";
     }
 
@@ -711,6 +919,22 @@ public class SettingsService extends AbstractIndexMetadataService {
                 .setDoc(this.importProfileConverter.write(importProfile), XContentType.JSON)
                 .setDocAsUpsert(true)
                 .setDetectNoop(true);
+    }
+
+    /**
+     * Returns the current import profile configuration.
+     *
+     * @return The current import profile configuration.
+     */
+    private String getCurrentImportProfileConfiguration(String importProfileName) {
+        var getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IMPORT_PROFILE_ID_PREFIX + importProfileName)
+                .setFetchSource(true)
+        );
+        if (!getResponse.isExists()) {
+            return null;
+        }
+        var importProfile = this.importProfileConverter.read(getResponse.getSourceAsString());
+        return this.importProfileConverter.write(importProfile);
     }
 
     @GET
@@ -829,30 +1053,189 @@ public class SettingsService extends AbstractIndexMetadataService {
         if (etmConfiguration.getDirectory() == null) {
             return null;
         }
-        EtmPrincipal principal = etmConfiguration.getDirectory().getPrincipal(userId, false);
-        if (principal == null) {
+        var now = Instant.now();
+        var etmPrincipal = getEtmPrincipal();
+        var oldUserConfiguration = getCurrentUserConfiguration(userId);
+
+        var principalToImport = etmConfiguration.getDirectory().getPrincipal(userId, false);
+        if (principalToImport == null) {
             throw new EtmException(EtmException.INVALID_LDAP_USER);
         }
-        EtmPrincipal currentPrincipal = loadPrincipal(principal.getId());
-        if (currentPrincipal != null) {
-            if (currentPrincipal.isLdapBase()) {
+        EtmPrincipal currentPrincipalToImport = loadPrincipal(principalToImport.getId());
+        if (currentPrincipalToImport != null) {
+            if (currentPrincipalToImport.isLdapBase()) {
                 // LDAP user already present. No need to import the user again.
                 return null;
             }
             // Merge the current and the LDAP principal.
-            currentPrincipal.setPasswordHash(null);
-            currentPrincipal.setName(principal.getName());
-            currentPrincipal.setEmailAddress(principal.getEmailAddress());
-            currentPrincipal.setChangePasswordOnLogon(false);
-            principal = currentPrincipal;
+            currentPrincipalToImport.setPasswordHash(null);
+            currentPrincipalToImport.setName(principalToImport.getName());
+            currentPrincipalToImport.setEmailAddress(principalToImport.getEmailAddress());
+            currentPrincipalToImport.setChangePasswordOnLogon(false);
+            principalToImport = currentPrincipalToImport;
         }
-        principal.setLdapBase(true);
+        principalToImport.setLdapBase(true);
+        var newUserConfiguration = this.etmPrincipalConverter.writePrincipal(principalToImport);
         IndexRequestBuilder builder = requestEnhancer.enhance(
-                new IndexRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + principal.getId())
+                new IndexRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + principalToImport.getId())
         )
-                .setSource(this.etmPrincipalConverter.writePrincipal(principal), XContentType.JSON);
+                .setSource(newUserConfiguration, XContentType.JSON);
         dataRepository.index(builder);
-        return toStringWithoutNamespace(this.etmPrincipalConverter.writePrincipal(principal), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER);
+        if (!Objects.equals(oldUserConfiguration, newUserConfiguration)) {
+            storeConfigurationChangedAuditLog(new ConfigurationChangedAuditLogBuilder()
+                    .setPrincipalId(etmPrincipal.getId())
+                    .setHandlingTime(now)
+                    .setAction(oldUserConfiguration == null ? ConfigurationChangedAuditLog.Action.CREATE : ConfigurationChangedAuditLog.Action.UPDATE)
+                    .setConfigurationType(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER)
+                    .setConfigurationId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId)
+                    .setOldValue(oldUserConfiguration)
+                    .setNewValue(newUserConfiguration)
+            );
+        }
+        return toStringWithoutNamespace(this.etmPrincipalConverter.writePrincipal(principalToImport), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER);
+    }
+
+    @DELETE
+    @Path("/user/{userId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed(SecurityRoles.USER_SETTINGS_READ_WRITE)
+    public String deleteUser(@PathParam("userId") String userId) {
+        var now = Instant.now();
+        var etmPrincipal = getEtmPrincipal();
+        var oldUserConfiguration = getCurrentUserConfiguration(userId);
+
+        var principalToDelete = loadPrincipal(userId);
+        if (principalToDelete == null) {
+            return null;
+        }
+        if (principalToDelete.isInRole(SecurityRoles.USER_SETTINGS_READ_WRITE)) {
+            // The user was and user admin. Check if he/she is the latest admin. If so, block this operation because we don't want a user without the user admin role.
+            // This check should be skipped/changed when LDAP is supported.
+            if (getNumberOfUsersWithUserAdminRole() <= 1) {
+                throw new EtmException(EtmException.NO_MORE_USER_ADMINS_LEFT);
+            }
+        }
+        DeleteRequestBuilder builder = requestEnhancer.enhance(
+                new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId)
+        );
+        dataRepository.delete(builder);
+        if (oldUserConfiguration != null) {
+            storeConfigurationChangedAuditLog(new ConfigurationChangedAuditLogBuilder()
+                    .setPrincipalId(etmPrincipal.getId())
+                    .setHandlingTime(now)
+                    .setAction(ConfigurationChangedAuditLog.Action.DELETE)
+                    .setConfigurationType(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER)
+                    .setConfigurationId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId)
+                    .setOldValue(oldUserConfiguration)
+            );
+        }
+        return "{\"status\":\"success\"}";
+    }
+
+    @PUT
+    @Path("/user/{userId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed(SecurityRoles.USER_SETTINGS_READ_WRITE)
+    public String addUser(@PathParam("userId") String userId, String json) {
+        var now = Instant.now();
+        var etmPrincipal = getEtmPrincipal();
+        var oldUserConfiguration = getCurrentUserConfiguration(userId);
+
+        // Do a read and write of the user to make sure it's valid.
+        var valueMap = toMap(json);
+        var newPrincipal = loadPrincipal(toMapWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER));
+        var newPassword = getString("new_password", valueMap);
+        if (newPassword != null) {
+            newPrincipal.setPasswordHash(BCrypt.hashpw(newPassword, BCrypt.gensalt()));
+        }
+        var currentPrincipal = loadPrincipal(userId);
+        if (currentPrincipal != null && currentPrincipal.isInRole(SecurityRoles.USER_SETTINGS_READ_WRITE) && !newPrincipal.isInRole(SecurityRoles.USER_SETTINGS_READ_WRITE)) {
+            // The user was admin, but that role is revoked. Check if he/she is the latest admin. If so, block this operation because we don't want a user without the admin role.
+            // This check should be skipped/changed when LDAP is supported.
+            if (getNumberOfUsersWithUserAdminRole() <= 1) {
+                throw new EtmException(EtmException.NO_MORE_USER_ADMINS_LEFT);
+            }
+        }
+        if (currentPrincipal != null) {
+            // Copy the ldap base of the original user because it may never be overwritten.
+            newPrincipal.setLdapBase(currentPrincipal.isLdapBase());
+        }
+        if (currentPrincipal == null && (newPrincipal.getApiKey() != null || newPrincipal.getSecondaryApiKey() != null)) {
+            // New user, check if the api key is unique.
+            if (newPrincipal.getApiKey() != null && !isApiKeyUnique(newPrincipal.getApiKey())) {
+                throw new EtmException(EtmException.API_KEY_NOT_UNIQUE);
+            }
+            if (newPrincipal.getSecondaryApiKey() != null && !isApiKeyUnique(newPrincipal.getSecondaryApiKey())) {
+                throw new EtmException(EtmException.API_KEY_NOT_UNIQUE);
+            }
+        }
+        var newUserConfiguration = this.etmPrincipalConverter.writePrincipal(newPrincipal);
+        var builder = requestEnhancer.enhance(
+                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId)
+        ).setDoc(newUserConfiguration, XContentType.JSON)
+                .setDocAsUpsert(true)
+                .setDetectNoop(true);
+        dataRepository.update(builder);
+        if (!Objects.equals(oldUserConfiguration, newUserConfiguration)) {
+            storeConfigurationChangedAuditLog(new ConfigurationChangedAuditLogBuilder()
+                    .setPrincipalId(etmPrincipal.getId())
+                    .setHandlingTime(now)
+                    .setAction(oldUserConfiguration == null ? ConfigurationChangedAuditLog.Action.CREATE : ConfigurationChangedAuditLog.Action.UPDATE)
+                    .setConfigurationType(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER)
+                    .setConfigurationId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId)
+                    .setOldValue(oldUserConfiguration)
+                    .setNewValue(newUserConfiguration)
+            );
+        }
+        if (currentPrincipal == null) {
+            // Add some default templates to the user so he/she is able to search.
+            builder = requestEnhancer.enhance(
+                    new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId)
+            ).setDoc(new DefaultUserSettings().toJson(newPrincipal, etmConfiguration.getMaxSearchTemplateCount()), XContentType.JSON);
+            dataRepository.update(builder);
+        }
+        if (userId.equals(getEtmPrincipal().getId())) {
+            getEtmPrincipal().forceReload = true;
+        }
+        return "{ \"status\": \"success\" }";
+    }
+
+    private boolean isApiKeyUnique(String apiKey) {
+        var searchResponse = dataRepository.search(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+                .setFetchSource(false)
+                .setQuery(
+                        new BoolQueryBuilder()
+                                .should(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.principalTags.getApiKeyTag(), apiKey))
+                                .should(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.principalTags.getSecondaryApiKeyTag(), apiKey))
+                                .minimumShouldMatch(1)
+                )
+                .setSize(1)
+        );
+        return searchResponse.getHits().getHits().length == 0;
+    }
+
+    @GET
+    @Path("/user/api_key")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({SecurityRoles.USER_SETTINGS_READ_WRITE})
+    public String createNewApiKey() {
+        return new JsonBuilder().startObject().field("api_key", UUID.randomUUID().toString()).endObject().build();
+    }
+
+    /**
+     * Returns the current user configuration.
+     *
+     * @return The current user configuration.
+     */
+    private String getCurrentUserConfiguration(String userId) {
+        var getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId)
+                .setFetchSource(true)
+        );
+        if (!getResponse.isExists()) {
+            return null;
+        }
+        var user = this.etmPrincipalConverter.readPrincipal(getResponse.getSourceAsString());
+        return this.etmPrincipalConverter.writePrincipal(user);
     }
 
     @GET
@@ -926,6 +1309,8 @@ public class SettingsService extends AbstractIndexMetadataService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.CLUSTER_SETTINGS_READ_WRITE)
     public String importCertificate(String json) {
+        var now = Instant.now();
+        var etmPrincipal = getEtmPrincipal();
         var objectMap = toMap(json);
         var host = getString("host", objectMap);
         var port = getInteger("port", objectMap);
@@ -946,17 +1331,29 @@ public class SettingsService extends AbstractIndexMetadataService {
             return serials.contains((((X509Certificate) c).getSerialNumber().toString(16)));
         }).forEach(c -> {
             var certificate = new com.jecstar.etm.server.core.domain.cluster.certificate.Certificate((X509Certificate) c);
-            Map<String, Object> values = toMap(this.certificateConverter.write(certificate));
-            values.put(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE);
+            var oldCertificateConfiguration = getCurrentCertificateConfiguration(certificate.getSerial());
+            var newCertificateConfiguration = this.certificateConverter.write(certificate);
             IndexRequestBuilder indexRequestBuilder = requestEnhancer.enhance(new IndexRequestBuilder()
                     .setIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
                     .setId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE_ID_PREFIX + certificate.getSerial())
-                    .setSource(values));
+                    .setSource(newCertificateConfiguration, XContentType.JSON)
+            );
             dataRepository.index(indexRequestBuilder);
+            if (!Objects.equals(oldCertificateConfiguration, newCertificateConfiguration)) {
+                storeConfigurationChangedAuditLog(new ConfigurationChangedAuditLogBuilder()
+                        .setPrincipalId(etmPrincipal.getId())
+                        .setHandlingTime(now)
+                        .setAction(oldCertificateConfiguration == null ? ConfigurationChangedAuditLog.Action.CREATE : ConfigurationChangedAuditLog.Action.UPDATE)
+                        .setConfigurationType(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE)
+                        .setConfigurationId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE_ID_PREFIX + certificate.getSerial())
+                        .setOldValue(oldCertificateConfiguration)
+                        .setNewValue(newCertificateConfiguration)
+                );
+            }
             if (result.toString().endsWith("}")) {
                 result.append(",");
             }
-            result.append(toStringWithoutNamespace(values, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE));
+            result.append(toStringWithoutNamespace(newCertificateConfiguration, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE));
         });
         result.append("]}");
         return result.toString();
@@ -967,19 +1364,38 @@ public class SettingsService extends AbstractIndexMetadataService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.CLUSTER_SETTINGS_READ_WRITE)
     public Response updateCertificate(@PathParam("id") String id, String json) {
-        Map<String, Object> inputMap = toMap(json);
-        GetResponse getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE_ID_PREFIX + id));
-        if (!getResponse.isExists()) {
+        var now = Instant.now();
+        var etmPrincipal = getEtmPrincipal();
+        var oldCertificateConfiguration = getCurrentCertificateConfiguration(id);
+        if (oldCertificateConfiguration == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
-        Map<String, Object> sourceMap = getResponse.getSourceAsMap();
-        Map<String, Object> certMap = getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE, sourceMap);
-        certMap.put("trust_anchor", getBoolean("trust_anchor", inputMap));
-        certMap.put("usage", getArray("usage", inputMap));
+        Map<String, Object> inputMap = toMap(json);
+        com.jecstar.etm.server.core.domain.cluster.certificate.Certificate certificate = this.certificateConverter.read(oldCertificateConfiguration);
+        certificate.setTrustAnchor(getBoolean(com.jecstar.etm.server.core.domain.cluster.certificate.Certificate.TRUST_ANCHOR, inputMap));
+        Collection<String> usages = getArray(com.jecstar.etm.server.core.domain.cluster.certificate.Certificate.USAGE, inputMap);
+        for (String usage : usages) {
+            certificate.addUsage(Usage.safeValueOf(usage));
+        }
+        var newCertificateConfiguration = this.certificateConverter.write(certificate);
         UpdateRequestBuilder builder = requestEnhancer.enhance(
-                new UpdateRequestBuilder().setIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME).setId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE_ID_PREFIX + id).setDoc(sourceMap)
+                new UpdateRequestBuilder()
+                        .setIndex(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
+                        .setId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE_ID_PREFIX + id)
+                        .setDoc(newCertificateConfiguration, XContentType.JSON)
         );
         dataRepository.update(builder);
+        if (!Objects.equals(oldCertificateConfiguration, newCertificateConfiguration)) {
+            storeConfigurationChangedAuditLog(new ConfigurationChangedAuditLogBuilder()
+                    .setPrincipalId(etmPrincipal.getId())
+                    .setHandlingTime(now)
+                    .setAction(ConfigurationChangedAuditLog.Action.UPDATE)
+                    .setConfigurationType(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE)
+                    .setConfigurationId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE_ID_PREFIX + certificate.getSerial())
+                    .setOldValue(oldCertificateConfiguration)
+                    .setNewValue(newCertificateConfiguration)
+            );
+        }
         return Response.ok("{\"status\":\"success\"}", MediaType.APPLICATION_JSON).build();
     }
 
@@ -988,10 +1404,23 @@ public class SettingsService extends AbstractIndexMetadataService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.CLUSTER_SETTINGS_READ_WRITE)
     public String deleteCertificate(@PathParam("id") String id) {
+        var now = Instant.now();
+        var etmPrincipal = getEtmPrincipal();
+        var oldCertificateConfiguration = getCurrentCertificateConfiguration(id);
         DeleteRequestBuilder builder = requestEnhancer.enhance(
                 new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE_ID_PREFIX + id)
         );
         dataRepository.delete(builder);
+        if (oldCertificateConfiguration != null) {
+            storeConfigurationChangedAuditLog(new ConfigurationChangedAuditLogBuilder()
+                    .setPrincipalId(etmPrincipal.getId())
+                    .setHandlingTime(now)
+                    .setAction(ConfigurationChangedAuditLog.Action.DELETE)
+                    .setConfigurationType(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE)
+                    .setConfigurationId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE_ID_PREFIX + id)
+                    .setOldValue(oldCertificateConfiguration)
+            );
+        }
         return "{\"status\":\"success\"}";
     }
 
@@ -1120,101 +1549,20 @@ public class SettingsService extends AbstractIndexMetadataService {
         }
     }
 
-    @DELETE
-    @Path("/user/{userId}")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed(SecurityRoles.USER_SETTINGS_READ_WRITE)
-    public String deleteUser(@PathParam("userId") String userId) {
-        EtmPrincipal principal = loadPrincipal(userId);
-        if (principal == null) {
+    /**
+     * Returns the current certificate configuration.
+     *
+     * @return The current certificate configuration.
+     */
+    private String getCurrentCertificateConfiguration(String certificateSerial) {
+        var getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_CERTIFICATE_ID_PREFIX + certificateSerial)
+                .setFetchSource(true)
+        );
+        if (!getResponse.isExists()) {
             return null;
         }
-        if (principal.isInRole(SecurityRoles.USER_SETTINGS_READ_WRITE)) {
-            // The user was and user admin. Check if he/she is the latest admin. If so, block this operation because we don't want a user without the user admin role.
-            // This check should be skipped/changed when LDAP is supported.
-            if (getNumberOfUsersWithUserAdminRole() <= 1) {
-                throw new EtmException(EtmException.NO_MORE_USER_ADMINS_LEFT);
-            }
-        }
-        DeleteRequestBuilder builder = requestEnhancer.enhance(
-                new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId)
-        );
-        dataRepository.delete(builder);
-        return "{\"status\":\"success\"}";
-    }
-
-    @PUT
-    @Path("/user/{userId}")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed(SecurityRoles.USER_SETTINGS_READ_WRITE)
-    public String addUser(@PathParam("userId") String userId, String json) {
-        // Do a read and write of the user to make sure it's valid.
-        var valueMap = toMap(json);
-        var newPrincipal = loadPrincipal(toMapWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER));
-        var newPassword = getString("new_password", valueMap);
-        if (newPassword != null) {
-            newPrincipal.setPasswordHash(BCrypt.hashpw(newPassword, BCrypt.gensalt()));
-        }
-        var currentPrincipal = loadPrincipal(userId);
-        if (currentPrincipal != null && currentPrincipal.isInRole(SecurityRoles.USER_SETTINGS_READ_WRITE) && !newPrincipal.isInRole(SecurityRoles.USER_SETTINGS_READ_WRITE)) {
-            // The user was admin, but that role is revoked. Check if he/she is the latest admin. If so, block this operation because we don't want a user without the admin role.
-            // This check should be skipped/changed when LDAP is supported.
-            if (getNumberOfUsersWithUserAdminRole() <= 1) {
-                throw new EtmException(EtmException.NO_MORE_USER_ADMINS_LEFT);
-            }
-        }
-        if (currentPrincipal != null) {
-            // Copy the ldap base of the original user because it may never be overwritten.
-            newPrincipal.setLdapBase(currentPrincipal.isLdapBase());
-        }
-        if (currentPrincipal == null && (newPrincipal.getApiKey() != null || newPrincipal.getSecondaryApiKey() != null)) {
-            // New user, check if the api key is unique.
-            if (newPrincipal.getApiKey() != null && !isApiKeyUnique(newPrincipal.getApiKey())) {
-                throw new EtmException(EtmException.API_KEY_NOT_UNIQUE);
-            }
-            if (newPrincipal.getSecondaryApiKey() != null && !isApiKeyUnique(newPrincipal.getSecondaryApiKey())) {
-                throw new EtmException(EtmException.API_KEY_NOT_UNIQUE);
-            }
-        }
-        var builder = requestEnhancer.enhance(
-                new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId)
-        ).setDoc(this.etmPrincipalConverter.writePrincipal(newPrincipal), XContentType.JSON)
-                .setDocAsUpsert(true)
-                .setDetectNoop(true);
-        dataRepository.update(builder);
-        if (currentPrincipal == null) {
-            // Add some default templates to the user if he/she is able to search.
-            builder = requestEnhancer.enhance(
-                    new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER_ID_PREFIX + userId)
-            ).setDoc(new DefaultUserSettings().toJson(newPrincipal, etmConfiguration.getMaxSearchTemplateCount()), XContentType.JSON);
-            dataRepository.update(builder);
-        }
-        if (userId.equals(getEtmPrincipal().getId())) {
-            getEtmPrincipal().forceReload = true;
-        }
-        return "{ \"status\": \"success\" }";
-    }
-
-    private boolean isApiKeyUnique(String apiKey) {
-        var searchResponse = dataRepository.search(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME)
-                .setFetchSource(false)
-                .setQuery(
-                        new BoolQueryBuilder()
-                                .should(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.principalTags.getApiKeyTag(), apiKey))
-                                .should(QueryBuilders.termQuery(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_USER + "." + this.principalTags.getSecondaryApiKeyTag(), apiKey))
-                                .minimumShouldMatch(1)
-                )
-                .setSize(1)
-        );
-        return searchResponse.getHits().getHits().length == 0;
-    }
-
-    @GET
-    @Path("/user/api_key")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({SecurityRoles.USER_SETTINGS_READ_WRITE})
-    public String createNewApiKey() {
-        return new JsonBuilder().startObject().field("api_key", UUID.randomUUID().toString()).endObject().build();
+        var certificate = this.certificateConverter.read(getResponse.getSourceAsString());
+        return this.certificateConverter.write(certificate);
     }
 
     @GET
@@ -1287,10 +1635,13 @@ public class SettingsService extends AbstractIndexMetadataService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.GROUP_SETTINGS_READ_WRITE)
     public String importLdapGroup(@PathParam("groupName") String groupName) {
+        var now = Instant.now();
+        var etmPrincipal = getEtmPrincipal();
         EtmGroup group = etmConfiguration.getDirectory().getGroup(groupName);
         if (group == null) {
             throw new EtmException(EtmException.INVALID_LDAP_GROUP);
         }
+        var oldGroupConfiguration = getCurrentGroupConfiguration(groupName);
         EtmGroup currentGroup = loadGroup(groupName);
         if (currentGroup != null) {
             // Merge the existing group with the new one.
@@ -1298,11 +1649,23 @@ public class SettingsService extends AbstractIndexMetadataService {
             group = currentGroup;
         }
         group.setLdapBase(true);
+        var newGroupConfiguration = this.etmPrincipalConverter.writeGroup(group);
         IndexRequestBuilder builder = requestEnhancer.enhance(
                 new IndexRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName)
         )
-                .setSource(this.etmPrincipalConverter.writeGroup(group), XContentType.JSON);
+                .setSource(newGroupConfiguration, XContentType.JSON);
         dataRepository.index(builder);
+        if (!Objects.equals(oldGroupConfiguration, newGroupConfiguration)) {
+            storeConfigurationChangedAuditLog(new ConfigurationChangedAuditLogBuilder()
+                    .setPrincipalId(etmPrincipal.getId())
+                    .setHandlingTime(now)
+                    .setAction(oldGroupConfiguration == null ? ConfigurationChangedAuditLog.Action.CREATE : ConfigurationChangedAuditLog.Action.UPDATE)
+                    .setConfigurationType(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP)
+                    .setConfigurationId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName)
+                    .setOldValue(oldGroupConfiguration)
+                    .setNewValue(newGroupConfiguration)
+            );
+        }
         return toStringWithoutNamespace(this.etmPrincipalConverter.writeGroup(group), ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP);
     }
 
@@ -1311,6 +1674,9 @@ public class SettingsService extends AbstractIndexMetadataService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.GROUP_SETTINGS_READ_WRITE)
     public String addGroup(@PathParam("groupName") String groupName, String json) {
+        var now = Instant.now();
+        var etmPrincipal = getEtmPrincipal();
+        var oldGroupConfiguration = getCurrentGroupConfiguration(groupName);
         // Do a read and write of the group to make sure it's valid.
         Map<String, Object> objectMap = toMapWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP);
         EtmGroup newGroup = this.etmPrincipalConverter.readGroup(objectMap);
@@ -1326,13 +1692,25 @@ public class SettingsService extends AbstractIndexMetadataService {
             // Copy the ldap base of the original group because it may never be overwritten.
             newGroup.setLdapBase(currentGroup.isLdapBase());
         }
+        var newGroupConfiguration = this.etmPrincipalConverter.writeGroup(newGroup);
         UpdateRequestBuilder builder = requestEnhancer.enhance(
                 new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName)
         )
-                .setDoc(this.etmPrincipalConverter.writeGroup(newGroup), XContentType.JSON)
+                .setDoc(newGroupConfiguration, XContentType.JSON)
                 .setDocAsUpsert(true)
                 .setDetectNoop(true);
         dataRepository.update(builder);
+        if (!Objects.equals(oldGroupConfiguration, newGroupConfiguration)) {
+            storeConfigurationChangedAuditLog(new ConfigurationChangedAuditLogBuilder()
+                    .setPrincipalId(etmPrincipal.getId())
+                    .setHandlingTime(now)
+                    .setAction(oldGroupConfiguration == null ? ConfigurationChangedAuditLog.Action.CREATE : ConfigurationChangedAuditLog.Action.UPDATE)
+                    .setConfigurationType(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP)
+                    .setConfigurationId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName)
+                    .setOldValue(oldGroupConfiguration)
+                    .setNewValue(newGroupConfiguration)
+            );
+        }
         // Force a reload of the principal if he/she is in the updated group.
         EtmPrincipal principal = getEtmPrincipal();
         if (principal.isInGroup(groupName)) {
@@ -1346,6 +1724,10 @@ public class SettingsService extends AbstractIndexMetadataService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.GROUP_SETTINGS_READ_WRITE)
     public String deleteGroup(@PathParam("groupName") String groupName) {
+        var now = Instant.now();
+        var etmPrincipal = getEtmPrincipal();
+        var oldGroupConfiguration = getCurrentGroupConfiguration(groupName);
+
         List<String> adminGroups = getGroupsWithRole(SecurityRoles.USER_SETTINGS_READ_WRITE);
         if (adminGroups.contains(groupName)) {
             // Check if there are admins left if this group is removed.
@@ -1363,12 +1745,65 @@ public class SettingsService extends AbstractIndexMetadataService {
         );
         removeGroupFromPrincipal(bulkRequestBuilder, groupName);
         dataRepository.bulk(bulkRequestBuilder);
+        if (oldGroupConfiguration != null) {
+            storeConfigurationChangedAuditLog(new ConfigurationChangedAuditLogBuilder()
+                    .setPrincipalId(etmPrincipal.getId())
+                    .setHandlingTime(now)
+                    .setAction(ConfigurationChangedAuditLog.Action.DELETE)
+                    .setConfigurationType(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP)
+                    .setConfigurationId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName)
+                    .setOldValue(oldGroupConfiguration)
+            );
+        }
         // Force a reload of the principal if he/she is in the deleted group.
         EtmPrincipal principal = getEtmPrincipal();
         if (principal.isInGroup(groupName)) {
             principal.forceReload = true;
         }
         return "{\"status\":\"success\"}";
+    }
+
+    private void removeGroupFromPrincipal(BulkRequestBuilder bulkRequestBuilder, String groupName) {
+        SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
+                .setFetchSource(false)
+                .setQuery(QueryBuilders.boolQuery()
+                        .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP))
+                        .must(QueryBuilders.termQuery(this.principalTags.getGroupsTag(), groupName))
+                );
+        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder, null);
+        for (var searchHit : scrollableSearch) {
+            boolean updated = false;
+            EtmPrincipal principal = loadPrincipal(searchHit.getId());
+            if (principal != null && principal.isInGroup(groupName)) {
+                Iterator<EtmGroup> it = principal.getGroups().iterator();
+                while (it.hasNext()) {
+                    EtmGroup group = it.next();
+                    if (group.getName().equals(groupName)) {
+                        it.remove();
+                        updated = true;
+                    }
+                }
+            }
+            if (updated) {
+                bulkRequestBuilder.add(createPrincipalUpdateRequest(principal).build());
+            }
+        }
+    }
+
+    /**
+     * Returns the current group configuration.
+     *
+     * @return The current group configuration.
+     */
+    private String getCurrentGroupConfiguration(String groupName) {
+        var getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP_ID_PREFIX + groupName)
+                .setFetchSource(true)
+        );
+        if (!getResponse.isExists()) {
+            return null;
+        }
+        var group = this.etmPrincipalConverter.readGroup(getResponse.getSourceAsString());
+        return this.etmPrincipalConverter.writeGroup(group);
     }
 
     @GET
@@ -1424,6 +1859,10 @@ public class SettingsService extends AbstractIndexMetadataService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.NOTIFIERS_READ_WRITE)
     public String addNotifier(@PathParam("notifierName") String notifierName, String json) {
+        var now = Instant.now();
+        var etmPrincipal = getEtmPrincipal();
+        var oldNotifierConfiguration = getCurrentNotifierConfiguration(notifierName);
+
         // Do a read and write of the notifier to make sure it's valid.
         Map<String, Object> objectMap = toMapWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER);
         var testConnection = getBoolean("test_connection", getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER, objectMap), false);
@@ -1435,12 +1874,23 @@ public class SettingsService extends AbstractIndexMetadataService {
                 return new JsonBuilder().startObject().field("status", "failed").field("reason", testResult.getErrorMessage()).endObject().build();
             }
         }
-
+        var newNotifierConfiguration = this.notifierConverter.write(notifier);
         IndexRequestBuilder builder = requestEnhancer.enhance(
                 new IndexRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER_ID_PREFIX + notifier.getName())
         )
-                .setSource(this.notifierConverter.write(notifier), XContentType.JSON);
+                .setSource(newNotifierConfiguration, XContentType.JSON);
         dataRepository.index(builder);
+        if (!Objects.equals(oldNotifierConfiguration, newNotifierConfiguration)) {
+            storeConfigurationChangedAuditLog(new ConfigurationChangedAuditLogBuilder()
+                    .setPrincipalId(etmPrincipal.getId())
+                    .setHandlingTime(now)
+                    .setAction(oldNotifierConfiguration == null ? ConfigurationChangedAuditLog.Action.CREATE : ConfigurationChangedAuditLog.Action.UPDATE)
+                    .setConfigurationType(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER)
+                    .setConfigurationId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER_ID_PREFIX + notifierName)
+                    .setOldValue(oldNotifierConfiguration)
+                    .setNewValue(newNotifierConfiguration)
+            );
+        }
         return "{ \"status\": \"success\" }";
     }
 
@@ -1449,6 +1899,10 @@ public class SettingsService extends AbstractIndexMetadataService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.NOTIFIERS_READ_WRITE)
     public String deleteNotifier(@PathParam("notifierName") String notifierName) {
+        var now = Instant.now();
+        var etmPrincipal = getEtmPrincipal();
+        var oldNotifierConfiguration = getCurrentNotifierConfiguration(notifierName);
+
         BulkRequestBuilder bulkRequestBuilder = requestEnhancer.enhance(new BulkRequestBuilder());
         bulkRequestBuilder.add(
                 requestEnhancer.enhance(
@@ -1457,6 +1911,16 @@ public class SettingsService extends AbstractIndexMetadataService {
         );
         removeNotifierFromSignalsAndPrincipals(bulkRequestBuilder, notifierName);
         dataRepository.bulk(bulkRequestBuilder);
+        if (oldNotifierConfiguration != null) {
+            storeConfigurationChangedAuditLog(new ConfigurationChangedAuditLogBuilder()
+                    .setPrincipalId(etmPrincipal.getId())
+                    .setHandlingTime(now)
+                    .setAction(ConfigurationChangedAuditLog.Action.DELETE)
+                    .setConfigurationType(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER)
+                    .setConfigurationId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER_ID_PREFIX + notifierName)
+                    .setOldValue(oldNotifierConfiguration)
+            );
+        }
         return "{\"status\":\"success\"}";
     }
 
@@ -1519,32 +1983,20 @@ public class SettingsService extends AbstractIndexMetadataService {
         }
     }
 
-
-    private void removeGroupFromPrincipal(BulkRequestBuilder bulkRequestBuilder, String groupName) {
-        SearchRequestBuilder searchRequestBuilder = requestEnhancer.enhance(new SearchRequestBuilder().setIndices(ElasticsearchLayout.CONFIGURATION_INDEX_NAME))
-                .setFetchSource(false)
-                .setQuery(QueryBuilders.boolQuery()
-                        .must(QueryBuilders.termQuery(ElasticsearchLayout.ETM_TYPE_ATTRIBUTE_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_GROUP))
-                        .must(QueryBuilders.termQuery(this.principalTags.getGroupsTag(), groupName))
-                );
-        ScrollableSearch scrollableSearch = new ScrollableSearch(dataRepository, searchRequestBuilder, null);
-        for (var searchHit : scrollableSearch) {
-            boolean updated = false;
-            EtmPrincipal principal = loadPrincipal(searchHit.getId());
-            if (principal != null && principal.isInGroup(groupName)) {
-                Iterator<EtmGroup> it = principal.getGroups().iterator();
-                while (it.hasNext()) {
-                    EtmGroup group = it.next();
-                    if (group.getName().equals(groupName)) {
-                        it.remove();
-                        updated = true;
-                    }
-                }
-            }
-            if (updated) {
-                bulkRequestBuilder.add(createPrincipalUpdateRequest(principal).build());
-            }
+    /**
+     * Returns the current notifier configuration.
+     *
+     * @return The current notifier configuration.
+     */
+    private String getCurrentNotifierConfiguration(String notifierName) {
+        var getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NOTIFIER_ID_PREFIX + notifierName)
+                .setFetchSource(true)
+        );
+        if (!getResponse.isExists()) {
+            return null;
         }
+        var notifier = this.notifierConverter.read(getResponse.getSourceAsString());
+        return this.notifierConverter.write(notifier);
     }
 
     private UpdateRequestBuilder createPrincipalUpdateRequest(EtmPrincipal principal) {
@@ -1671,5 +2123,25 @@ public class SettingsService extends AbstractIndexMetadataService {
                 .setQuery(query);
         SearchResponse response = dataRepository.search(builder);
         return response.getHits().getTotalHits().value;
+    }
+
+    /**
+     * Store a <code>ConfigurationChangedAuditLog</code> instance.
+     *
+     * @param auditLogBuilder The builder that contains the data.
+     */
+    private void storeConfigurationChangedAuditLog(ConfigurationChangedAuditLogBuilder auditLogBuilder) {
+        var now = Instant.now();
+        IndexRequestBuilder indexRequestBuilder = requestEnhancer.enhance(
+                new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerDay.format(now))
+                        .setId(auditLogBuilder.getId())
+        )
+                .setSource(this.configurationChangedAuditLogConverter.write(
+                        auditLogBuilder
+                                .setId(idGenerator.createId())
+                                .setTimestamp(now)
+                                .build()
+                ), XContentType.JSON);
+        dataRepository.indexAsync(indexRequestBuilder, DataRepository.noopActionListener());
     }
 }

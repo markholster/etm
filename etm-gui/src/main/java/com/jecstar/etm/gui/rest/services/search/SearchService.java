@@ -62,7 +62,6 @@ import com.jecstar.etm.server.core.persisting.RedactedSearchHit;
 import com.jecstar.etm.server.core.persisting.RequestEnhancer;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
 import com.jecstar.etm.server.core.util.DateUtils;
-import com.jecstar.etm.server.core.util.IdGenerator;
 import org.apache.lucene.search.TotalHits;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.get.GetResponse;
@@ -91,7 +90,6 @@ import java.io.IOException;
 import java.text.NumberFormat;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -103,13 +101,6 @@ public class SearchService extends AbstractIndexMetadataService {
      * The <code>LogWrapper</code> for this class.
      */
     private static final LogWrapper log = LogFactory.getLogger(SearchService.class);
-
-    /**
-     * An <code>IdGenerator</code> that will be used to create id's for audit logs.
-     */
-    private static final IdGenerator idGenerator = new IdGenerator();
-
-    private static final DateTimeFormatter dateTimeFormatterIndexPerDay = DateUtils.getIndexPerDayFormatter();
 
     private static DataRepository dataRepository;
     private static EtmConfiguration etmConfiguration;

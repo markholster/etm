@@ -107,6 +107,7 @@ function buildNotifiersPage() {
 
             $('#sel-snmp-authentication-protocol').trigger('change');
         }
+        enableOrDisableButtons();
     });
 
     $('#sel-snmp-authentication-protocol').on('change', function (event) {
@@ -175,7 +176,7 @@ function buildNotifiersPage() {
         } else {
             $('#btn-confirm-save-notifier').attr('disabled', 'disabled');
         }
-        var notifierName = $('#input-notifier-name').val();
+        const notifierName = $('#input-notifier-name').val();
         if (notifierName && isNotifierExistent(notifierName)) {
             $('#btn-confirm-remove-notifier').removeAttr('disabled');
         } else {

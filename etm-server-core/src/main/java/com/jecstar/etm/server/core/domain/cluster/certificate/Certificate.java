@@ -153,9 +153,18 @@ public class Certificate {
         this.trustAnchor = trustAnchor;
     }
 
-
     public List<Usage> getUsage() {
         return this.usage;
+    }
+
+    public void addUsage(Usage usage) {
+        if (usage == null) {
+            return;
+        }
+        if (this.usage.contains(usage)) {
+            return;
+        }
+        this.usage.add(usage);
     }
 
     private boolean isSelfSigned(X509Certificate cert) {

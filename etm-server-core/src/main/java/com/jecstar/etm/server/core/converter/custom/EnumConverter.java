@@ -19,7 +19,6 @@ package com.jecstar.etm.server.core.converter.custom;
 
 import com.jecstar.etm.domain.writer.json.JsonBuilder;
 import com.jecstar.etm.server.core.converter.CustomFieldConverter;
-import com.jecstar.etm.server.core.domain.converter.json.JsonConverter;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 
@@ -30,8 +29,6 @@ import java.lang.reflect.Method;
 public class EnumConverter implements CustomFieldConverter<Enum> {
 
     private final LogWrapper log = LogFactory.getLogger(EnumConverter.class);
-
-    private final JsonConverter jsonConverter = new JsonConverter();
 
     @Override
     public void addToJsonBuffer(String jsonKey, Enum value, JsonBuilder builder) {

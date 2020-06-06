@@ -64,7 +64,7 @@ Ldap host | The hostname or ip-address the ldap server is running on.
 Ldap port | The port number the ldap server is listening on.
 Connection security | Select the connection security that applies to the ldap server. Make sure to add the required root certificates to the [Certificate settings](#certificate-settings) when connecting to an LDAP server over TLS.
 Bind DN | The Distinguished Name (DN) of the user that is connecting to the ldap server.
-Bind password | The password used to connect to the ldap server. Note that this password will be base64 encoded into the database. Make sure only Enterprise Telemetry Monitor has access to your database!
+Bind password | The password used to connect to the ldap server. Note that this password will be base64 encoded into the database. The password will be visible in it's encoded form in the audit logs and in your browsers network log. Make sure only Enterprise Telemetry Monitor has access to your database!
 Min connections | The minimum number of connections to the ldap server in the connection pool. 
 Max connections | The maximum number of connections to the ldap server in the connection pool.
 Connection test base DN | The base DN used to perform a connection test query on.  
