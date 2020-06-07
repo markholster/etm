@@ -20,8 +20,8 @@ package com.jecstar.etm.server.core.domain.cluster.notifier;
 import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.converter.JsonField;
 import com.jecstar.etm.server.core.converter.JsonNamespace;
-import com.jecstar.etm.server.core.converter.custom.Base64Converter;
 import com.jecstar.etm.server.core.converter.custom.EnumConverter;
+import com.jecstar.etm.server.core.converter.custom.PasswordConverter;
 import com.jecstar.etm.server.core.domain.cluster.certificate.Usage;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
@@ -56,7 +56,7 @@ public class EmailNotifier extends Notifier {
     private Integer port;
     @JsonField(USERNAME)
     private String username;
-    @JsonField(value = PASSWORD, converterClass = Base64Converter.class)
+    @JsonField(value = PASSWORD, converterClass = PasswordConverter.class)
     private String password;
 
     @JsonField(value = SMTP_CONNECTION_SECURITY, converterClass = EnumConverter.class)

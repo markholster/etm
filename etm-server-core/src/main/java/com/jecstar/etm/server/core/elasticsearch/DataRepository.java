@@ -35,6 +35,7 @@ import org.elasticsearch.action.admin.cluster.settings.ClusterGetSettingsRespons
 import org.elasticsearch.action.admin.cluster.settings.ClusterUpdateSettingsResponse;
 import org.elasticsearch.action.admin.cluster.storedscripts.GetStoredScriptResponse;
 import org.elasticsearch.action.admin.indices.flush.FlushResponse;
+import org.elasticsearch.action.admin.indices.refresh.RefreshResponse;
 import org.elasticsearch.action.admin.indices.settings.get.GetSettingsResponse;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteResponse;
@@ -242,6 +243,18 @@ public class DataRepository {
         } catch (IOException e) {
             throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
         }
+    }
+
+    public RefreshResponse indicesRefresh(RefreshIndexRequestBuilder builder) {
+        try {
+            long startTime = System.currentTimeMillis();
+            var response = this.client.indices().refresh(builder.build(), RequestOptions.DEFAULT);
+            shapeRequest(calculateIndexRequestUnits(response), System.currentTimeMillis() - startTime);
+            return response;
+        } catch (IOException e) {
+            throw new EtmException(EtmException.DATA_COMMUNICATION_EXCEPTION, e);
+        }
+
     }
 
     public FlushResponse indicesFlush(FlushIndexRequestBuilder builder) {

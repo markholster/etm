@@ -25,9 +25,6 @@ import com.jecstar.etm.server.core.logging.LogWrapper;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.Base64;
-import java.util.Base64.Decoder;
-import java.util.Base64.Encoder;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -162,30 +159,6 @@ public class JsonConverter {
             }
             return null;
         }
-    }
-
-    public String encodeBase64(String stringToEncode, int rounds) {
-        if (stringToEncode == null) {
-            return null;
-        }
-        Encoder encoder = Base64.getEncoder();
-        byte[] encoded = stringToEncode.getBytes();
-        for (int i = 0; i < rounds; i++) {
-            encoded = encoder.encode(encoded);
-        }
-        return new String(encoded);
-    }
-
-    public String decodeBase64(String stringToDecode, int rounds) {
-        if (stringToDecode == null) {
-            return null;
-        }
-        Decoder decoder = Base64.getDecoder();
-        byte[] decoded = stringToDecode.getBytes();
-        for (int i = 0; i < rounds; i++) {
-            decoded = decoder.decode(decoded);
-        }
-        return new String(decoded);
     }
 
 }

@@ -19,8 +19,8 @@ package com.jecstar.etm.server.core.domain.cluster.notifier;
 
 import com.jecstar.etm.server.core.converter.JsonField;
 import com.jecstar.etm.server.core.converter.JsonNamespace;
-import com.jecstar.etm.server.core.converter.custom.Base64Converter;
 import com.jecstar.etm.server.core.converter.custom.EnumConverter;
+import com.jecstar.etm.server.core.converter.custom.PasswordConverter;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 
@@ -89,17 +89,17 @@ public class SnmpNotifier extends Notifier {
     private Integer port;
     @JsonField(USERNAME)
     private String username;
-    @JsonField(value = PASSWORD, converterClass = Base64Converter.class)
+    @JsonField(value = PASSWORD, converterClass = PasswordConverter.class)
     private String password;
     @JsonField(value = SNMP_VERSION, converterClass = EnumConverter.class)
     private SnmpVersion snmpVersion;
-    @JsonField(value = SNMP_COMMUNITY, converterClass = Base64Converter.class)
+    @JsonField(value = SNMP_COMMUNITY, converterClass = PasswordConverter.class)
     private String snmpCommunity;
     @JsonField(value = SNMP_AUTHENTICATION_PROTOCOL, converterClass = EnumConverter.class)
     private SnmpAuthenticationProtocol snmpAuthenticationProtocol;
     @JsonField(value = SNMP_PRIVACY_PROTOCOL, converterClass = EnumConverter.class)
     private SnmpPrivacyProtocol snmpPrivacyProtocol;
-    @JsonField(value = SNMP_PRIVACY_PASSPHRASE, converterClass = Base64Converter.class)
+    @JsonField(value = SNMP_PRIVACY_PASSPHRASE, converterClass = PasswordConverter.class)
     private String snmpPrivacyPassphrase;
 
 

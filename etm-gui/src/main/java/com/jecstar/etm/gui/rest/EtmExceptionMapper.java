@@ -78,6 +78,9 @@ public class EtmExceptionMapper implements ExceptionMapper<Throwable> {
                 case EtmException.CONFIGURATION_LOAD_EXCEPTION:
                     errorMessage.setMessage("Error loading configuration");
                     break;
+                case EtmException.INVALID_SECRET:
+                    errorMessage.setMessage("Invalid secret found in etm.yml");
+                    break;
                 case EtmException.UNMARSHALLER_CREATE_EXCEPTION:
                     errorMessage.setMessage("Error creating XML unmarshaller");
                     break;

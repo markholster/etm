@@ -35,7 +35,9 @@ import java.util.Map;
 import java.util.function.Function;
 
 /**
- * Migrator that cleans the index templates that are obsolete after the 4.1 migration.
+ * Migrator that migrates the following things:
+ * - Cleans the index templates that are obsolete after the 4.1 migration
+ * - Migrates the 'etm_event_read_without_payload' role to field denies.
  */
 public class Version42Migrator extends AbstractEtmMigrator {
 
@@ -118,15 +120,13 @@ public class Version42Migrator extends AbstractEtmMigrator {
                 System.out.println("Errors detected. Quitting migration. Migrated indices are prefixed with '" + this.migrationIndexPrefix + "' and are still existent in your Elasticsearch cluster!");
                 return;
             }
-            flushIndices(this.dataRepository, this.migrationIndexPrefix + "*");
+            refreshAndFlushIndices(this.dataRepository, this.migrationIndexPrefix + "*");
 
             deleteIndices(this.dataRepository, "old index", ElasticsearchLayout.CONFIGURATION_INDEX_NAME);
             reindexTemporaryIndicesToNew(this.dataRepository, listener, this.migrationIndexPrefix);
             deleteIndices(this.dataRepository, "temporary indices", this.migrationIndexPrefix + "*");
             deleteTemporaryIndexTemplates(this.dataRepository, this.migrationIndexPrefix);
-            checkAndCreateIndexExistence(this.dataRepository, ElasticsearchLayout.CONFIGURATION_INDEX_NAME
-            );
-
+            checkAndCreateIndexExistence(this.dataRepository, ElasticsearchLayout.CONFIGURATION_INDEX_NAME);
         }
     }
 

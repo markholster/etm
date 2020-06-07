@@ -11,6 +11,7 @@ Code | Reason | Solution
 200002 | License not yet valid. | Your license is not yet valid.
 200003 | License storage size exceeded. | The maximum database size of your license is exceeded. Upgrade your license or remove some indices.
 201000 | Configuration load error. | Please check the connection to your Elasticsearch cluster.
+201001 | Invalid secret found in etm.yml. | The secret configured in the etm.yml configuration doesn't match the secret used on another, or previous node.
 201010 | Error creating XML unmarshaller. |
 201011 | Invalid xpath expression. The provided input is an invalid XPath expression. | Change your input to a valid XPath expression.
 201012 | Invalid xslt template. The provided input is an invalid XSLT template. | Change your input to a valid XSLT template.

@@ -103,6 +103,7 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
     protected void reindexTemporaryIndicesToNew(DataRepository dataRepository, FailureDetectingBulkProcessorListener listener, String migrationIndexPrefix) {
         System.out.println("Start moving temporary indices to permanent indices.");
         GetIndexResponse indexResponse = dataRepository.indicesGet(new GetIndexRequestBuilder(migrationIndexPrefix + "*"));
+        long grantTotal = 0;
         if (indexResponse != null && indexResponse.getIndices() != null && indexResponse.getIndices().length > 0) {
             for (String index : indexResponse.getIndices()) {
                 System.out.println("Migrating index '" + index + "'.");
@@ -113,7 +114,8 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
                         .setTimeout(TimeValue.timeValueSeconds(30))
                         .setFetchSource(true);
                 ScrollableSearch searchHits = new ScrollableSearch(dataRepository, searchRequestBuilder, null);
-                long total = searchHits.getNumberOfHits();
+                var total = searchHits.getNumberOfHits();
+                grantTotal += total;
                 long current = 0, lastPrint = 0;
                 for (var searchHit : searchHits) {
                     bulkProcessor.add(new IndexRequest()
@@ -144,11 +146,11 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
                     indexExist = dataRepository.indicesExist(new GetIndexRequestBuilder(index.substring(migrationIndexPrefix.length())));
                 }
                 if (indexExist) {
-                    flushIndices(dataRepository, index.substring(migrationIndexPrefix.length()));
+                    refreshAndFlushIndices(dataRepository, index.substring(migrationIndexPrefix.length()));
                 }
             }
         }
-        System.out.println("Done moving temporary indices to permanent indices.");
+        System.out.println("Done moving temporary indices to permanent indices. " + grantTotal + " records migrated.");
     }
 
     protected void createTemporaryIndexTemplates(DataRepository dataRepository, String migrationIndexPrefix, int shardsPerIndex) {
@@ -215,11 +217,12 @@ public abstract class AbstractEtmMigrator implements EtmMigrator {
             Thread.currentThread().interrupt();
         }
         printPercentageWhenChanged(lastPrint, current, total);
-        System.out.println("Done migrating " + entityName + (listener.hasFailures() ? " temporary index with failures." : "."));
+        System.out.println("Done migrating " + entityName + (listener.hasFailures() ? " temporary index with failures." : ". " + total + " records migrated."));
         return !listener.hasFailures();
     }
 
-    protected void flushIndices(DataRepository dataRepository, String... indices) {
+    protected void refreshAndFlushIndices(DataRepository dataRepository, String... indices) {
+        dataRepository.indicesRefresh(new RefreshIndexRequestBuilder().setIndices(indices));
         dataRepository.indicesFlush(new FlushIndexRequestBuilder().setIndices(indices).setForce(true));
     }
 

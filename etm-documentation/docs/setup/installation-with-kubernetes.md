@@ -13,6 +13,10 @@ kubectl create -f etm-svc.yml
 kubectl create -f elasticearch-master.yml
 kubectl create -f elasticearch-data.yml
 kubectl create -f elasticearch-client.yml
-kubectl create -f etm.yml
+kubectl create -f etm.yml #Make sure you change the default password in this template!
 ```
 Of course this 9 node cluster created with the templates might be overkill for your situation, but nothing should stop you from creating a single node Elasticsearch cluster with the use of these templates.
+
+::: danger Important
+Make sure you always change the value of the secret in the etm.yml to a random string before your first start of Enterprise Telemetry Monitor! 
+:::

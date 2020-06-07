@@ -19,89 +19,148 @@ package com.jecstar.etm.server.core.domain.configuration.converter;
 
 public interface EtmConfigurationTags {
 
-    String getNodeNameTag();
+    default String getNodeNameTag() {
+        return "name";
+    }
 
-    String getLicenseTag();
+    default String getSecretHashTag() {
+        return "secret_hash";
+    }
 
-    String getSessionTimeoutTag();
+    default String getLicenseTag() {
+        return "license";
+    }
 
-    String getImportProfileCacheSizeTag();
+    default String getSessionTimeoutTag() {
+        return "session_timeout";
+    }
 
-    String getEnhancingHandlerCountTag();
+    default String getImportProfileCacheSizeTag() {
+        return "import_profile_cache_size";
+    }
 
-    String getPersistingHandlerCountTag();
+    default String getEnhancingHandlerCountTag() {
+        return "enhancing_handler_count";
+    }
 
-    String getEventBufferSizeTag();
+    default String getPersistingHandlerCountTag() {
+        return "persisting_handler_count";
+    }
 
-    String getWaitStrategyTag();
+    default String getEventBufferSizeTag() {
+        return "event_buffer_size";
+    }
 
-    String getPersistingBulkCountTag();
+    default String getWaitStrategyTag() {
+        return "wait_strategy";
+    }
 
-    String getPersistingBulkSizeTag();
+    default String getPersistingBulkCountTag() {
+        return "persisting_bulk_count";
+    }
 
-    String getPersistingBulkTimeTag();
+    default String getPersistingBulkSizeTag() {
+        return "persisting_bulk_size";
+    }
 
-    String getPersistingBulkThreadsTag();
+    default String getPersistingBulkTimeTag() {
+        return "persisting_bulk_time";
+    }
 
-    String getShardsPerIndexTag();
+    default String getPersistingBulkThreadsTag() {
+        return "persisting_bulk_threads";
+    }
 
-    String getReplicasPerIndexTag();
+    default String getShardsPerIndexTag() {
+        return "shards_per_index";
+    }
 
-    String getMaxEventIndexCountTag();
+    default String getReplicasPerIndexTag() {
+        return "replicas_per_index";
+    }
 
-    String getMaxMetricsIndexCountTag();
+    default String getMaxEventIndexCountTag() {
+        return "max_event_index_count";
+    }
 
-    String getMaxAuditLogIndexCountTag();
+    default String getMaxMetricsIndexCountTag() {
+        return "max_metrics_index_count";
+    }
 
-    String getWaitForActiveShardsTag();
+    default String getMaxAuditLogIndexCountTag() {
+        return "max_audit_log_index_count";
+    }
 
-    String getRetryOnConflictCountTag();
+    default String getWaitForActiveShardsTag() {
+        return "wait_for_active_shards";
+    }
 
-    String getQueryTimeoutTag();
+    default String getRetryOnConflictCountTag() {
+        return "retry_on_conflict_count";
+    }
 
-    String getRemoteClustersTag();
+    default String getQueryTimeoutTag() {
+        return "query_timeout";
+    }
 
-    String getRemoteClusterNameTag();
+    default String getRemoteClustersTag() {
+        return "remote_clusters";
+    }
 
-    String getRemoteClusterClusterWideTag();
+    default String getRemoteClusterNameTag() {
+        return "name";
+    }
 
-    String getRemoteClusterSeedsTag();
+    default String getRemoteClusterClusterWideTag() {
+        return "cluster_wide";
+    }
 
-    String getRemoteClusterSeedHostTag();
+    default String getRemoteClusterSeedsTag() {
+        return "seeds";
+    }
 
-    String getRemoteClusterSeedPortTag();
+    default String getRemoteClusterSeedHostTag() {
+        return "host";
+    }
 
-    String getMaxSearchResultDownloadRowsTag();
+    default String getRemoteClusterSeedPortTag() {
+        return "port";
+    }
 
-    String getMaxSearchHistoryCountTag();
+    default String getMaxSearchResultDownloadRowsTag() {
+        return "max_search_result_download_rows";
+    }
 
-    String getMaxSearchTemplateCountTag();
+    default String getMaxSearchHistoryCountTag() {
+        return "max_search_history_count";
+    }
 
-    String getMaxGraphCountTag();
+    default String getMaxSearchTemplateCountTag() {
+        return "max_search_template_count";
+    }
 
-    String getMaxDashboardCountTag();
+    default String getMaxGraphCountTag() {
+        return "max_graph_count";
+    }
 
-    String getMaxSignalCountTag();
+    default String getMaxDashboardCountTag() {
+        return "max_dashboard_count";
+    }
 
-    // Search history tags
-    String getSearchHistoryTag();
+    default String getMaxSignalCountTag() {
+        return "max_signal_count";
+    }
 
-    String getTimestampTag();
-
-    String getQueryTag();
-
-    String getTypesTag();
-
-    String getFieldsTag();
-
-    String getResultsPerPageTag();
-
-    String getSortFieldTag();
-
-    String getSortOrderTag();
+    default String getSearchHistoryTag() {
+        return "search_history";
+    }
 
     // Node instances tags
-    String getInstancesTag();
+    default String getInstancesTag() {
+        return "instances";
+    }
 
-    String getLastSeenTag();
+    default String getLastSeenTag() {
+        return "last_seen";
+    }
 }

@@ -19,8 +19,8 @@ package com.jecstar.etm.server.core.domain.configuration;
 
 import com.jecstar.etm.server.core.converter.JsonField;
 import com.jecstar.etm.server.core.converter.JsonNamespace;
-import com.jecstar.etm.server.core.converter.custom.Base64Converter;
 import com.jecstar.etm.server.core.converter.custom.EnumConverter;
+import com.jecstar.etm.server.core.converter.custom.PasswordConverter;
 
 @JsonNamespace(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_LDAP)
 public class LdapConfiguration {
@@ -50,7 +50,7 @@ public class LdapConfiguration {
     private ConnectionSecurity connectionSecurity;
     @JsonField("bind_dn")
     private String bindDn;
-    @JsonField(value = "bind_password", converterClass = Base64Converter.class)
+    @JsonField(value = "bind_password", converterClass = PasswordConverter.class)
     private String bindPassword;
 
     // connection pool

@@ -38,9 +38,12 @@ import java.io.*;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 class Startup {
 
@@ -101,16 +104,68 @@ class Startup {
         }
         Configuration configuration;
         try (Reader reader = new FileReader(configFile)) {
-            Constructor constructor = new Constructor();
-            constructor.addTypeDescription(new TypeDescription(NativeConnectionFactory.class, new Tag("!nativeConnectionFactory")));
-            constructor.addTypeDescription(new TypeDescription(JNDIConnectionFactory.class, new Tag("!jndiConnectionFactory")));
-            constructor.addTypeDescription(new TypeDescription(CustomConnectionFactory.class, new Tag("!customConnectionFactory")));
-            Yaml yaml = new Yaml(constructor);
-
-            configuration = yaml.loadAs(reader, Configuration.class);
+            configuration = createYamlInstance().loadAs(reader, Configuration.class);
         }
         addEnvironmentToConfiguration(configuration, null);
+        if (configuration.secret == null) {
+            createSecret(configuration, configFile);
+        }
         return configuration;
+    }
+
+    /**
+     * Creates a random secret and add it to the configuration file and object.
+     *
+     * @param configuration The <code>Configuration instance</code>
+     * @param configFile    The configuration file.
+     * @throws IOException when reading or updating the configuration file fails.
+     */
+    private static void createSecret(Configuration configuration, File configFile) throws IOException {
+        final var secret = generateSecret();
+        final var commentLine = "# The secret that is used to encrypt passwords before they get saved. Make sure this secret has the same value on all Enterprise Telemetry Monitor instances you run in your cluster!";
+        final var secretLine = "secret: " + secret;
+        var path = configFile.toPath();
+        var lines = Files.lines(path).collect(Collectors.toList());
+        int instanceNameIx = -1;
+        int secretIx = -1;
+        for (int i = 0; i < lines.size(); i++) {
+            var line = lines.get(i);
+            if (line.startsWith("instanceName:")) {
+                instanceNameIx = i;
+            } else if (line.startsWith("secret:")) {
+                secretIx = i;
+            }
+        }
+        if (secretIx != -1) {
+            lines.remove(secretIx);
+            lines.add(secretIx, secretLine);
+        } else if (instanceNameIx != -1) {
+            lines.add(instanceNameIx + 1, secretLine);
+            lines.add(instanceNameIx + 1, commentLine);
+        } else {
+            lines.add(0, secretLine);
+            lines.add(0, commentLine);
+        }
+        Files.write(path, lines);
+        configuration.secret = secret;
+    }
+
+    private static Yaml createYamlInstance() {
+        var constructor = new Constructor();
+        constructor.addTypeDescription(new TypeDescription(NativeConnectionFactory.class, new Tag("!nativeConnectionFactory")));
+        constructor.addTypeDescription(new TypeDescription(JNDIConnectionFactory.class, new Tag("!jndiConnectionFactory")));
+        constructor.addTypeDescription(new TypeDescription(CustomConnectionFactory.class, new Tag("!customConnectionFactory")));
+        return new Yaml(constructor);
+    }
+
+    private static String generateSecret() {
+        var dictionary = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ`~!@#$%^&*()-_=+[{]}\\|;:'\",<.>/?";
+        var random = new SecureRandom();
+        StringBuilder pwd = new StringBuilder();
+        for (var i = 0; i < 48; i++) {
+            pwd.append(dictionary.charAt(random.nextInt(dictionary.length())));
+        }
+        return pwd.toString();
     }
 
     private static void addEnvironmentToConfiguration(Object configurationInstance, String prefix) {

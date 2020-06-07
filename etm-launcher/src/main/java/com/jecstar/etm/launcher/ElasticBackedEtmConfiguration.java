@@ -74,6 +74,12 @@ public class ElasticBackedEtmConfiguration extends EtmConfiguration {
     }
 
     @Override
+    public String getSecretHash() {
+        reloadConfigurationWhenNecessary();
+        return super.getSecretHash();
+    }
+
+    @Override
     public License getLicense() {
         reloadConfigurationWhenNecessary();
         return super.getLicense();

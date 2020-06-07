@@ -32,6 +32,7 @@ Name | Default value | Description
 bindingAddress | 0.0.0.0 | The interface address to bind Enterprise Telemetry Monitor to.
 clusterName | Enterprise Telemetry Monitor|The name of the Enterprise Telemetry Monitor cluster. When running multiple Enterprise Telemetry Monitor clusters it is recommended to give them a separate name.
 instanceName | Node_1 | The name of the Node. When running multiple nodes in a cluster, it is recommended to give them a separate name.
+secret | <random> | A secret used to encrypt sensitive data in Elasticsearch. When left empty, a secret will be generated the first time Enterprise Monitor is started. The value should always be the same on all nodes running in the same cluster!
 elasticsearch | | The elasticsearch configuration. See [Elasticsearch section in etm.yml](#elasticsearch-section-in-etm-yml) to view the nested options.
 http | | The http configuration. See [Http section in etm.yml](#http-section-in-etm-yml) to view the nested options.
 ibmMq | | The IBM MQ configuration. See [IBM MQ section in etm.yml](#ibm-mq-section-in-etm-yml) to view the nested options.
@@ -41,6 +42,11 @@ signaler | | The signaler configuration. See [Signaler section in etm.yml](#sign
 logging | | The logging configuration. See [Logging section in etm.yml](#logging-section-in-etm-yml) to view the nested options.
 
 All other configuration sections are identified with the name of the section without indentation. Configuration options in that section have an indentation of 2 spaces.
+
+::: warning Important 
+Special care should be given to the secret configuration. You should always keep a copy of the (generated) value in your password manager! Without the value you won't be 
+able to decrypt configured passwords that are stored in Elasticsearch. This would render the configuration of the node useless, and eventually might cause data loss.
+:::
 
 ## Elasticsearch section in etm.yml
 The *elasticsearch* section contains all options that are necessary to connect to an Elasticsearch cluster:

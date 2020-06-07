@@ -26,6 +26,7 @@ import com.jecstar.etm.launcher.http.HttpServer;
 import com.jecstar.etm.launcher.migrations.EtmMigrator;
 import com.jecstar.etm.launcher.migrations.v4.Version41Migrator;
 import com.jecstar.etm.launcher.migrations.v4.Version42Migrator;
+import com.jecstar.etm.launcher.migrations.v4.Version44Migrator;
 import com.jecstar.etm.launcher.migrations.v4.Version4Migrator;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessor;
 import com.jecstar.etm.processor.core.TelemetryCommandProcessorImpl;
@@ -36,12 +37,14 @@ import com.jecstar.etm.processor.jms.JmsProcessor;
 import com.jecstar.etm.processor.jms.JmsProcessorImpl;
 import com.jecstar.etm.processor.kafka.KafkaProcessor;
 import com.jecstar.etm.processor.kafka.KafkaProcessorImpl;
+import com.jecstar.etm.server.core.EtmException;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.persisting.internal.BusinessEventLogger;
 import com.jecstar.etm.server.core.persisting.internal.InternalBulkProcessorWrapper;
+import com.jecstar.etm.server.core.util.BCrypt;
 import com.jecstar.etm.server.core.util.NamedThreadFactory;
 import com.jecstar.etm.signaler.Signaler;
 
@@ -69,6 +72,7 @@ class LaunchEtmCommand extends AbstractCommand {
     private InternalBulkProcessorWrapper bulkProcessorWrapper;
 
     public void launch(CommandLineParameters commandLineParameters, Configuration configuration, InternalBulkProcessorWrapper bulkProcessorWrapper) {
+        EtmConfiguration.secret = configuration.secret;
         this.bulkProcessorWrapper = bulkProcessorWrapper;
         addShutdownHooks();
         try {
@@ -95,6 +99,7 @@ class LaunchEtmCommand extends AbstractCommand {
                     return;
                 }
             }
+            validateSecret(etmConfiguration);
             MetricRegistry metricRegistry = new MetricRegistry();
             initializeMetricReporter(metricRegistry, configuration);
             initializeProcessor(metricRegistry, configuration, etmConfiguration);
@@ -129,6 +134,12 @@ class LaunchEtmCommand extends AbstractCommand {
             if (log.isFatalLevelEnabled()) {
                 log.logFatalMessage("Error launching Enterprise Telemetry Monitor", e);
             }
+        }
+    }
+
+    private void validateSecret(EtmConfiguration etmConfiguration) {
+        if (etmConfiguration.getSecretHash() != null && !BCrypt.checkpw(EtmConfiguration.secret, etmConfiguration.getSecretHash())) {
+            throw new EtmException(EtmException.INVALID_SECRET);
         }
     }
 
@@ -256,6 +267,10 @@ class LaunchEtmCommand extends AbstractCommand {
         if (etmMigrator.shouldBeExecuted()) {
             etmMigrator.migrate(false);
             reinitialze = true;
+        }
+        etmMigrator = new Version44Migrator(dataRepository);
+        if (etmMigrator.shouldBeExecuted()) {
+            etmMigrator.migrate(false);
         }
         return reinitialze;
     }

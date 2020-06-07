@@ -19,7 +19,7 @@ package com.jecstar.etm.gui.rest.services.iib;
 
 import com.jecstar.etm.server.core.converter.JsonField;
 import com.jecstar.etm.server.core.converter.JsonNamespace;
-import com.jecstar.etm.server.core.converter.custom.Base64Converter;
+import com.jecstar.etm.server.core.converter.custom.PasswordConverter;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 
 @JsonNamespace(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE)
@@ -35,7 +35,7 @@ public class Node {
     private boolean useTls;
     @JsonField("username")
     private String username;
-    @JsonField(value = "password", converterClass = Base64Converter.class)
+    @JsonField(value = "password", converterClass = PasswordConverter.class)
     private String password;
     @JsonField("queue_manager")
     private String queueManager;

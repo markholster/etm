@@ -29,8 +29,10 @@ public class Configuration {
 
     public String clusterName = "Enterprise Telemetry Monitor";
     public String instanceName = "Node_1";
-
     public String bindingAddress = "127.0.0.1";
+    // In an ideal world this would be a char[], but the snakeyml doesn't support that type. The data will always
+    // be read into a ScalarNode which contains a value of String type.
+    public String secret;
 
     public String licenseUpdateUrl;
 

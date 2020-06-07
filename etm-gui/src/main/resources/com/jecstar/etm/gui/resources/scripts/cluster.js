@@ -652,20 +652,14 @@ function buildClusterPage() {
         if (!data) {
             return null;
         }
-        for (let i = 0; i < 7; i++) {
-            data = commons.base64Decode(data);
-        }
-        return data;
+        return commons.base64Decode(data);
     }
 
     function encode(data) {
         if (!data) {
             return null;
         }
-        for (let i = 0; i < 7; i++) {
-            data = commons.base64Encode(data);
-        }
-        return data;
+        return commons.base64Encode(data);
     }
 
     function validateForm(formId) {

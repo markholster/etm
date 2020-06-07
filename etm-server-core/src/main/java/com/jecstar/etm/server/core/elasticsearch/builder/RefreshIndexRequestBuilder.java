@@ -15,10 +15,21 @@
  *  under the License.
  */
 
-package com.jecstar.etm.server.core.domain.configuration.converter.json;
+package com.jecstar.etm.server.core.elasticsearch.builder;
 
-import com.jecstar.etm.server.core.domain.configuration.converter.EtmConfigurationTags;
+import org.elasticsearch.action.admin.indices.refresh.RefreshRequest;
 
-public class EtmConfigurationTagsJsonImpl implements EtmConfigurationTags {
+public class RefreshIndexRequestBuilder extends AbstractActionRequestBuilder<RefreshRequest> {
 
+    private final RefreshRequest request = new RefreshRequest();
+
+    public RefreshIndexRequestBuilder setIndices(String... indices) {
+        this.request.indices(indices);
+        return this;
+    }
+
+    @Override
+    public RefreshRequest build() {
+        return this.request;
+    }
 }

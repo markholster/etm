@@ -36,14 +36,16 @@ spec:
       containers:
       - name: "etm"
         env:
-        - name: elasticsearch_connectAddresses
-          value: "elasticsearch-client:9200"
-        - name: elasticsearch_clusterName
-          value: etm-demo-01
-        - name: instanceName
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
+          - name: secret
+            value: REPLACE_ME_WITH_A_RANDOM_STRING
+          - name: elasticsearch_connectAddresses
+            value: "elasticsearch-client:9200"
+          - name: elasticsearch_clusterName
+            value: etm-demo-01
+          - name: instanceName
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
         readinessProbe:
           httpGet:
             path: /status

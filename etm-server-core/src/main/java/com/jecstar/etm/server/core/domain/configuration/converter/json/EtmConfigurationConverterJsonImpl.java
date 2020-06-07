@@ -51,6 +51,7 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
         if (nodeConfiguration == null) {
             // only add the defaults.
             builder.field(this.tags.getNodeNameTag(), ElasticsearchLayout.ETM_OBJECT_NAME_DEFAULT);
+            builder.field(this.tags.getSecretHashTag(), defaultConfiguration.getSecretHash());
             builder.field(this.tags.getSessionTimeoutTag(), defaultConfiguration.getSessionTimeout());
             builder.field(this.tags.getImportProfileCacheSizeTag(), defaultConfiguration.getImportProfileCacheSize());
             builder.field(this.tags.getEnhancingHandlerCountTag(), defaultConfiguration.getEnhancingHandlerCount());
@@ -133,6 +134,7 @@ public class EtmConfigurationConverterJsonImpl implements EtmConfigurationConver
         nodeMap = this.converter.getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE, nodeMap);
         defaultMap = this.converter.getObject(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_NODE, defaultMap);
         EtmConfiguration etmConfiguration = new EtmConfiguration(nodeName);
+        etmConfiguration.setSecretHash(getStringValue(this.tags.getSecretHashTag(), defaultMap, nodeMap));
         etmConfiguration.setSessionTimeout(getLongValue(this.tags.getSessionTimeoutTag(), defaultMap, nodeMap));
         etmConfiguration.setImportProfileCacheSize(getIntValue(this.tags.getImportProfileCacheSizeTag(), defaultMap, nodeMap));
         etmConfiguration.setEnhancingHandlerCount(getIntValue(this.tags.getEnhancingHandlerCountTag(), defaultMap, nodeMap));

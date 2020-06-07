@@ -90,7 +90,7 @@ public class Version4Migrator extends AbstractEtmMigrator {
             System.out.println("Errors detected. Quitting migration. Migrated indices are prefixed with '" + this.migrationIndexPrefix + "' and are still existent in your Elasticsearch cluster!");
             return;
         }
-        flushIndices(this.dataRepository, this.migrationIndexPrefix + "*");
+        refreshAndFlushIndices(this.dataRepository, this.migrationIndexPrefix + "*");
 //      Reinitialize template
         ElasticsearchIndexTemplateCreator indexTemplateCreator = new ElasticsearchIndexTemplateCreator(this.dataRepository);
         indexTemplateCreator.addConfigurationChangeNotificationListener(new ElasticBackedEtmConfiguration(null, this.dataRepository, this.migrationIndexPrefix + ElasticsearchLayout.CONFIGURATION_INDEX_NAME));

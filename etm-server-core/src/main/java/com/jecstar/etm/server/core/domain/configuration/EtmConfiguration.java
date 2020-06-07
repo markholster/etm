@@ -31,6 +31,7 @@ public class EtmConfiguration {
 
     // Cluster configuration
     private static final String CONFIG_KEY_SESSION_TIMEOUT = "sessionTimeout";
+    private static final String CONFIG_KEY_SECRET_HASH = "secretHash";
     public static final String CONFIG_KEY_SHARDS_PER_INDEX = "shardsPerIndex";
     public static final String CONFIG_KEY_REPLICAS_PER_INDEX = "replicasPerIndex";
     private static final String CONFIG_KEY_MAX_EVENT_INDEX_COUNT = "maxEventIndexCount";
@@ -57,6 +58,8 @@ public class EtmConfiguration {
     public static final String CONFIG_KEY_PERSISTING_BULK_THREADS = "persistingBulkThreads";
     public static final String CONFIG_KEY_WAIT_STRATEGY = "waitStrategy";
     public static final String CONFIG_KEY_IMPORT_PROFILE_CACHE_SIZED = "importProfileCacheSize";
+    // The secret used to encrypt and decrypt sensitive data.
+    public static String secret;
 
     // Disruptor configuration properties.
     private int enhancingHandlerCount = 5;
@@ -99,6 +102,7 @@ public class EtmConfiguration {
 
     // Other stuff.
     private final String nodeName;
+    private String secretHash;
 
     private License license;
 
@@ -488,6 +492,15 @@ public class EtmConfiguration {
         return this.nodeName;
     }
 
+    public String getSecretHash() {
+        return this.secretHash;
+    }
+
+    public EtmConfiguration setSecretHash(String secretHash) {
+        this.secretHash = secretHash;
+        return this;
+    }
+
     public void addConfigurationChangeListener(ConfigurationChangeListener configurationChangeListener) {
         if (!this.changeListeners.contains(configurationChangeListener)) {
             this.changeListeners.add(configurationChangeListener);
@@ -650,6 +663,10 @@ public class EtmConfiguration {
         if (changed.size() > 0) {
             ConfigurationChangedEvent event = new ConfigurationChangedEvent(changed);
             this.changeListeners.forEach(c -> c.configurationChanged(event));
+        }
+        if (!Objects.equals(this.secretHash, etmConfiguration.getSecretHash())) {
+            setSecretHash(etmConfiguration.getSecretHash());
+            changed.add(CONFIG_KEY_SECRET_HASH);
         }
         return changed.size() > 0;
     }
