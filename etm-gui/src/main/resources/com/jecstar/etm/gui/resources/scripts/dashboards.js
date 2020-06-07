@@ -847,7 +847,7 @@ function appendCell($cellContainer, graph, readonly) {
             updateChart(graph, $graphContainer, readonly);
             if (graph.refresh_rate) {
                 graph.interval = setInterval(function () {
-                    updateChart(graph, $graphContainer);
+                    updateChart(graph, $graphContainer, readonly);
                 }, graph.refresh_rate * 1000);
             }
         } else if (!readonly) {

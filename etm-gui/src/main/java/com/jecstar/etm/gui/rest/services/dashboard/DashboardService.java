@@ -31,6 +31,9 @@ import com.jecstar.etm.server.core.domain.aggregator.Aggregator;
 import com.jecstar.etm.server.core.domain.aggregator.bucket.BucketAggregator;
 import com.jecstar.etm.server.core.domain.aggregator.bucket.BucketKey;
 import com.jecstar.etm.server.core.domain.aggregator.metric.MetricValue;
+import com.jecstar.etm.server.core.domain.audit.ConfigurationChangedAuditLog;
+import com.jecstar.etm.server.core.domain.audit.builder.ConfigurationChangedAuditLogBuilder;
+import com.jecstar.etm.server.core.domain.audit.converter.ConfigurationChangedAuditLogConverter;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.principal.EtmGroup;
@@ -40,10 +43,12 @@ import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
 import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalTagsJsonImpl;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
+import com.jecstar.etm.server.core.elasticsearch.builder.IndexRequestBuilder;
 import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
 import com.jecstar.etm.server.core.persisting.EtmQueryBuilder;
 import com.jecstar.etm.server.core.persisting.RequestEnhancer;
 import com.jecstar.etm.server.core.util.DateUtils;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.RangeQueryBuilder;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.HasAggregations;
@@ -72,6 +77,7 @@ public class DashboardService extends AbstractUserAttributeService {
     private final EtmPrincipalTags principalTags = new EtmPrincipalTagsJsonImpl();
     private final GraphContainerConverter graphContainerConverter = new GraphContainerConverter();
     private final DashboardConverter dashboardConverter = new DashboardConverter();
+    private final ConfigurationChangedAuditLogConverter configurationChangedAuditLogConverter = new ConfigurationChangedAuditLogConverter();
 
     public static void initialize(DataRepository dataRepository, EtmConfiguration etmConfiguration) {
         DashboardService.dataRepository = dataRepository;
@@ -254,6 +260,10 @@ public class DashboardService extends AbstractUserAttributeService {
      * @return The json result of the addition.
      */
     private String addGraph(String groupName, String graphName, String json) {
+        var now = Instant.now();
+        var etmPrincipal = getEtmPrincipal();
+        var oldGraphContainerConfiguration = (String) null;
+
         // Execute a dry run on all data.
         Map<String, Object> objectMap = getEntity(dataRepository, groupName, this.principalTags.getGraphsTag(), this.principalTags.getDashboardDatasourcesTag());
         EtmSecurityEntity etmSecurityEntity = getEtmSecurityEntity(dataRepository, groupName);
@@ -261,10 +271,11 @@ public class DashboardService extends AbstractUserAttributeService {
         if (!etmSecurityEntity.isAuthorizedForDashboardDatasource(graphContainer.getData().getDataSource())) {
             throw new EtmException(EtmException.NOT_AUTHORIZED_FOR_DASHBOARD_DATA_SOURCE);
         }
-        graphContainer.normalizeQueryTimesToInstant(getEtmPrincipal());
-        createGraphSearchRequest(getEtmPrincipal(), graphContainer);
+        graphContainer.normalizeQueryTimesToInstant(etmPrincipal);
+        createGraphSearchRequest(etmPrincipal, graphContainer);
 
         // Data seems ok, now store the graph.
+        var newGraphContainerConfiguration = this.graphContainerConverter.write(graphContainer);
         List<Map<String, Object>> currentGraphContainers = new ArrayList<>();
         Map<String, Object> graphContainerValues = toMap(this.graphContainerConverter.write(graphContainer));
         graphContainerValues.put(GraphContainer.NAME, graphName);
@@ -276,6 +287,7 @@ public class DashboardService extends AbstractUserAttributeService {
         while (iterator.hasNext()) {
             Map<String, Object> graphContainerMap = iterator.next();
             if (graphName.equals(getString(GraphContainer.NAME, graphContainerMap))) {
+                oldGraphContainerConfiguration = this.graphContainerConverter.write(this.graphContainerConverter.read(graphContainerMap));
                 iterator.set(graphContainerValues);
                 updated = true;
                 break;
@@ -290,6 +302,17 @@ public class DashboardService extends AbstractUserAttributeService {
         Map<String, Object> source = new HashMap<>();
         source.put(this.principalTags.getGraphsTag(), currentGraphContainers);
         updateEntity(dataRepository, etmConfiguration, groupName, source);
+        if (!Objects.equals(oldGraphContainerConfiguration, newGraphContainerConfiguration)) {
+            storeConfigurationChangedAuditLog(new ConfigurationChangedAuditLogBuilder()
+                    .setPrincipalId(etmPrincipal.getId())
+                    .setHandlingTime(now)
+                    .setAction(oldGraphContainerConfiguration == null ? ConfigurationChangedAuditLog.Action.CREATE : ConfigurationChangedAuditLog.Action.UPDATE)
+                    .setConfigurationType("graph")
+                    .setConfigurationId(groupName != null ? "group_" + groupName + "_graph_" + graphName : "graph_" + graphName)
+                    .setOldValue(oldGraphContainerConfiguration)
+                    .setNewValue(newGraphContainerConfiguration)
+            );
+        }
         return "{\"status\":\"success\"}";
     }
 
@@ -331,6 +354,10 @@ public class DashboardService extends AbstractUserAttributeService {
      * @return The json result of the delete.
      */
     private String deleteGraph(String groupName, String graphName) {
+        var now = Instant.now();
+        var etmPrincipal = getEtmPrincipal();
+        var oldGraphContainerConfiguration = (String) null;
+
         Map<String, Object> objectMap = getEntity(dataRepository, groupName, this.principalTags.getDashboardsTag(), this.principalTags.getGraphsTag());
 
         List<Map<String, Object>> currentGraphContainers = new ArrayList<>();
@@ -344,6 +371,7 @@ public class DashboardService extends AbstractUserAttributeService {
         while (iterator.hasNext()) {
             Map<String, Object> graphContainerValues = iterator.next();
             if (graphName.equals(getString(GraphContainer.NAME, graphContainerValues))) {
+                oldGraphContainerConfiguration = this.graphContainerConverter.write(this.graphContainerConverter.read(graphContainerValues));
                 iterator.remove();
                 break;
             }
@@ -370,6 +398,16 @@ public class DashboardService extends AbstractUserAttributeService {
             }
         }
         updateEntity(dataRepository, etmConfiguration, groupName, source);
+        if (oldGraphContainerConfiguration != null) {
+            storeConfigurationChangedAuditLog(new ConfigurationChangedAuditLogBuilder()
+                    .setPrincipalId(etmPrincipal.getId())
+                    .setHandlingTime(now)
+                    .setAction(ConfigurationChangedAuditLog.Action.DELETE)
+                    .setConfigurationType("graph")
+                    .setConfigurationId(groupName != null ? "group_" + groupName + "_graph_" + graphName : "graph_" + graphName)
+                    .setOldValue(oldGraphContainerConfiguration)
+            );
+        }
         return "{\"status\":\"success\"}";
     }
 
@@ -505,8 +543,13 @@ public class DashboardService extends AbstractUserAttributeService {
      * @return The json result of the addition.
      */
     private String addDashboard(String groupName, String dashboardName, String json) {
+        var now = Instant.now();
+        var etmPrincipal = getEtmPrincipal();
+        var oldDashboardConfiguration = (String) null;
+
         Dashboard dashboard = this.dashboardConverter.read(json);
         dashboard.setName(dashboardName);
+        var newDashboardConfiguration = this.dashboardConverter.write(dashboard);
         // Data seems ok, now store the graph.
         Map<String, Object> objectMap = getEntity(dataRepository, groupName, this.principalTags.getDashboardsTag());
 
@@ -519,6 +562,7 @@ public class DashboardService extends AbstractUserAttributeService {
         while (dashboardIterator.hasNext()) {
             Map<String, Object> db = dashboardIterator.next();
             if (dashboardName.equals(getString(Dashboard.NAME, db))) {
+                oldDashboardConfiguration = this.dashboardConverter.write(this.dashboardConverter.read(db));
                 dashboardIterator.set(toMap(this.dashboardConverter.write(dashboard)));
                 updated = true;
                 break;
@@ -533,6 +577,18 @@ public class DashboardService extends AbstractUserAttributeService {
         Map<String, Object> source = new HashMap<>();
         source.put(this.principalTags.getDashboardsTag(), currentDashboards);
         updateEntity(dataRepository, etmConfiguration, groupName, source);
+        if (!Objects.equals(oldDashboardConfiguration, newDashboardConfiguration)) {
+            storeConfigurationChangedAuditLog(new ConfigurationChangedAuditLogBuilder()
+                    .setPrincipalId(etmPrincipal.getId())
+                    .setHandlingTime(now)
+                    .setAction(oldDashboardConfiguration == null ? ConfigurationChangedAuditLog.Action.CREATE : ConfigurationChangedAuditLog.Action.UPDATE)
+                    .setConfigurationType("dashboard")
+                    .setConfigurationId(groupName != null ? "group_" + groupName + "_dashboard_" + dashboardName : "dashboard_" + dashboardName)
+                    .setOldValue(oldDashboardConfiguration)
+                    .setNewValue(newDashboardConfiguration)
+            );
+        }
+
         return "{\"status\":\"success\"}";
     }
 
@@ -567,6 +623,9 @@ public class DashboardService extends AbstractUserAttributeService {
      * @return The json result of the delete.
      */
     private String deleteDashboard(String groupName, String dashboardName) {
+        var now = Instant.now();
+        var etmPrincipal = getEtmPrincipal();
+        var oldDashboardConfiguration = (String) null;
         Map<String, Object> objectMap = getEntity(dataRepository, groupName, this.principalTags.getDashboardsTag());
         List<Map<String, Object>> currentDashboards = new ArrayList<>();
         if (objectMap != null && objectMap.containsKey(this.principalTags.getDashboardsTag())) {
@@ -576,6 +635,7 @@ public class DashboardService extends AbstractUserAttributeService {
         while (iterator.hasNext()) {
             Map<String, Object> dashboard = iterator.next();
             if (dashboardName.equals(getString(Dashboard.NAME, dashboard))) {
+                oldDashboardConfiguration = this.dashboardConverter.write(this.dashboardConverter.read(dashboard));
                 iterator.remove();
                 break;
             }
@@ -583,6 +643,16 @@ public class DashboardService extends AbstractUserAttributeService {
         Map<String, Object> source = new HashMap<>();
         source.put(this.principalTags.getDashboardsTag(), currentDashboards);
         updateEntity(dataRepository, etmConfiguration, groupName, source);
+        if (oldDashboardConfiguration != null) {
+            storeConfigurationChangedAuditLog(new ConfigurationChangedAuditLogBuilder()
+                    .setPrincipalId(etmPrincipal.getId())
+                    .setHandlingTime(now)
+                    .setAction(ConfigurationChangedAuditLog.Action.DELETE)
+                    .setConfigurationType("dashboard")
+                    .setConfigurationId(groupName != null ? "group_" + groupName + "_dashboard_" + dashboardName : "dashboard_" + dashboardName)
+                    .setOldValue(oldDashboardConfiguration)
+            );
+        }
         return "{\"status\":\"success\"}";
     }
 
@@ -892,5 +962,25 @@ public class DashboardService extends AbstractUserAttributeService {
         graphContainer.getGraph().prepareForSearch(dataRepository, searchRequestBuilder);
         graphContainer.getGraph().addAggregators(searchRequestBuilder);
         return searchRequestBuilder;
+    }
+
+    /**
+     * Store a <code>ConfigurationChangedAuditLog</code> instance.
+     *
+     * @param auditLogBuilder The builder that contains the data.
+     */
+    private void storeConfigurationChangedAuditLog(ConfigurationChangedAuditLogBuilder auditLogBuilder) {
+        var now = Instant.now();
+        IndexRequestBuilder indexRequestBuilder = requestEnhancer.enhance(
+                new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerWeek.format(now))
+                        .setId(auditLogBuilder.getId())
+        )
+                .setSource(this.configurationChangedAuditLogConverter.write(
+                        auditLogBuilder
+                                .setId(idGenerator.createId())
+                                .setTimestamp(now)
+                                .build()
+                ), XContentType.JSON);
+        dataRepository.indexAsync(indexRequestBuilder, DataRepository.noopActionListener());
     }
 }

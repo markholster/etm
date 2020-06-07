@@ -206,6 +206,7 @@ public class DirectedGraphTest {
         directedGraph.addEdge(event2, event3);
         directedGraph.addEdge(event3, event1);
         var order = directedGraph.finishGraph().getDirectedAcyclicOrder();
-
     }
+
+
 }

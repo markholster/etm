@@ -42,6 +42,7 @@ import javax.annotation.security.DeclareRoles;
 import javax.annotation.security.PermitAll;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -150,10 +151,13 @@ public class UserService extends AbstractGuiService {
     @Path("/password")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public String setPassword(String json) {
+    public Response setPassword(String json) {
         if (getEtmPrincipal().isLdapBase()) {
-            // TODO gooi exceptie
-            return null;
+            return Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity("{ \"status\": \"failure\", \"reason\": \"Principal is imported from LDAP. Password not managed in Enterprise Telemetry Monitor.\" }")
+                    .type(MediaType.APPLICATION_JSON)
+                    .build();
         }
         Map<String, Object> valueMap = toMap(json);
 
@@ -180,7 +184,7 @@ public class UserService extends AbstractGuiService {
                 .setDoc(updateMap)
                 .setDetectNoop(true);
         dataRepository.update(builder);
-        return "{ \"status\": \"success\" }";
+        return Response.ok("{ \"status\": \"success\" }", MediaType.APPLICATION_JSON).build();
     }
 
     @GET

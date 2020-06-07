@@ -26,7 +26,7 @@ Shards per index | Each day at 00:00 UTC a new Elasticsearch index is created. T
 Replicas per index | The number of [replica's](https://www.elastic.co/guide/en/elasticsearch/reference/7.x/scalability.html) each Elasticsearch index should have. Leave this value to zero if you have only one Elasticsearch instance in your cluster.
 Max event indices | The number of event indices to keep. Each day at 00:00 UTC a new Elasticsearch index is created. This means that setting this value to 10 will keep your events at least 9 days, depending on your local time zone.
 Max metrics indices | The number of metrics indices to keep. Each Enterprise Telemetry Monitor node generates metrics to the metrics index of the current day. This index cannot be queried, but is useful to monitor your Enterprise Telemetry Monitor cluster health.
-Max audit log indices | The number of audit logs indices to keep. This index cannot be queried, but keeps your audit logs to see who is doing what in Enterprise Telemetry Monitor.
+Max audit log indices | The number of audit logs indices to keep. This index cannot be queried, but keeps your audit logs to see who is doing what in Enterprise Telemetry Monitor. Every week a new index is created.
 Wait for active shards | The number of Elasticsearch shards that need to be active before performing any query. Leave this value to 1 if you have only one Elasticsearch instance in your cluster, or have not configured any replicas.
 Retries on conflict | The number of retries before an insert or update query will fail.
 Query timeout | The timeout in milliseconds for queries to Elasticsearch.
@@ -64,7 +64,7 @@ Ldap host | The hostname or ip-address the ldap server is running on.
 Ldap port | The port number the ldap server is listening on.
 Connection security | Select the connection security that applies to the ldap server. Make sure to add the required root certificates to the [Certificate settings](#certificate-settings) when connecting to an LDAP server over TLS.
 Bind DN | The Distinguished Name (DN) of the user that is connecting to the ldap server.
-Bind password | The password used to connect to the ldap server. Note that this password will be base64 encoded into the database. Make sure only Enterprise Telemetry Monitor has access to your database!
+Bind password | The password used to connect to the ldap server. Note that this password will be base64 encoded into the database. The password will be visible in it's encoded form in the audit logs and in your browsers network log. Make sure only Enterprise Telemetry Monitor has access to your database!
 Min connections | The minimum number of connections to the ldap server in the connection pool. 
 Max connections | The maximum number of connections to the ldap server in the connection pool.
 Connection test base DN | The base DN used to perform a connection test query on.  

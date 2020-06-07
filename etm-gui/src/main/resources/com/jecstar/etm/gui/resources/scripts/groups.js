@@ -82,11 +82,11 @@ function buildGroupPage() {
 	$('#sel-group').on('change', function (event) {
 		event.preventDefault();
 		const groupData = groupMap[$(this).val()];
+		$('#list-notifiers, #list-event-denies').empty();
 		if ('undefined' == typeof groupData) {
 			resetValues();
 			return;
 		}
-		$('#list-notifiers').empty();
 		$('#input-group-name').val(groupData.name);
 		$('#input-group-display-name').val(groupData.display_name);
 		$('#input-filter-query').val(groupData.filter_query);

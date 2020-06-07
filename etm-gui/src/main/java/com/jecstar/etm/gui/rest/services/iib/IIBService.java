@@ -24,14 +24,14 @@ import com.jecstar.etm.gui.rest.AbstractGuiService;
 import com.jecstar.etm.gui.rest.IIBApi;
 import com.jecstar.etm.gui.rest.services.iib.proxy.*;
 import com.jecstar.etm.server.core.EtmException;
+import com.jecstar.etm.server.core.domain.audit.ConfigurationChangedAuditLog;
+import com.jecstar.etm.server.core.domain.audit.builder.ConfigurationChangedAuditLogBuilder;
+import com.jecstar.etm.server.core.domain.audit.converter.ConfigurationChangedAuditLogConverter;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
 import com.jecstar.etm.server.core.domain.principal.SecurityRoles;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
-import com.jecstar.etm.server.core.elasticsearch.builder.DeleteRequestBuilder;
-import com.jecstar.etm.server.core.elasticsearch.builder.GetRequestBuilder;
-import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
-import com.jecstar.etm.server.core.elasticsearch.builder.UpdateRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.*;
 import com.jecstar.etm.server.core.logging.LogFactory;
 import com.jecstar.etm.server.core.logging.LogWrapper;
 import com.jecstar.etm.server.core.persisting.RequestEnhancer;
@@ -46,6 +46,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.time.Instant;
 import java.util.*;
 
 @Path("/iib")
@@ -64,6 +65,7 @@ public class IIBService extends AbstractGuiService {
     private static RequestEnhancer requestEnhancer;
 
     private final NodeConverter nodeConverter = new NodeConverter();
+    private final ConfigurationChangedAuditLogConverter configurationChangedAuditLogConverter = new ConfigurationChangedAuditLogConverter();
 
     public static void initialize(DataRepository dataRepository, EtmConfiguration etmConfiguration) {
         IIBService.dataRepository = dataRepository;
@@ -101,10 +103,24 @@ public class IIBService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.IIB_NODE_READ_WRITE)
     public String deleteNode(@PathParam("nodeName") String nodeName) {
+        var now = Instant.now();
+        var etmPrincipal = getEtmPrincipal();
+        var oldNodeConfiguration = getCurrentNodeConfiguration(nodeName);
+
         DeleteRequestBuilder builder = requestEnhancer.enhance(
                 new DeleteRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName)
         );
         dataRepository.delete(builder);
+        if (oldNodeConfiguration != null) {
+            storeConfigurationChangedAuditLog(new ConfigurationChangedAuditLogBuilder()
+                    .setPrincipalId(etmPrincipal.getId())
+                    .setHandlingTime(now)
+                    .setAction(ConfigurationChangedAuditLog.Action.DELETE)
+                    .setConfigurationType(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE)
+                    .setConfigurationId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName)
+                    .setOldValue(oldNodeConfiguration)
+            );
+        }
         return "{\"status\":\"success\"}";
     }
 
@@ -113,18 +129,50 @@ public class IIBService extends AbstractGuiService {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(SecurityRoles.IIB_NODE_READ_WRITE)
     public String addNode(@PathParam("nodeName") String nodeName, String json) {
+        var now = Instant.now();
+        var etmPrincipal = getEtmPrincipal();
+        var oldNodeConfiguration = getCurrentNodeConfiguration(nodeName);
+
         Node node = this.nodeConverter.read(toStringWithNamespace(json, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE));
         try (IIBNodeConnection nodeConnection = createIIBConnectionInstance(node)) {
             nodeConnection.connect();
         }
+        var newNodeConfiguration = this.nodeConverter.write(node);
         UpdateRequestBuilder builder = requestEnhancer.enhance(
                 new UpdateRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName)
         )
-                .setDoc(this.nodeConverter.write(node), XContentType.JSON)
+                .setDoc(newNodeConfiguration, XContentType.JSON)
                 .setDocAsUpsert(true)
                 .setDetectNoop(true);
         dataRepository.update(builder);
+        if (!Objects.equals(oldNodeConfiguration, newNodeConfiguration)) {
+            storeConfigurationChangedAuditLog(new ConfigurationChangedAuditLogBuilder()
+                    .setPrincipalId(etmPrincipal.getId())
+                    .setHandlingTime(now)
+                    .setAction(oldNodeConfiguration == null ? ConfigurationChangedAuditLog.Action.CREATE : ConfigurationChangedAuditLog.Action.UPDATE)
+                    .setConfigurationType(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE)
+                    .setConfigurationId(ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName)
+                    .setOldValue(oldNodeConfiguration)
+                    .setNewValue(newNodeConfiguration)
+            );
+        }
         return "{ \"status\": \"success\" }";
+    }
+
+    /**
+     * Returns the current node configuration.
+     *
+     * @return The current node configuration.
+     */
+    private String getCurrentNodeConfiguration(String nodeName) {
+        var getResponse = dataRepository.get(new GetRequestBuilder(ElasticsearchLayout.CONFIGURATION_INDEX_NAME, ElasticsearchLayout.CONFIGURATION_OBJECT_TYPE_IIB_NODE_ID_PREFIX + nodeName)
+                .setFetchSource(true)
+        );
+        if (!getResponse.isExists()) {
+            return null;
+        }
+        var nodeConfig = this.nodeConverter.read(getResponse.getSourceAsString());
+        return this.nodeConverter.write(nodeConfig);
     }
 
     @GET
@@ -199,7 +247,7 @@ public class IIBService extends AbstractGuiService {
                     }
                     throw new EtmException(EtmException.IIB_UNKNOWN_OBJECT);
                 }
-                result = updateFlowMonitorning(nodeConnection, integrationServer, null, null, null, messageFlow, valueMap);
+                result = updateFlowMonitoring(nodeConnection, integrationServer, null, null, null, messageFlow, valueMap);
             } else {
                 if (log.isDebugLevelEnabled()) {
                     log.logDebugMessage("Unknown object type '" + objectType + "' not found. Not updating monitoring.");
@@ -360,7 +408,7 @@ public class IIBService extends AbstractGuiService {
             if (messageFlow == null) {
                 continue;
             }
-            updateFlowMonitorning(nodeConnection, integrationServer, applicationName, null, version, messageFlow, flowValues);
+            updateFlowMonitoring(nodeConnection, integrationServer, applicationName, null, version, messageFlow, flowValues);
         }
         return "{\"status\":\"success\"}";
     }
@@ -384,7 +432,7 @@ public class IIBService extends AbstractGuiService {
     }
 
 
-    private String updateFlowMonitorning(IIBNodeConnection nodeConnection, IIBIntegrationServer integrationServer, String applicationName, String libraryName, String version, IIBMessageFlow flow, Map<String, Object> valueMap) throws ConfigManagerProxyLoggedException {
+    private String updateFlowMonitoring(IIBNodeConnection nodeConnection, IIBIntegrationServer integrationServer, String applicationName, String libraryName, String version, IIBMessageFlow flow, Map<String, Object> valueMap) throws ConfigManagerProxyLoggedException {
         boolean monitoringActive = getBoolean("monitoring_active", valueMap);
         if (monitoringActive) {
             activateMonitoring(nodeConnection, integrationServer, applicationName, libraryName, version, flow, valueMap);
@@ -474,5 +522,23 @@ public class IIBService extends AbstractGuiService {
         }
     }
 
-
+    /**
+     * Store a <code>ConfigurationChangedAuditLog</code> instance.
+     *
+     * @param auditLogBuilder The builder that contains the data.
+     */
+    private void storeConfigurationChangedAuditLog(ConfigurationChangedAuditLogBuilder auditLogBuilder) {
+        var now = Instant.now();
+        IndexRequestBuilder indexRequestBuilder = requestEnhancer.enhance(
+                new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerWeek.format(now))
+                        .setId(auditLogBuilder.getId())
+        )
+                .setSource(this.configurationChangedAuditLogConverter.write(
+                        auditLogBuilder
+                                .setId(idGenerator.createId())
+                                .setTimestamp(now)
+                                .build()
+                ), XContentType.JSON);
+        dataRepository.indexAsync(indexRequestBuilder, DataRepository.noopActionListener());
+    }
 }

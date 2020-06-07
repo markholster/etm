@@ -49,7 +49,7 @@ function buildAuditLogPage() {
                         $('#btn-search').attr('disabled', 'disabled');
                     }
                 }).on('keydown', function (event) {
-                if (event.keyCode === 13 && !event.shiftKey) {
+                if (event.keyCode === 13 && !event.shiftKey && !$(this).autocomplete('instance').menu.active) {
                     event.preventDefault();
                     const $searchButton = $('#btn-search');
                     if ($searchButton.is(':enabled')) {
@@ -279,12 +279,14 @@ function buildAuditLogPage() {
 				if ('login' === data.object_type) {
 					showLoginAuditLog(data, timeZone);
 				} else if ('logout' === data.object_type) {
-					showLogoutAuditLog(data, timeZone);
-				} else if ('getevent' === data.object_type) {
-					showGetEventAuditLog(data, timeZone);
-				} else if ('search' === data.object_type) {
-					showSearchAuditLog(data, timeZone);
-				}
+                    showLogoutAuditLog(data, timeZone);
+                } else if ('get_event' === data.object_type || 'getevent' === data.object_type) {
+                    showGetEventAuditLog(data, timeZone);
+                } else if ('search' === data.object_type) {
+                    showSearchAuditLog(data, timeZone);
+                } else if ('configuration_changed' === data.object_type) {
+                    showConfigurationChangedAuditLog(data, timeZone);
+                }
 			}
 		});
 		$('#event-container').show();
@@ -397,25 +399,94 @@ function buildAuditLogPage() {
 			text: function (trigger) {
 				return $(trigger).next().next().text();
 			}
-		}));
-		if (typeof (Worker) !== "undefined") {
-			const worker = new Worker('../scripts/highlight-worker.js');
-			worker.onmessage = function (result) {
-				executedQuery.html(result.data);
-			}
-			worker.postMessage([executedQuery.text(), 'JSON']);
-		}
-	}
+        }));
+        if (typeof (Worker) !== "undefined") {
+            const worker = new Worker('../scripts/highlight-worker.js');
+            worker.onmessage = function (result) {
+                executedQuery.html(result.data);
+            }
+            worker.postMessage([executedQuery.text(), 'JSON']);
+        }
+    }
 
-	function appendToContainerInRow(container, name, value) {
-		appendElementToContainerInRow(container, name, $('<p>').addClass('form-control-static').text(value));
-	}
+    function showConfigurationChangedAuditLog(data, timeZone) {
+        appendToContainerInRow($('#event-detail'), 'Handling time', moment.tz(data.handling_time, timeZone).format('YYYY-MM-DDTHH:mm:ss.SSSZ'));
+        appendToContainerInRow($('#event-detail'), 'Type', 'Configuration changed');
+        appendToContainerInRow($('#event-detail'), 'Action', data.action);
+        appendToContainerInRow($('#event-detail'), 'Principal id', data.principal_id);
+        appendToContainerInRow($('#event-detail'), 'Configuration type', data.configuration_type);
+        appendToContainerInRow($('#event-detail'), 'Configuration id', data.configuration_id);
 
-	function appendElementToContainerInRow(container, name, element) {
-		const $container = $(container);
-		const $row = $container.children(":last-child");
-		if ($row.children().length > 0 && $row.children().length <= 2) {
-			$row.append(
+        if (data.old_value) {
+            $('#event-detail').append($('<br/>'));
+            $('#event-detail').append($('<label>').addClass('font-weight-bold form-control-static').text('Old value'));
+            const oldValue = $('<code>').text(vkbeautify.json(data.old_value, 4));
+            const $clipboardOldValue = $('<a>').attr('href', "#").addClass('small').text('Copy raw data to clipboard');
+            $('#event-detail').append(
+                $('<div>').addClass('row').attr('style', 'background-color: #eceeef;').append(
+                    $('<div>').addClass('col-sm-12').append(
+                        $clipboardOldValue,
+                        $('<pre>').attr('style', 'white-space: pre-wrap;').append(
+                            oldValue
+                        ),
+                        $('<pre>').attr('style', 'display: none').text(data.old_value)
+                    )
+                )
+            );
+            clipboards.push(new Clipboard($clipboardOldValue[0], {
+                text: function (trigger) {
+                    return $(trigger).next().next().text();
+                }
+            }));
+            if (typeof (Worker) !== "undefined") {
+                const worker = new Worker('../scripts/highlight-worker.js');
+                worker.onmessage = function (result) {
+                    oldValue.html(result.data);
+                }
+                worker.postMessage([oldValue.text(), 'JSON']);
+            }
+        }
+
+        if (data.new_value) {
+            $('#event-detail').append($('<br/>'));
+            $('#event-detail').append($('<label>').addClass('font-weight-bold form-control-static').text('New value'));
+            const newValue = $('<code>').text(vkbeautify.json(data.new_value, 4));
+            const $clipboardNewValue = $('<a>').attr('href', "#").addClass('small').text('Copy raw data to clipboard');
+            $('#event-detail').append(
+                $('<div>').addClass('row').attr('style', 'background-color: #eceeef;').append(
+                    $('<div>').addClass('col-sm-12').append(
+                        $clipboardNewValue,
+                        $('<pre>').attr('style', 'white-space: pre-wrap;').append(
+                            newValue
+                        ),
+                        $('<pre>').attr('style', 'display: none').text(data.new_value)
+                    )
+                )
+            );
+            clipboards.push(new Clipboard($clipboardNewValue[0], {
+                text: function (trigger) {
+                    return $(trigger).next().next().text();
+                }
+            }));
+            if (typeof (Worker) !== "undefined") {
+                const worker = new Worker('../scripts/highlight-worker.js');
+                worker.onmessage = function (result) {
+                    newValue.html(result.data);
+                }
+                worker.postMessage([newValue.text(), 'JSON']);
+            }
+        }
+    }
+
+    function appendToContainerInRow(container, name, value) {
+        appendElementToContainerInRow(container, name, $('<p>').addClass('form-control-static').text(value));
+    }
+
+    function appendElementToContainerInRow(container, name, element) {
+        const $container = $(container);
+        const $row = $container.children(":last-child");
+        if ($row.children().length > 0 && $row.children().length <= 2) {
+            $row.append(
 				$('<div>').addClass('col-md-2').append($('<label>').addClass('font-weight-bold form-control-static').text(name)),
 				$('<div>').addClass('col-md-4').attr('style', 'word-wrap: break-word;').append(element)
 			);

@@ -24,15 +24,28 @@ import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalC
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.elasticsearch.builder.GetRequestBuilder;
 import com.jecstar.etm.server.core.rest.AbstractJsonService;
+import com.jecstar.etm.server.core.util.DateUtils;
+import com.jecstar.etm.server.core.util.IdGenerator;
 import org.elasticsearch.action.get.GetResponse;
 
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.SecurityContext;
+import java.time.format.DateTimeFormatter;
 
 public abstract class AbstractGuiService extends AbstractJsonService {
 
     @Context
     protected SecurityContext securityContext;
+
+    /**
+     * A <code>DateTimeFormatter</code> that is configured to have week precision.
+     */
+    protected final DateTimeFormatter dateTimeFormatterIndexPerWeek = DateUtils.getIndexPerWeekFormatter();
+
+    /**
+     * An <code>IdGenerator</code> that will be used to create id's for audit logs.
+     */
+    protected final IdGenerator idGenerator = new IdGenerator();
 
     private final EtmPrincipalConverterJsonImpl principalConverter = new EtmPrincipalConverterJsonImpl();
 

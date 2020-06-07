@@ -196,6 +196,17 @@ public class Layer<V extends Vertex> {
             }
             // Continue after the parent.
             addAndOptimize(layers, orderedVertices);
+        } else {
+            // No container at start of chain, but container at end of chain.
+            // 1. Add the start of the chain to this layer.
+            // 2. Then handle all events from first event with parent until the end.
+            List<V> withParent = orderedVertices.stream().filter(p -> p.getParent() != null).collect(Collectors.toList());
+            var head = new ArrayList<>(orderedVertices.subList(0, orderedVertices.indexOf(withParent.get(0))));
+            orderedVertices.removeAll(head);
+            // Step 1.
+            addAndOptimize(layers, head);
+            // Step 2.
+            addAndOptimize(layers, orderedVertices);
         }
     }
 

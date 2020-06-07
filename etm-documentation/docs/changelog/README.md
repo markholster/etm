@@ -1,6 +1,11 @@
 # Changelog
 ## Version 4.4.0
 * [ETM-45](https://github.com/jecstarinnovations/etm/issues/45) Unable to remove search template.
+* [ETM-47](https://github.com/jecstarinnovations/etm/issues/47) Edit graph visible when dashboard is read-only.
+* [ETM-48](https://github.com/jecstarinnovations/etm/issues/48) Changes to settings not visible in audit logs.
+* [ETM-49](https://github.com/jecstarinnovations/etm/issues/49) Endpoints tab is empty.
+* [ETM-50](https://github.com/jecstarinnovations/etm/issues/50) Denies list isn't cleared when switching groups.
+* [ETM-53](https://github.com/jecstarinnovations/etm/issues/53) Audit index should rotate every week instead of day.
 
 ## Version 4.3.0
 * [ETM-8](https://github.com/jecstarinnovations/etm/issues/8) Automatic migration.

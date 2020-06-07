@@ -24,6 +24,9 @@ import com.jecstar.etm.server.core.domain.aggregator.Aggregator;
 import com.jecstar.etm.server.core.domain.aggregator.bucket.BucketAggregator;
 import com.jecstar.etm.server.core.domain.aggregator.bucket.BucketKey;
 import com.jecstar.etm.server.core.domain.aggregator.metric.MetricValue;
+import com.jecstar.etm.server.core.domain.audit.ConfigurationChangedAuditLog;
+import com.jecstar.etm.server.core.domain.audit.builder.ConfigurationChangedAuditLogBuilder;
+import com.jecstar.etm.server.core.domain.audit.converter.ConfigurationChangedAuditLogConverter;
 import com.jecstar.etm.server.core.domain.cluster.notifier.Notifier;
 import com.jecstar.etm.server.core.domain.configuration.ElasticsearchLayout;
 import com.jecstar.etm.server.core.domain.configuration.EtmConfiguration;
@@ -35,6 +38,7 @@ import com.jecstar.etm.server.core.domain.principal.converter.EtmPrincipalTags;
 import com.jecstar.etm.server.core.domain.principal.converter.json.EtmPrincipalConverterJsonImpl;
 import com.jecstar.etm.server.core.elasticsearch.DataRepository;
 import com.jecstar.etm.server.core.elasticsearch.builder.GetRequestBuilder;
+import com.jecstar.etm.server.core.elasticsearch.builder.IndexRequestBuilder;
 import com.jecstar.etm.server.core.elasticsearch.builder.SearchRequestBuilder;
 import com.jecstar.etm.server.core.persisting.RequestEnhancer;
 import com.jecstar.etm.server.core.persisting.ScrollableSearch;
@@ -44,6 +48,7 @@ import com.jecstar.etm.signaler.domain.Threshold;
 import com.jecstar.etm.signaler.domain.converter.SignalConverter;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.HasAggregations;
@@ -56,6 +61,7 @@ import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.time.Instant;
 import java.util.*;
 
 @Path("/signal")
@@ -69,6 +75,7 @@ public class SignalService extends AbstractUserAttributeService {
     private final EtmPrincipalConverterJsonImpl etmPrincipalConverter = new EtmPrincipalConverterJsonImpl();
     private final EtmPrincipalTags etmPrincipalTags = etmPrincipalConverter.getTags();
     private final SignalConverter signalConverter = new SignalConverter();
+    private final ConfigurationChangedAuditLogConverter configurationChangedAuditLogConverter = new ConfigurationChangedAuditLogConverter();
 
     public static void initialize(DataRepository dataRepository, EtmConfiguration etmConfiguration) {
         SignalService.dataRepository = dataRepository;
@@ -282,6 +289,10 @@ public class SignalService extends AbstractUserAttributeService {
      * @return The json result of the addition.
      */
     private String addSignal(String groupName, String signalName, String json) {
+        var now = Instant.now();
+        var etmPrincipal = getEtmPrincipal();
+        var oldSignalConfiguration = (String) null;
+
         Signal signal = this.signalConverter.read(json);
         signal.normalizeQueryTimesToInstant(getEtmPrincipal());
         EtmSecurityEntity etmSecurityEntity = getEtmSecurityEntity(dataRepository, groupName);
@@ -294,6 +305,7 @@ public class SignalService extends AbstractUserAttributeService {
                 throw new EtmException(EtmException.NOT_AUTHORIZED_FOR_NOTIFIER);
             }
         }
+        var newSignalConfiguration = this.signalConverter.write(signal);
         List<Map<String, Object>> currentSignals = new ArrayList<>();
         Map<String, Object> signalData = toMap(this.signalConverter.write(signal));
         if (objectMap != null && objectMap.containsKey(this.etmPrincipalTags.getSignalsTag())) {
@@ -304,6 +316,7 @@ public class SignalService extends AbstractUserAttributeService {
         while (iterator.hasNext()) {
             Map<String, Object> signalMap = iterator.next();
             if (signalName.equals(getString("name", signalMap))) {
+                oldSignalConfiguration = this.signalConverter.write(this.signalConverter.read(signalMap));
                 // Copy metadata that isn't store by the converter.
                 for (String key : Signal.METADATA_KEYS) {
                     if (signalMap.containsKey(key)) {
@@ -324,6 +337,17 @@ public class SignalService extends AbstractUserAttributeService {
         Map<String, Object> source = new HashMap<>();
         source.put(this.etmPrincipalTags.getSignalsTag(), currentSignals);
         updateEntity(dataRepository, etmConfiguration, groupName, source);
+        if (!Objects.equals(oldSignalConfiguration, newSignalConfiguration)) {
+            storeConfigurationChangedAuditLog(new ConfigurationChangedAuditLogBuilder()
+                    .setPrincipalId(etmPrincipal.getId())
+                    .setHandlingTime(now)
+                    .setAction(oldSignalConfiguration == null ? ConfigurationChangedAuditLog.Action.CREATE : ConfigurationChangedAuditLog.Action.UPDATE)
+                    .setConfigurationType("signal")
+                    .setConfigurationId(groupName != null ? "group_" + groupName + "_signal_" + signalName : "signal_" + signalName)
+                    .setOldValue(oldSignalConfiguration)
+                    .setNewValue(newSignalConfiguration)
+            );
+        }
         return "{\"status\":\"success\"}";
     }
 
@@ -365,6 +389,10 @@ public class SignalService extends AbstractUserAttributeService {
      * @return The json result of the delete.
      */
     private String deleteSignal(String groupName, String signalName) {
+        var now = Instant.now();
+        var etmPrincipal = getEtmPrincipal();
+        var oldSignalConfiguration = (String) null;
+
         Map<String, Object> objectMap = getEntity(dataRepository, groupName, this.etmPrincipalTags.getSignalsTag());
 
         List<Map<String, Object>> currentSignals = new ArrayList<>();
@@ -378,6 +406,7 @@ public class SignalService extends AbstractUserAttributeService {
         while (iterator.hasNext()) {
             Map<String, Object> signalData = iterator.next();
             if (signalName.equals(getString("name", signalData))) {
+                oldSignalConfiguration = this.signalConverter.write(this.signalConverter.read(signalData));
                 iterator.remove();
                 break;
             }
@@ -387,6 +416,16 @@ public class SignalService extends AbstractUserAttributeService {
         Map<String, Object> source = new HashMap<>();
         source.put(this.etmPrincipalTags.getSignalsTag(), currentSignals);
         updateEntity(dataRepository, etmConfiguration, groupName, source);
+        if (oldSignalConfiguration != null) {
+            storeConfigurationChangedAuditLog(new ConfigurationChangedAuditLogBuilder()
+                    .setPrincipalId(etmPrincipal.getId())
+                    .setHandlingTime(now)
+                    .setAction(ConfigurationChangedAuditLog.Action.DELETE)
+                    .setConfigurationType("signal")
+                    .setConfigurationId(groupName != null ? "group_" + groupName + "_signal_" + signalName : "signal_" + signalName)
+                    .setOldValue(oldSignalConfiguration)
+            );
+        }
         return "{\"status\":\"success\"}";
     }
 
@@ -561,5 +600,25 @@ public class SignalService extends AbstractUserAttributeService {
         } else {
             values.add("[" + bucketKey.getJsonValue() + ", " + 0 + "]");
         }
+    }
+
+    /**
+     * Store a <code>ConfigurationChangedAuditLog</code> instance.
+     *
+     * @param auditLogBuilder The builder that contains the data.
+     */
+    private void storeConfigurationChangedAuditLog(ConfigurationChangedAuditLogBuilder auditLogBuilder) {
+        var now = Instant.now();
+        IndexRequestBuilder indexRequestBuilder = requestEnhancer.enhance(
+                new IndexRequestBuilder(ElasticsearchLayout.AUDIT_LOG_INDEX_PREFIX + dateTimeFormatterIndexPerWeek.format(now))
+                        .setId(auditLogBuilder.getId())
+        )
+                .setSource(this.configurationChangedAuditLogConverter.write(
+                        auditLogBuilder
+                                .setId(idGenerator.createId())
+                                .setTimestamp(now)
+                                .build()
+                ), XContentType.JSON);
+        dataRepository.indexAsync(indexRequestBuilder, DataRepository.noopActionListener());
     }
 }

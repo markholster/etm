@@ -163,12 +163,12 @@ function buildUserPage() {
     $('#sel-user').on('change', function (event) {
         event.preventDefault();
         const userData = userMap[$(this).val()];
+        $('#list-groups, #list-notifiers, #list-event-denies, #list-event-grants').empty();
         if ('undefined' == typeof userData) {
             resetValues();
             enableFieldsForNonLdapUser();
             return;
         }
-        $('#list-groups, #list-notifiers').empty();
         $('#input-user-id').val(userData.id);
         $('#input-user-name').val(userData.name);
         $('#input-user-email').val(userData.email);
@@ -188,17 +188,15 @@ function buildUserPage() {
                 $('#card-acl').find("option[value='" + role + "']").parent().val(role).trigger('change');
             });
         }
-        if (userData.roles.indexOf('etm_event_read') !== -1 || userData.roles.indexOf('etm_event_read_write') !== -1) {
-            if (userData.event_field_denies) {
-                $.each(userData.event_field_denies, function (index, deny) {
-                    $('#list-event-denies').append(createEventDenyGrantRow(deny));
-                });
-            }
-            if (userData.event_field_grants) {
-                $.each(userData.event_field_grants, function (index, grant) {
-                    $('#list-event-grants').append(createEventDenyGrantRow(grant));
-                });
-            }
+        if (userData.event_field_denies) {
+            $.each(userData.event_field_denies, function (index, deny) {
+                $('#list-event-denies').append(createEventDenyGrantRow(deny));
+            });
+        }
+        if (userData.event_field_grants) {
+            $.each(userData.event_field_grants, function (index, grant) {
+                $('#list-event-grants').append(createEventDenyGrantRow(grant));
+            });
         }
         $('#dashboard-datasource-block').find("input[type='checkbox']").prop('checked', false);
         if (userData.dashboard_datasources) {
@@ -646,20 +644,18 @@ function buildUserPage() {
                 userData.notifiers.push(notifierName);
             }
         });
-        if (userData.roles.indexOf('etm_event_read') !== -1 || userData.roles.indexOf('etm_event_read_write') !== -1) {
-            $('#list-event-denies').find('input').each(function () {
-                const val = $(this).val();
-                if (val.trim().length > 0) {
-                    userData.event_field_denies.push(val.trim());
-                }
-            });
-            $('#list-event-grants').find('input').each(function () {
-                const val = $(this).val();
-                if (val.trim().length > 0) {
-                    userData.event_field_grants.push(val.trim());
-                }
-            });
-        }
+        $('#list-event-denies').find('input').each(function () {
+            const val = $(this).val();
+            if (val.trim().length > 0) {
+                userData.event_field_denies.push(val.trim());
+            }
+        });
+        $('#list-event-grants').find('input').each(function () {
+            const val = $(this).val();
+            if (val.trim().length > 0) {
+                userData.event_field_grants.push(val.trim());
+            }
+        });
         return userData;
     }
 

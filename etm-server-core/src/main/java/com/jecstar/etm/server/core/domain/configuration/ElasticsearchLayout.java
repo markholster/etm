@@ -89,7 +89,8 @@ public final class ElasticsearchLayout {
     public static final String AUDIT_LOG_OBJECT_TYPE_LOGIN = "login";
     public static final String AUDIT_LOG_OBJECT_TYPE_LOGOUT = "logout";
     public static final String AUDIT_LOG_OBJECT_TYPE_SEARCH = "search";
-    public static final String AUDIT_LOG_OBJECT_TYPE_GET_EVENT = "getevent";
+    public static final String AUDIT_LOG_OBJECT_TYPE_GET_EVENT = "get_event";
+    public static final String AUDIT_LOG_OBJECT_TYPE_CONFIGURATION_CHANGED = "configuration_changed";
 
     public static final String STATE_INDEX_NAME = ETM_INDEX_PREFIX + "state";
     public static final String STATE_OBJECT_TYPE_SESSION = "session";
